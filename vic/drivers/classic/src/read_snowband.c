@@ -84,26 +84,23 @@ read_snowband(FILE            *snowband,
             soil_con->elevation = (double) avg_elev;
         }
         for (band = 0; band < Nbands; band++) {
-            soil_con->Tfactor[band] =
-                (soil_con->BandElev[band] -
-                 soil_con->elevation) * param.LAPSE_RATE;
+            if (soil_con->AreaFract[band] > 0) {
+                soil_con->Tfactor[band] = (soil_con->elevation - soil_con->BandElev[band]) / 1000. * soil_con->T_LAPSE;
+            }
+            else {
+                soil_con->Tfactor[band] = 0.; 
+            }
         }
-
         /** Read Precipitation Fraction **/
         total = 0.;
         for (band = 0; band < options.SNOW_BAND; band++) {
-            fscanf(snowband, "%lf", &prec_frac);
-            if (prec_frac < 0) {
+            soil_con->Pfactor[band] = (1.0 + soil_con->PGRAD * (soil_con->BandElev[band] - soil_con->elevation)) * 
+                                      soil_con->AreaFract[band];
+            if (soil_con->Pfactor[band] < 0) {
                 log_err("Snow band precipitation fraction (%f) must be "
-                        "between 0 and 1", prec_frac);
+                        "between 0 and 1", soil_con->Pfactor[band]);
             }
-            if (prec_frac > 0 && soil_con->AreaFract[band] == 0) {
-                log_err("Snow band precipitation fraction (%f) should be 0 "
-                        "when the area fraction is 0. (band = %zu)",
-                        prec_frac, band);
-            }
-            soil_con->Pfactor[band] = prec_frac;
-            total += prec_frac;
+            total += soil_con->Pfactor[band];
         }
         if (total != 1.) {
             log_warn("Sum of the snow band precipitation fractions "
