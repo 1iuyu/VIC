@@ -136,6 +136,7 @@ snow_intercept(double             Dt,
 
     Drip = 0.0;
     ReleasedMass = 0.0;
+    MaxSnowInt = 0.0;
 
     OldTfoliage = *Tfoliage;
 
