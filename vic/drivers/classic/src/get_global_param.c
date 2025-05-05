@@ -511,6 +511,9 @@ get_global_param(FILE *gp)
                             "control file.");
                 }
             }
+            else if (strcasecmp("GLACIER_ID", optstr) == 0) {
+                sscanf(cmdstr,"%*s %zu", &options.GLACIER_ID);
+            }
             else if (strcasecmp("ROOT_ZONES", optstr) == 0) {
                 sscanf(cmdstr, "%*s %zu", &options.ROOT_ZONES);
             }
@@ -560,6 +563,15 @@ get_global_param(FILE *gp)
             }
             else if (strcasecmp("OUT_FORMAT", optstr) == 0) {
                 ; // do nothing
+            }
+            else if(strcasecmp("PRT_HEADER", optstr) == 0) {
+                sscanf(cmdstr,"%*s %s",flgstr);
+                if(strcasecmp("TRUE", flgstr) == 0) {
+                    options.PRT_HEADER = true;
+                }
+                else {
+                    options.PRT_HEADER = false;
+                }
             }
 
             /*************************************
@@ -649,10 +661,10 @@ get_global_param(FILE *gp)
                         "OUT_SOIL_LIQ_FRAC, update your global parameter file "
                         "accordingly");
             }
-            else if (strcasecmp("PRT_HEADER", optstr) == 0) {
+            /* else if (strcasecmp("PRT_HEADER", optstr) == 0) {
                 log_err("PRT_HEADER has been deprecated. All output files "
                         "include a header including pertinent metadata.");
-            }
+            } */
             else if (strcasecmp("PRT_SNOW_BAND", optstr) == 0) {
                 log_err("PRT_SNOW_BAND has been deprecated. To output band "
                         "specific variables, directly specify them in the "
