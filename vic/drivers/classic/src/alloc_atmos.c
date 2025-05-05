@@ -28,6 +28,10 @@ alloc_atmos(int                 nrecs,
         check_alloc_status((*force)[i].longwave, "Memory allocation error.");
         (*force)[i].prec = calloc(NR + 1, sizeof(*(*force)[i].prec));
         check_alloc_status((*force)[i].prec, "Memory allocation error.");
+        (*force)[i].rainf = calloc(NR + 1, sizeof(*(*force)[i].rainf));
+        check_alloc_status((*force)[i].rainf, "Memory allocation error.");
+        (*force)[i].snowf = calloc(NR + 1, sizeof(*(*force)[i].snowf));
+        check_alloc_status((*force)[i].snowf, "Memory allocation error.");
         (*force)[i].pressure = calloc(NR + 1, sizeof(*(*force)[i].pressure));
         check_alloc_status((*force)[i].pressure, "Memory allocation error.");
         (*force)[i].shortwave = calloc(NR + 1, sizeof(*(*force)[i].shortwave));
@@ -78,6 +82,8 @@ free_atmos(int                 nrecs,
         free((*force)[i].density);
         free((*force)[i].longwave);
         free((*force)[i].prec);
+        free((*force)[i].rainf);
+        free((*force)[i].snowf);
         free((*force)[i].pressure);
         free((*force)[i].shortwave);
         free((*force)[i].snowflag);
