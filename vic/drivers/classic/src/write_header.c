@@ -250,63 +250,69 @@ write_header(stream_struct **streams,
             }
         }
         else if ((*streams)[stream_idx].file_format == ASCII) {
-            // ASCII header format:
-            //
-            // # NRECS: (nrecs)
-            // # STARTDATE: yyyy-mm-dd hh:00:00
-            // # NVARS: (nvars)
-            // # VARNAME    VARNAME   VARNAME   ...
-            //
-            // where
-            // nrecs       = Number of records in the file
-            // start date  = Date and time of first record of file
-            // nvars       = Number of variables in the file, including date fields
+            // TRUE = insert header at beginning of output file; FALSE = no header
+            if (options.PRT_HEADER) {
+                // ASCII header format:
+                //
+                // # NRECS: (nrecs)
+                // # STARTDATE: yyyy-mm-dd hh:00:00
+                // # NVARS: (nvars)
+                // # VARNAME    VARNAME   VARNAME   ...
+                //
+                // where
+                // nrecs       = Number of records in the file
+                // start date  = Date and time of first record of file
+                // nvars       = Number of variables in the file, including date fields
 
-            // Header part 1: Global attributes
-            nvars = (*streams)[stream_idx].nvars;
-            if ((*streams)[stream_idx].agg_alarm.is_subdaily) {
-                nvars += 4;
-            }
-            else {
-                nvars += 3;
-            }
-            fprintf((*streams)[stream_idx].fh, "# SIMULATION: %s\n",
-                    (*streams)[stream_idx].prefix);
-            fprintf((*streams)[stream_idx].fh, "# MODEL_VERSION: %s\n",
-                    SHORT_VERSION);
+                // Header part 1: Global attributes
+                nvars = (*streams)[stream_idx].nvars;
+                if ((*streams)[stream_idx].agg_alarm.is_subdaily) {
+                    nvars += 4;
+                }
+                else {
+                    nvars += 3;
+                }
+                fprintf((*streams)[stream_idx].fh, "# SIMULATION: %s\n",
+                        (*streams)[stream_idx].prefix);
+                fprintf((*streams)[stream_idx].fh, "# MODEL_VERSION: %s\n",
+                        SHORT_VERSION);
 
-            // Header part 2: Variables
-            // Write the date
-            if ((*streams)[stream_idx].agg_alarm.is_subdaily) {
-                // Write year, month, day, and sec
-                fprintf((*streams)[stream_idx].fh,
-                        "YEAR\tMONTH\tDAY\tSEC\t");
-            }
-            else {
-                // Only write year, month, and day
-                fprintf((*streams)[stream_idx].fh, "YEAR\tMONTH\tDAY\t");
-            }
+                // Header part 2: Variables
+                // Write the date
+                if ((*streams)[stream_idx].agg_alarm.is_subdaily) {
+                    // Write year, month, day, and sec
+                    fprintf((*streams)[stream_idx].fh,
+                            "YEAR\tMONTH\tDAY\tSEC\t");
+                }
+                else {
+                    // Only write year, month, and day
+                    fprintf((*streams)[stream_idx].fh, "YEAR\tMONTH\tDAY\t");
+                }
 
-            // Loop over this output file's data variables
-            for (var_idx = 0; var_idx < (*streams)[stream_idx].nvars;
-                 var_idx++) {
-                varid = (*streams)[stream_idx].varid[var_idx];
-                // Loop over this variable's elements
-                for (elem_idx = 0;
-                     elem_idx < out_metadata[varid].nelem;
-                     elem_idx++) {
-                    if (!(var_idx == 0 && elem_idx == 0)) {
-                        fprintf((*streams)[stream_idx].fh, "\t ");
-                    }
-                    fprintf((*streams)[stream_idx].fh, "%s",
-                            out_metadata[varid].varname);
-                    if (out_metadata[varid].nelem > 1) {
-                        fprintf((*streams)[stream_idx].fh, "_%d",
-                                elem_idx);
+                // Loop over this output file's data variables
+                for (var_idx = 0; var_idx < (*streams)[stream_idx].nvars;
+                     var_idx++) {
+                    varid = (*streams)[stream_idx].varid[var_idx];
+                    // Loop over this variable's elements
+                    for (elem_idx = 0;
+                         elem_idx < out_metadata[varid].nelem;
+                         elem_idx++) {
+                        if (!(var_idx == 0 && elem_idx == 0)) {
+                            fprintf((*streams)[stream_idx].fh, "\t ");
+                        }
+                        fprintf((*streams)[stream_idx].fh, "%s",
+                                out_metadata[varid].varname);
+                        if (out_metadata[varid].nelem > 1) {
+                            fprintf((*streams)[stream_idx].fh, "_%d",
+                                    elem_idx);
+                        }
                     }
                 }
+                fprintf((*streams)[stream_idx].fh, "\n");
             }
-            fprintf((*streams)[stream_idx].fh, "\n");
+            else {
+                ; // do nothing
+            }
         }
         else {
             log_err("Unrecognized OUT_FORMAT option");
