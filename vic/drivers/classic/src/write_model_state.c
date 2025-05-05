@@ -19,7 +19,7 @@
  *****************************************************************************/
 void
 write_model_state(all_vars_struct *all_vars,
-                  int              Nveg,
+                  veg_con_struct  *veg_con,
                   int              cellnum,
                   filep_struct    *filep,
                   soil_con_struct *soil_con)
@@ -33,12 +33,13 @@ write_model_state(all_vars_struct *all_vars,
     size_t               nidx;
     int                  Nbands;
     int                  Nbytes;
+    int                  Nveg;
     size_t               frost_area;
 
-    cell_data_struct   **cell;
-    snow_data_struct   **snow;
-    energy_bal_struct  **energy;
-    veg_var_struct     **veg_var;
+    cell_data_struct    *cell;
+    snow_data_struct    *snow;
+    energy_bal_struct   *energy;
+    veg_var_struct      *veg_var;
     lake_var_struct      lake_var;
     int                  node;
 
@@ -49,7 +50,7 @@ write_model_state(all_vars_struct *all_vars,
     snow = all_vars->snow;
     energy = all_vars->energy;
     lake_var = all_vars->lake_var;
-
+    Nveg = veg_con->vegetat_type_num;
     /* write cell information */
     if (options.STATE_FORMAT == BINARY) {
         fwrite(&cellnum, sizeof(int), 1, filep->statefile);
@@ -66,23 +67,23 @@ write_model_state(all_vars_struct *all_vars,
     if (options.STATE_FORMAT == BINARY) {
         Nbytes = options.Nnode * sizeof(double) + // dz_node
                  options.Nnode * sizeof(double) + // Zsum_node
-                 (Nveg + 1) * Nbands * 2 * sizeof(int) + // veg & band
-                 (Nveg + 1) * Nbands * options.Nlayer * sizeof(double) + // soil moisture
+                 (Nveg + 1) * 2 * sizeof(int) + // veg & band
+                 (Nveg + 1) * options.Nlayer * sizeof(double) + // soil moisture
                  (Nveg +
-                  1) * Nbands * options.Nlayer * options.Nfrost *
+                  1) * options.Nlayer * options.Nfrost *
                  sizeof(double) +                                                     // soil ice
-                 Nveg * Nbands * sizeof(double); // dew
+                 Nveg * sizeof(double); // dew
         if (options.CARBON) {
             /* Carbon-specific state vars */
-            Nbytes += Nveg * Nbands * 5 * sizeof(double); // AnnualNPP, AnnualNPPPrev, and 3 soil carbon storages
+            Nbytes += Nveg * 5 * sizeof(double); // AnnualNPP, AnnualNPPPrev, and 3 soil carbon storages
         }
-        Nbytes += (Nveg + 1) * Nbands * sizeof(int) + // last_snow
-                  (Nveg + 1) * Nbands * sizeof(char) + // MELTING
-                  (Nveg + 1) * Nbands * sizeof(double) * 9 + // other snow parameters
-                  (Nveg + 1) * Nbands * options.Nnode * sizeof(double) + // soil temperatures
-                  (Nveg + 1) * Nbands * sizeof(double) + // Tfoliage
-                  (Nveg + 1) * Nbands * sizeof(double) + // energy.LongUnderOut
-                  (Nveg + 1) * Nbands * sizeof(double); // energy.snow_flux
+        Nbytes += (Nveg + 1) * sizeof(int) + // last_snow
+                  (Nveg + 1) * sizeof(char) + // MELTING
+                  (Nveg + 1) * sizeof(double) * 9 + // other snow parameters
+                  (Nveg + 1) * options.Nnode * sizeof(double) + // soil temperatures
+                  (Nveg + 1) * sizeof(double) + // Tfoliage
+                  (Nveg + 1) * sizeof(double) + // energy.LongUnderOut
+                  (Nveg + 1) * sizeof(double); // energy.snow_flux
         if (options.LAKES) {
             /* Lake/wetland tiles have lake-specific state vars */
             Nbytes += sizeof(int) + // activenod
@@ -151,184 +152,183 @@ write_model_state(all_vars_struct *all_vars,
     /* Output for all vegetation types */
     for (veg = 0; veg <= Nveg; veg++) {
         /* Output for all snow bands */
-        for (band = 0; band < Nbands; band++) {
-            /* Write cell identification information */
+        band = veg_con[veg].BandIndex;
+        /* Write cell identification information */
+        if (options.STATE_FORMAT == BINARY) {
+            fwrite(&veg, sizeof(int), 1, filep->statefile);
+            fwrite(&band, sizeof(int), 1, filep->statefile);
+        }
+        else {
+            fprintf(filep->statefile, "%i %i", veg, band);
+        }
+
+        /* Write total soil moisture */
+        for (lidx = 0; lidx < options.Nlayer; lidx++) {
+            tmpval = cell[veg].layer[lidx].moist;
             if (options.STATE_FORMAT == BINARY) {
-                fwrite(&veg, sizeof(int), 1, filep->statefile);
-                fwrite(&band, sizeof(int), 1, filep->statefile);
+                fwrite(&tmpval, sizeof(double), 1, filep->statefile);
             }
             else {
-                fprintf(filep->statefile, "%i %i", veg, band);
+                fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT, tmpval);
             }
+        }
 
-            /* Write total soil moisture */
-            for (lidx = 0; lidx < options.Nlayer; lidx++) {
-                tmpval = cell[veg][band].layer[lidx].moist;
+        /* Write average ice content */
+        for (lidx = 0; lidx < options.Nlayer; lidx++) {
+            for (frost_area = 0; frost_area < options.Nfrost;
+                 frost_area++) {
+                 tmpval = cell[veg].layer[lidx].ice[frost_area];
                 if (options.STATE_FORMAT == BINARY) {
                     fwrite(&tmpval, sizeof(double), 1, filep->statefile);
-                }
-                else {
-                    fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT, tmpval);
-                }
-            }
-
-            /* Write average ice content */
-            for (lidx = 0; lidx < options.Nlayer; lidx++) {
-                for (frost_area = 0; frost_area < options.Nfrost;
-                     frost_area++) {
-                    tmpval = cell[veg][band].layer[lidx].ice[frost_area];
-                    if (options.STATE_FORMAT == BINARY) {
-                        fwrite(&tmpval, sizeof(double), 1, filep->statefile);
-                    }
-                    else {
-                        fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
-                                tmpval);
-                    }
-                }
-            }
-
-            if (veg < Nveg) {
-                /* Write dew storage */
-                tmpval = veg_var[veg][band].Wdew;
-                if (options.STATE_FORMAT == BINARY) {
-                    fwrite(&tmpval, sizeof(double), 1, filep->statefile);
-                }
-                else {
-                    fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT, tmpval);
-                }
-                if (options.CARBON) {
-                    /* Write cumulative NPP */
-                    tmpval = veg_var[veg][band].AnnualNPP;
-                    if (options.STATE_FORMAT == BINARY) {
-                        fwrite(&tmpval, sizeof(double), 1, filep->statefile);
-                    }
-                    else {
-                        fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
-                                tmpval);
-                    }
-                    tmpval = veg_var[veg][band].AnnualNPPPrev;
-                    if (options.STATE_FORMAT == BINARY) {
-                        fwrite(&tmpval, sizeof(double), 1, filep->statefile);
-                    }
-                    else {
-                        fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
-                                tmpval);
-                    }
-                    /* Write soil carbon storages */
-                    tmpval = cell[veg][band].CLitter;
-                    if (options.STATE_FORMAT == BINARY) {
-                        fwrite(&tmpval, sizeof(double), 1, filep->statefile);
-                    }
-                    else {
-                        fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
-                                tmpval);
-                    }
-                    tmpval = cell[veg][band].CInter;
-                    if (options.STATE_FORMAT == BINARY) {
-                        fwrite(&tmpval, sizeof(double), 1, filep->statefile);
-                    }
-                    else {
-                        fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
-                                tmpval);
-                    }
-                    tmpval = cell[veg][band].CSlow;
-                    if (options.STATE_FORMAT == BINARY) {
-                        fwrite(&tmpval, sizeof(double), 1, filep->statefile);
-                    }
-                    else {
-                        fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
-                                tmpval);
-                    }
-                }
-            }
-
-            /* Write snow data */
-            if (options.STATE_FORMAT == BINARY) {
-                fwrite(&snow[veg][band].last_snow, sizeof(int), 1,
-                       filep->statefile);
-                fwrite(&snow[veg][band].MELTING, sizeof(char), 1,
-                       filep->statefile);
-                fwrite(&snow[veg][band].coverage, sizeof(double), 1,
-                       filep->statefile);
-                fwrite(&snow[veg][band].swq, sizeof(double), 1,
-                       filep->statefile);
-                fwrite(&snow[veg][band].surf_temp, sizeof(double), 1,
-                       filep->statefile);
-                fwrite(&snow[veg][band].surf_water, sizeof(double), 1,
-                       filep->statefile);
-                fwrite(&snow[veg][band].pack_temp, sizeof(double), 1,
-                       filep->statefile);
-                fwrite(&snow[veg][band].pack_water, sizeof(double), 1,
-                       filep->statefile);
-                fwrite(&snow[veg][band].density, sizeof(double), 1,
-                       filep->statefile);
-                fwrite(&snow[veg][band].coldcontent, sizeof(double), 1,
-                       filep->statefile);
-                fwrite(&snow[veg][band].snow_canopy, sizeof(double), 1,
-                       filep->statefile);
-            }
-            else {
-                fprintf(filep->statefile, " %i %i "
-                        ASCII_STATE_FLOAT_FMT " "ASCII_STATE_FLOAT_FMT " "
-                        ASCII_STATE_FLOAT_FMT " "ASCII_STATE_FLOAT_FMT " "
-                        ASCII_STATE_FLOAT_FMT " "ASCII_STATE_FLOAT_FMT " "
-                        ASCII_STATE_FLOAT_FMT " "ASCII_STATE_FLOAT_FMT " "
-                        ASCII_STATE_FLOAT_FMT,
-                        snow[veg][band].last_snow, (int)snow[veg][band].MELTING,
-                        snow[veg][band].coverage, snow[veg][band].swq,
-                        snow[veg][band].surf_temp, snow[veg][band].surf_water,
-                        snow[veg][band].pack_temp, snow[veg][band].pack_water,
-                        snow[veg][band].density, snow[veg][band].coldcontent,
-                        snow[veg][band].snow_canopy);
-            }
-
-            /* Write soil thermal node temperatures */
-            for (nidx = 0; nidx < options.Nnode; nidx++) {
-                if (options.STATE_FORMAT == BINARY) {
-                    fwrite(&energy[veg][band].T[nidx], sizeof(double), 1,
-                           filep->statefile);
                 }
                 else {
                     fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
-                            energy[veg][band].T[nidx]);
+                            tmpval);
                 }
             }
+        }
 
-            /* Write foliage temperature */
+        if (veg < Nveg) {
+            /* Write dew storage */
+            tmpval = veg_var[veg].Wdew;
             if (options.STATE_FORMAT == BINARY) {
-                fwrite(&energy[veg][band].Tfoliage, sizeof(double), 1,
+                fwrite(&tmpval, sizeof(double), 1, filep->statefile);
+            }
+            else {
+                fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT, tmpval);
+            }
+            if (options.CARBON) {
+                /* Write cumulative NPP */
+                tmpval = veg_var[veg].AnnualNPP;
+                if (options.STATE_FORMAT == BINARY) {
+                    fwrite(&tmpval, sizeof(double), 1, filep->statefile);
+                }
+                else {
+                    fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
+                            tmpval);
+                }
+                tmpval = veg_var[veg].AnnualNPPPrev;
+                if (options.STATE_FORMAT == BINARY) {
+                    fwrite(&tmpval, sizeof(double), 1, filep->statefile);
+                }
+                else {
+                    fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
+                            tmpval);
+                }
+                /* Write soil carbon storages */
+                tmpval = cell[veg].CLitter;
+                if (options.STATE_FORMAT == BINARY) {
+                    fwrite(&tmpval, sizeof(double), 1, filep->statefile);
+                }
+                else {
+                    fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
+                            tmpval);
+                }
+                tmpval = cell[veg].CInter;
+                if (options.STATE_FORMAT == BINARY) {
+                    fwrite(&tmpval, sizeof(double), 1, filep->statefile);
+                }
+                else {
+                    fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
+                            tmpval);
+                }
+                tmpval = cell[veg].CSlow;
+                if (options.STATE_FORMAT == BINARY) {
+                    fwrite(&tmpval, sizeof(double), 1, filep->statefile);
+                }
+                else {
+                    fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
+                            tmpval);
+                }
+            }
+        }
+
+        /* Write snow data */
+        if (options.STATE_FORMAT == BINARY) {
+            fwrite(&snow[veg].last_snow, sizeof(int), 1,
+                   filep->statefile);
+            fwrite(&snow[veg].MELTING, sizeof(char), 1,
+                   filep->statefile);
+            fwrite(&snow[veg].coverage, sizeof(double), 1,
+                   filep->statefile);
+            fwrite(&snow[veg].swq, sizeof(double), 1,
+                   filep->statefile);
+            fwrite(&snow[veg].surf_temp, sizeof(double), 1,
+                   filep->statefile);
+            fwrite(&snow[veg].surf_water, sizeof(double), 1,
+                   filep->statefile);
+            fwrite(&snow[veg].pack_temp, sizeof(double), 1,
+                   filep->statefile);
+            fwrite(&snow[veg].pack_water, sizeof(double), 1,
+                   filep->statefile);
+            fwrite(&snow[veg].density, sizeof(double), 1,
+                   filep->statefile);
+            fwrite(&snow[veg].coldcontent, sizeof(double), 1,
+                   filep->statefile);
+            fwrite(&snow[veg].snow_canopy, sizeof(double), 1,
+                   filep->statefile);
+        }
+        else {
+            fprintf(filep->statefile, " %i %i "
+                    ASCII_STATE_FLOAT_FMT " "ASCII_STATE_FLOAT_FMT " "
+                    ASCII_STATE_FLOAT_FMT " "ASCII_STATE_FLOAT_FMT " "
+                    ASCII_STATE_FLOAT_FMT " "ASCII_STATE_FLOAT_FMT " "
+                    ASCII_STATE_FLOAT_FMT " "ASCII_STATE_FLOAT_FMT " "
+                    ASCII_STATE_FLOAT_FMT,
+                    snow[veg].last_snow, (int)snow[veg].MELTING,
+                    snow[veg].coverage, snow[veg].swq,
+                    snow[veg].surf_temp, snow[veg].surf_water,
+                    snow[veg].pack_temp, snow[veg].pack_water,
+                    snow[veg].density, snow[veg].coldcontent,
+                    snow[veg].snow_canopy);
+        }
+
+        /* Write soil thermal node temperatures */
+        for (nidx = 0; nidx < options.Nnode; nidx++) {
+            if (options.STATE_FORMAT == BINARY) {
+                fwrite(&energy[veg].T[nidx], sizeof(double), 1,
                        filep->statefile);
             }
             else {
                 fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
-                        energy[veg][band].Tfoliage);
+                        energy[veg].T[nidx]);
             }
+        }
 
-            /* Write outgoing longwave from understory */
-            /* TO-DO: this is a flux. Saving it to the state file is a temporary solution! */
-            if (options.STATE_FORMAT == BINARY) {
-                fwrite(&energy[veg][band].LongUnderOut, sizeof(double), 1,
-                       filep->statefile);
-            }
-            else {
-                fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
-                        energy[veg][band].LongUnderOut);
-            }
+        /* Write foliage temperature */
+        if (options.STATE_FORMAT == BINARY) {
+            fwrite(&energy[veg].Tfoliage, sizeof(double), 1,
+                   filep->statefile);
+        }
+        else {
+            fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
+                    energy[veg].Tfoliage);
+        }
 
-            /* Write thermal flux through the snow pack */
-            /* TO-DO: this is a flux. Saving it to the state file is a temporary solution! */
-            if (options.STATE_FORMAT == BINARY) {
-                fwrite(&energy[veg][band].snow_flux, sizeof(double), 1,
-                       filep->statefile);
-            }
-            else {
-                fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
-                        energy[veg][band].snow_flux);
-            }
+        /* Write outgoing longwave from understory */
+        /* TO-DO: this is a flux. Saving it to the state file is a temporary solution! */
+        if (options.STATE_FORMAT == BINARY) {
+            fwrite(&energy[veg].LongUnderOut, sizeof(double), 1,
+                   filep->statefile);
+        }
+        else {
+            fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
+                    energy[veg].LongUnderOut);
+        }
 
-            if (options.STATE_FORMAT == ASCII) {
-                fprintf(filep->statefile, "\n");
-            }
+        /* Write thermal flux through the snow pack */
+        /* TO-DO: this is a flux. Saving it to the state file is a temporary solution! */
+        if (options.STATE_FORMAT == BINARY) {
+            fwrite(&energy[veg].snow_flux, sizeof(double), 1,
+                   filep->statefile);
+        }
+        else {
+            fprintf(filep->statefile, " "ASCII_STATE_FLOAT_FMT,
+                    energy[veg].snow_flux);
+        }
+
+        if (options.STATE_FORMAT == ASCII) {
+            fprintf(filep->statefile, "\n");
         }
     }
 
