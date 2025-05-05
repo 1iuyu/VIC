@@ -43,8 +43,9 @@ vic_force(force_data_struct *force,
     if (!param_set.TYPE[AIR_TEMP].SUPPLIED) {
         log_err("Air temperature must be supplied as a forcing");
     }
-    if (!param_set.TYPE[PREC].SUPPLIED) {
-        log_err("Precipitation must be supplied as a forcing");
+    if (!param_set.TYPE[PREC].SUPPLIED && !param_set.TYPE[RAINF].SUPPLIED &&
+                                          !param_set.TYPE[SNOWF].SUPPLIED) {
+        log_err("PREC or RAINF and SNOWF must be supplied as a forcing");
     }
     if (!param_set.TYPE[SWDOWN].SUPPLIED) {
         log_err("Downward shortwave radiation must be supplied as a forcing");
@@ -81,6 +82,13 @@ vic_force(force_data_struct *force,
     if (param_set.TYPE[FCANOPY].SUPPLIED) {
         param_set.TYPE[FCANOPY].N_ELEM = veg_con[0].vegetat_type_num;
     }
+    if (param_set.TYPE[PREC].SUPPLIED && !param_set.TYPE[RAINF].SUPPLIED && 
+                                         !param_set.TYPE[SNOWF].SUPPLIED) {
+        hasRAINF_SNOWF = false;
+    }
+    else {
+        hasRAINF_SNOWF = true;
+    }
 
     /*******************************
        read in meteorological data
@@ -106,8 +114,24 @@ vic_force(force_data_struct *force,
             uidx = rec * NF + i;
             // temperature in Celsius
             force[rec].air_temp[i] = forcing_data[AIR_TEMP][uidx];
-            // precipitation in mm/period
-            force[rec].prec[i] = forcing_data[PREC][uidx];
+            if (hasRAINF_SNOWF) {
+                // rain in mm/period
+                force[rec].rainf[i] = forcing_data[RAINF][uidx];
+                // snow in mm/period
+                force[rec].snowf[i] = forcing_data[SNOWF][uidx];
+                // snow flag
+                force[rec].snowflag[i] = will_it_snow(&(force[rec].snowf[i]), 1);
+            }
+            else {
+                /** Calculate Fraction of Precipitation that falls as Rain **/
+                force[rec].prec[i] = forcing_data[PREC][uidx];
+                rainonly = calc_rainonly(force[rec].air_temp[i], force[rec].prec[i],
+                                         soil_con->MAX_SNOW_TEMP, soil_con->MIN_RAIN_TEMP);
+                force[rec].rainf[i] = rainonly;
+                force[rec].snowf[i] = force[rec].prec[i] - rainonly;
+                // snow flag
+                force[rec].snowflag[i] = will_it_snow(&(force[rec].snowf[i]), 1);
+            }
             // downward shortwave in W/m2
             force[rec].shortwave[i] = forcing_data[SWDOWN][uidx];
             // downward longwave in W/m2
@@ -127,11 +151,6 @@ vic_force(force_data_struct *force,
                                                 force[rec].pressure[i]);
             // wind speed in m/s
             force[rec].wind[i] = forcing_data[WIND][uidx];
-            // snow flag
-            force[rec].snowflag[i] = will_it_snow(&(force[rec].air_temp[i]),
-                                                  t_offset,
-                                                  param.SNOW_MAX_SNOW_TEMP,
-                                                  &(force[rec].prec[i]), 1);
             // Optional inputs
             if (options.LAKES) {
                 // Channel inflow from upstream (into lake)
@@ -161,6 +180,8 @@ vic_force(force_data_struct *force,
             force[rec].air_temp[NR] = average(force[rec].air_temp, NF);
             // For precipitation put total
             force[rec].prec[NR] = average(force[rec].prec, NF) * NF;
+            force[rec].rainf[NR] = average(force[rec].rainf, NF) * NF;
+            force[rec].snowf[NR] = average(force[rec].snowf, NF) * NF;
             force[rec].shortwave[NR] = average(force[rec].shortwave, NF);
             force[rec].longwave[NR] = average(force[rec].longwave, NF);
             force[rec].pressure[NR] = average(force[rec].pressure, NF);
