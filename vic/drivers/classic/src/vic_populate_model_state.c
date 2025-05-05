@@ -32,11 +32,11 @@ vic_populate_model_state(all_vars_struct *all_vars,
     size_t               Nveg;
     int                  tmp_lake_idx;
 
-    cell_data_struct   **cell;
-    energy_bal_struct  **energy;
-    lake_var_struct     *lake;
-    snow_data_struct   **snow;
-    veg_var_struct     **veg_var;
+    cell_data_struct   *cell;
+    energy_bal_struct  *energy;
+    lake_var_struct    *lake;
+    snow_data_struct   *snow;
+    veg_var_struct     *veg_var;
 
     cell = all_vars->cell;
     energy = all_vars->energy;
@@ -55,7 +55,7 @@ vic_populate_model_state(all_vars_struct *all_vars,
         if (tmp_lake_idx < 0) {
             tmp_lake_idx = 0;
         }
-        initialize_lake(lake, lake_con, soil_con, &(cell[tmp_lake_idx][0]),
+        initialize_lake(lake, lake_con, soil_con, &(cell[tmp_lake_idx]),
                         false);
     }
     initialize_energy(energy, Nveg);
