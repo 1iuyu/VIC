@@ -164,6 +164,12 @@ read_vegparam(FILE  *vegparam,
                 temp[i].zone_fract[j] /= sum;
             }
         }
+        temp[i].BandIndex = atof(vegarr[2 + options.ROOT_ZONES * 2]);
+        if (temp[i].veg_class == options.GLACIER_ID) {
+            temp[i].isGlacier = true;
+        } else {
+            temp[i].isGlacier = false; // 不是冰川
+        }
 
         if (options.BLOWING) {
             j = 2 * options.ROOT_ZONES;
