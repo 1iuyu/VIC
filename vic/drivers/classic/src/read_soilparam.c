@@ -585,6 +585,216 @@ read_soilparam(FILE            *soilparam,
             sscanf(token, "%lf", &tempdbl);
             temp->avgJulyAirTemp = tempdbl;
         }
+        // Assign defaults, these will be overwritten if read from the soil file.
+        temp->NEW_SNOW_ALB = 0.85;
+        temp->SNOW_ALB_ACCUM_A = 0.94;
+        temp->SNOW_ALB_ACCUM_B = 0.58;
+        temp->SNOW_ALB_THAW_A = 0.82;
+        temp->SNOW_ALB_THAW_B = 0.46;
+        temp->MIN_RAIN_TEMP = 1.0;
+        temp->MAX_SNOW_TEMP = 10.0;
+        temp->PADJ_R = 1.0;
+        temp->PADJ_S = 1.0;
+        temp->T_LAPSE = 6.5;
+        temp->PGRAD = 0.0;
+        temp->GLAC_SURF_THICK = 100.0;
+        temp->GLAC_SURF_WE = 91.7;
+        temp->GLAC_KMIN = 0.01;
+        temp->GLAC_DK = 0.24;
+        temp->GLAC_A = 20.;
+        temp->GLAC_ALBEDO = 0.3;
+        temp->GLAC_ROUGH = 0.002;
+      
+        /* Only attempt to read the new glacier soil parameters if GLACIER_SOIL_FILE_FORMAT is TRUE
+         * (ie. not in legacy soil file format mode). If GLACIER_SOIL_FILE_FORMAT is FALSE then the
+         * soil file format is expected to be in the original format and reasonable default values will be
+         * assigned to the glacier parameters.  */
+
+        // Read NEW_SNOW_ALB.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for NEW_SNOW_ALB in soil file");
+        }
+        sscanf(token, "%lf", &temp->NEW_SNOW_ALB);
+
+        // Read SNOW_ALB_ACCUM_A.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for SNOW_ALB_ACCUM_A in soil file");
+        }
+        sscanf(token, "%lf", &temp->SNOW_ALB_ACCUM_A);
+
+        // Read SNOW_ALB_ACCUM_B.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for SNOW_ALB_ACCUM_B in soil file");
+        }
+        sscanf(token, "%lf", &temp->SNOW_ALB_ACCUM_B);
+
+        // Read SNOW_ALB_THAW_A.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for SNOW_ALB_THAW_A in soil file");
+        }
+        sscanf(token, "%lf", &temp->SNOW_ALB_THAW_A);
+
+        // Read SNOW_ALB_THAW_B.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for SNOW_ALB_THAW_B in soil file");
+        }
+        sscanf(token, "%lf", &temp->SNOW_ALB_THAW_B);
+
+        // Read MIN_RAIN_TEMP.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for MIN_RAIN_TEMP in soil file");
+        }
+        sscanf(token, "%lf", &temp->MIN_RAIN_TEMP);
+
+        // Read MAX_SNOW_TEMP.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for MAX_SNOW_TEMP in soil file");
+        }
+        sscanf(token, "%lf", &temp->MAX_SNOW_TEMP);
+
+        // Read PADJ_R.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for PADJ_R in soil file");
+        }
+        sscanf(token, "%lf", &temp->PADJ_R);
+
+        // Read PADJ_S.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for PADJ_S in soil file");
+        }
+        sscanf(token, "%lf", &temp->PADJ_S);
+
+        // Read T_LAPSE.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for T_LAPSE in soil file");
+        }
+        sscanf(token, "%lf", &temp->T_LAPSE);
+
+        // Read PGRAD.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for PGRAD in soil file");
+        }
+        sscanf(token, "%lf", &temp->PGRAD);
+
+        // Read GLAC_SURF_THICK.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for GLAC_SURF_THICK in soil file");
+        }
+        sscanf(token, "%lf", &temp->GLAC_SURF_THICK);
+
+        // Read GLAC_SURF_WE.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for GLAC_SURF_WE in soil file");
+        }
+        sscanf(token, "%lf", &temp->GLAC_SURF_WE);
+
+        // Read GLAC_KMIN.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for GLAC_KMIN in soil file");
+        }
+        sscanf(token, "%lf", &temp->GLAC_KMIN);
+
+        // Read GLAC_DK.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for GLAC_DK in soil file");
+        }
+        sscanf(token, "%lf", &temp->GLAC_DK);
+
+        if((temp->GLAC_DK + temp->GLAC_KMIN) > 1.0) {
+          log_err("GLAC_KMIN (%f) plus GLAC_DK (%f) must be less than 1,"
+            " else glacier outflow will exceed glacier water storage",
+                    temp->GLAC_KMIN, temp->GLAC_DK);
+        }
+
+        // Read GLAC_A.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for GLAC_A in soil file");
+        }
+        sscanf(token, "%lf", &temp->GLAC_A);
+
+        // Read GLAC_ALBEDO.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for GLAC_ALBEDO in soil file");
+        }
+        sscanf(token, "%lf", &temp->GLAC_ALBEDO);
+
+        // Read GLAC_ROUGH.
+        token = strtok (NULL, delimiters);
+        while (token != NULL && (length=strlen(token))==0) {
+            token = strtok (NULL, delimiters);
+        }
+        if( token == NULL ) {
+          log_err("Can't find values for GLAC_ROUGH in soil file");
+        }
+        sscanf(token, "%lf", &temp->GLAC_ROUGH);
 
         /*******************************************
            End of soil parameters for this grid cell
