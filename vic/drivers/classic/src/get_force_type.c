@@ -77,23 +77,31 @@ get_force_type(char *cmdstr,
     else if (strcasecmp("PREC", optstr) == 0) {
         type = PREC;
     }
-    /* type 10: air pressure [kPa] */
+    /* type 10: RAIN [mm] */
+    else if (strcasecmp("RAINF", optstr) == 0) {
+        type = RAINF;
+    }
+    /* type 11: SNOW [mm] */
+    else if (strcasecmp("SNOWF", optstr) == 0) {
+        type = SNOWF;
+    }
+    /* type 12: air pressure [kPa] */
     else if (strcasecmp("PRESSURE", optstr) == 0) {
         type = PRESSURE;
     }
-    /* type 11: vapor pressure [kPa] */
+    /* type 13: vapor pressure [kPa] */
     else if (strcasecmp("VP", optstr) == 0) {
         type = VP;
     }
-    /* type 12: incoming shortwave radiation [W/m2]  */
+    /* type 14: incoming shortwave radiation [W/m2]  */
     else if (strcasecmp("SWDOWN", optstr) == 0) {
         type = SWDOWN;
     }
-    /* type 13: wind speed [m/s] */
+    /* type 15: wind speed [m/s] */
     else if (strcasecmp("WIND", optstr) == 0) {
         type = WIND;
     }
-    /* type 14: unused (blank) data */
+    /* type 16: unused (blank) data */
     else if (strcasecmp("SKIP", optstr) == 0) {
         type = SKIP;
     }
