@@ -42,8 +42,8 @@ generate_default_state(all_vars_struct *all_vars,
     double                 **tmpZ;
     int                      ErrorFlag;
 
-    cell_data_struct       **cell;
-    energy_bal_struct      **energy;
+    cell_data_struct        *cell;
+    energy_bal_struct       *energy;
 
     cell = all_vars->cell;
     energy = all_vars->energy;
@@ -64,17 +64,16 @@ generate_default_state(all_vars_struct *all_vars,
     for (veg = 0; veg <= Nveg; veg++) {
         Cv = veg_con[veg].Cv;
         if (Cv > 0) {
-            for (band = 0; band < options.SNOW_BAND; band++) {
-                if (soil_con->AreaFract[band] > 0.) {
-                    /* Initialize soil moistures */
-                    for (lidx = 0; lidx < options.Nlayer; lidx++) {
-                        cell[veg][band].layer[lidx].moist =
+            band = veg_con[veg].BandIndex;
+            if (soil_con->AreaFract[band] > 0.) {
+                /* Initialize soil moistures */
+                for (lidx = 0; lidx < options.Nlayer; lidx++) {
+                    cell[veg].layer[lidx].moist =
                             soil_con->init_moist[lidx];
-                        if (cell[veg][band].layer[lidx].moist >
-                            soil_con->max_moist[lidx]) {
-                            cell[veg][band].layer[lidx].moist =
+                    if (cell[veg].layer[lidx].moist >
+                        soil_con->max_moist[lidx]) {
+                        cell[veg].layer[lidx].moist =
                                 soil_con->max_moist[lidx];
-                        }
                     }
                 }
             }
@@ -88,24 +87,23 @@ generate_default_state(all_vars_struct *all_vars,
     for (veg = 0; veg <= Nveg; veg++) {
         Cv = veg_con[veg].Cv;
         if (Cv > 0) {
-            for (band = 0; band < options.SNOW_BAND; band++) {
-                if (soil_con->AreaFract[band] > 0.) {
-                    /* Initialize soil node temperatures */
-                    for (k = 0; k < options.Nnode; k++) {
-                        if (options.FULL_ENERGY || options.FROZEN_SOIL) {
-                            energy[veg][band].T[k] = soil_con->avg_temp;
-                        }
-                        else {
-                            energy[veg][band].T[k] = 0;
-                        }
+            band = veg_con[veg].BandIndex;
+            if (soil_con->AreaFract[band] > 0.) {
+                /* Initialize soil node temperatures */
+                for (k = 0; k < options.Nnode; k++) {
+                    if (options.FULL_ENERGY || options.FROZEN_SOIL) {
+                        energy[veg].T[k] = soil_con->avg_temp;
                     }
-                    /* Initial estimate of LongUnderOut for use by snow_intercept() */
-                    tmp = energy[veg][band].T[0] + CONST_TKFRZ;
-                    energy[veg][band].LongUnderOut = calc_outgoing_longwave(tmp,
-                                                                            param.EMISS_SNOW);
-                    energy[veg][band].Tfoliage = energy[veg][band].T[0] +
-                                                 soil_con->Tfactor[band];
+                    else {
+                        energy[veg].T[k] = 0;
+                    }
                 }
+                /* Initial estimate of LongUnderOut for use by snow_intercept() */
+                tmp = energy[veg].T[0] + CONST_TKFRZ;
+                energy[veg].LongUnderOut = calc_outgoing_longwave(tmp,
+                                                                  param.EMISS_SNOW);
+                energy[veg].Tfoliage = energy[veg].T[0] +
+                                                 soil_con->Tfactor[band];
             }
         }
     }
@@ -143,40 +141,40 @@ generate_default_state(all_vars_struct *all_vars,
     for (veg = 0; veg <= Nveg; veg++) {
         Cv = veg_con[veg].Cv;
         if (Cv > 0) {
-            for (band = 0; band < options.SNOW_BAND; band++) {
-                if (soil_con->AreaFract[band] > 0.) {
-                    if (options.QUICK_FLUX) {
-                        // TBD: calculation of layer ice content for quick flux
-                        // depends on layer temperatures; so this initial
-                        // estimation here is not ideal, since the layer
-                        // temperature calculation is later in compute_derived_
-                        // state_vars.
-                        ErrorFlag =
-                            estimate_layer_ice_content_quick_flux(
-                                cell[veg][band].layer,
+            band = veg_con[veg].BandIndex;
+            if (soil_con->AreaFract[band] > 0.) {
+                if (options.QUICK_FLUX) {
+                    // TBD: calculation of layer ice content for quick flux
+                    // depends on layer temperatures; so this initial
+                    // estimation here is not ideal, since the layer
+                    // temperature calculation is later in compute_derived_
+                    // state_vars.
+                    ErrorFlag =
+                        estimate_layer_ice_content_quick_flux(
+                                cell[veg].layer,
                                 soil_con->depth,
                                 soil_con->max_moist,
                                 soil_con->expt, soil_con->bubble,
                                 soil_con->frost_fract, soil_con->frost_slope,
                                 soil_con->FS_ACTIVE);
-                        if (ErrorFlag == ERROR) {
-                            log_err("Error calculating layer temperature "
-                                    "using QUICK_FLUX option");
-                        }
+                    if (ErrorFlag == ERROR) {
+                        log_err("Error calculating layer temperature "
+                                "using QUICK_FLUX option");
                     }
-                    else {
-                        estimate_frost_temperature_and_depth(
+                }
+                else {
+                    estimate_frost_temperature_and_depth(
                             tmpT,
                             tmpZ,
                             soil_con->Zsum_node,
-                            energy[veg][band].T,
+                            energy[veg].T,
                             soil_con->depth,
                             soil_con->frost_fract,
                             soil_con->frost_slope,
                             options.Nnode,
                             options.Nlayer);
-                        ErrorFlag = estimate_layer_ice_content(
-                            cell[veg][band].layer,
+                    ErrorFlag = estimate_layer_ice_content(
+                            cell[veg].layer,
                             tmpT,
                             tmpZ,
                             soil_con->Zsum_node,
@@ -187,9 +185,8 @@ generate_default_state(all_vars_struct *all_vars,
                             options.Nnode,
                             options.Nlayer,
                             soil_con->FS_ACTIVE);
-                        if (ErrorFlag == ERROR) {
-                            log_err("Error calculating layer ice content");
-                        }
+                    if (ErrorFlag == ERROR) {
+                        log_err("Error calculating layer ice content");
                     }
                 }
             }
