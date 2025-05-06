@@ -83,16 +83,13 @@ air_density(double t,
  * @brief   return 1 if it will snow, otherwise return 0
  *****************************************************************************/
 char
-will_it_snow(double *t,
-             double  t_offset,
-             double  max_snow_temp,
-             double *prcp,
+will_it_snow(double *snowf,
              size_t  n)
 {
     size_t i;
 
     for (i = 0; i < n; i++) {
-        if ((t[i] + t_offset) < max_snow_temp && prcp[i] > 0.) {
+        if (snowf[i] > 0.) {
             return 1;
         }
     }
