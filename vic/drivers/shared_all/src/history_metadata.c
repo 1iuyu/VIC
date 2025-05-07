@@ -1235,6 +1235,104 @@ set_output_met_data_info()
     strcpy(out_metadata[OUT_CSLOW].units, "g m-2");
     strcpy(out_metadata[OUT_CSLOW].description, "slow pool carbon density");
 
+    /* glacier water storage [mm] */
+    strcpy(out_metadata[OUT_GLAC_WAT_STOR].varname, "OUT_GLAC_WAT_STOR");
+    strcpy(out_metadata[OUT_GLAC_WAT_STOR].long_name, "wat_stor");
+    strcpy(out_metadata[OUT_GLAC_WAT_STOR].standard_name, "glacier water storage");
+    strcpy(out_metadata[OUT_GLAC_WAT_STOR].units, "mm");
+    strcpy(out_metadata[OUT_GLAC_WAT_STOR].description, "glacier water storage");
+    /* glacier surface area fraction */
+    strcpy(out_metadata[OUT_GLAC_AREA].varname, "OUT_GLAC_AREA");
+    strcpy(out_metadata[OUT_GLAC_AREA].long_name, "glac_area");
+    strcpy(out_metadata[OUT_GLAC_AREA].standard_name, "glacier surface area fraction");
+    strcpy(out_metadata[OUT_GLAC_AREA].units, "1");
+    strcpy(out_metadata[OUT_GLAC_AREA].description, "glacier surface area fraction");
+
+    /* glacier mass balance [mm] */
+    strcpy(out_metadata[OUT_GLAC_MBAL].varname, "OUT_GLAC_MBAL");
+    strcpy(out_metadata[OUT_GLAC_MBAL].long_name, "glac_mbal");
+    strcpy(out_metadata[OUT_GLAC_MBAL].standard_name, "glacier mass balance");
+    strcpy(out_metadata[OUT_GLAC_MBAL].units, "mm");
+    strcpy(out_metadata[OUT_GLAC_MBAL].description, "glacier mass balance");
+    /* glacier ice mass balance [mm] */
+    strcpy(out_metadata[OUT_GLAC_IMBAL].varname, "OUT_GLAC_IMBAL");
+    strcpy(out_metadata[OUT_GLAC_IMBAL].long_name, "glac_imbal");
+    strcpy(out_metadata[OUT_GLAC_IMBAL].standard_name, "glacier ice mass balance");
+    strcpy(out_metadata[OUT_GLAC_IMBAL].units, "mm");
+    strcpy(out_metadata[OUT_GLAC_IMBAL].description, "glacier ice mass balance");
+    /* glacier ice accumulation from conversion of firn to ice [mm] */
+    strcpy(out_metadata[OUT_GLAC_ACCUM].varname, "OUT_GLAC_ACCUM");
+    strcpy(out_metadata[OUT_GLAC_ACCUM].long_name, "glac_accum");
+    strcpy(out_metadata[OUT_GLAC_ACCUM].standard_name, 
+           "glacier ice accumulation from conversion of firn to ice");
+    strcpy(out_metadata[OUT_GLAC_ACCUM].units, "mm");
+    strcpy(out_metadata[OUT_GLAC_ACCUM].description, 
+           "glacier ice accumulation from conversion of firn to ice");
+    /* glacier ice melt [mm] */
+    strcpy(out_metadata[OUT_GLAC_MELT].varname, "OUT_GLAC_MELT");
+    strcpy(out_metadata[OUT_GLAC_MELT].long_name, "glac_melt");
+    strcpy(out_metadata[OUT_GLAC_MELT].standard_name, "glacier ice melt");
+    strcpy(out_metadata[OUT_GLAC_MELT].units, "mm");
+    strcpy(out_metadata[OUT_GLAC_MELT].description, "glacier ice melt");
+    /* Net sublimation of glacier ice [mm] */
+    strcpy(out_metadata[OUT_GLAC_SUB].varname, "OUT_GLAC_SUB");
+    strcpy(out_metadata[OUT_GLAC_SUB].long_name, "glac_sub");
+    strcpy(out_metadata[OUT_GLAC_SUB].standard_name, "Net sublimation of glacier ice");
+    strcpy(out_metadata[OUT_GLAC_SUB].units, "mm");
+    strcpy(out_metadata[OUT_GLAC_SUB].description, "Net sublimation of glacier ice");
+    /* glacier water inflow from snow melt, ice melt and rainfall [mm] */
+    strcpy(out_metadata[OUT_GLAC_INFLOW].varname, "OUT_GLAC_INFLOW");
+    strcpy(out_metadata[OUT_GLAC_INFLOW].long_name, "glac_inflow");
+    strcpy(out_metadata[OUT_GLAC_INFLOW].standard_name, 
+           "glacier water inflow from snow melt, ice melt and rainfall");
+    strcpy(out_metadata[OUT_GLAC_INFLOW].units, "mm");
+    strcpy(out_metadata[OUT_GLAC_INFLOW].description, 
+           "glacier water inflow from snow melt, ice melt and rainfall");
+    /* glacier water outflow [mm] */
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW].varname, "OUT_GLAC_OUTFLOW");
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW].long_name, "glac_outflow");
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW].standard_name, "glacier water outflow");
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW].units, "mm");
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW].description, "glacier water outflow");
+    /* glacier surface temperature [C] */
+    strcpy(out_metadata[OUT_GLAC_SURF_TEMP].varname, "OUT_GLAC_SURF_TEMP");
+    strcpy(out_metadata[OUT_GLAC_SURF_TEMP].long_name, "glac_surf_temp");
+    strcpy(out_metadata[OUT_GLAC_SURF_TEMP].standard_name, "glacier surface temperature");
+    strcpy(out_metadata[OUT_GLAC_SURF_TEMP].units, "C");
+    strcpy(out_metadata[OUT_GLAC_SURF_TEMP].description, "glacier surface temperature");
+    /* glacier surface temperature flag */
+    strcpy(out_metadata[OUT_GLAC_TSURF_FBFLAG].varname, "OUT_GLAC_TSURF_FBFLAG");
+    strcpy(out_metadata[OUT_GLAC_TSURF_FBFLAG].long_name, "glac_tsurf_fbflag");
+    strcpy(out_metadata[OUT_GLAC_TSURF_FBFLAG].standard_name, "glacier surface temperature flag");
+    strcpy(out_metadata[OUT_GLAC_TSURF_FBFLAG].units, "1");
+    strcpy(out_metadata[OUT_GLAC_TSURF_FBFLAG].description, "glacier surface temperature flag");
+    /* rate of change of cold content in glacier surface layer [W/m2] */
+    strcpy(out_metadata[OUT_GLAC_DELTACC].varname, "OUT_GLAC_DELTACC");
+    strcpy(out_metadata[OUT_GLAC_DELTACC].long_name, "glac_deltacc");
+    strcpy(out_metadata[OUT_GLAC_DELTACC].standard_name, 
+           "rate of change of cold content in glacier surface layer");
+    strcpy(out_metadata[OUT_GLAC_DELTACC].units, "W/m2");
+    strcpy(out_metadata[OUT_GLAC_DELTACC].description, 
+           "rate of change of cold content in glacier surface layer");
+    /* energy flux through glacier surface layer [W/m2] */
+    strcpy(out_metadata[OUT_GLAC_FLUX].varname, "OUT_GLAC_FLUX");
+    strcpy(out_metadata[OUT_GLAC_FLUX].long_name, "glac_flux");
+    strcpy(out_metadata[OUT_GLAC_FLUX].standard_name, "energy flux through glacier surface layer");
+    strcpy(out_metadata[OUT_GLAC_FLUX].units, "W/m2");
+    strcpy(out_metadata[OUT_GLAC_FLUX].description, "energy flux through glacier surface layer");
+    /* energy used to thaw glacier ice [W/m2] */
+    strcpy(out_metadata[OUT_GLAC_MELT_ENERGY].varname, "OUT_GLAC_MELT_ENERGY");
+    strcpy(out_metadata[OUT_GLAC_MELT_ENERGY].long_name, "glac_energy");
+    strcpy(out_metadata[OUT_GLAC_MELT_ENERGY].standard_name, "energy used to thaw glacier ice");
+    strcpy(out_metadata[OUT_GLAC_MELT_ENERGY].units, "W/m2");
+    strcpy(out_metadata[OUT_GLAC_MELT_ENERGY].description, "energy used to thaw glacier ice");
+    /* glacier outflow coefficient [fraction] */
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW_COEF].varname, "OUT_GLAC_OUTFLOW_COEF");
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW_COEF].long_name, "glac_outflow_coef");
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW_COEF].standard_name, "glacier outflow coefficient");
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW_COEF].units, "1");
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW_COEF].description, "glacier outflow coefficient");
+
     // Band-specific quantities
     /* net sensible heat flux advected to snow pack [W m-2] */
     strcpy(out_metadata[OUT_ADV_SENS_BAND].varname, "OUT_ADV_SENS_BAND");
@@ -1448,6 +1546,97 @@ set_output_met_data_info()
     strcpy(out_metadata[OUT_SWE_BAND].units, out_metadata[OUT_SWE].units);
     strcpy(out_metadata[OUT_SWE_BAND].description,
            out_metadata[OUT_SWE].description);
+
+    /* rate of change of cold content in glacier surface layer [W/m2] */
+    strcpy(out_metadata[OUT_GLAC_DELTACC_BAND].varname, "OUT_GLAC_DELTACC_BAND");
+    strcpy(out_metadata[OUT_GLAC_DELTACC_BAND].long_name, "glac_deltacc_band");
+    strcpy(out_metadata[OUT_GLAC_DELTACC_BAND].standard_name,
+           out_metadata[OUT_GLAC_DELTACC].standard_name);
+    strcpy(out_metadata[OUT_GLAC_DELTACC_BAND].units, out_metadata[OUT_GLAC_DELTACC].units);
+    strcpy(out_metadata[OUT_GLAC_DELTACC_BAND].description,
+           out_metadata[OUT_GLAC_DELTACC].description);
+
+    /* energy flux through glacier surface layer [W/m2] */
+    strcpy(out_metadata[OUT_GLAC_FLUX_BAND].varname, "OUT_GLAC_FLUX_BAND");
+    strcpy(out_metadata[OUT_GLAC_FLUX_BAND].long_name, "glac_flux_band");
+    strcpy(out_metadata[OUT_GLAC_FLUX_BAND].standard_name,
+           out_metadata[OUT_GLAC_FLUX].standard_name);
+    strcpy(out_metadata[OUT_GLAC_FLUX_BAND].units, out_metadata[OUT_GLAC_FLUX].units);
+    strcpy(out_metadata[OUT_GLAC_FLUX_BAND].description,
+           out_metadata[OUT_GLAC_FLUX].description); 
+
+    /*  glacier water storage [mm] */
+    strcpy(out_metadata[OUT_GLAC_WAT_STOR_BAND].varname, "OUT_GLAC_WAT_STOR_BAND");
+    strcpy(out_metadata[OUT_GLAC_WAT_STOR_BAND].long_name, "glac_wat_str_band");
+    strcpy(out_metadata[OUT_GLAC_WAT_STOR_BAND].standard_name,
+           out_metadata[OUT_GLAC_WAT_STOR].standard_name);
+    strcpy(out_metadata[OUT_GLAC_WAT_STOR_BAND].units, out_metadata[OUT_GLAC_WAT_STOR].units);
+    strcpy(out_metadata[OUT_GLAC_WAT_STOR_BAND].description,
+           out_metadata[OUT_GLAC_WAT_STOR].description);  
+    /*  glacier surface area fraction */
+    strcpy(out_metadata[OUT_GLAC_AREA_BAND].varname, "OUT_GLAC_AREA_BAND");
+    strcpy(out_metadata[OUT_GLAC_AREA_BAND].long_name, "glac_area_band");
+    strcpy(out_metadata[OUT_GLAC_AREA_BAND].standard_name,
+           out_metadata[OUT_GLAC_AREA].standard_name);
+    strcpy(out_metadata[OUT_GLAC_AREA_BAND].units, out_metadata[OUT_GLAC_AREA].units);
+    strcpy(out_metadata[OUT_GLAC_AREA_BAND].description,
+           out_metadata[OUT_GLAC_AREA].description); 
+    /*  glacier mass balance [mm] */
+    strcpy(out_metadata[OUT_GLAC_MBAL_BAND].varname, "OUT_GLAC_MBAL_BAND");
+    strcpy(out_metadata[OUT_GLAC_MBAL_BAND].long_name, "glac_mbal_band");
+    strcpy(out_metadata[OUT_GLAC_MBAL_BAND].standard_name,
+           out_metadata[OUT_GLAC_MBAL].standard_name);
+    strcpy(out_metadata[OUT_GLAC_MBAL_BAND].units, out_metadata[OUT_GLAC_MBAL].units);
+    strcpy(out_metadata[OUT_GLAC_MBAL_BAND].description,
+           out_metadata[OUT_GLAC_MBAL].description); 
+    /*  glacier ice mass balance [mm] */
+    strcpy(out_metadata[OUT_GLAC_IMBAL_BAND].varname, "OUT_GLAC_IMBAL_BAND");
+    strcpy(out_metadata[OUT_GLAC_IMBAL_BAND].long_name, "glac_imbal_band");
+    strcpy(out_metadata[OUT_GLAC_IMBAL_BAND].standard_name,
+           out_metadata[OUT_GLAC_IMBAL].standard_name);
+    strcpy(out_metadata[OUT_GLAC_IMBAL_BAND].units, out_metadata[OUT_GLAC_IMBAL].units);
+    strcpy(out_metadata[OUT_GLAC_IMBAL_BAND].description,
+           out_metadata[OUT_GLAC_IMBAL].description);
+    /*  glacier ice accumulation from conversion of firn to ice [mm] */
+    strcpy(out_metadata[OUT_GLAC_ACCUM_BAND].varname, "OUT_GLAC_ACCUM_BAND");
+    strcpy(out_metadata[OUT_GLAC_ACCUM_BAND].long_name, "glac_accum_band");
+    strcpy(out_metadata[OUT_GLAC_ACCUM_BAND].standard_name,
+           out_metadata[OUT_GLAC_ACCUM].standard_name);
+    strcpy(out_metadata[OUT_GLAC_ACCUM_BAND].units, out_metadata[OUT_GLAC_ACCUM].units);
+    strcpy(out_metadata[OUT_GLAC_ACCUM_BAND].description,
+           out_metadata[OUT_GLAC_ACCUM].description); 
+    /*  glacier ice melt [mm] */
+    strcpy(out_metadata[OUT_GLAC_MELT_BAND].varname, "OUT_GLAC_MELT_BAND");
+    strcpy(out_metadata[OUT_GLAC_MELT_BAND].long_name, "glac_accum_band");
+    strcpy(out_metadata[OUT_GLAC_MELT_BAND].standard_name,
+           out_metadata[OUT_GLAC_MELT].standard_name);
+    strcpy(out_metadata[OUT_GLAC_MELT_BAND].units, out_metadata[OUT_GLAC_MELT].units);
+    strcpy(out_metadata[OUT_GLAC_MELT_BAND].description,
+           out_metadata[OUT_GLAC_MELT].description);  
+    /*  Net sublimation of glacier ice [mm] */
+    strcpy(out_metadata[OUT_GLAC_SUB_BAND].varname, "OUT_GLAC_SUB_BAND");
+    strcpy(out_metadata[OUT_GLAC_SUB_BAND].long_name, "glac_accum_band");
+    strcpy(out_metadata[OUT_GLAC_SUB_BAND].standard_name,
+           out_metadata[OUT_GLAC_SUB].standard_name);
+    strcpy(out_metadata[OUT_GLAC_SUB_BAND].units, out_metadata[OUT_GLAC_SUB].units);
+    strcpy(out_metadata[OUT_GLAC_SUB_BAND].description,
+           out_metadata[OUT_GLAC_SUB].description); 
+    /*  glacier water inflow from snow melt, ice melt and rainfall [mm] */
+    strcpy(out_metadata[OUT_GLAC_INFLOW_BAND].varname, "OUT_GLAC_INFLOW_BAND");
+    strcpy(out_metadata[OUT_GLAC_INFLOW_BAND].long_name, "glac_inflow_band");
+    strcpy(out_metadata[OUT_GLAC_INFLOW_BAND].standard_name,
+           out_metadata[OUT_GLAC_INFLOW].standard_name);
+    strcpy(out_metadata[OUT_GLAC_INFLOW_BAND].units, out_metadata[OUT_GLAC_INFLOW].units);
+    strcpy(out_metadata[OUT_GLAC_INFLOW_BAND].description,
+           out_metadata[OUT_GLAC_INFLOW].description); 
+    /*  glacier water outflow [mm] */
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW_BAND].varname, "OUT_GLAC_OUTFLOW_BAND");
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW_BAND].long_name, "glac_outflow_band");
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW_BAND].standard_name,
+           out_metadata[OUT_GLAC_OUTFLOW].standard_name);
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW_BAND].units, out_metadata[OUT_GLAC_OUTFLOW].units);
+    strcpy(out_metadata[OUT_GLAC_OUTFLOW_BAND].description,
+           out_metadata[OUT_GLAC_OUTFLOW].description);                                                                                                            
 
     /* Wall time spent inside vic_run [seconds] */
     strcpy(out_metadata[OUT_TIME_VICRUN_WALL].varname, "OUT_TIME_VICRUN_WALL");
