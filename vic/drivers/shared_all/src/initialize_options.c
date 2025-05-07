@@ -49,6 +49,7 @@ initialize_options()
     options.SPATIAL_FROST = false;
     options.SPATIAL_SNOW = false;
     options.TFALLBACK = true;
+    options.GLACIER_DYNAMICS = true;
     // Model dimensions
     options.Ncanopy = 3;
     options.Nfrost = 1;
@@ -80,4 +81,5 @@ initialize_options()
     options.SAVE_STATE = false;
     // output options
     options.Noutstreams = 2;
+    options.PRT_HEADER = false;
 }
