@@ -156,6 +156,29 @@ set_output_defaults(stream_struct **streams,
     set_output_var(&((*streams)[streamnum]), "OUT_WIND", varnum++, "%.4f",
                    OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
 
+    if (options.GLACIER_DYNAMICS) {
+        set_output_var(&((*streams)[streamnum]), "OUT_GLAC_MBAL", varnum++, "%.4f",
+                       OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
+        set_output_var(&((*streams)[streamnum]), "OUT_GLAC_IMBAL", varnum++, "%.4f",
+                       OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
+        set_output_var(&((*streams)[streamnum]), "OUT_GLAC_ACCUM", varnum++,
+                       "%.4f", OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
+        set_output_var(&((*streams)[streamnum]), "OUT_GLAC_MELT", varnum++,
+                       "%.4f", OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
+        set_output_var(&((*streams)[streamnum]), "OUT_GLAC_SUB", varnum++, "%.4f",
+                       OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
+        set_output_var(&((*streams)[streamnum]), "OUT_GLAC_INFLOW", varnum++, "%.4f",
+                       OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
+        set_output_var(&((*streams)[streamnum]), "OUT_GLAC_OUTFLOW", varnum++, "%.4f",
+                       OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
+        set_output_var(&((*streams)[streamnum]), "OUT_GLAC_DELTACC", varnum++, "%.4f",
+                       OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
+        set_output_var(&((*streams)[streamnum]), "OUT_GLAC_FLUX", varnum++, "%.4f",
+                       OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
+        set_output_var(&((*streams)[streamnum]), "OUT_GLAC_MELT_ENERGY", varnum++, "%.4f",
+                       OUT_TYPE_FLOAT, 1, AGG_TYPE_DEFAULT);
+    }
+
     // Variables in second file
     streamnum++;
     varnum = 0;
@@ -234,6 +257,29 @@ set_output_defaults(stream_struct **streams,
                            varnum++, "%.4f", OUT_TYPE_FLOAT, 1,
                            AGG_TYPE_DEFAULT);
             set_output_var(&((*streams)[streamnum]), "OUT_RFRZ_ENERGY_BAND",
+                           varnum++, "%.4f", OUT_TYPE_FLOAT, 1,
+                           AGG_TYPE_DEFAULT);
+        }
+        if (options.GLACIER_DYNAMICS) {
+            set_output_var(&((*streams)[streamnum]), "OUT_GLAC_MBAL_BAND",
+                           varnum++, "%.4f", OUT_TYPE_FLOAT, 1,
+                           AGG_TYPE_DEFAULT);
+            set_output_var(&((*streams)[streamnum]), "OUT_GLAC_IMBAL_BAND",
+                           varnum++, "%.4f", OUT_TYPE_FLOAT, 1,
+                           AGG_TYPE_DEFAULT);
+            set_output_var(&((*streams)[streamnum]), "OUT_GLAC_ACCUM_BAND",
+                           varnum++, "%.4f", OUT_TYPE_FLOAT, 1,
+                           AGG_TYPE_DEFAULT);
+            set_output_var(&((*streams)[streamnum]), "OUT_GLAC_MELT_BAND",
+                           varnum++, "%.4f", OUT_TYPE_FLOAT, 1,
+                           AGG_TYPE_DEFAULT);
+            set_output_var(&((*streams)[streamnum]), "OUT_GLAC_SUB_BAND",
+                           varnum++, "%.4f", OUT_TYPE_FLOAT, 1,
+                           AGG_TYPE_DEFAULT);
+            set_output_var(&((*streams)[streamnum]), "OUT_GLAC_INFLOW_BAND",
+                           varnum++, "%.4f", OUT_TYPE_FLOAT, 1,
+                           AGG_TYPE_DEFAULT);
+            set_output_var(&((*streams)[streamnum]), "OUT_GLAC_OUTFLOW_BAND",
                            varnum++, "%.4f", OUT_TYPE_FLOAT, 1,
                            AGG_TYPE_DEFAULT);
         }
