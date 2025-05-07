@@ -77,6 +77,8 @@ enum
     LWDOWN,      /**< incoming longwave radiation [W/m2] */
     PAR,         /**< incoming photosynthetically active radiation [W/m2] */
     PREC,        /**< total precipitation (rain and snow) [mm] */
+    RAINF,       /**< rain [mm] */
+    SNOWF,       /**< snow [mm] */
     PRESSURE,    /**< atmospheric pressure [kPa] */
     VP,          /**< vapor pressure [kPa] */
     SWDOWN,      /**< incoming shortwave [W/m2] */
@@ -266,6 +268,30 @@ enum
     // Timing and Profiling Terms
     OUT_TIME_VICRUN_WALL, /**< Wall time spent inside vic_run [seconds] */
     OUT_TIME_VICRUN_CPU,  /**< Wall time spent inside vic_run [seconds] */
+    //Glacier Water Balance Terms - state variables
+    OUT_GLAC_WAT_STOR,    /* glacier water storage [mm] */
+    OUT_GLAC_AREA,        /* glacier surface area fraction */
+
+    //Glacier Water Balance Terms - fluxes
+    OUT_GLAC_MBAL,        /* glacier mass balance [mm] */
+    OUT_GLAC_IMBAL,       /* glacier ice mass balance [mm] */
+    OUT_GLAC_ACCUM,       /* glacier ice accumulation from conversion of firn to ice [mm] */
+    OUT_GLAC_MELT,        /* glacier ice melt [mm] */
+    OUT_GLAC_SUB,         /* Net sublimation of glacier ice [mm] */
+    OUT_GLAC_INFLOW,      /* glacier water inflow from snow melt, ice melt and rainfall [mm] */
+    OUT_GLAC_OUTFLOW,     /* glacier water outflow [mm] */
+
+    //Glacier Energy Balance Terms - state variables
+    OUT_GLAC_SURF_TEMP,    /* glacier surface temperature [C] */
+    OUT_GLAC_TSURF_FBFLAG, /* glacier surface temperature flag */
+
+    //Glacier Energy Balance Terms - fluxes
+    OUT_GLAC_DELTACC,      /* rate of change of cold content in glacier surface layer [W/m2] */
+    OUT_GLAC_FLUX,         /* energy flux through glacier surface layer [W/m2] */
+    OUT_GLAC_MELT_ENERGY,  /* energy used to thaw glacier ice [W/m2] */
+
+    //Glacier Miscellaneous types
+    OUT_GLAC_OUTFLOW_COEF,  /* glacier outflow coefficient [fraction] */
     // Last value of enum - DO NOT ADD ANYTHING BELOW THIS LINE!!
     // used as a loop counter and must be >= the largest value in this enum
     N_OUTVAR_TYPES        /**< used as a loop counter*/
@@ -571,17 +597,17 @@ double all_leap_from_dmy(dmy_struct *dmy);
 void alloc_aggdata(stream_struct *stream);
 void alloc_out_data(size_t ngridcells, double ***out_data);
 double average(double *ar, size_t n);
-double calc_energy_balance_error(double, double, double, double, double);
+double calc_energy_balance_error(double, double, double, double, double, double);
 void calc_root_fractions(veg_con_struct *veg_con, soil_con_struct *soil_con);
-double calc_water_balance_error(double, double, double, double);
+double calc_water_balance_error(double, double, double, double, double);
 bool cell_method_from_agg_type(unsigned short int aggtype, char cell_method[]);
 bool check_write_flag(int rec);
-void collect_eb_terms(energy_bal_struct, snow_data_struct, cell_data_struct,
-                      double, double, double, bool, bool, double, bool, int,
-                      double *, double, double **);
-void collect_wb_terms(cell_data_struct, veg_var_struct, snow_data_struct,
-                      double, double, double, bool, double, bool, double *,
-                      double **);
+void collect_eb_terms(energy_bal_struct, snow_data_struct, glac_data_struct, 
+                      cell_data_struct, double, double, double, bool, bool, 
+                      bool, double, bool, int, double *, double, double **);
+void collect_wb_terms(cell_data_struct, veg_var_struct, glac_data_struct,
+                      snow_data_struct, double, double, double, bool, bool, 
+                      double, bool, double *, double **);
 void compute_derived_state_vars(all_vars_struct *, soil_con_struct *,
                                 veg_con_struct *);
 void compute_lake_params(lake_con_struct *, soil_con_struct);
@@ -620,7 +646,7 @@ void get_default_nstreams_nvars(size_t *nstreams, size_t nvars[]);
 void get_parameters(FILE *paramfile);
 void init_output_list(double **out_data, int write, char *format, int type,
                       double mult);
-void initialize_energy(energy_bal_struct **energy, size_t nveg);
+void initialize_energy(energy_bal_struct *energy, size_t nveg);
 void initialize_global(void);
 void initialize_options(void);
 void initialize_parameters(void);
@@ -629,20 +655,22 @@ void initialize_save_data(all_vars_struct *all_vars, force_data_struct *force,
                           veg_lib_struct *veg_lib, lake_con_struct *lake_con,
                           double **out_data, save_data_struct *save_data,
                           timer_struct *timer);
-void initialize_snow(snow_data_struct **snow, size_t veg_num);
-void initialize_soil(cell_data_struct **cell, size_t veg_num);
+void initialize_snow(snow_data_struct *snow, size_t veg_num);
+void initialize_glac(glac_data_struct *glacier, size_t veg_num);
+void initialize_soil(cell_data_struct *cell, size_t veg_num);
 void initialize_time(void);
-void initialize_veg(veg_var_struct **veg_var, size_t nveg);
+void initialize_veg(veg_var_struct *veg_var, size_t nveg);
 double julian_day_from_dmy(dmy_struct *dmy, unsigned short int calendar);
 bool leap_year(unsigned short int year, unsigned short int calendar);
 all_vars_struct make_all_vars(size_t nveg);
-cell_data_struct **make_cell_data(size_t veg_type_num);
+cell_data_struct *make_cell_data(size_t veg_type_num);
 dmy_struct *make_dmy(global_param_struct *global);
-energy_bal_struct **make_energy_bal(size_t nveg);
+energy_bal_struct *make_energy_bal(size_t nveg);
+glac_data_struct *make_glac_data(size_t nveg);
 void make_lastday(unsigned short int calendar, unsigned short int year,
                   unsigned short int lastday[]);
-snow_data_struct **make_snow_data(size_t nveg);
-veg_var_struct **make_veg_var(size_t veg_type_num);
+snow_data_struct *make_snow_data(size_t nveg);
+veg_var_struct *make_veg_var(size_t veg_type_num);
 double no_leap_day_from_dmy(dmy_struct *dmy);
 void num2date(double origin, double time_value, double tzoffset,
               unsigned short int calendar, unsigned short int time_units,
@@ -719,8 +747,7 @@ int update_step_vars(all_vars_struct *, veg_con_struct *, veg_hist_struct *);
 int invalid_date(unsigned short int calendar, dmy_struct *dmy);
 void validate_parameters(void);
 void validate_streams(stream_struct **stream);
-char will_it_snow(double *t, double t_offset, double max_snow_temp,
-                  double *prcp, size_t n);
+char will_it_snow(double *snow, size_t n);
 void zero_output_list(double **);
 
 #endif
