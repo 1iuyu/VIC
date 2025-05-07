@@ -384,32 +384,11 @@ get_parameters(FILE *paramfile)
             else if (strcasecmp("SNOW_L2", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.SNOW_L2);
             }
-            else if (strcasecmp("SNOW_NEW_SNOW_ALB", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_NEW_SNOW_ALB);
-            }
-            else if (strcasecmp("SNOW_ALB_ACCUM_A", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_ALB_ACCUM_A);
-            }
-            else if (strcasecmp("SNOW_ALB_ACCUM_B", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_ALB_ACCUM_B);
-            }
-            else if (strcasecmp("SNOW_ALB_THAW_A", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_ALB_THAW_A);
-            }
-            else if (strcasecmp("SNOW_ALB_THAW_B", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_ALB_THAW_B);
-            }
             else if (strcasecmp("SNOW_TRACESNOW", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.SNOW_TRACESNOW);
             }
             else if (strcasecmp("SNOW_CONDUCT", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.SNOW_CONDUCT);
-            }
-            else if (strcasecmp("SNOW_MAX_SNOW_TEMP", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_MAX_SNOW_TEMP);
-            }
-            else if (strcasecmp("SNOW_MIN_RAIN_TEMP", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_MIN_RAIN_TEMP);
             }
             // Blowing Snow Parameters
             else if (strcasecmp("BLOWING_KA", optstr) == 0) {
@@ -782,37 +761,11 @@ validate_parameters()
     if (!(param.SNOW_L2 >= 0.)) {
         log_err("SNOW_L2 must be defined on the interval [0, inf) (1/m)");
     }
-    if (!(param.SNOW_NEW_SNOW_ALB >= 0 && param.SNOW_NEW_SNOW_ALB <= 1)) {
-        log_err("SNOW_NEW_SNOW_ALB must be defined on the interval [0,1] (-)");
-    }
-    if (!(param.SNOW_ALB_ACCUM_A >= 0.)) {
-        log_err("SNOW_ALB_ACCUM_A must be defined on the interval [0, inf) (-)");
-    }
-    if (!(param.SNOW_ALB_ACCUM_B >= 0.)) {
-        log_err("SNOW_ALB_ACCUM_B must be defined on the interval [0, inf) (-)");
-    }
-    if (!(param.SNOW_ALB_THAW_A >= 0.)) {
-        log_err("SNOW_ALB_THAW_A must be defined on the interval [0, inf) (-)");
-    }
-    if (!(param.SNOW_ALB_THAW_B >= 0.)) {
-        log_err("SNOW_ALB_THAW_B must be defined on the interval [0, inf) (-)");
-    }
     if (!(param.SNOW_TRACESNOW >= 0.)) {
         log_err("SNOW_TRACESNOW must be defined on the interval [0, inf) (mm)");
     }
     if (!(param.SNOW_CONDUCT >= 0.)) {
         log_err("SNOW_CONDUCT must be defined on the interval [0, inf) (W/mK)");
-    }
-    if (!(param.SNOW_MAX_SNOW_TEMP >= -10 && param.SNOW_MAX_SNOW_TEMP <= 10)) {
-        log_err(
-            "SNOW_MAX_SNOW_TEMP must be defined on the interval [-10,10] (C)");
-    }
-    if (!(param.SNOW_MIN_RAIN_TEMP >= -10 && param.SNOW_MIN_RAIN_TEMP <= 10)) {
-        log_err(
-            "SNOW_MIN_RAIN_TEMP must be defined on the interval [-10,10] (C)");
-    }
-    if (!(param.SNOW_MIN_RAIN_TEMP < param.SNOW_MAX_SNOW_TEMP)) {
-        log_err("SNOW_MIN_RAIN_TEMP > SNOW_MAX_SNOW_TEMP.");
     }
     // Blowing Snow Parameters
     if (!(param.BLOWING_KA >= 0.)) {
