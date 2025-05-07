@@ -760,17 +760,10 @@ print_parameters(parameters_struct *param)
     fprintf(LOG_DEST, "\tSNOW_A2: %.4f\n", param->SNOW_A2);
     fprintf(LOG_DEST, "\tSNOW_L1: %.4f\n", param->SNOW_L1);
     fprintf(LOG_DEST, "\tSNOW_L2: %.4f\n", param->SNOW_L2);
-    fprintf(LOG_DEST, "\tSNOW_NEW_SNOW_ALB: %.4f\n", param->SNOW_NEW_SNOW_ALB);
-    fprintf(LOG_DEST, "\tSNOW_ALB_ACCUM_A: %.4f\n", param->SNOW_ALB_ACCUM_A);
-    fprintf(LOG_DEST, "\tSNOW_ALB_ACCUM_B: %.4f\n", param->SNOW_ALB_ACCUM_B);
-    fprintf(LOG_DEST, "\tSNOW_ALB_THAW_A: %.4f\n", param->SNOW_ALB_THAW_A);
-    fprintf(LOG_DEST, "\tSNOW_ALB_THAW_B: %.4f\n", param->SNOW_ALB_THAW_B);
+
     fprintf(LOG_DEST, "\tSNOW_TRACESNOW: %.4f\n", param->SNOW_TRACESNOW);
     fprintf(LOG_DEST, "\tSNOW_CONDUCT: %.4f\n", param->SNOW_CONDUCT);
-    fprintf(LOG_DEST, "\tSNOW_MAX_SNOW_TEMP: %.4f\n",
-            param->SNOW_MAX_SNOW_TEMP);
-    fprintf(LOG_DEST, "\tSNOW_MIN_RAIN_TEMP: %.4f\n",
-            param->SNOW_MIN_RAIN_TEMP);
+
     fprintf(LOG_DEST, "\tBLOWING_KA: %.4f\n", param->BLOWING_KA);
     fprintf(LOG_DEST, "\tBLOWING_CSALT: %.4f\n", param->BLOWING_CSALT);
     fprintf(LOG_DEST, "\tBLOWING_UTHRESH: %.4f\n", param->BLOWING_UTHRESH);
@@ -1097,6 +1090,15 @@ print_soil_con(soil_con_struct *scon,
     fprintf(LOG_DEST, "\taspect                : %f\n", scon->aspect);
     fprintf(LOG_DEST, "\tehoriz                : %f\n", scon->ehoriz);
     fprintf(LOG_DEST, "\twhoriz                : %f\n", scon->whoriz);
+    fprintf(LOG_DEST, "\tSNOW_NEW_SNOW_ALB: %.4f\n", scon->NEW_SNOW_ALB);
+    fprintf(LOG_DEST, "\tSNOW_ALB_ACCUM_A: %.4f\n", scon->SNOW_ALB_ACCUM_A);
+    fprintf(LOG_DEST, "\tSNOW_ALB_ACCUM_B: %.4f\n", scon->SNOW_ALB_ACCUM_B);
+    fprintf(LOG_DEST, "\tSNOW_ALB_THAW_A: %.4f\n", scon->SNOW_ALB_THAW_A);
+    fprintf(LOG_DEST, "\tSNOW_ALB_THAW_B: %.4f\n", scon->SNOW_ALB_THAW_B);
+    fprintf(LOG_DEST, "\tSNOW_MAX_SNOW_TEMP: %.4f\n",
+            scon->MAX_SNOW_TEMP);
+    fprintf(LOG_DEST, "\tSNOW_MIN_RAIN_TEMP: %.4f\n",
+            scon->MIN_RAIN_TEMP);
 }
 
 /******************************************************************************
