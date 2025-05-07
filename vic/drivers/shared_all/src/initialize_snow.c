@@ -10,47 +10,44 @@
  * @brief    Initialize the snow variable arrays for each new grid cell.
  *****************************************************************************/
 void
-initialize_snow(snow_data_struct **snow,
-                size_t             veg_num)
+initialize_snow(snow_data_struct *snow,
+                size_t            veg_num)
 {
-    extern option_struct options;
-    size_t               i, j;
+    size_t               i;
 
     for (i = 0; i <= veg_num; i++) {
-        for (j = 0; j < options.SNOW_BAND; j++) {
             // Prognostic states
-            snow[i][j].albedo = 0.0;
-            snow[i][j].canopy_albedo = 0.0;
-            snow[i][j].coldcontent = 0.0;
-            snow[i][j].coverage = 0.0;
-            snow[i][j].density = 0.0;
-            snow[i][j].depth = 0.0;
-            snow[i][j].last_snow = 0;
-            snow[i][j].max_snow_depth = 0.0;
-            snow[i][j].MELTING = false;
-            snow[i][j].pack_temp = 0.0;
-            snow[i][j].pack_water = 0.0;
-            snow[i][j].snow = false;
-            snow[i][j].snow_canopy = 0.0;
-            snow[i][j].store_coverage = 0.0;
-            snow[i][j].store_snow = false;
-            snow[i][j].store_swq = 0.0;
-            snow[i][j].surf_temp = 0.0;
-            snow[i][j].surf_temp_fbcount = 0;
-            snow[i][j].surf_temp_fbflag = false;
-            snow[i][j].surf_water = 0.0;
-            snow[i][j].swq = 0.0;
-            snow[i][j].snow_distrib_slope = 0.0;
-            snow[i][j].tmp_int_storage = 0.0;
+            snow[i].albedo = 0.0;
+            snow[i].canopy_albedo = 0.0;
+            snow[i].coldcontent = 0.0;
+            snow[i].coverage = 0.0;
+            snow[i].density = 0.0;
+            snow[i].depth = 0.0;
+            snow[i].last_snow = 0;
+            snow[i].max_snow_depth = 0.0;
+            snow[i].MELTING = false;
+            snow[i].pack_temp = 0.0;
+            snow[i].pack_water = 0.0;
+            snow[i].snow = false;
+            snow[i].snow_canopy = 0.0;
+            snow[i].store_coverage = 0.0;
+            snow[i].store_snow = false;
+            snow[i].store_swq = 0.0;
+            snow[i].surf_temp = 0.0;
+            snow[i].surf_temp_fbcount = 0;
+            snow[i].surf_temp_fbflag = false;
+            snow[i].surf_water = 0.0;
+            snow[i].swq = 0.0;
+            snow[i].snow_distrib_slope = 0.0;
+            snow[i].tmp_int_storage = 0.0;
             // Fluxes
-            snow[i][j].blowing_flux = 0.0;
-            snow[i][j].canopy_vapor_flux = 0.0;
-            snow[i][j].mass_error = 0.0;
-            snow[i][j].melt = 0.0;
-            snow[i][j].Qnet = 0.0;
-            snow[i][j].surface_flux = 0.0;
-            snow[i][j].transport = 0.0;
-            snow[i][j].vapor_flux = 0.0;
-        }
+            snow[i].blowing_flux = 0.0;
+            snow[i].canopy_vapor_flux = 0.0;
+            snow[i].mass_error = 0.0;
+            snow[i].melt = 0.0;
+            snow[i].Qnet = 0.0;
+            snow[i].surface_flux = 0.0;
+            snow[i].transport = 0.0;
+            snow[i].vapor_flux = 0.0;
     }
 }
