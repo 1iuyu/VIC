@@ -18,12 +18,15 @@
    下面的字段需要在全局文件中指定：TEMP_TH_TYPE
    
    1. 原版基于温度阈值的VIC需要MAX_SNOW_TEMP和MIN_RAIN_TEMP两个参数（默认分别为0.5和-0.5），这两个参数目前已经修改为在土壤文件中。<br>
+   
    ```
-   'TEMP_TH_TYPE VIC_CLASSIC'
+   TEMP_TH_TYPE VIC_CLASSIC
    ```
+   
    2. 基于Ding et al. (2014)的参数化方案（推荐，默认设置）<br>
    
-   'TEMP_TH_TYPE VIC_DING'
-   
+   ```
+   TEMP_TH_TYPE VIC_DING
+   、、、
 
 
