@@ -27,7 +27,7 @@
    ```
    TEMP_TH_TYPE VIC_DING
    ```
-   3. 水文响应单元<br>
+3. 水文响应单元<br>
 
 参考了VIC-GL模型中的相关概念，但对energy_bal_struct，snow_data_struct等数组的结构进行了修改。
 
