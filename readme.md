@@ -12,5 +12,6 @@
 
 2. 新的雨雪划分参数化方案<br>
 
+基于Ding et al. (2014)的参数化方案，根据每个单元的相对湿度、海拔和湿球温度等地理和气象信息在每个时间步长中进行雨雪划分![image](https://github.com/user-attachments/assets/fc4e91d2-bedf-49e8-8ed0-47eb4bccb52f)
 
 
