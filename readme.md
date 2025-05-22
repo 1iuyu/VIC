@@ -19,7 +19,7 @@
    
    下面的字段需要在全局文件中指定：TEMP_TH_TYPE
    
-   1. 原版基于温度阈值的VIC需要MAX_SNOW_TEMP和MIN_RAIN_TEMP两个参数（默认分别为0.5和-0.5），这两个参数目前已经修改为在土壤文件中。<br>
+   1. 原版基于温度阈值的VIC需要MAX_SNOW_TEMP和MIN_RAIN_TEMP两个参数（默认分别为0.5和-0.5），这两个参数目前已经修改为在土壤文件中（具体修改见read_soilparam.c）。<br>
    ```
    TEMP_TH_TYPE VIC_CLASSIC
    ```
@@ -29,7 +29,7 @@
    ```
 3. 水文响应单元<br>
 
-参考了VIC-GL模型中的相关概念，但对energy_bal_struct，snow_data_struct等数组的结构进行了修改。
+   参考了VIC-GL模型中的相关概念，但对energy_bal_struct，snow_data_struct等数组的结构进行了修改。
 
 
    
