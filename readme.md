@@ -16,11 +16,12 @@
    目前修改后的模型保留了原版基于温度阈值的雨雪划分方案以及基于Ding et al. (2014)的参数化方案，运行模型前需要在全局文件中选择相应的参数化方案。<br>
    （注：目前修改后的模型）
    下面的字段需要在全局文件中指定：TEMP_TH_TYPE
-   1. 原版基于温度阈值的VIC需要MAX_SNOW_TEMP和MIN_RAIN_TEMP两个参数（默认分别为0.5和-0.5），这两个参数目前已经修改为在土壤文件中。<br>
+   
+1. 原版基于温度阈值的VIC需要MAX_SNOW_TEMP和MIN_RAIN_TEMP两个参数（默认分别为0.5和-0.5），这两个参数目前已经修改为在土壤文件中。<br>
    
    TEMP_TH_TYPE VIC_CLASSIC
    
-   2. 基于Ding et al. (2014)的参数化方案（推荐，默认设置）<br>
+2. 基于Ding et al. (2014)的参数化方案（推荐，默认设置）<br>
    
    TEMP_TH_TYPE VIC_DING
    
