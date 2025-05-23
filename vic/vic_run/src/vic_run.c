@@ -52,7 +52,6 @@ vic_run(force_data_struct   *force,
     double                  *Melt;
     double                   bare_albedo;
     double                  *snow_inflow;
-    double                   rainonly;
     double                   sum_runoff;
     double                   sum_baseflow;
     double                   tmp_wind[3];
@@ -72,16 +71,17 @@ vic_run(force_data_struct   *force,
     veg_var_struct          *veg_var;
     energy_bal_struct       *energy;
     snow_data_struct        *snow;
+    glac_data_struct        *glacier;
 
-    out_prec = calloc(options.SNOW_BAND, sizeof(*out_prec));
+    out_prec = calloc(1, sizeof(*out_prec));
     check_alloc_status(out_prec, "Memory allocation error.");
-    out_rain = calloc(options.SNOW_BAND, sizeof(*out_rain));
+    out_rain = calloc(1, sizeof(*out_rain));
     check_alloc_status(out_rain, "Memory allocation error.");
-    out_snow = calloc(options.SNOW_BAND, sizeof(*out_snow));
+    out_snow = calloc(1, sizeof(*out_snow));
     check_alloc_status(out_snow, "Memory allocation error.");
-    Melt = calloc(options.SNOW_BAND, sizeof(*Melt));
+    Melt = calloc(1, sizeof(*Melt));
     check_alloc_status(Melt, "Memory allocation error.");
-    snow_inflow = calloc(options.SNOW_BAND, sizeof(*snow_inflow));
+    snow_inflow = calloc(1, sizeof(*snow_inflow));
     check_alloc_status(snow_inflow, "Memory allocation error.");
 
     // assign vic_run_veg_lib to veg_lib, so that the veg_lib for the correct
@@ -121,9 +121,10 @@ vic_run(force_data_struct   *force,
     **************************************************/
     for (iveg = 0; iveg <= Nveg; iveg++) {
         /** Solve Veg Tile only if Coverage Greater than 0% **/
-        if (veg_con[iveg].Cv > 0.0) {
+        if (veg_con[iveg].Cv > 0.0 || (veg_con[iveg].isGlacier && 
+            options.GLACIER_DYNAMICS && veg_con[iveg].Cv >= 0.0)) {
+
             Cv = veg_con[iveg].Cv;
-            Nbands = options.SNOW_BAND;
 
             /** Define vegetation class number **/
             veg_class = veg_con[iveg].veg_class;
@@ -161,7 +162,7 @@ vic_run(force_data_struct   *force,
             }
 
             /* local pointer to veg_var */
-            veg_var = &(all_vars->veg_var[iveg][0]);
+            veg_var = &(all_vars->veg_var[iveg]);
 
             /** Assign wind_h **/
             /** Note: this is ignored below **/
@@ -174,7 +175,13 @@ vic_run(force_data_struct   *force,
 
             /* Set surface descriptive variables */
             displacement[0] = veg_var->displacement;
-            roughness[0] = veg_var->roughness;
+            if (veg_con[iveg].isGlacier) {
+                roughness[0] = soil_con->GLAC_ROUGH;
+            }
+            else {
+                roughness[0] = veg_var->roughness;
+            }
+
             if (roughness[0] == 0) {
                 roughness[0] = soil_con->rough;
             }
@@ -204,152 +211,171 @@ vic_run(force_data_struct   *force,
             }
 
             /**************************************************
-               Loop over elevation bands
+               Loop over hru types
             **************************************************/
-            for (band = 0; band < Nbands; band++) {
-                /** Solve band only if coverage greater than 0% **/
-                if (soil_con->AreaFract[band] > 0) {
-                    /* Set local pointers */
-                    cell = &(all_vars->cell[iveg][band]);
-                    veg_var = &(all_vars->veg_var[iveg][band]);
-                    snow = &(all_vars->snow[iveg][band]);
-                    energy = &(all_vars->energy[iveg][band]);
+            band = veg_con[iveg].BandIndex;
 
-                    // Convert LAI from global to local
-                    if (veg_var->fcanopy > 0) {
-                        veg_var->LAI /= veg_var->fcanopy;
-                        veg_var->Wdew /= veg_var->fcanopy;
-                        veg_var->Wdmax = veg_var->LAI *
+            /** Solve band only if coverage greater than 0% **/
+            if (soil_con->AreaFract[band] > 0 || (veg_con[iveg].isGlacier && 
+            options.GLACIER_DYNAMICS && veg_con[iveg].Cv >= 0.0)) {
+                /* Set local pointers */
+                cell = &(all_vars->cell[iveg]);
+                veg_var = &(all_vars->veg_var[iveg]);
+                snow = &(all_vars->snow[iveg]);
+                energy = &(all_vars->energy[iveg]);
+                glacier = &(all_vars->glacier[iveg]);
+
+                // Convert LAI from global to local
+                if (veg_var->fcanopy > 0) {
+                    veg_var->LAI /= veg_var->fcanopy;
+                    veg_var->Wdew /= veg_var->fcanopy;
+                    veg_var->Wdmax = veg_var->LAI *
                                          param.VEG_LAI_WATER_FACTOR;
-                        snow->snow_canopy /= veg_var->fcanopy;
-                    }
+                    snow->snow_canopy /= veg_var->fcanopy;
+                }
 
-                    /******************************************
-                       Initialize Band-dependent Model Parameters
-                    ******************************************/
+                /******************************************
+                 Initialize Band-dependent Model Parameters
+                ******************************************/
 
-                    /** Surface Attenuation due to Vegetation Coverage **/
-                    surf_atten = (1 - veg_var->fcanopy) * 1.0 +
-                                 veg_var->fcanopy *
-                                 exp(-vic_run_veg_lib[veg_class].rad_atten *
-                                     veg_var->LAI);
+                /** Surface Attenuation due to Vegetation Coverage **/
+                surf_atten = (1 - veg_var->fcanopy) * 1.0 +
+                            veg_var->fcanopy *
+                            exp(-vic_run_veg_lib[veg_class].rad_atten *
+                                veg_var->LAI);
 
-                    /** Bare (free of snow) Albedo **/
-                    if (iveg != Nveg) {
-                        bare_albedo = veg_var->albedo;
+                /** Bare (free of snow) Albedo **/
+                if (iveg != Nveg) {
+                    if (veg_con[iveg].isGlacier) {
+                        bare_albedo = soil_con->GLAC_ALBEDO;
                     }
                     else {
-                        bare_albedo = param.ALBEDO_BARE_SOIL;
+                        bare_albedo = veg_var->albedo;
                     }
+                }
+                else {
+                    bare_albedo = param.ALBEDO_BARE_SOIL;
+                }
 
-                    /* Soil thermal properties for the top two layers */
-                    prepare_full_energy(cell, energy, soil_con, &moist0, &ice0);
+                /* Soil thermal properties for the top two layers */
+                prepare_full_energy(cell, energy, soil_con, &moist0, &ice0);
 
-                    /* Initialize final aerodynamic resistance values */
-                    cell->aero_resist[0] = aero_resist[0];
-                    cell->aero_resist[1] = aero_resist[1];
+                /* Initialize final aerodynamic resistance values */
+                cell->aero_resist[0] = aero_resist[0];
+                cell->aero_resist[1] = aero_resist[1];
 
-                    /* Initialize pot_evap */
-                    cell->pot_evap = 0;
+                /* Initialize pot_evap */
+                cell->pot_evap = 0;
 
-                    /** Initialize other veg vars **/
-                    if (iveg < Nveg) {
-                        veg_var->rc = param.HUGE_RESIST;
+                /** Initialize other veg vars **/
+                if (iveg < Nveg) {
+                    veg_var->rc = param.HUGE_RESIST;
 
-                        /* Carbon-related variables */
-                        if (options.CARBON) {
-                            for (cidx = 0; cidx < options.Ncanopy; cidx++) {
-                                veg_var->rsLayer[cidx] = param.HUGE_RESIST;
-                            }
-                            veg_var->aPAR = 0;
-
-                            calc_Nscale_factors(
-                                vic_run_veg_lib[veg_class].NscaleFlag,
-                                veg_con[iveg].CanopLayerBnd,
-                                veg_var->LAI,
-                                force->coszen[NR],
-                                veg_var->NscaleFactor);
-
-                            // TBD: move this outside of vic_run()
-                            if (dmy->day_in_year == 1) {
-                                veg_var->AnnualNPPPrev = veg_var->AnnualNPP;
-                                veg_var->AnnualNPP = 0;
-                            }
-                        } // if options.CARBON
-                    } // if iveg < Nveg
-
-                    /* Initialize energy balance variables */
-                    energy->shortwave = 0;
-                    energy->longwave = 0.;
-
-                    /* Initialize snow variables */
-                    snow->vapor_flux = 0.;
-                    snow->canopy_vapor_flux = 0.;
-                    snow_inflow[band] = 0.;
-                    Melt[band] = 0.;
-
-                    /* Initialize precipitation storage */
-                    out_prec[band] = 0;
-                    out_rain[band] = 0;
-                    out_snow[band] = 0;
-
-                    /******************************
-                       Solve ground surface fluxes
-                    ******************************/
-
-                    lag_one = veg_con[iveg].lag_one;
-                    sigma_slope = veg_con[iveg].sigma_slope;
-                    fetch = veg_con[iveg].fetch;
-
-                    ErrorFlag = surface_fluxes(overstory, bare_albedo,
-                                               ice0, moist0, surf_atten,
-                                               &(Melt[band]), &Le, aero_resist,
-                                               displacement, gauge_correction,
-                                               &out_prec[band],
-                                               &out_rain[band],
-                                               &out_snow[band],
-                                               ref_height, roughness,
-                                               &snow_inflow[band],
-                                               tmp_wind, veg_con[iveg].root,
-                                               options.Nlayer, Nveg, band, dp,
-                                               iveg, veg_class, force, dmy,
-                                               energy, gp, cell, snow,
-                                               soil_con, veg_var, lag_one,
-                                               sigma_slope, fetch,
-                                               veg_con[iveg].CanopLayerBnd);
-
-                    if (ErrorFlag == ERROR) {
-                        return (ERROR);
-                    }
-
-                    force->out_prec +=
-                        out_prec[band] * Cv * soil_con->AreaFract[band];
-                    force->out_rain +=
-                        out_rain[band] * Cv * soil_con->AreaFract[band];
-                    force->out_snow +=
-                        out_snow[band] * Cv * soil_con->AreaFract[band];
-
-                    /********************************************************
-                       Compute soil wetness and root zone soil moisture
-                    ********************************************************/
-                    cell->rootmoist = 0;
-                    cell->wetness = 0;
-                    for (l = 0; l < options.Nlayer; l++) {
-                        if (veg_con[iveg].root[l] > 0) {
-                            cell->rootmoist += cell->layer[l].moist;
+                    /* Carbon-related variables */
+                    if (options.CARBON) {
+                        for (cidx = 0; cidx < options.Ncanopy; cidx++) {
+                            veg_var->rsLayer[cidx] = param.HUGE_RESIST;
                         }
-                        cell->wetness +=
-                            (cell->layer[l].moist - soil_con->Wpwp[l]) /
-                            (soil_con->porosity[l] * soil_con->depth[l] *
-                             MM_PER_M - soil_con->Wpwp[l]);
-                    }
-                    cell->wetness /= options.Nlayer;
+                        veg_var->aPAR = 0;
 
-                    /* Convert LAI back to global */
-                    veg_var->LAI *= veg_var->fcanopy;
-                    veg_var->Wdmax *= veg_var->fcanopy;
-                } /** End non-zero area band **/
-            } /** End Loop Through Elevation Bands **/
+                        calc_Nscale_factors(
+                            vic_run_veg_lib[veg_class].NscaleFlag,
+                            veg_con[iveg].CanopLayerBnd,
+                            veg_var->LAI,
+                            force->coszen[NR],
+                            veg_var->NscaleFactor);
+
+                        // TBD: move this outside of vic_run()
+                        if (dmy->day_in_year == 1) {
+                            veg_var->AnnualNPPPrev = veg_var->AnnualNPP;
+                            veg_var->AnnualNPP = 0;
+                        }
+                    } // if options.CARBON
+                } // if iveg < Nveg
+
+                /* Initialize energy balance variables */
+                energy->shortwave = 0.;
+                energy->longwave = 0.;
+
+                /* Initialize snow variables */
+                snow->vapor_flux = 0.;
+                snow->canopy_vapor_flux = 0.;
+                snow_inflow[0] = 0.;
+                Melt[0] = 0.;
+
+                /* Initialize precipitation storage */
+                out_prec[0] = 0;
+                out_rain[0] = 0;
+                out_snow[0] = 0;
+
+                /******************************
+                    Solve ground surface fluxes
+                ******************************/
+
+                lag_one = veg_con[iveg].lag_one;
+                sigma_slope = veg_con[iveg].sigma_slope;
+                fetch = veg_con[iveg].fetch;
+
+                if (veg_con[iveg].isGlacier) {
+                    ErrorFlag = surface_fluxes_glac(bare_albedo,
+                                            &(Melt[0]), &Le, aero_resist,
+                                            displacement, gauge_correction,
+                                            &out_prec[0],
+                                            &out_rain[0],
+                                            &out_snow[0],
+                                            ref_height, roughness,
+                                            &snow_inflow[0],
+                                            tmp_wind, options.Nlayer, Nveg, band,
+                                            iveg, veg_class, force, dmy, energy,
+                                            gp, cell, snow, soil_con, veg_var, 
+                                            glacier, lag_one, sigma_slope, fetch);
+                } else {
+                    ErrorFlag = surface_fluxes(overstory, bare_albedo,
+                                            ice0, moist0, surf_atten,
+                                            &(Melt[0]), &Le, aero_resist,
+                                            displacement, gauge_correction,
+                                            &out_prec[0],
+                                            &out_rain[0],
+                                            &out_snow[0],
+                                            ref_height, roughness,
+                                            &snow_inflow[0],
+                                            tmp_wind, veg_con[iveg].root,
+                                            options.Nlayer, Nveg, band, dp,
+                                            iveg, veg_class, force, dmy,
+                                            energy, gp, cell, snow,
+                                            soil_con, veg_var, lag_one,
+                                            sigma_slope, fetch,
+                                            veg_con[iveg].CanopLayerBnd);
+                }
+
+                if (ErrorFlag == ERROR) {
+                    return (ERROR);
+                }
+
+                force->out_prec += out_prec[0] * Cv;
+                force->out_rain += out_rain[0] * Cv;
+                force->out_snow += out_snow[0] * Cv;
+                
+                /********************************************************
+                    Compute soil wetness and root zone soil moisture
+                ********************************************************/
+                cell->rootmoist = 0;
+                cell->wetness = 0;
+                for (l = 0; l < options.Nlayer; l++) {
+                    if (veg_con[iveg].root[l] > 0) {
+                        cell->rootmoist += cell->layer[l].moist;
+                    }
+                    cell->wetness +=
+                        (cell->layer[l].moist - soil_con->Wpwp[l]) /
+                        (soil_con->porosity[l] * soil_con->depth[l] *
+                         MM_PER_M - soil_con->Wpwp[l]);
+                }
+                cell->wetness /= options.Nlayer;
+
+                /* Convert LAI back to global */
+                veg_var->LAI *= veg_var->fcanopy;
+                veg_var->Wdmax *= veg_var->fcanopy;
+            } /** End non-zero area band **/
         } /** end non-zero area veg tile **/
     } /** end of vegetation loop **/
 
@@ -374,33 +400,22 @@ vic_run(force_data_struct   *force,
             /** Solve Veg Tile only if Coverage Greater than 0% **/
             if (veg_con[iveg].Cv > 0.) {
                 Cv = veg_con[iveg].Cv;
-                Nbands = options.SNOW_BAND;
-                if (veg_con[iveg].LAKE) {
-                    Cv *= (1 - lakefrac);
-                    Nbands = 1;
-                }
-
                 // Loop through snow elevation bands
-                for (band = 0; band < Nbands; band++) {
-                    if (soil_con->AreaFract[band] > 0) {
-                        /* Set local pointers */
-                        cell = &(all_vars->cell[iveg][band]);
-                        if (veg_con[iveg].LAKE) {
-                            wetland_runoff += (cell->runoff * Cv *
-                                               soil_con->AreaFract[band]);
-                            wetland_baseflow += (cell->baseflow * Cv *
-                                                 soil_con->AreaFract[band]);
+                band = veg_con[iveg].BandIndex;
+                if (soil_con->AreaFract[band] > 0) {
+                    /* Set local pointers */
+                    cell = &(all_vars->cell[iveg]);
+                    if (veg_con[iveg].LAKE) {
+                        wetland_runoff += (cell->runoff * Cv);
+                            wetland_baseflow += (cell->baseflow * Cv);
                             cell->runoff = 0;
                             cell->baseflow = 0;
-                        }
-                        else {
-                            sum_runoff += (cell->runoff * Cv *
-                                           soil_con->AreaFract[band]);
-                            sum_baseflow += (cell->baseflow * Cv *
-                                             soil_con->AreaFract[band]);
-                            cell->runoff *= (1 - lake_con->rpercent);
-                            cell->baseflow *= (1 - lake_con->rpercent);
-                        }
+                    }
+                    else {
+                        sum_runoff += (cell->runoff * Cv);
+                        sum_baseflow += (cell->baseflow * Cv);
+                        cell->runoff *= (1 - lake_con->rpercent);
+                        cell->baseflow *= (1 - lake_con->rpercent);
                     }
                 }
             }
@@ -417,20 +432,14 @@ vic_run(force_data_struct   *force,
              wetland_baseflow) * soil_con->cell_area / MM_PER_M;                                                 // m3
         lake_var->channel_in = force->channel_in[NR] * soil_con->cell_area /
                                MM_PER_M;                                        // m3
-        lake_var->prec = force->prec[NR] * lake_var->sarea / MM_PER_M; // m3
-        rainonly = calc_rainonly(force->air_temp[NR], force->prec[NR],
-                                 param.SNOW_MAX_SNOW_TEMP,
-                                 param.SNOW_MIN_RAIN_TEMP);
-        if ((int) rainonly == ERROR) {
-            return(ERROR);
-        }
+        lake_var->prec = (force->snowf[NR] + force->rainf[NR]) * lake_var->sarea / MM_PER_M; // m3
 
         /**********************************************************************
            Solve the energy budget for the lake.
         **********************************************************************/
 
-        snowprec = gauge_correction[SNOW] * (force->prec[NR] - rainonly);
-        rainprec = gauge_correction[SNOW] * rainonly;
+        snowprec = gauge_correction[SNOW] * force->snowf[NR];
+        rainprec = gauge_correction[SNOW] * force->rainf[NR];
         Cv = veg_con[iveg].Cv * lakefrac;
         force->out_prec += (snowprec + rainprec) * Cv;
         force->out_rain += rainprec * Cv;
