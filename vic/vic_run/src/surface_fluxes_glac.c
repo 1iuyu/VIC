@@ -13,8 +13,6 @@
 ******************************************************************************/
 int
 surface_fluxes_glac(double               BareAlbedo,
-//                    double               ice0,
-//                    double               moist0,
                     double              *Melt,
                     double              *Le,
                     double              *aero_resist,
@@ -163,7 +161,7 @@ surface_fluxes_glac(double               BareAlbedo,
     // Structures holding values for current iteration
     double            temp_aero_resist[3];
     double            temp_aero_resist_used[2];
-//    double            stability_factor[2];
+    double            stability_factor[2];
     double            step_pot_evap;
 
     //step_aero_resist = new AeroResistUsed[N_PET_TYPES];
