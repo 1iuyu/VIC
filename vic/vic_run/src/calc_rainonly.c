@@ -8,8 +8,8 @@
 #include <vic_run.h>
 
 /******************************************************************************
- * @brief    Determines from the air temperature what fraction of incoming
- *           precipitation is frozen and unfrozen (snow and rain).
+ * @brief    Modified to handle two precipitation partitioning algorithms 
+ *           algorithms based on value of TEMP_TH_TYPE parameter.
  *****************************************************************************/
 double
 calc_rainonly(double            air_temp,
