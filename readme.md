@@ -31,7 +31,7 @@
 
    参考了VIC-GL模型中的相关概念，但对energy_bal_struct，snow_data_struct等数组的结构进行了修改。
    
-# References
+## References
    [1]	Ding B, Yang K, Qin J, et al. The dependence of precipitation types on surface elevation and meteorological conditions and its parameterization[J]. Journal of hydrology, 2014, 513: 154-163.
 
 
