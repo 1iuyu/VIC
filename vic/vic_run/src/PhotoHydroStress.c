@@ -197,8 +197,8 @@ PhotoHydroStress(double             air_temp,
             LAIcanopy = 0.5 * NetLAI;
         }
         if (Ncanopy == 1) {
-            nscaler_sun = vcmaxcint_sun;
-            nscaler_sha = vcmaxcint_sha;
+            nscaler_sun = veg_var->ksun_vcmax;
+            nscaler_sha = veg_var->ksha_vcmax;
         }
         else {
             nscaler_sun = exp(-f_N * LAIcanopy);
@@ -301,98 +301,6 @@ PhotoHydroStress(double             air_temp,
             c_quad = qabs * jmax_sha[i];
             solve_quadratic(a, b, c_quad, &r1, &r2);
             double je_sha = fmin(r1, r2);
-            
-            // Ci初始猜测
-            if (veg_lib->Ctype == 0) {
-                ci_z_sun[i] = 0.7 * atmosCO2;
-                ci_z_sha[i] = 0.7 * atmosCO2;
-            } else {
-                ci_z_sun[i] = 0.4 * atmosCO2;
-                ci_z_sha[i] = 0.4 * atmosCO2;
-            }
-            
-            // 寻找Ci和气孔导度
-            int iter1, iter2;
-            hybrid_PHS();
-            
-            double gsminsun, gsminsha, gs_slope_sun, gs_slope_sha;
-            gsminsun = medlynintercept[i];
-            gsminsha = medlynintercept[i];
-            gs_slope_sun = medlynslope[i];
-            gs_slope_sha = medlynslope[i];
-            
-            // 检查an < 0的情况
-            if (an_sun[i] < 0.0) {
-                gs_mol_sun[i] = fmax(bsun * gsminsun, 1.0);
-            }
-            if (an_sha[i] < 0.0) {
-                gs_mol_sha[i] = fmax(bsha * gsminsha, 1.0);
-            }
-            
-            // 午间气孔导度记录 (11AM-1PM)
-            if (is_near_local_noon(londeg[g], 3600)) {
-                gs_mol_sun_ln[i] = gs_mol_sun[i];
-                gs_mol_sha_ln[i] = gs_mol_sha[i];
-            } else {
-                gs_mol_sun_ln[i] = SPVAL;
-                gs_mol_sha_ln[i] = SPVAL;
-            }
-            
-            // 最终计算cs和ci
-            double cs_sun = atmosCO2 - 1.4 / RS_tmp * an_sun[i] * pressure;
-            cs_sun = max(cs_sun, MAX_CS);
-            ci_z_sun[i] = atmosCO2 - an_sun[i] * pressure *
-                              (1.4 * gs_mol_sun[i] + 1.6 * RS_tmp) /
-                              (RS_tmp * gs_mol_sun[i]);
-            ci_z_sun[i] = max(ci_z_sun[i], param.TOL_A);
-            
-            double cs_sha = atmosCO2 - 1.4 / RS_tmp * an_sha[i] * pressure;
-            cs_sha = max(cs_sha, MAX_CS);
-            ci_z_sha[i] = atmosCO2 - an_sha[i] * pressure *
-                              (1.4 * gs_mol_sha[i] + 1.6 * RS_tmp) /
-                              (RS_tmp * gs_mol_sha[i]);
-            ci_z_sha[i] = max(ci_z_sha[i], param.TOL_A);
-            
-            // 将gs_mol转换为gs (m/s)，再转换为rs (s/m)
-            double gs = gs_mol_sun[i] / cf;
-            rs_z_sun[i] = fmin(1.0 / gs, rsmax0);
-            rs_z_sun[i] = rs_z_sun[p][iv] / o3coefg_sun;
-            
-            gs = gs_mol_sha[i] / cf;
-            rs_z_sha[i] = fmin(1.0 / gs, rsmax0);
-            rs_z_sha[i] = rs_z_sha[i] / o3coefg_sha;
-            
-            // 光合作用 - 保存限制性光合作用
-            psn_z_sun[i] = ag_sun[i] * o3coefv_sun;
-            
-            
-            // 检查迭代解的正确性
-            if (gs_mol_sun[i] < 0.0 || gs_mol_sha[i] < 0.0) {
-                printf("Negative stomatal conductance: p=%d, iv=%d, gs_mol_sun=%f, gs_mol_sha=%f\n",
-                       p, iv, gs_mol_sun[p][iv], gs_mol_sha[p][iv]);
-                exit(1);
-            }
-            
-            // Ball-Berry模型校验
-            double hs = (gb_mol * ceair + gs_mol_sun[i] * esat_T) /
-                       ((gb_mol + gs_mol_sun[i]) * esat_T);
-            rh_leaf_sun = hs;
-            
-            double gs_mol_err = gs_slope_sun * fmax(an_sun[i], 0.0) * hs / cs_sun * pressure +
-                               fmax(bsun * gsminsun, 1.0);
-            
-            hs = (gb_mol * ceair + gs_mol_sha[i] * esat_T) /
-                ((gb_mol + gs_mol_sha[i]) * esat_T);
-            rh_leaf_sha = hs;
-            
-            gs_mol_err = gs_slope_sha * fmax(an_sha[i], 0.0) * hs / cs_sha * pressure +
-                        max(bsha * gsminsha, 1.0);
-        } else {
-            // 夜间设置
-            an_sun[i] = -bsun * lmr_sun[i];
-            an_sha[i] = -bsha * lmr_sha[i];
-            gs_mol_sun[i] = max(bsun * bbb, 1.0);
-            gs_mol_sha[i] = max(bsha * bbb, 1.0);
         }
     }
 

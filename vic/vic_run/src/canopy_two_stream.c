@@ -203,6 +203,20 @@ canopy_two_stream(size_t	         lidx,
 
     if (cell->Ncanopy == 1) {
         double fsun_z = (1.0 - S2) / min(tau_leaf_direct * NetVEG, 40.0);
+        double ksun_vcmax = (1.0 - exp(-(tau_leaf_direct + 0.30) * NetLAI)) / (tau_leaf_direct + 0.30);
+        double ksha_vcmax = (1.0 - exp(-0.30 * NetLAI)) / 0.30 - ksun_vcmax;
+        if (NetLAI > 0.0) {
+            ksun_vcmax /= (fsun_z * NetLAI);
+            ksha_vcmax /= ((1.0 - fsun_z) * NetLAI);
+        }else {
+            ksun_vcmax = 0.0;
+            ksha_vcmax = 0.0;
+        }
+        veg_var->ksun_vcmax = ksun_vcmax;
+        veg_var->ksha_vcmax = ksha_vcmax;
+    }
+    else {
+
     }
 
     /* direct and diffuse fluxes below vegetation Niu and Yang (2004), JGR. */

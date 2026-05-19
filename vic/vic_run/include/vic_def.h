@@ -899,6 +899,8 @@ typedef struct {
     double leaf_shade;
     double f_sun;
     double f_shade;
+    double ksun_vcmax;          /**< leaf to canopy scaling coefficient, sunlit leaf vcmax */
+    double ksha_vcmax;          /**< leaf to canopy scaling coefficient, shaded leaf vcmax */
     double LAI_z[MAX_CANOPYS];
     double SAI_z[MAX_CANOPYS];
     // Fluxes
