@@ -14,7 +14,7 @@ initialize_energy(energy_bal_struct *energy,
                   size_t             Nveg)
 {
 
-    size_t               i, index;
+    size_t               i, lidx;
     size_t               veg;
 
     // initialize miscellaneous energy balance terms
@@ -50,16 +50,16 @@ initialize_energy(energy_bal_struct *energy,
         energy[veg].Tsurf = 0.0;
         energy[veg].Tfoliage = 0.0;
         energy[veg].Tstem = 0.0;
-        for (index = 0; index < MAX_NODES; index++) {
-            energy[veg].Cs_node[index] = 0.0;
-            energy[veg].last_Cs[index] = 0.0;
-            energy[veg].kappa_node[index] = 0.0;
-            energy[veg].T[index] = 0.0;
-            energy[veg].last_T[index] = 0.0;
-            energy[veg].MELTING[index] = 0;
-            energy[veg].fusion_flux[index] = 0.0;
-            energy[veg].kappa_int[index] = 0.0;
-            energy[veg].fact[index] = 0.0;
+        for (lidx = 0; lidx < MAX_NODES; lidx++) {
+            energy[veg].Cs_node[lidx] = 0.0;
+            energy[veg].last_Cs[lidx] = 0.0;
+            energy[veg].kappa_node[lidx] = 0.0;
+            energy[veg].T[lidx] = 0.0;
+            energy[veg].last_T[lidx] = 0.0;
+            energy[veg].MELTING[lidx] = 0;
+            energy[veg].fusion_flux[lidx] = 0.0;
+            energy[veg].kappa_int[lidx] = 0.0;
+            energy[veg].fact[lidx] = 0.0;
         }
         energy[veg].qsdT = 0.0;
         energy[veg].delt_Q = 0.0;
