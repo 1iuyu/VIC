@@ -16,14 +16,11 @@
 void
 canopy_two_stream(size_t	         lidx,
 				  size_t	         index,
-                  double             Tfoliage,
-				  double	         NetLAI,
-				  double	         NetSAI,
-				  double	         fcanopy,
                   double             coszen,
 				  double	        *proj_area,
-				  double	         wetFrac,
                   energy_bal_struct *energy,
+                  cell_data_struct  *cell,
+                  veg_var_struct    *veg_var,
                   veg_lib_struct    *veg_lib)
 {
 	extern parameters_struct param;
@@ -86,13 +83,18 @@ canopy_two_stream(size_t	         lidx,
     double *AlbedoSurfDir = energy->AlbedoSurfDir;
     double *AlbedoSurfDfs = energy->AlbedoSurfDfs;
 
-    double  COI = veg_lib->COI;
-    double  Canopy_Upper = veg_lib->Canopy_Upper;
-    double  Canopy_Lower = veg_lib->Canopy_Lower;
-    double  Canopy_Radius = veg_lib->Canopy_Radius;
-
+    double COI = veg_lib->COI;
+    double NetLAI = veg_var->NetLAI;
+    double NetSAI = veg_var->NetSAI;
+    double fcanopy = veg_var->fcanopy;
+    double wetFrac = veg_var->wetFrac;
+    double Tfoliage = energy->Tfoliage;
+    double Canopy_Upper = veg_lib->Canopy_Upper;
+    double Canopy_Lower = veg_lib->Canopy_Lower;
+    double Canopy_Radius = veg_lib->Canopy_Radius;
+    double NetVEG = NetLAI + NetSAI;
 	/* compute within and between gaps */
-    if (NetLAI + NetSAI == 0.0) {
+    if (NetVEG == 0.0) {
         gap_frac_direct = 1.0;
         gap_frac_diffuse = 1.0;
     }
@@ -105,7 +107,7 @@ canopy_two_stream(size_t	         lidx,
                                         tan(acos(max(0.01, coszen))));
         gap_bc = exp(-veg_density * CONST_PI * Canopy_Radius * 
                                         Canopy_Radius / cos(tmp_angle));
-        fvd = (NetLAI + NetSAI) / (1.33 * CONST_PI * pow(Canopy_Radius, 3.0) *
+        fvd = NetVEG / (1.33 * CONST_PI * pow(Canopy_Radius, 3.0) *
                                 (can_radius_z / Canopy_Radius) * veg_density);
         tmp_veg = can_depth * fvd;
         gap_wc = (1.0 - gap_bc) * exp(-0.5 * tmp_veg / coszen);
@@ -165,15 +167,15 @@ canopy_two_stream(size_t	         lidx,
     P2 = B - tau_leaf_diffuse * H;
     P3 = B + tmp_0;
     P4 = B - tmp_0;
-    S1 = exp(-H * (NetLAI + NetSAI));
-    S2 = exp(-tau_leaf_direct * (NetLAI + NetSAI));
+    S1 = exp(-1.0 * min(H * NetVEG, 40.0));
+    S2 = exp(-1.0 * min(tau_leaf_direct * NetVEG, 40.0));
     // direct
-    if (index == 0) {
+    if (index == SUNLIT) {
         U1 = B - C / AlbedoGrndDir[lidx];
         U2 = B - C * AlbedoGrndDir[lidx];
         U3 = F + C * AlbedoGrndDir[lidx];
     }
-    else {  // diffuse
+    else if (index == SHADE) {  // diffuse
         U1 = B - C / AlbedoGrndDfs[lidx];
         U2 = B - C * AlbedoGrndDfs[lidx];
         U3 = F + C * AlbedoGrndDfs[lidx];                        
@@ -199,53 +201,57 @@ canopy_two_stream(size_t	         lidx,
     H9 = tmp_4 / (D2 * S1);
     H10 = (-tmp_5 * S1) / D2;
 
+    if (cell->Ncanopy == 1) {
+        double fsun_z = (1.0 - S2) / min(tau_leaf_direct * NetVEG, 40.0);
+    }
+
     /* direct and diffuse fluxes below vegetation Niu and Yang (2004), JGR. */
-    if (index == 0) {
+    if (index == SUNLIT) {
         transmit_sw_direct = S2 * (1.0 - gap_frac_direct) + gap_frac_direct;
         transmit_sw_diffuse = (H4 * S2 / sigma + H5 * S1 + H6 / S1) * (1.0 - gap_frac_direct);
     }
-    else {
+    else if (index == SHADE) {
         transmit_sw_direct = 0.0;
         transmit_sw_diffuse = (H9 * S1 + H10 / S1) * (1.0 - gap_frac_diffuse) + gap_frac_diffuse;
     }
-    if (index == 0) {
+    if (index == SUNLIT) {
         ShortDir2Dir[lidx] = transmit_sw_direct;
         ShortDfs2Dir[lidx] = transmit_sw_diffuse;
     }
-    else {
+    else if (index == SHADE) {
         ShortDir2Dfs[lidx] = transmit_sw_direct;
         ShortDfs2Dfs[lidx] = transmit_sw_diffuse;
     }
 
     /* flux reflected by the surface (veg and grnd) */
-    if (index == 0) {
+    if (index == SUNLIT) {
         refl_total = (H1 / sigma + H2 + H3) * (1.0 - gap_frac_direct) + 
                                     AlbedoGrndDir[lidx] * gap_frac_direct;
         refl_over = (H1 / sigma + H2 + H3) * (1.0 - gap_frac_direct);
         refl_grnd = AlbedoGrndDir[lidx] * gap_frac_direct;
     }
-    else {
+    else if (index == SHADE) {
         refl_total = (H7 + H8) * (1.0 - gap_frac_diffuse) + AlbedoGrndDfs[lidx] * gap_frac_diffuse;
         refl_over = (H7 + H8) * (1.0 - gap_frac_diffuse) + AlbedoGrndDfs[lidx] * gap_frac_diffuse;
         refl_grnd = 0.0;                        
     }
-    if (index == 0) {
+    if (index == SUNLIT) {
         AlbedoSurfDir[lidx] = refl_total;
         ReflSubDir[lidx] = refl_over;
         ReflGrndDir[lidx] = refl_grnd;
     }
-    else {
+    else if (index == SHADE) {
         AlbedoSurfDfs[lidx] = refl_total;
         ReflSubDfs[lidx] = refl_over;
         ReflGrndDfs[lidx] = refl_grnd;                        
     }
 
     /* flux absorbed by vegetation */
-    if (index == 0) {
+    if (index == SUNLIT) {
         AbsSubDir[lidx] = 1.0 - AlbedoSurfDir[lidx] - (1.0 - AlbedoGrndDir[lidx]) * 
                     ShortDir2Dir[lidx] - (1.0 - AlbedoGrndDfs[lidx]) * ShortDfs2Dir[lidx];
     }
-    else {
+    else if (index == SHADE) {
         AbsSubDfs[lidx] = 1.0 - AlbedoSurfDfs[lidx] - (1.0 - AlbedoGrndDir[lidx]) *
                     ShortDir2Dfs[lidx] - (1.0 - AlbedoGrndDfs[lidx]) * ShortDfs2Dfs[lidx];
     }

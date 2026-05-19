@@ -187,6 +187,13 @@ typedef enum {
     RHODT = 1 << 5, // 32
 
 } SVPFlag;
+/******************************************************************************
+ * @brief   Calculation of canopy type options
+ *****************************************************************************/
+typedef enum {
+    SUNLIT = 0,
+    SHADE = 1
+};
 
 /***** Data Structures *****/
 
@@ -610,6 +617,7 @@ typedef struct {
     double smpso;
     double carboxylation;
     double minPhotosyn;
+    double m_bb;                  /**< Ball-Berry slope of conductance-photosynthesis relationship */
     unsigned short int veg_class; /**< vegetation class reference number */
     // Carbon terms
     char Ctype;            /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
@@ -660,8 +668,8 @@ typedef struct {
     double *fdir;       /**< fraction of incoming shortwave that is direct (fraction) */
     double *longwave;   /**< incoming longwave radiation (W/m^2) (net incoming
                                            longwave for water balance model) */
-    double *Qair;
-    double *par;        /**< incoming photosynthetically active radiation () */
+    double *Qair;       /**< specific humidity (kg/kg) */
+    double *par;        /**< incoming photosynthetically active radiation (μmol/m^2/s) */
     double *prec;       /**< average precipitation in grid cell (mm/s) */
     double *snowf;      /**< snowfall partitioned from precipitation (mm/s) */
     double *rainf;      /**< rainfall partitioned from precipitation (mm/s) */
@@ -892,6 +900,7 @@ typedef struct {
     double f_sun;
     double f_shade;
     double LAI_z[MAX_CANOPYS];
+    double SAI_z[MAX_CANOPYS];
     // Fluxes
     double RainThroughFall;     /**< rain that reaches the ground through
                                     the canopy (mm/s) */

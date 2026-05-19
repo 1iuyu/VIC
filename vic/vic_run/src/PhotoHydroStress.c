@@ -70,13 +70,13 @@ PhotoHydroStress(double             air_temp,
     Nsoil = cell->Nsoil;
     Ncanopy = cell->Ncanopy;
     double f_N = 0.0;
+    double g_min = 2.0e3; // Ball-Berry minimum leaf conductance (mol/m^2/s)
     double CF = pressure / (8.314 * air_temp) * param.MAX_LIMIT;
     double RS_tmp = 1.0 / cell->Ra_leaf * CF;
     double tmp_photoleaf = 0.;
     double atmosO2 = pressure * 0.209;
     double atmosCO2 = pressure * 395.0e-06;
     double carbonylmax = 0.0;
-    double indexgrow = 0.0;
     double rho_root = 0.0;
     double froot_carbon = 20.0; // kg/m2
     double lmrhd = 150650.0; // J/mol
@@ -112,16 +112,16 @@ PhotoHydroStress(double             air_temp,
         // 土壤导水率 (m/s)
         double hk_soil = conductivity[i] / r_soil;
         // 使用植被PLC函数调整根区导水率
-        // fs: 由于根水势降低（更负）导致的电导减少因子
+        // fs: 由于根水势降低（更负）导致的导水率减少因子
         double fs = plc(matric[i], matric_50);
-        // 根电导：单位面积单位长度的电导 (m/s)
+        // 根导水率：单位面积单位长度的导水率 (m/s)
         double hk_root = (fs * rai * krmax) / (croot_length + Zsum_soil[i]);
         hk_soil = max(hk_soil, 1.e-16);
         hk_root = max(hk_root, 1.e-16);
-        // 计算土壤和根的总阻力，然后取倒数得到总电导
+        // 计算土壤和根的总阻力，然后取倒数得到总导水率
         double Ra_total = 1.0 / hk_soil + 1.0 / hk_root;
-        // 电导是阻力的倒数
-        // 对于表层土壤，明确设置电导为0
+        // 导水率是阻力的倒数
+        // 对于表层土壤，明确设置导水率为0
         if (rai * root[i] > 0.0 && i > 0) {
             hk_total = 1.0 / Ra_total;
         } 
@@ -163,7 +163,8 @@ PhotoHydroStress(double             air_temp,
     double lnc = 1.0 / (leaf_CN * SLA_top);
     lnc = min(lnc, 10.0);
     double vcmax25 = lnc * flnr * 7.16 * 60.0 * daylen_fact;
-    double jmax25 = ((2.59 - 0.035 * min(max((Tfoliage - CONST_TKFRZ), 11.0), 35.0)) * vcmax25); // ???
+    double jmax25 = ((2.59 - 0.035 * min(max((Tfoliage - CONST_TKFRZ), 
+                        11.0), 35.0)) * vcmax25) * jmaxse_sf;
     double tpu25 = tpu25ratio * vcmax25;
     double kp25 = kp25ratio * vcmax25;
     double luvcmax25 = vcmax25;
@@ -178,10 +179,10 @@ PhotoHydroStress(double             air_temp,
     }
     // Leaf maintenance respiration in proportion to vcmax25
     double lmr25top = 0.0;
-    if (veg_lib->Ctype == 0) {
+    if (veg_lib->Ctype == 0) { // C3植物
         lmr25top = vcmax25 * 0.015; // C3_veg = 0.015;
     }
-    else {
+    else {  // C4植物
         lmr25top = vcmax25 * 0.025; // C4_veg = 0.025;
     }
     // 遍历冠层

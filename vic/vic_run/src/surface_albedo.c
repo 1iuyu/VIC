@@ -23,7 +23,7 @@ surface_albedo(double             step_dt,
 {
     extern option_struct options;
     extern parameters_struct param;
-    size_t i;
+    size_t i, Nswband;
     double f_sun = 0.0;
     double f_shade = 0.0;
     double tau_beam = 0.0;
@@ -37,9 +37,12 @@ surface_albedo(double             step_dt,
     double wetFrac = veg_var->wetFrac;
     double fcanopy = veg_var->fcanopy;
     double Tfoliage = energy->Tfoliage;
+    double *LAI_z = veg_var->LAI_z;
+    double *SAI_z = veg_var->SAI_z;
 
+    Nswband = options.Nswband;
     // initialize albedo and two-stream fluxes
-    for (i = 0; i < options.Nswband; i++) {
+    for (i = 0; i < Nswband; i++) {
         energy->AlbedoSnowDir[i] = 0.0;
         energy->AlbedoSnowDfs[i] = 0.0;
         energy->AlbedoSoilDir[i] = 0.0;
@@ -72,7 +75,7 @@ surface_albedo(double             step_dt,
         leaf_frac = NetLAI / max(NetLAI + NetSAI, param.TOL_A);
         stem_frac = NetSAI / max(NetLAI + NetSAI, param.TOL_A);
 
-        for (i = 0; i < options.Nswband; i++) {
+        for (i = 0; i < Nswband; i++) {
             energy->ReflectVeg[i] = max(veg_lib->reflleaf[i] * leaf_frac + 
                                         veg_lib->reflstem[i] * 
                                             stem_frac, param.TOL_A);
@@ -97,24 +100,69 @@ surface_albedo(double             step_dt,
                      energy->AlbedoSnowDfs,
                      energy->AlbedoGrndDir,
                      energy->AlbedoGrndDfs);
+        
+        // Diagnose number of canopy layers for radiative transfer
+        double frac_veg = 0.25;
+        double veg_sum = 0.0;
+        for (i = 0; i < MAX_CANOPYS; i++) {
+            if (MAX_CANOPYS == 1) {
+                cell->Ncanopy = 1;
+                LAI_z[i] = NetLAI;
+                SAI_z[i] = NetSAI;
+            }
+            else if (MAX_CANOPYS > 1) {
+                if (NetLAI + NetSAI <= 0.0) {
+                    cell->Ncanopy = 0;
+                    LAI_z[i] = 0.0;
+                    SAI_z[i] = 0.0;
+                }
+                else {
+                    veg_sum += frac_veg;
+                    if (NetLAI + NetSAI - veg_sum > param.TOL_A) {
+                        cell->Ncanopy = i + 1;
+                        LAI_z[i] = NetLAI * frac_veg / max(NetLAI + NetSAI, param.TOL_A);
+                        SAI_z[i] = NetSAI * frac_veg / max(NetLAI + NetSAI, param.TOL_A);
+                    }
+                    else {
+                        cell->Ncanopy = i + 1;
+                        LAI_z[i] = max(NetLAI - LAI_z[i - 1], 0.0);
+                        SAI_z[i] = max(NetSAI - SAI_z[i - 1], 0.0);
+                        break;
+                    }
+                }
+            }
+        }
+        // if the canopy is too sparse, set it to 4 layers with equal LAI and SAI
+        if (cell->Ncanopy < 4) {
+            cell->Ncanopy = 4;
+            for (i = 0; i < 4; i++) {
+                LAI_z[i] = NetLAI / 4.0;
+                SAI_z[i] = NetSAI / 4.0;
+            }
+        }
+        double sum_LAI = 0.0;
+        double sum_SAI = 0.0;
+        for (i = 0; i < cell->Ncanopy; i++) {
+            sum_LAI += LAI_z[i];
+            sum_SAI += SAI_z[i];
+        }
+        if (fabs(sum_LAI - NetLAI) > param.TOL_A || fabs(sum_SAI - NetSAI) > param.TOL_A) {
+            log_err("Error in diagnosing canopy layers: sum of LAI_z or SAI_z does not equal NetLAI or NetSAI");
+        }
 
         /* Compute canopy radiative transfer 
            using two-stream approximation */
-        for (i = 0; i < options.Nswband; i++) {
+        for (i = 0; i < Nswband; i++) {
             // direct
-            canopy_two_stream(i, 0, Tfoliage,
-                              NetLAI, NetSAI,
-                              fcanopy,
+            canopy_two_stream(i, SUNLIT,
                               coszen, &proj_area,
-                              wetFrac, 
-                              energy, veg_lib);
+                              energy, cell,
+                              veg_var, veg_lib);
             // diffuse
-            canopy_two_stream(i, 1, Tfoliage,
-                              NetLAI, NetSAI,
-                              fcanopy,
+            canopy_two_stream(i, SHADE,
                               coszen, &proj_area, 
-                              wetFrac, 
-                              energy, veg_lib);
+                              energy, cell,
+                              veg_var, veg_lib);
         }
         tau_beam = proj_area / coszen *
                         sqrt(1.0 - energy->ReflectVeg[0] -
