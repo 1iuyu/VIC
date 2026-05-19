@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    
+    {
+      "name": "Debug VIC",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/mnt/c/Users/liuyu/Downloads/VIC-master/vic/drivers/image/vic_image.exe",
+      "stopAtEntry": false,
+      "externalConsole": false,
+
+      "args": ["-g"],
+      
+      "linux": {
+        "program": "/mnt/c/Users/liuyu/Downloads/VIC-master/vic/drivers/image/vic_image.exe",
+        "args": ["-g", "/mnt/d/VIC_GL/test/global_param.txt"],
+        "cwd": "/mnt/d/VIC_GL/test",
+        "MIMode": "gdb",
+        "miDebuggerPath": "/usr/bin/gdb"
+      },
+
+      "osx": {
+        "program": "/Volumes/myExFAT/10km/VIC-master/vic/drivers/image/vic_image.exe",
+        "args": ["-g", "/Volumes/myExFAT/jinzhu_VIC/test/global_param.txt"],
+        "cwd": "${workspaceFolder}",
+        "MIMode": "lldb"
+      }
+    }
+  ]
+}
