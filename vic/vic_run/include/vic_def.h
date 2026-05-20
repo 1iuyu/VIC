@@ -46,8 +46,8 @@
 #define MAX_SNOWS       3      /**< maximum number of snowpack layers */
 #define MAX_SOILS       45     /**< maximum number of soil nodes */
 #define MAX_SWBANDS     2      /**< maximum number of solar radiation wave bands */
-#define MAX_CANOPYS     4
-#define MAX_HRUS        50
+#define MAX_CANOPYS     4      /**< maximum number of canopy layers for radiative transfer */
+#define MAX_HRUS        50     /**< maximum number of hydrological response units */
 
 /***** Define minimum values for model parameters *****/
 #define MINSOILDEPTH    0.001  /**< Minimum layer depth with which model can work (m) */
@@ -618,6 +618,9 @@ typedef struct {
     double carboxylation;
     double minPhotosyn;
     double m_bb;                  /**< Ball-Berry slope of conductance-photosynthesis relationship */
+    double matric50;              /**< matric potential at which stomatal conductance is reduced by 50% (m) */
+    double kseg_max;              /**< plant segment max conductance (m/s) */
+    double conduct_max;           /**< maximum canopy conductance (m/s) */ 
     unsigned short int veg_class; /**< vegetation class reference number */
     // Carbon terms
     char Ctype;            /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
@@ -768,6 +771,7 @@ typedef struct {
     double f_transp;                   /**< soil water transpiration factor (0 to 1) */
     double soil_excess;
     double root[MAX_SOILS];
+    double hksr_int[MAX_SOILS];        /**< soil-root interface conductance (mm/s) */
     double Netroot[MAX_SOILS];
     double liquid_flux[MAX_SOILS];
     double vapor_flux[MAX_SOILS];

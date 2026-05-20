@@ -11,11 +11,13 @@
  * @brief    Calculate canopy photosynthesis and stomatal resistance.
  *****************************************************************************/
 int
-PhotoHydroStress(double             air_temp,
+PhotoHydroStress(double             thm,
                  double             esat_T,
                  double             qsat_T,
                  double             vp_over,
+                 double             Qair_over,
                  double             pressure,
+                 double             air_density,
                  energy_bal_struct *energy,
                  cell_data_struct  *cell,
                  soil_con_struct   *soil_con,
@@ -33,6 +35,7 @@ PhotoHydroStress(double             air_temp,
     double *dz_soil = soil_con->dz_soil;
     double *root = cell->root;
     double *LAI_z = veg_var->LAI_z;
+    double *hksr_int = cell->hksr_int;
     double kp_sun[MAX_CANOPYS];
     double kp_sha[MAX_CANOPYS];
     double par_sun[MAX_CANOPYS];
@@ -71,8 +74,8 @@ PhotoHydroStress(double             air_temp,
     Ncanopy = cell->Ncanopy;
     double f_N = 0.0;
     double g_min = 2.0e3; // Ball-Berry minimum leaf conductance (mol/m^2/s)
-    double CF = pressure / (8.314 * air_temp) * param.MAX_LIMIT;
-    double RS_tmp = 1.0 / cell->Ra_leaf * CF;
+    double CF = pressure / (CONST_RGAS * thm) * 1.0e6;
+    double RS_mol = 1.0 / cell->Ra_leaf * CF;
     double tmp_photoleaf = 0.;
     double atmosO2 = pressure * 0.209;
     double atmosCO2 = pressure * 395.0e-06;
@@ -123,10 +126,10 @@ PhotoHydroStress(double             air_temp,
         // 导水率是阻力的倒数
         // 对于表层土壤，明确设置导水率为0
         if (rai * root[i] > 0.0 && i > 0) {
-            hk_total = 1.0 / Ra_total;
+            hksr_int[i] = 1.0 / Ra_total;
         } 
         else {
-            hk_total = 0.0;
+            hksr_int[i] = 0.0;
         }
     }
     // Miscellaneous parameters
@@ -186,6 +189,8 @@ PhotoHydroStress(double             air_temp,
         lmr25top = vcmax25 * 0.025; // C4_veg = 0.025;
     }
     // 遍历冠层
+    bool light_inhibit = false; // 是否存在光抑制
+    double bsun, bsha;
     double LAIcanopy = 0.0;
     double nscaler_sun = 0.0;
     double nscaler_sha = 0.0;
@@ -263,9 +268,12 @@ PhotoHydroStress(double             air_temp,
             kp_sun[i] = kp25 * nscaler_sun * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
             kp_sha[i] = kp25 * nscaler_sha * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
 
-            if (energy->aPAR_sunlit <= 0.0) {
-                double vegwp_sun = 1.0;
-            }
+            // 调用calc_stress函数计算水分胁迫因子
+            calc_stress(&bsun, &bsha, thm, RS_mol, 
+                        qsat_T, Qair_over, 
+                        pressure, air_density, 
+                        energy, cell, 
+                        soil_con, veg_var, veg_lib);
             
             // 计算电子传输速率
             double qabs_sun = 0.5 * (1.0 - fnps) * par_sun[i] * 4.6;

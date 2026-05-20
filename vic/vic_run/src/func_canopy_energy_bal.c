@@ -221,9 +221,10 @@ func_canopy_energy_bal(double             step_dt,
         /**********************
           Stomatal Resistance
         **********************/
-        PhotoHydroStress(air_temp, esat_T, 
+        PhotoHydroStress(thm, esat_T, 
                          qsat_T, vp_over, 
-                         pressure, energy, 
+                         pressure, 
+                         air_density, energy, 
                          cell, soil_con,
                          veg_var, veg_lib);
 

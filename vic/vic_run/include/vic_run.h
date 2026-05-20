@@ -16,7 +16,9 @@ void AdvectedEnergy(double, double, double, double, double,
 void AdvectedEnergyGlac(double, double, double, double, double *);
 bool assert_close_double(double x, double y, double rtol, double abs_tol);
 bool assert_close_float(float x, float y, float rtol, float abs_tol);
-
+int calc_stress(double *, double *, double, double, double, double, double, double,
+                energy_bal_struct *, cell_data_struct *, soil_con_struct *,
+                veg_var_struct *, veg_lib_struct *);
 int calc_energy_bal(size_t, double, double, double,
                     force_data_struct *, energy_bal_struct *, 
                     cell_data_struct *, snow_data_struct *, 
@@ -58,7 +60,7 @@ void enthalpy_to_state(cell_data_struct *, energy_bal_struct *);
 int FrictionVelocity(double, double, double *, double *, double *, double *,
                       double *, double);
 int frozen_soil(size_t, double, double *, double *, double *, soil_con_struct *);
-int func_canopy_energy_bal(double, double, double, double, 
+int func_canopy_energy_bal(double, double, double, double,
                            double, double, double, double,
                            energy_bal_struct *, cell_data_struct *, 
                            snow_data_struct *, soil_con_struct *,
@@ -78,7 +80,7 @@ double linear_interp(double, double, double, double, double);
 double new_snow_density(double);
 int PhaseChangeGlac(double, energy_bal_struct *, cell_data_struct *,
                     snow_data_struct *, soil_con_struct *);
-int PhotoHydroStress(double, double, double, double, double,
+int PhotoHydroStress(double, double, double, double, double, double,
                      energy_bal_struct *, cell_data_struct *, soil_con_struct *,
                      veg_var_struct *, veg_lib_struct *);
 void prepare_full_energy(bool, cell_data_struct *, energy_bal_struct *,
