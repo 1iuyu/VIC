@@ -1,22 +1,29 @@
 /******************************************************************************
  * @section DESCRIPTION
  *
- * Calculate the transpiration stress using a plant hydraulics approach.
+ * use a hybrid solver to find the root of the ci_func equation for sunlit
+ * and shaded leaves.
  *****************************************************************************/
 
 #include "vic_run.h"
 
 /******************************************************************************
- * @brief  Calculate the transpiration stress using a plant hydraulics approach.
+ * @brief  use a hybrid solver to find the root of the ci_func equation 
+ *         for sunlit and shaded leaves
  *****************************************************************************/
 void hybrid_PHS(double *x0sun, double *x0sha,
                 double *vegwp,
                 double gb_mol,
                 double *bsun, double *bsha,
                 double jesun, double jesha,
+                double thm, double RS_mol,
+                double qsat_T, double Qair_over,
+                double pressure, double air_density,
+                double Canopy_Upper, double matric50, 
+                double conduct_max,
                 double atmosCO2, double atmosO2,
-                double lmr_z_sun, double lmr_z_sha,
-                double par_z_sun, double par_z_sha,
+                double lmr_sun, double lmr_sha,
+                double par_sun, double par_sha,
                 double rh_can,
                 double *gs_mol_sun, double *gs_mol_sha,
                 double qsatl, double qaf,
@@ -29,7 +36,7 @@ void hybrid_PHS(double *x0sun, double *x0sha,
 {
     // 局部变量
     size_t i;
-    double x[4];            // vegwp的工作副本
+    double x[4];
     double gs0sun, gs0sha;          // 无水分胁迫的气孔导度
     int bflag;                      // 是否重新计算水分胁迫
     double x1sun, x1sha;            // ci的第二个猜测值
@@ -53,7 +60,7 @@ void hybrid_PHS(double *x0sun, double *x0sha,
     // 初始化
     x1sun = *x0sun;
     x1sha = *x0sha;
-    bflag = 0;                      // false
+    bflag = 0;
     b0sun = -1.0;
     b0sha = -1.0;
     gs0sun = 0.0;
@@ -90,9 +97,9 @@ void hybrid_PHS(double *x0sun, double *x0sha,
                     gb_mol, gs0sun, gs0sha,
                     gs_mol_sun, gs_mol_sha,
                     jesun, jesha, atmosCO2, atmosO2,
-                    lmr_z_sun, lmr_z_sha,
-                    par_z_sun, par_z_sha, rh_can,
-                    qsatl, qaf);
+                    lmr_sun, lmr_sha,
+                    par_sun, par_sha, rh_can,
+                    qsat_T, Qair_over);
         
         // 更新水分胁迫收敛检查变量
         dbsun = b0sun - *bsun;
@@ -107,9 +114,9 @@ void hybrid_PHS(double *x0sun, double *x0sha,
                     gb_mol, gs0sun, gs0sha,
                     gs_mol_sun, gs_mol_sha,
                     jesun, jesha, atmosCO2, atmosO2,
-                    lmr_z_sun, lmr_z_sha,
-                    par_z_sun, par_z_sha, rh_can,
-                    qsatl, qaf);
+                    lmr_sun, lmr_sha,
+                    par_sun, par_sha, rh_can,
+                    qsat_T, Qair_over);
         
         // ========== 内层循环：割线法求解ci ==========
         while (1) {
@@ -151,9 +158,9 @@ void hybrid_PHS(double *x0sun, double *x0sha,
                         gb_mol, gs0sun, gs0sha,
                         gs_mol_sun, gs_mol_sha,
                         jesun, jesha, atmosCO2, atmosO2,
-                        lmr_z_sun, lmr_z_sha,
-                        par_z_sun, par_z_sha, rh_can,
-                        qsatl, qaf);
+                        lmr_sun, lmr_sha,
+                        par_sun, par_sha, rh_can,
+                        qsat_T, Qair_over);
             
             // 检查增量收敛
             if (fabs(dxsun) < tolsun && fabs(dxsha) < tolsha) {
@@ -186,10 +193,10 @@ void hybrid_PHS(double *x0sun, double *x0sha,
                           &xsha, *x0sha, x1sha, f0sha, f1sha,
                           tolsun, gb_mol,
                           jesun, jesha, atmosCO2, atmosO2,
-                          lmr_z_sun, lmr_z_sha,
-                          par_z_sun, par_z_sha, rh_can,
+                          lmr_sun, lmr_sha,
+                          par_sun, par_sha, rh_can,
                           gs_mol_sun, gs_mol_sha,
-                          bsun, bsha, qsatl, qaf);
+                          bsun, bsha, qsat_T, Qair_over);
                 *x0sun = xsun;
                 *x0sha = xsha;
                 break;
@@ -204,9 +211,9 @@ void hybrid_PHS(double *x0sun, double *x0sha,
                             gb_mol, gs0sun, gs0sha,
                             gs_mol_sun, gs_mol_sha,
                             jesun, jesha, atmosCO2, atmosO2,
-                            lmr_z_sun, lmr_z_sha,
-                            par_z_sun, par_z_sha, rh_can,
-                            qsatl, qaf);
+                            lmr_sun, lmr_sha,
+                            par_sun, par_sha, rh_can,
+                            qsat_T, Qair_over);
                 break;
             }
         } // 内层循环结束
