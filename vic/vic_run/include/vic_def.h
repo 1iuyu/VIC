@@ -620,7 +620,10 @@ typedef struct {
     double m_bb;                  /**< Ball-Berry slope of conductance-photosynthesis relationship */
     double matric50;              /**< matric potential at which stomatal conductance is reduced by 50% (m) */
     double kseg_max;              /**< plant segment max conductance (m/s) */
-    double conduct_max;           /**< maximum canopy conductance (m/s) */ 
+    double conduct_max;           /**< maximum canopy conductance (m/s) */
+    double theta_cj;
+    double medlynslope;         /**< slope of Medlyn conductance-photosynthesis relationship */
+    double medlynint;           /**< intercept of Medlyn conductance-photosynthesis relationship */
     unsigned short int veg_class; /**< vegetation class reference number */
     // Carbon terms
     char Ctype;            /**< Photosynthetic pathway; 0 = C3; 1 = C4 */

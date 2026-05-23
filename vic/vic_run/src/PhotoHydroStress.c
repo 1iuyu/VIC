@@ -216,7 +216,8 @@ PhotoHydroStress(double             thm,
         if (veg_lib->Ctype == 0) {
             lmr_sun[i] = lmr25_sun * ft(Tfoliage, lmrha) * fth(Tfoliage, lmrhd, lmrse, lmrc);
             lmr_sha[i] = lmr25_sha * ft(Tfoliage, lmrha) * fth(Tfoliage, lmrhd, lmrse, lmrc);
-        } else {
+        } 
+        else {
             lmr_sun[i] = lmr25_sun * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
             lmr_sun[i] = lmr_sun[i] / (1.0 + exp(1.3 * (Tfoliage - (CONST_TKFRZ + 55.0))));
             lmr_sha[i] = lmr25_sha * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
@@ -270,8 +271,8 @@ PhotoHydroStress(double             thm,
 
             // 调用calc_stress函数计算水分胁迫因子
             calc_stress(&bsun, &bsha, thm, RS_mol, 
-                        qsat_T, Qair_over, 
-                        pressure, air_density, 
+                        qsat_T, Qair_over,
+                        pressure, air_density,
                         energy, cell, 
                         soil_con, veg_var, veg_lib);
             
@@ -301,14 +302,14 @@ PhotoHydroStress(double             thm,
             double c_quad = qabs * jmax_sun[i];
             double r1, r2;
             solve_quadratic(a, b, c_quad, &r1, &r2);
-            double je_sun = fmin(r1, r2);
+            double je_sun = min(r1, r2);
             
             // 阴叶
             qabs = 0.5 * (1.0 - fnps) * par_sha[i] * 4.6;
             b = -(qabs + jmax_sha[i]);
             c_quad = qabs * jmax_sha[i];
             solve_quadratic(a, b, c_quad, &r1, &r2);
-            double je_sha = fmin(r1, r2);
+            double je_sha = min(r1, r2);
         }
     }
 
@@ -353,4 +354,14 @@ double plc(double matric, double matric_50)
         plc_val = 0.0;
     }
     return (plc_val);
+}
+/******************************************************************************
+ * @brief    Calculate temperature scaling factor.
+ *****************************************************************************/
+double d1plc(double matric, double matric_50, double ck)
+{
+    double ratio_pow = pow(matric / matric_50, ck);
+    double exp_term = pow(2.0, -ratio_pow);
+    double dplc_dmatric = -ck * log(2.0) * exp_term * ratio_pow / matric;
+    return (dplc_dmatric);
 }
