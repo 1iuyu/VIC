@@ -13,29 +13,23 @@
  *****************************************************************************/
 void hybrid_PHS(double *x0sun, double *x0sha,
                 double *vegwp,
-                double gb_mol,
                 double *bsun, double *bsha,
                 double jesun, double jesha,
                 double thm, double RS_mol,
                 double qsat_T, double Qair_over,
                 double pressure, double air_density,
-                double Canopy_Upper, double matric50, 
-                double conduct_max,
                 double atmosCO2, double atmosO2,
                 double lmr_sun, double lmr_sha,
                 double par_sun, double par_sha,
                 double rh_can,
                 double *gs_mol_sun, double *gs_mol_sha,
-                double qsatl, double qaf,
-                int *iter1, int *iter2,
-                energy_bal_struct *energy,
                 cell_data_struct  *cell,
                 soil_con_struct   *soil_con,
                 veg_var_struct    *veg_var,
                 veg_lib_struct    *veg_lib)
 {
     // 局部变量
-    size_t i;
+    size_t i, iter1, iter2;
     double x[4];
     double gs0sun, gs0sha;          // 无水分胁迫的气孔导度
     int bflag;                      // 是否重新计算水分胁迫
@@ -50,7 +44,9 @@ void hybrid_PHS(double *x0sun, double *x0sha,
     double minxsun, minxsha;        // 最小残差对应的ci解
     double soilflux;                // 土壤蒸腾通量 (mm/s)
     double xsun, xsha;              // Brent方法返回的解
-    
+    double Canopy_Upper = veg_lib->Canopy_Upper;  // 叶片分布参数
+    double matric50 = veg_lib->matric50;          // 50%失水点 (MPa)
+    double conduct_max = veg_lib->conduct_max;    // 最大导度 (mm/s)
     // 参数常量
     const double toldb = 1e-2;      // bsun/bsha收敛容差
     const double eps = 1e-2;        // 相对精度
@@ -67,7 +63,8 @@ void hybrid_PHS(double *x0sun, double *x0sha,
     gs0sha = 0.0;
     *bsun = 1.0;
     *bsha = 1.0;
-    *iter1 = 0;
+    iter1 = 0;
+    iter2 = 0;
     
     // 获取vegwp副本（用于calcstress）
     for (i = 0; i < 4; i++) {
@@ -76,8 +73,8 @@ void hybrid_PHS(double *x0sun, double *x0sha,
     
     // ========== 外层循环：更新水分胁迫因子 ==========
     while (1) {
-        (*iter1)++;
-        *iter2 = 0;
+        iter1++;
+        iter2 = 0;
         
         x1sun = *x0sun;
         *x0sun = max(0.1, x1sun);
@@ -94,7 +91,7 @@ void hybrid_PHS(double *x0sun, double *x0sha,
         // 第一次ci_func调用（计算f(x0)）
         ci_func_PHS(x, *x0sun, *x0sha, &f0sun, &f0sha,
                     bsun, bsha, bflag,
-                    gb_mol, gs0sun, gs0sha,
+                    RS_mol, gs0sun, gs0sha,
                     gs_mol_sun, gs_mol_sha,
                     jesun, jesha, atmosCO2, atmosO2,
                     lmr_sun, lmr_sha,
@@ -111,7 +108,7 @@ void hybrid_PHS(double *x0sun, double *x0sha,
         // 第二次ci_func调用（计算f(x1)）
         ci_func_PHS(x, x1sun, x1sha, &f1sun, &f1sha,
                     bsun, bsha, bflag,
-                    gb_mol, gs0sun, gs0sha,
+                    RS_mol, gs0sun, gs0sha,
                     gs_mol_sun, gs_mol_sha,
                     jesun, jesha, atmosCO2, atmosO2,
                     lmr_sun, lmr_sha,
@@ -130,7 +127,7 @@ void hybrid_PHS(double *x0sun, double *x0sha,
                 break;
             }
             
-            (*iter2)++;
+            iter2++;
             
             // 阳叶：割线法更新
             if (f1sun - f0sun == 0.0) {
@@ -155,7 +152,7 @@ void hybrid_PHS(double *x0sun, double *x0sha,
             // 调用ci_func计算新的f值
             ci_func_PHS(x, x1sun, x1sha, &f1sun, &f1sha,
                         bsun, bsha, bflag,
-                        gb_mol, gs0sun, gs0sha,
+                        RS_mol, gs0sun, gs0sha,
                         gs_mol_sun, gs_mol_sha,
                         jesun, jesha, atmosCO2, atmosO2,
                         lmr_sun, lmr_sha,
@@ -170,7 +167,7 @@ void hybrid_PHS(double *x0sun, double *x0sha,
             }
             
             // 记录最优解（残差最小的点）
-            if (*iter2 == 1) {
+            if (iter2 == 1) {
                 minf = fabs(f1sun + f1sha);
                 minxsun = x1sun;
                 minxsha = x1sha;
@@ -191,7 +188,7 @@ void hybrid_PHS(double *x0sun, double *x0sha,
             if ((f1sun * f0sun < 0.0) && (f1sha * f0sha < 0.0)) {
                 brent_PHS(&xsun, *x0sun, x1sun, f0sun, f1sun,
                           &xsha, *x0sha, x1sha, f0sha, f1sha,
-                          tolsun, gb_mol,
+                          tolsun, RS_mol,
                           jesun, jesha, atmosCO2, atmosO2,
                           lmr_sun, lmr_sha,
                           par_sun, par_sha, rh_can,
@@ -203,12 +200,12 @@ void hybrid_PHS(double *x0sun, double *x0sha,
             }
             
             // 最大迭代次数保护
-            if (*iter2 > itmax) {
+            if (iter2 > itmax) {
                 x1sun = minxsun;
                 x1sha = minxsha;
                 ci_func_PHS(x, x1sun, x1sha, &f1sun, &f1sha,
                             bsun, bsha, bflag,
-                            gb_mol, gs0sun, gs0sha,
+                            RS_mol, gs0sun, gs0sha,
                             gs_mol_sun, gs_mol_sha,
                             jesun, jesha, atmosCO2, atmosO2,
                             lmr_sun, lmr_sha,
@@ -234,7 +231,7 @@ void hybrid_PHS(double *x0sun, double *x0sha,
         }
         
         // 最大迭代次数保护
-        if (*iter1 > itmax) {
+        if (iter1 > itmax) {
             break;
         }
         

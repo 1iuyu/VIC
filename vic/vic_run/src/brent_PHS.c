@@ -16,7 +16,7 @@ void brent_PHS(double *xsun, double x1sun,
                double f2sun, double *xsha, 
                double x1sha, double x2sha, 
                double f1sha, double f2sha,
-               double tol, double gb_mol,
+               double tol, double RS_mol,
                double jesun, double jesha,
                double atmosCO2, double atmosO2,
                double lmr_sun, double lmr_sha,
@@ -60,8 +60,8 @@ void brent_PHS(double *xsun, double x1sun,
     for (phase = 0; phase < nphs; phase++) {
         if ((fa[phase] > 0.0 && fb[phase] > 0.0) || 
             (fa[phase] < 0.0 && fb[phase] < 0.0)) {
-                log_err("brent_PHS: root must be bracketed for phase %d (fa=%f, fb=%f)", 
-                        phase, fa[phase], fb[phase]);
+            log_err("brent_PHS: root must be bracketed for phase %d (fa=%f, fb=%f)", 
+                    phase, fa[phase], fb[phase]);
         }
     }
     
@@ -164,9 +164,13 @@ void brent_PHS(double *xsun, double x1sun,
             
             // 计算新的试探点
             if (fabs(d[phase]) > tol1[phase]) {
-                b[phase] = b[phase] + d[phase];
+                b[phase] += d[phase];
             } else {
-                b[phase] = b[phase] + (xm[phase] > 0.0 ? tol1[phase] : -tol1[phase]);
+                if (xm[phase] > 0.0) {
+                    b[phase] += tol1[phase];
+                } else {
+                    b[phase] -= tol1[phase];
+                }
             }
         }
         
@@ -177,7 +181,7 @@ void brent_PHS(double *xsun, double x1sun,
         // 调用ci_func_PHS计算新点的函数值
         ci_func_PHS(x, b[0], b[1], &fb[0], &fb[1],
                     bsun, bsha, bflag,
-                    gb_mol, gs0sun, gs0sha,
+                    RS_mol, gs0sun, gs0sha,
                     gs_mol_sun, gs_mol_sha,
                     jesun, jesha, atmosCO2, atmosO2,
                     lmr_sun, lmr_sha,

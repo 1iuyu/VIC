@@ -12,6 +12,7 @@
 int
 calc_stress(double            *bsun,
             double            *bsha,
+            double            *vegwp,
             double             thm,
             double             RS_mol,
             double             qsat_T,
@@ -33,7 +34,6 @@ calc_stress(double            *bsun,
     (*bsha) = 1.0;
     double qflx_sun = 0.0;
     double qflx_sha = 0.0;
-    double vegwp[4]; // 水势：0-阳叶，1-阴叶，2-木质部，3-根部
     double dx[4]; // 水势更新量
     double mat_A[16]; // 雅可比矩阵
     double mat_RHS[4]; // 右侧项

@@ -11,7 +11,7 @@
  *****************************************************************************/
 void ci_func_PHS(double cisun, double cisha,
                 double *fvalsun, double *fvalsha,
-                double *bsun, double *bsha,
+                double *bsun, double *bsha, double vegwp,
                 double vcmax_sun, double vcmax_sha,
                 double tpu_sun, double tpu_sha,
                 double kp_sun, double kp_sha,
@@ -53,7 +53,7 @@ void ci_func_PHS(double cisun, double cisha,
     
     // 如果需要重新计算水分胁迫因子
     if (bflag) {
-        calc_stress(&bsun, &bsha, thm, RS_mol, 
+        calc_stress(&bsun, &bsha, &vegwp, thm, RS_mol, 
                     qsat_T, Qair_over,
                     pressure, air_density,
                     energy, cell, 
