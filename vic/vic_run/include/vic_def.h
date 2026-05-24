@@ -771,7 +771,7 @@ typedef struct {
     double esoil_grnd;
     double dewsoil;                    /**< evapotranspiration from soil layer (mm) */
     double total_transp;               /**< accumulated soil water transpiration factor (0 to 1) */
-    double f_transp;                   /**< soil water transpiration factor (0 to 1) */
+    double transp_fact;                   /**< soil water transpiration factor (0 to 1) */
     double soil_excess;
     double root[MAX_SOILS];
     double hksr_int[MAX_SOILS];        /**< soil-root interface conductance (mm/s) */
@@ -780,7 +780,6 @@ typedef struct {
     double vapor_flux[MAX_SOILS];
     double soil_imped[MAX_SOILS];      /**< frost content of the frozen sublayer */
     double transp_sink[MAX_SOILS];     /**< transpiration sink term [m/s] */
-    double transp_fact[MAX_SOILS];     /**< soil layer transpiration facter */
     double conductivity[MAX_SOILS];    /**< soil hydraulic conductivity [m/s] */
     double conduct_int[MAX_SOILS];     /**< soil hydraulic conductivity for interface between layers */
     double matric[MAX_SOILS];          /**< soil matric potential [mm] */
