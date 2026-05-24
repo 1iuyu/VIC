@@ -11,22 +11,32 @@
  * @brief  use a hybrid solver to find the root of the ci_func equation 
  *         for sunlit and shaded leaves
  *****************************************************************************/
-void hybrid_PHS(double *x0sun, double *x0sha,
-                double *vegwp,
-                double *bsun, double *bsha,
-                double jesun, double jesha,
-                double thm, double RS_mol,
-                double qsat_T, double Qair_over,
-                double pressure, double air_density,
-                double atmosCO2, double atmosO2,
-                double lmr_sun, double lmr_sha,
-                double par_sun, double par_sha,
-                double rh_can,
-                double *gs_mol_sun, double *gs_mol_sha,
-                cell_data_struct  *cell,
-                soil_con_struct   *soil_con,
-                veg_var_struct    *veg_var,
-                veg_lib_struct    *veg_lib)
+void hybrid_PHS(double           *x0sun, 
+                double           *x0sha,
+                double           *vegwp,
+                double           *bsun, 
+                double           *bsha,
+                double            jesun, 
+                double            jesha,
+                double            thm, 
+                double            RS_mol,
+                double            qsat_T, 
+                double            Qair_over,
+                double            pressure, 
+                double            air_density,
+                double            atmosCO2, 
+                double            atmosO2,
+                double            lmr_sun, 
+                double            lmr_sha,
+                double            par_sun, 
+                double            par_sha,
+                double            rh_can,
+                double           *gs_mol_sun, 
+                double           *gs_mol_sha,
+                cell_data_struct *cell,
+                soil_con_struct  *soil_con,
+                veg_var_struct   *veg_var,
+                veg_lib_struct   *veg_lib)
 {
     // 局部变量
     size_t i, iter1, iter2;
@@ -242,10 +252,10 @@ void hybrid_PHS(double *x0sun, double *x0sha,
     
     // 根据最终气孔导度更新植被水势
     getvegwp(vegwp, RS_mol, &gs0sun, &gs0sha, 
-                qsat_T, Qair_over, &soilflux, 
-                Canopy_Upper, matric50, 
-                pressure, conduct_max, air_density,
-                thm, cell, soil_con, veg_var);
+             qsat_T, Qair_over, &soilflux, 
+             Canopy_Upper, matric50, 
+             pressure, conduct_max, air_density,
+             thm, cell, soil_con, veg_var);
     
     // 保存vegwp
     for (i = 0; i < 4; i++) {
