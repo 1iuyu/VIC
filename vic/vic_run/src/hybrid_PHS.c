@@ -18,6 +18,9 @@ void hybrid_PHS(double           *x0sun,
                 double           *bsha,
                 double            jesun, 
                 double            jesha,
+                double            CP,
+                double            KC,
+                double            KO,
                 double            thm, 
                 double            RS_mol,
                 double            qsat_T, 
@@ -31,6 +34,12 @@ void hybrid_PHS(double           *x0sun,
                 double            par_sun, 
                 double            par_sha,
                 double            rh_can,
+                double            vcmax_sun,
+                double            vcmax_sha,
+                double            tpu_sun,
+                double            tpu_sha,
+                double            kp_sun,
+                double            kp_sha,
                 double           *gs_mol_sun, 
                 double           *gs_mol_sha,
                 cell_data_struct *cell,
@@ -40,9 +49,9 @@ void hybrid_PHS(double           *x0sun,
 {
     // 局部变量
     size_t i, iter1, iter2;
+    bool bflag;                     // 是否重新计算水分胁迫
     double x[4];
     double gs0sun, gs0sha;          // 无水分胁迫的气孔导度
-    int bflag;                      // 是否重新计算水分胁迫
     double x1sun, x1sha;            // ci的第二个猜测值
     double f0sun, f0sha;            // f(x0)残差
     double f1sun, f1sha;            // f(x1)残差
@@ -66,7 +75,7 @@ void hybrid_PHS(double           *x0sun,
     // 初始化
     x1sun = *x0sun;
     x1sha = *x0sha;
-    bflag = 0;
+    bflag = false;
     b0sun = -1.0;
     b0sha = -1.0;
     gs0sun = 0.0;
@@ -99,31 +108,33 @@ void hybrid_PHS(double           *x0sun,
         tolsha = fabs(x1sha) * eps;
         
         // 第一次ci_func调用（计算f(x0)）
-        ci_func_PHS(x, *x0sun, *x0sha, &f0sun, &f0sha,
-                    bsun, bsha, bflag,
-                    RS_mol, gs0sun, gs0sha,
-                    gs_mol_sun, gs_mol_sha,
+        ci_func_PHS(bflag, *x0sun, *x0sha, &f0sun, &f0sha,
+                    bsun, bsha, gs_mol_sun, gs_mol_sha, 
+                    vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
+                    tpu_sun, tpu_sha, kp_sun, kp_sha, 
+                    CP, KC, KO, thm, RS_mol,
+                    qsat_T, Qair_over, pressure, air_density,
                     jesun, jesha, atmosCO2, atmosO2,
-                    lmr_sun, lmr_sha,
-                    par_sun, par_sha, rh_can,
-                    qsat_T, Qair_over);
+                    lmr_sun, lmr_sha, par_sun, par_sha, rh_can,
+                    cell, soil_con, veg_var, veg_lib);
         
         // 更新水分胁迫收敛检查变量
         dbsun = b0sun - *bsun;
         dbsha = b0sha - *bsha;
         b0sun = *bsun;
         b0sha = *bsha;
-        bflag = 0;  // false
+        bflag = false;
         
         // 第二次ci_func调用（计算f(x1)）
-        ci_func_PHS(x, x1sun, x1sha, &f1sun, &f1sha,
-                    bsun, bsha, bflag,
-                    RS_mol, gs0sun, gs0sha,
-                    gs_mol_sun, gs_mol_sha,
+        ci_func_PHS(bflag, x1sun, x1sha, &f1sun, &f1sha,
+                    bsun, bsha, gs_mol_sun, gs_mol_sha, 
+                    vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
+                    tpu_sun, tpu_sha, kp_sun, kp_sha, 
+                    CP, KC, KO, thm, RS_mol,
+                    qsat_T, Qair_over, pressure, air_density,
                     jesun, jesha, atmosCO2, atmosO2,
-                    lmr_sun, lmr_sha,
-                    par_sun, par_sha, rh_can,
-                    qsat_T, Qair_over);
+                    lmr_sun, lmr_sha, par_sun, par_sha, rh_can,
+                    cell, soil_con, veg_var, veg_lib);
         
         // ========== 内层循环：割线法求解ci ==========
         while (1) {
@@ -160,14 +171,15 @@ void hybrid_PHS(double           *x0sun,
             x1sha = x1sha + dxsha;
             
             // 调用ci_func计算新的f值
-            ci_func_PHS(x, x1sun, x1sha, &f1sun, &f1sha,
-                        bsun, bsha, bflag,
-                        RS_mol, gs0sun, gs0sha,
-                        gs_mol_sun, gs_mol_sha,
+            ci_func_PHS(bflag, x1sun, x1sha, &f1sun, &f1sha,
+                        bsun, bsha, gs_mol_sun, gs_mol_sha, 
+                        vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
+                        tpu_sun, tpu_sha, kp_sun, kp_sha, 
+                        CP, KC, KO, thm, RS_mol,
+                        qsat_T, Qair_over, pressure, air_density,
                         jesun, jesha, atmosCO2, atmosO2,
-                        lmr_sun, lmr_sha,
-                        par_sun, par_sha, rh_can,
-                        qsat_T, Qair_over);
+                        lmr_sun, lmr_sha, par_sun, par_sha, rh_can,
+                        cell, soil_con, veg_var, veg_lib);
             
             // 检查增量收敛
             if (fabs(dxsun) < tolsun && fabs(dxsha) < tolsha) {
@@ -196,14 +208,17 @@ void hybrid_PHS(double           *x0sun,
             
             // 如果函数值异号（根被包围），切换到Brent方法
             if ((f1sun * f0sun < 0.0) && (f1sha * f0sha < 0.0)) {
-                brent_PHS(&xsun, *x0sun, x1sun, f0sun, f1sun,
-                          &xsha, *x0sha, x1sha, f0sha, f1sha,
-                          tolsun, RS_mol,
-                          jesun, jesha, atmosCO2, atmosO2,
+                brent_PHS(*x0sun, x1sun, f0sun, f1sun,
+                          *x0sha, x1sha, f0sha, f1sha,
+                          tolsun, RS_mol, jesun, jesha, 
+                          atmosCO2, atmosO2,
                           lmr_sun, lmr_sha,
                           par_sun, par_sha, rh_can,
+                          qsat_T, Qair_over,
                           gs_mol_sun, gs_mol_sha,
-                          bsun, bsha, qsat_T, Qair_over);
+                          &xsun, &xsha, bsun, bsha,
+                          gs_mol_sun, gs_mol_sha);
+
                 *x0sun = xsun;
                 *x0sha = xsha;
                 break;
@@ -213,14 +228,15 @@ void hybrid_PHS(double           *x0sun,
             if (iter2 > itmax) {
                 x1sun = minxsun;
                 x1sha = minxsha;
-                ci_func_PHS(x, x1sun, x1sha, &f1sun, &f1sha,
-                            bsun, bsha, bflag,
-                            RS_mol, gs0sun, gs0sha,
-                            gs_mol_sun, gs_mol_sha,
+                ci_func_PHS(bflag, x1sun, x1sha, &f1sun, &f1sha,
+                            bsun, bsha, gs_mol_sun, gs_mol_sha, 
+                            vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
+                            tpu_sun, tpu_sha, kp_sun, kp_sha, 
+                            CP, KC, KO, thm, RS_mol,
+                            qsat_T, Qair_over, pressure, air_density,
                             jesun, jesha, atmosCO2, atmosO2,
-                            lmr_sun, lmr_sha,
-                            par_sun, par_sha, rh_can,
-                            qsat_T, Qair_over);
+                            lmr_sun, lmr_sha, par_sun, par_sha, rh_can,
+                            cell, soil_con, veg_var, veg_lib);
                 break;
             }
         } // 内层循环结束
@@ -233,7 +249,7 @@ void hybrid_PHS(double           *x0sun,
             gs0sha = *gs_mol_sha / *bsha;
         }
         
-        bflag = 1;  // true，下次外层循环重新计算水分胁迫
+        bflag = true;  // true，下次外层循环重新计算水分胁迫
         
         // 检查外层循环收敛
         if (fabs(dbsun) < toldb && fabs(dbsha) < toldb) {

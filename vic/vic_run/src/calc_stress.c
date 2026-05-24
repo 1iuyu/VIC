@@ -19,7 +19,8 @@ calc_stress(double            *bsun,
             double             Qair_over,
             double             pressure,
             double             air_density,
-            energy_bal_struct *energy,
+            double             gs_mol_sun,
+            double             gs_mol_sha,
             cell_data_struct  *cell,
             soil_con_struct   *soil_con,
             veg_var_struct    *veg_var,
@@ -30,6 +31,7 @@ calc_stress(double            *bsun,
     size_t i, j, k;
     size_t iter;
     bool flag = false;
+    bool night = false;
     (*bsun) = 1.0;
     (*bsha) = 1.0;
     double qflx_sun = 0.0;
@@ -42,19 +44,21 @@ calc_stress(double            *bsun,
     double leaf_shade = veg_var->leaf_shade;
     double conduct_max = veg_lib->conduct_max; // 最大导度
     double Canopy_Upper = veg_lib->Canopy_Upper;
-    if (energy->aPAR_sunlit > 0.0) {
-        vegwp[0] = 1.0;
-        vegwp[1] = 0.0;
+    // 夜间处理：如果阳叶水势为正，说明植物处于夜间状态，使用阴叶水势作为阳叶水势的近似值
+    if (vegwp[0] > 0.0) {
+        night = true;
+        vegwp[0] = vegwp[1];
     }
-    // Medlyn intercept of conductance-photosynthesis relationship [umol H2O]
-    double gsmin = 200.0;
+    else {
+        night = false;
+    }
     // 复制以避免重写原始导度值
-    double gs0sun = gsmin;
-    double gs0sha = gsmin;
+    double gs0sun = gs_mol_sun;
+    double gs0sha = gs_mol_sha;
     
     /* 计算蒸腾需求（未受胁迫的潜在蒸腾） */
     bool CALC_TRANSP = true;
-    get_qflx(CALC_TRANSP, RS_mol, 
+    get_qflx(CALC_TRANSP, RS_mol,
              qsat_T, Qair_over, 
              pressure, air_density, 
              thm, &gs0sun, 
@@ -244,14 +248,14 @@ calc_stress(double            *bsun,
                  &qsha, veg_var);
         
         if (qflx_sun > 0.0) {
-            *bsun = gs0sun / gsmin;
+            *bsun = gs0sun / gs_mol_sun;
         } 
         else {
             *bsun = plc(vegwp[0], matric50);
         }
         
         if (qflx_sha > 0.0) {
-            *bsha = gs0sha / gsmin;
+            *bsha = gs0sha / gs_mol_sha;
         } 
         else {
             *bsha = plc(vegwp[1], matric50);
@@ -267,9 +271,9 @@ calc_stress(double            *bsun,
     }
     
     // 夜间处理
-    if (energy->aPAR_sunlit <= 0.0) {
-        gs0sun = (*bsun) * gsmin;
-        gs0sha = (*bsha) * gsmin;
+    if (night) {
+        gs0sun = (*bsun) * gs_mol_sun;
+        gs0sha = (*bsha) * gs_mol_sha;
         getvegwp(vegwp, RS_mol, &gs0sun, &gs0sha, 
                  qsat_T, Qair_over, &soilflux, 
                  Canopy_Upper, matric50, 

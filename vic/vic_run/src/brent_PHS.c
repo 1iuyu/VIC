@@ -11,20 +11,33 @@
  * @brief  use a hybrid solver to find the root of the ci_func equation 
  *         for sunlit and shaded leaves
  *****************************************************************************/
-void brent_PHS(double *xsun, double x1sun, 
-               double x2sun, double f1sun, 
-               double f2sun, double *xsha, 
-               double x1sha, double x2sha, 
-               double f1sha, double f2sha,
-               double tol, double RS_mol,
-               double jesun, double jesha,
-               double atmosCO2, double atmosO2,
-               double lmr_sun, double lmr_sha,
-               double par_sun, double par_sha,
-               double rh_can,
-               double *gs_mol_sun, double *gs_mol_sha,
-               double *bsun, double *bsha,
-               double qsat_T, double Qair_over)
+void brent_PHS(double   x1sun, 
+               double   x2sun, 
+               double   f1sun, 
+               double   f2sun, 
+               double   x1sha, 
+               double   x2sha, 
+               double   f1sha, 
+               double   f2sha,
+               double   tol, 
+               double   RS_mol,
+               double   jesun, 
+               double   jesha,
+               double   atmosCO2, 
+               double   atmosO2,
+               double   lmr_sun, 
+               double   lmr_sha,
+               double   par_sun, 
+               double   par_sha,
+               double   rh_can,
+               double   qsat_T, 
+               double   Qair_over,
+               double   *xsun,
+               double   *xsha,
+               double   *bsun, 
+               double   *bsha,
+               double   *gs_mol_sun, 
+               double   *gs_mol_sha)
 {
     // 局部变量
     double gs0sun, gs0sha;              // 无水分胁迫的气孔导度副本
@@ -127,7 +140,8 @@ void brent_PHS(double *xsun, double x1sun,
                     // 割线法退化为线性插值
                     pv[phase] = 2.0 * xm[phase] * sv[phase];
                     qv[phase] = 1.0 - sv[phase];
-                } else {
+                } 
+                else {
                     // 完整反二次插值
                     qv[phase] = fa[phase] / fc[phase];
                     rv[phase] = fb[phase] / fc[phase];
@@ -179,10 +193,10 @@ void brent_PHS(double *xsun, double x1sun,
         gs0sha = *gs_mol_sha;
         
         // 调用ci_func_PHS计算新点的函数值
-        ci_func_PHS(x, b[0], b[1], &fb[0], &fb[1],
-                    bsun, bsha, bflag,
+        ci_func_PHS(bflag, b[0], b[1], &fb[0], &fb[1],
+                    bsun, bsha, gs_mol_sun, gs_mol_sha,
+                    vegwp, gs0sun, gs0sha, vcmax_sun,
                     RS_mol, gs0sun, gs0sha,
-                    gs_mol_sun, gs_mol_sha,
                     jesun, jesha, atmosCO2, atmosO2,
                     lmr_sun, lmr_sha,
                     par_sun, par_sha, rh_can,

@@ -315,18 +315,21 @@ PhotoHydroStress(double             thm,
             hybrid_PHS(&ci_sun, &ci_sha,
                         vegwp, &bsun, &bsha,
                         je_sun, je_sha,
+                        CP, KC, KO,
                         thm, RS_mol,
                         qsat_T, Qair_over,
                         pressure, air_density,
                         atmosCO2, atmosO2,
                         lmr_sun, lmr_sha,
                         energy->aPAR_sunlit, 
-                        energy->aPAR_shade,
-                        rh_can,
+                        energy->aPAR_shade, rh_can,
+                        vcmax_sun, vcmax_sha,
+                        tpu_sun, tpu_sha,
                         &kp_sun, &kp_sha,
                         &gsun, &gsha,
-                        energy, cell, 
-                        soil_con, veg_var, veg_lib);
+                        cell, soil_con, 
+                        veg_var, veg_lib);
+
             if (an_sun < 0.0) {
                 gs_mol_sun = max(bsun * veg_lib->medlynint, 1.0);
             }
@@ -410,6 +413,9 @@ PhotoHydroStress(double             thm,
         }
         else {
             // 夜间或无光照条件下，光合作用为0，维护呼吸仍然存在
+            vegwp[0] = 1.0; // temporary signal for night time
+            double gsminsun = veg_lib->medlynint;
+            double gsminsha = veg_lib->medlynint;
             an_sun = 0.0;
             an_sha = 0.0;
             ci_sun = 0.0;
@@ -429,9 +435,9 @@ PhotoHydroStress(double             thm,
             // 调用calc_stress函数计算水分胁迫因子
             calc_stress(&bsun, &bsha, vegwp, thm, RS_mol, 
                         qsat_T, Qair_over,
-                        pressure, air_density,
-                        energy, cell, 
-                        soil_con, veg_var, veg_lib);
+                        pressure, air_density, 
+                        gsminsun, gsminsha,
+                        cell, soil_con, veg_var, veg_lib);
 
         }
     }

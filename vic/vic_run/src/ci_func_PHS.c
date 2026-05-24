@@ -9,46 +9,46 @@
 /******************************************************************************
  * @brief  Calculate the transpiration stress using a plant hydraulics approach.
  *****************************************************************************/
-void ci_func_PHS(bool               bflag,
-                 double             cisun, 
-                 double             cisha,
-                 double            *fvalsun, 
-                 double            *fvalsha,
-                 double            *bsun, 
-                 double            *bsha,
-                 double            *gs_mol_sun, 
-                 double            *gs_mol_sha,
-                 double            *vegwp,
-                 double             vcmax_sun, 
-                 double             vcmax_sha,
-                 double             tpu_sun, 
-                 double             tpu_sha,
-                 double             kp_sun, 
-                 double             kp_sha,
-                 double             cp, 
-                 double             kc, 
-                 double             ko, 
-                 double             qe,
-                 double             thm, 
-                 double             RS_mol,
-                 double             qsat_T, 
-                 double             Qair_over,
-                 double             pressure, 
-                 double             air_density,
-                 double             jesun, 
-                 double             jesha,
-                 double             atmosCO2, 
-                 double             atmosO2,
-                 double             lmr_sun, 
-                 double             lmr_sha,
-                 double             par_sun, 
-                 double             par_sha,
-                 double             rh_can,
-                 energy_bal_struct *energy,
-                 cell_data_struct  *cell,
-                 soil_con_struct   *soil_con,
-                 veg_var_struct    *veg_var,
-                 veg_lib_struct    *veg_lib)
+void ci_func_PHS(bool              bflag,
+                 double            cisun, 
+                 double            cisha,
+                 double           *fvalsun, 
+                 double           *fvalsha,
+                 double           *bsun, 
+                 double           *bsha,
+                 double           *gs_mol_sun, 
+                 double           *gs_mol_sha,
+                 double           *vegwp,
+                 double            gsminsun,
+                 double            gsminsha,
+                 double            vcmax_sun, 
+                 double            vcmax_sha,
+                 double            tpu_sun, 
+                 double            tpu_sha,
+                 double            kp_sun, 
+                 double            kp_sha,
+                 double            cp, 
+                 double            kc, 
+                 double            ko,
+                 double            thm, 
+                 double            RS_mol,
+                 double            qsat_T, 
+                 double            Qair_over,
+                 double            pressure, 
+                 double            air_density,
+                 double            jesun, 
+                 double            jesha,
+                 double            atmosCO2, 
+                 double            atmosO2,
+                 double            lmr_sun, 
+                 double            lmr_sha,
+                 double            par_sun, 
+                 double            par_sha,
+                 double            rh_can,
+                 cell_data_struct *cell,
+                 soil_con_struct  *soil_con,
+                 veg_var_struct   *veg_var,
+                 veg_lib_struct   *veg_lib)
 {
     double ai;                  // 中间协同限制光合速率
     double cs_sun, cs_sha;      // 叶面CO₂分压 (Pa)
@@ -61,7 +61,10 @@ void ci_func_PHS(bool               bflag,
     double ap_sun, ap_sha;      // 产物限制光合
     double ag_sun, ag_sha;      // 协同限制总光合
     double max_cs = 50000.0;    // 最大叶面CO₂分压 (Pa)
-    
+    double qe = 0.0; // Quantum efficiency (mol CO2 / mol photons);
+    if (veg_lib->Ctype == 1) {
+        qe = 0.05;
+    }
     double medlynslope = veg_lib->medlynslope;
     double medlynint = veg_lib->medlynint;
     double theta_cj = veg_lib->theta_cj; // AC-AJ耦合系数
@@ -71,9 +74,9 @@ void ci_func_PHS(bool               bflag,
     if (bflag) {
         calc_stress(&bsun, &bsha, vegwp, thm, RS_mol, 
                     qsat_T, Qair_over,
-                    pressure, air_density,
-                    energy, cell, 
-                    soil_con, veg_var, veg_lib);
+                    pressure, air_density, 
+                    gsminsun, gsminsha,
+                    cell, soil_con, veg_var, veg_lib);
     }
     
     // ========== 计算三种限制下的光合速率 ==========
@@ -164,15 +167,15 @@ void ci_func_PHS(bool               bflag,
     
     // Medlyn模型
     if (an_sun >= 0.0) {
-        term = 1.6 * an_sun / (cs_sun / pressure * 1e6);
+        term = 1.6 * an_sun / (cs_sun / pressure * 1.0e6);
         aquad = 1.0;
-        bquad = -(2.0 * (medlynint * 1e-6 + term) + 
-                    (medlynslope * term) * (medlynslope * term) / (RS_mol * 1e-6 * rh_can));
-        cquad = medlynint * medlynint * 1e-12 +
-                (2.0 * medlynint * 1e-6 + term * 
+        bquad = -(2.0 * (medlynint * 1.0e-6 + term) + 
+                    (medlynslope * term) * (medlynslope * term) / (RS_mol * 1.0e-6 * rh_can));
+        cquad = medlynint * medlynint * 1.0e-12 +
+                (2.0 * medlynint * 1.0e-6 + term * 
                 (1.0 - medlynslope * medlynslope / rh_can)) * term;
         solve_quadratic(aquad, bquad, cquad, &r1, &r2);
-        *gs_mol_sun = max(r1, r2) * 1e6;
+        *gs_mol_sun = max(r1, r2) * 1.0e6;
     }
     
     // 阴叶
@@ -180,15 +183,15 @@ void ci_func_PHS(bool               bflag,
         cs_sha = atmosCO2 - 1.4 / RS_mol * an_sha * pressure;
         cs_sha = max(cs_sha, max_cs);
         
-        term = 1.6 * an_sha / (cs_sha / pressure * 1e6);
+        term = 1.6 * an_sha / (cs_sha / pressure * 1.0e6);
         aquad = 1.0;
-        bquad = -(2.0 * (medlynint * 1e-6 + term) + 
-                    (medlynslope * term) * (medlynslope * term) / (RS_mol * 1e-6 * rh_can));
-        cquad = medlynint * medlynint * 1e-12 +
-                (2.0 * medlynint * 1e-6 + term * 
+        bquad = -(2.0 * (medlynint * 1.0e-6 + term) + 
+                    (medlynslope * term) * (medlynslope * term) / (RS_mol * 1.0e-6 * rh_can));
+        cquad = medlynint * medlynint * 1.0e-12 +
+                (2.0 * medlynint * 1.0e-6 + term * 
                 (1.0 - medlynslope * medlynslope / rh_can)) * term;
         solve_quadratic(aquad, bquad, cquad, &r1, &r2);
-        *gs_mol_sha = max(r1, r2) * 1e6;
+        *gs_mol_sha = max(r1, r2) * 1.0e6;
     }
     
     // ========== 计算残差函数值 ==========

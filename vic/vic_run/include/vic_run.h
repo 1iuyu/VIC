@@ -16,12 +16,11 @@ void AdvectedEnergy(double, double, double, double, double,
 void AdvectedEnergyGlac(double, double, double, double, double *);
 bool assert_close_double(double x, double y, double rtol, double abs_tol);
 bool assert_close_float(float x, float y, float rtol, float abs_tol);
-int calc_stress(double *, double *, double *, double, double, 
-                double, double, double, double, energy_bal_struct *, 
-                cell_data_struct *, soil_con_struct *, veg_var_struct *, veg_lib_struct *);
-int calc_energy_bal(size_t, double, double, double,
-                    force_data_struct *, energy_bal_struct *, 
-                    cell_data_struct *, snow_data_struct *, 
+int calc_stress(double *, double *, double *, double, double, double, double,
+                double, double, double, double, cell_data_struct *, 
+                soil_con_struct *, veg_var_struct *, veg_lib_struct *);
+int calc_energy_bal(size_t, double, double, double, force_data_struct *, 
+                    energy_bal_struct *, cell_data_struct *, snow_data_struct *, 
                     soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_energy_bal_glac(size_t, double, double, double,
                          force_data_struct *, energy_bal_struct *, cell_data_struct *,
@@ -53,6 +52,12 @@ void canopy_two_stream(size_t, size_t, double, double *, energy_bal_struct *,
 double compute_coszen(double, double, double, unsigned short int, unsigned int);
 void compute_soil_resis(cell_data_struct *, soil_con_struct *);
 void correct_precip(double *, double, double, double, double);
+void ci_func_PHS(bool, double, double, double *, double *, double *, double *,
+                 double *, double *, double *, double, double, double, double,
+                 double, double, double, double, double, double, double, double,
+                 double, double, double, double, double, double, double, double,
+                 double, double, double, double, double, double,
+                 cell_data_struct *, soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 int distribute_node_moisture_properties(bool, cell_data_struct *, soil_con_struct *);
 void distribute_snow_state(snow_data_struct *);
 double devries_weight(double, double, double);
