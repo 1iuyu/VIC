@@ -38,32 +38,6 @@ PhotoHydroStress(double             thm,
     double *LAI_z = veg_var->LAI_z;
     double *hksr_int = cell->hksr_int;
     double vegwp[4]; // 水势：0-阳叶，1-阴叶，2-木质部，3-根部
-    double kp_sun[MAX_CANOPYS];
-    double kp_sha[MAX_CANOPYS];
-    double par_sun[MAX_CANOPYS];
-    double par_sha[MAX_CANOPYS];
-    double lmr_sun[MAX_CANOPYS];
-    double lmr_sha[MAX_CANOPYS];
-    double vcmax_sun[MAX_CANOPYS];
-    double jmax_sun[MAX_CANOPYS];
-    double tpu_sun[MAX_CANOPYS];
-    double vcmax_sha[MAX_CANOPYS];
-    double jmax_sha[MAX_CANOPYS];
-    double tpu_sha[MAX_CANOPYS];
-    // 初始化变量
-    for (i = 0; i < MAX_CANOPYS; i++) {
-        kp_sun[i] = 0.0;
-        kp_sha[i] = 0.0;
-        par_sun[i] = 0.0;
-        par_sha[i] = 0.0;
-        lmr_sun[i] = 0.0;
-        lmr_sha[i] = 0.0;
-        vcmax_sun[i] = 0.0;
-        jmax_sun[i] = 0.0;
-        tpu_sun[i] = 0.0;
-        jmax_sha[i] = 0.0;
-        tpu_sha[i] = 0.0;
-    }
     // initialize variables
     Nsoil = cell->Nsoil;
     Ncanopy = cell->Ncanopy;
@@ -195,6 +169,11 @@ PhotoHydroStress(double             thm,
     double ac_sun, ac_sha;
     double aj_sun, aj_sha;
     double ap_sun, ap_sha;
+    double lmr_sun, lmr_sha;
+    double vcmax_sun, vcmax_sha;
+    double tpu_sun, tpu_sha;
+    double kp_sun, kp_sha;
+    double jmax_sun, jmax_sha;
     double hs = 0.0;
     double gs = 0.0;
     double cs_sun = 0.0;
@@ -203,14 +182,25 @@ PhotoHydroStress(double             thm,
     double gs_mol_sha = 0.0;
     double rs_sun = 0.0;
     double rs_sha = 0.0;
-    double psn_sun = 0.0;
-    double psn_sha = 0.0;
-    double psn_wc_sun = 0.0;
-    double psn_wj_sun = 0.0;
-    double psn_wp_sun = 0.0;
-    double psn_wc_sha = 0.0;
-    double psn_wj_sha = 0.0;
-    double psn_wp_sha = 0.0;
+    double psn_sun[MAX_CANOPYS];
+    double psn_sha[MAX_CANOPYS];
+    double psn_wc_sun[MAX_CANOPYS];
+    double psn_wj_sun[MAX_CANOPYS];
+    double psn_wp_sun[MAX_CANOPYS];
+    double psn_wc_sha[MAX_CANOPYS];
+    double psn_wj_sha[MAX_CANOPYS];
+    double psn_wp_sha[MAX_CANOPYS];
+    // 初始化光合作用和水分胁迫变量
+    for (i = 0; i < Ncanopy; i++) {
+        psn_sun[i] = 0.0;
+        psn_sha[i] = 0.0;
+        psn_wc_sun[i] = 0.0;
+        psn_wj_sun[i] = 0.0;
+        psn_wp_sun[i] = 0.0;
+        psn_wc_sha[i] = 0.0;
+        psn_wj_sha[i] = 0.0;
+        psn_wp_sha[i] = 0.0;
+    }
     double LAIcanopy = 0.0;
     double nscaler_sun = 0.0;
     double nscaler_sha = 0.0;
@@ -220,7 +210,7 @@ PhotoHydroStress(double             thm,
             LAIcanopy = 0.5 * NetLAI;
         }
         else {
-            LAIcanopy = 0.5 * NetLAI;
+            LAIcanopy += 0.5 * (LAI_z[i-1] + LAI_z[i]);
         }
         if (Ncanopy == 1) {
             nscaler_sun = veg_var->ksun_vcmax;
@@ -235,27 +225,27 @@ PhotoHydroStress(double             thm,
         double lmr25_sha = lmr25top * nscaler_sha;
 
         if (veg_lib->Ctype == 0) {
-            lmr_sun[i] = lmr25_sun * ft(Tfoliage, lmrha) * fth(Tfoliage, lmrhd, lmrse, lmrc);
-            lmr_sha[i] = lmr25_sha * ft(Tfoliage, lmrha) * fth(Tfoliage, lmrhd, lmrse, lmrc);
+            lmr_sun = lmr25_sun * ft(Tfoliage, lmrha) * fth(Tfoliage, lmrhd, lmrse, lmrc);
+            lmr_sha = lmr25_sha * ft(Tfoliage, lmrha) * fth(Tfoliage, lmrhd, lmrse, lmrc);
         } 
         else {
-            lmr_sun[i] = lmr25_sun * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
-            lmr_sun[i] = lmr_sun[i] / (1.0 + exp(1.3 * (Tfoliage - (CONST_TKFRZ + 55.0))));
-            lmr_sha[i] = lmr25_sha * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
-            lmr_sha[i] = lmr_sha[i] / (1.0 + exp(1.3 * (Tfoliage - (CONST_TKFRZ + 55.0))));
+            lmr_sun = lmr25_sun * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
+            lmr_sun = lmr_sun / (1.0 + exp(1.3 * (Tfoliage - (CONST_TKFRZ + 55.0))));
+            lmr_sha = lmr25_sha * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
+            lmr_sha = lmr_sha / (1.0 + exp(1.3 * (Tfoliage - (CONST_TKFRZ + 55.0))));
         }
         // 低LAI时减少lmr
-        lmr_sun[i] = lmr_sun[i] * min((0.2 * exp(3.218 * LAI_z[i])), 1.0);
-        lmr_sha[i] = lmr_sha[i] * min((0.2 * exp(3.218 * LAI_z[i])), 1.0);
+        lmr_sun = lmr_sun * min((0.2 * exp(3.218 * LAI_z[i])), 1.0);
+        lmr_sha = lmr_sha * min((0.2 * exp(3.218 * LAI_z[i])), 1.0);
         // 光抑制
-        if (light_inhibit && par_sun[i] > 0.0) {
-            lmr_sun[i] = lmr_sun[i] * 0.67;
+        if (light_inhibit && energy->aPAR_sunlit > 0.0) {
+            lmr_sun = lmr_sun * 0.67;
         }
-        if (light_inhibit && par_sha[i] > 0.0) {
-            lmr_sha[i] = lmr_sha[i] * 0.67;
+        if (light_inhibit && energy->aPAR_shade > 0.0) {
+            lmr_sha = lmr_sha * 0.67;
         }
         // 白天计算光合作用
-        if (par_sun[i] > 0.0) {
+        if (veg_var->leaf_sun > 0.0) {
             // Vcmax, Jmax, TPU 的温度调整
             double vcmaxse = (668.39 - 1.07 * min(max((Tfoliage - CONST_TKFRZ), 11.0), 35.0)) * vcmaxse_sf;
             double jmaxse = (659.70 - 0.75 * min(max((Tfoliage - CONST_TKFRZ), 11.0), 35.0)) * jmaxse_sf;
@@ -266,65 +256,52 @@ PhotoHydroStress(double             thm,
             double jmaxc = fth25(jmaxhd, jmaxse);
             double tpuc = fth25(tpuhd, tpuse);
             
-            vcmax_sun[i] = vcmax25 * nscaler_sun * ft(Tfoliage, vcmaxha) * fth(Tfoliage, vcmaxhd, vcmaxse, vcmaxc);
-            jmax_sun[i] = jmax25 * nscaler_sun * ft(Tfoliage, jmaxha) * fth(Tfoliage, jmaxhd, jmaxse, jmaxc);
-            tpu_sun[i] = tpu25 * nscaler_sun * ft(Tfoliage, tpuha) * fth(Tfoliage, tpuhd, tpuse, tpuc);
+            vcmax_sun = vcmax25 * nscaler_sun * ft(Tfoliage, vcmaxha) * fth(Tfoliage, vcmaxhd, vcmaxse, vcmaxc);
+            jmax_sun = jmax25 * nscaler_sun * ft(Tfoliage, jmaxha) * fth(Tfoliage, jmaxhd, jmaxse, jmaxc);
+            tpu_sun = tpu25 * nscaler_sun * ft(Tfoliage, tpuha) * fth(Tfoliage, tpuhd, tpuse, tpuc);
             
-            vcmax_sha[i] = vcmax25 * nscaler_sha * ft(Tfoliage, vcmaxha) * fth(Tfoliage, vcmaxhd, vcmaxse, vcmaxc);
-            jmax_sha[i] = jmax25 * nscaler_sha * ft(Tfoliage, jmaxha) * fth(Tfoliage, jmaxhd, jmaxse, jmaxc);
-            tpu_sha[i] = tpu25 * nscaler_sha * ft(Tfoliage, tpuha) * fth(Tfoliage, tpuhd, tpuse, tpuc);
+            vcmax_sha = vcmax25 * nscaler_sha * ft(Tfoliage, vcmaxha) * fth(Tfoliage, vcmaxhd, vcmaxse, vcmaxc);
+            jmax_sha = jmax25 * nscaler_sha * ft(Tfoliage, jmaxha) * fth(Tfoliage, jmaxhd, jmaxse, jmaxc);
+            tpu_sha = tpu25 * nscaler_sha * ft(Tfoliage, tpuha) * fth(Tfoliage, tpuhd, tpuse, tpuc);
             
             if (veg_lib->Ctype == 1) {
                 // C4植物的温度响应
                 double temp_factor_sun = pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
                 temp_factor_sun = temp_factor_sun / (1.0 + exp(0.2 * ((CONST_TKFRZ + 15.0) - Tfoliage)));
                 temp_factor_sun = temp_factor_sun / (1.0 + exp(0.3 * (Tfoliage - (CONST_TKFRZ + 40.0))));
-                vcmax_sun[i] = vcmax25 * nscaler_sun * temp_factor_sun;
+                vcmax_sun = vcmax25 * nscaler_sun * temp_factor_sun;
                 
                 double temp_factor_sha = pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
                 temp_factor_sha = temp_factor_sha / (1.0 + exp(0.2 * ((CONST_TKFRZ + 15.0) - Tfoliage)));
                 temp_factor_sha = temp_factor_sha / (1.0 + exp(0.3 * (Tfoliage - (CONST_TKFRZ + 40.0))));
-                vcmax_sha[i] = vcmax25 * nscaler_sha * temp_factor_sha;
+                vcmax_sha = vcmax25 * nscaler_sha * temp_factor_sha;
             }
             
-            kp_sun[i] = kp25 * nscaler_sun * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
-            kp_sha[i] = kp25 * nscaler_sha * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
-            
-            // 计算电子传输速率
-            double qabs_sun = 0.5 * (1.0 - fnps) * par_sun[i] * 4.6;
-            double qabs_sha = 0.5 * (1.0 - fnps) * par_sha[i] * 4.6;
-            
-            // 求解二次方程获取je
-            double theta_psii = 0.7;  // 经验曲率参数
-            double a = theta_psii;
-            double b_sun = -(qabs_sun + jmax_sun[i]);
-            double c_sun = qabs_sun * jmax_sun[i];
-            double je_sun = solve_quadratic_min(a, b_sun, c_sun);
-            
-            double b_sha = -(qabs_sha + jmax_sha[i]);
-            double c_sha = qabs_sha * jmax_sha[i];
-            double je_sha = solve_quadratic_min(a, b_sha, c_sha);
+            kp_sun = kp25 * nscaler_sun * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
+            kp_sha = kp25 * nscaler_sha * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
             
             // 调用混合求解器计算Ci和gs
             double ceair = min(vp_over, esat_T);
-            double rh_can;
+            double rh_can = ceair / esat_T;
             
             // 阳叶
+            double theta_psii = 0.7;  // 经验曲率参数
             double r1, r2;
             double aquad, bquad, cquad;
-            double qabs = 0.5 * (1.0 - fnps) * par_sun[i] * 4.6;
+            double qabs = 0.5 * (1.0 - fnps) * energy->aPAR_sunlit * 4.6;
             aquad = theta_psii;
-            bquad = -(qabs + jmax_sun[i]);
-            cquad = qabs * jmax_sun[i];
+            bquad = -(qabs + jmax_sun);
+            cquad = qabs * jmax_sun;
             solve_quadratic(aquad, bquad, cquad, &r1, &r2);
             double je_sun = min(r1, r2);
             
             // 阴叶
-            qabs = 0.5 * (1.0 - fnps) * par_sha[i] * 4.6;
-            bquad = -(qabs + jmax_sha[i]);
-            cquad = qabs * jmax_sha[i];
+            qabs = 0.5 * (1.0 - fnps) * energy->aPAR_shade * 4.6;
+            bquad = -(qabs + jmax_sha);
+            cquad = qabs * jmax_sha;
             solve_quadratic(aquad, bquad, cquad, &r1, &r2);
             double je_sha = min(r1, r2);
+            // 初始猜测Ci和气孔导度，后续迭代更新
             double ci_sun, ci_sha;
             if (veg_lib->Ctype == 0) {
                 ci_sun = 0.7 * atmosCO2; // 初始猜测Ci为大气CO2的70%
@@ -334,6 +311,7 @@ PhotoHydroStress(double             thm,
                 ci_sun = 0.4 * atmosCO2; // C4植物初始猜测Ci为大气CO2的40%
                 ci_sha = 0.4 * atmosCO2;
             }
+            // 计算ci和气孔导度的混合求解器
             hybrid_PHS(&ci_sun, &ci_sha,
                         vegwp, &bsun, &bsha,
                         je_sun, je_sha,
@@ -341,10 +319,11 @@ PhotoHydroStress(double             thm,
                         qsat_T, Qair_over,
                         pressure, air_density,
                         atmosCO2, atmosO2,
-                        lmr_sun[i], lmr_sha[i],
-                        par_sun[i], par_sha[i],
+                        lmr_sun, lmr_sha,
+                        energy->aPAR_sunlit, 
+                        energy->aPAR_shade,
                         rh_can,
-                        &kp_sun[i], &kp_sha[i],
+                        &kp_sun, &kp_sha,
                         &gsun, &gsha,
                         energy, cell, 
                         soil_con, veg_var, veg_lib);
@@ -362,7 +341,7 @@ PhotoHydroStress(double             thm,
             ci_sun = atmosCO2 - an_sun * pressure *
                 (1.4 * gs_mol_sun + 1.6 * RS_mol) /
                 (RS_mol * gs_mol_sun);
-            ci_sun = max(ci_sun, 1e-6);
+            ci_sun = max(ci_sun, 1.0e-6);
             
             // 阴叶
             cs_sha = atmosCO2 - 1.4 / RS_mol * an_sha * pressure;
@@ -371,7 +350,7 @@ PhotoHydroStress(double             thm,
             ci_sha = atmosCO2 - an_sha * pressure *
                 (1.4 * gs_mol_sha + 1.6 * RS_mol) /
                 (RS_mol * gs_mol_sha);
-            ci_sha = max(ci_sha, 1e-6);
+            ci_sha = max(ci_sha, 1.0e-6);
             
             // ========== 转换为气孔阻力 ==========
             gs = gs_mol_sun / CF;
@@ -381,39 +360,38 @@ PhotoHydroStress(double             thm,
             rs_sha = min(1.0 / gs, rsmax0);
             
             // ========== 记录光合速率和限制因子 ==========
-            // 晴叶
-            psn_sun = ag_sun;
-            psn_wc_sun = 0.0;
-            psn_wj_sun = 0.0;
-            psn_wp_sun = 0.0;
-            
+            // 阳叶
+            psn_sun[i] = ag_sun;
+            psn_wc_sun[i] = 0.0;
+            psn_wj_sun[i] = 0.0;
+            psn_wp_sun[i] = 0.0;
+            // 根据限制因子分配光合速率
             if (ac_sun <= aj_sun && ac_sun <= ap_sun) {
-                psn_wc_sun = psn_sun;
+                psn_wc_sun[i] = psn_sun[i];
             } 
             else if (aj_sun < ac_sun && aj_sun <= ap_sun) {
-                psn_wj_sun = psn_sun;
+                psn_wj_sun[i] = psn_sun[i];
             } 
             else if (ap_sun < ac_sun && ap_sun < aj_sun) {
-                psn_wp_sun = psn_sun;
+                psn_wp_sun[i] = psn_sun[i];
             } 
             else if (ap_sun < ac_sun && ap_sun < aj_sun) {
-                psn_wp_sun = psn_sun;
+                psn_wp_sun[i] = psn_sun[i];
             }
-            
             // 阴叶
-            psn_sha = ag_sha;
-            psn_wc_sha = 0.0;
-            psn_wj_sha = 0.0;
-            psn_wp_sha = 0.0;
+            psn_sha[i] = ag_sha;
+            psn_wc_sha[i] = 0.0;
+            psn_wj_sha[i] = 0.0;
+            psn_wp_sha[i] = 0.0;
             
             if (ac_sha <= aj_sha && ac_sha <= ap_sha) {
-                psn_wc_sha = psn_sha;
+                psn_wc_sha[i] = psn_sha[i];
             } 
             else if (aj_sha < ac_sha && aj_sha <= ap_sha) {
-                psn_wj_sha = psn_sha;
+                psn_wj_sha[i] = psn_sha[i];
             } 
             else if (ap_sha < ac_sha && ap_sha < aj_sha) {
-                psn_wp_sha = psn_sha;
+                psn_wp_sha[i] = psn_sha[i];
             }
             
             // ========== Ball-Berry 一致性校验 ==========
@@ -440,8 +418,14 @@ PhotoHydroStress(double             thm,
             gs_mol_sha = 0.0;
             rs_sun = rsmax0;
             rs_sha = rsmax0;
-            psn_sun = 0.0;
-            psn_sha = 0.0;
+            psn_sun[i] = 0.0;
+            psn_sha[i] = 0.0;
+            psn_wc_sun[i] = 0.0;
+            psn_wj_sun[i] = 0.0;
+            psn_wp_sun[i] = 0.0;
+            psn_wc_sha[i] = 0.0;
+            psn_wj_sha[i] = 0.0;
+            psn_wp_sha[i] = 0.0;
             // 调用calc_stress函数计算水分胁迫因子
             calc_stress(&bsun, &bsha, vegwp, thm, RS_mol, 
                         qsat_T, Qair_over,
@@ -451,6 +435,42 @@ PhotoHydroStress(double             thm,
 
         }
     }
+    // 计算冠层阻力
+    double laican_sun = 0.0;
+    double gscan_sun = 0.0;
+    double RS_sunlit = 0.0;
+    double RS_shade = 0.0;
+    for (i = 0; i < Ncanopy; i++) {
+        gscan_sun += LAI_z[i] / (rs_sun + cell->Ra_leaf);
+        laican_sun += LAI_z[i];
+    }
+    if (laican_sun > 0.0) {
+        RS_sunlit = laican_sun / gscan_sun - cell->Ra_leaf;
+    }
+    else {
+        RS_sunlit = 0.0;
+    }
+    double laican_sha = 0.0;
+    double gscan_sha = 0.0;
+    for (i = 0; i < Ncanopy; i++) {
+        gscan_sha += LAI_z[i] / (rs_sha + cell->Ra_leaf);
+        laican_sha += LAI_z[i];
+    }
+    if (laican_sha > 0.0) {
+        RS_shade = laican_sha / gscan_sha - cell->Ra_leaf;
+    }
+    else {
+        RS_shade = 0.0;
+    }
+    if (laican_sun + laican_sha > 0.0) {
+        cell->transp_fact = bsun * (laican_sun / (laican_sun + laican_sha)) +
+                            bsha * (laican_sha / (laican_sun + laican_sha));
+    }
+    else {
+        cell->transp_fact = bsun;
+    }
+    veg_var->RS_sunlit = RS_sunlit;
+    veg_var->RS_shade = RS_shade;
 
     return (0);
 }
