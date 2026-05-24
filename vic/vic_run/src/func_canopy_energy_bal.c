@@ -223,7 +223,7 @@ func_canopy_energy_bal(double             step_dt,
         **********************/
         PhotoHydroStress(thm, esat_T, 
                          qsat_T, vp_over, 
-                         pressure, 
+                         Qair_over, pressure, 
                          air_density, energy, 
                          cell, soil_con,
                          veg_var, veg_lib);
