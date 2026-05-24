@@ -9,30 +9,46 @@
 /******************************************************************************
  * @brief  Calculate the transpiration stress using a plant hydraulics approach.
  *****************************************************************************/
-void ci_func_PHS(double cisun, double cisha,
-                double *fvalsun, double *fvalsha,
-                double *bsun, double *bsha, double vegwp,
-                double vcmax_sun, double vcmax_sha,
-                double tpu_sun, double tpu_sha,
-                double kp_sun, double kp_sha,
-                double cp, double kc, double ko, double qe,
-                int bflag,
-                double thm, double RS_mol,
-                double qsat_T, double Qair_over,
-                double pressure, double air_density,
-                double gb_mol,
-                double *gs_mol_sun, double *gs_mol_sha,
-                double jesun, double jesha,
-                double atmosCO2, 
-                double atmosO2,
-                double lmr_sun, double lmr_sha,
-                double par_sun, double par_sha,
-                double rh_can,
-                energy_bal_struct *energy,
-                cell_data_struct  *cell,
-                soil_con_struct   *soil_con,
-                veg_var_struct    *veg_var,
-                veg_lib_struct    *veg_lib)
+void ci_func_PHS(bool               bflag,
+                 double             cisun, 
+                 double             cisha,
+                 double            *fvalsun, 
+                 double            *fvalsha,
+                 double            *bsun, 
+                 double            *bsha,
+                 double            *gs_mol_sun, 
+                 double            *gs_mol_sha,
+                 double            *vegwp,
+                 double             vcmax_sun, 
+                 double             vcmax_sha,
+                 double             tpu_sun, 
+                 double             tpu_sha,
+                 double             kp_sun, 
+                 double             kp_sha,
+                 double             cp, 
+                 double             kc, 
+                 double             ko, 
+                 double             qe,
+                 double             thm, 
+                 double             RS_mol,
+                 double             qsat_T, 
+                 double             Qair_over,
+                 double             pressure, 
+                 double             air_density,
+                 double             jesun, 
+                 double             jesha,
+                 double             atmosCO2, 
+                 double             atmosO2,
+                 double             lmr_sun, 
+                 double             lmr_sha,
+                 double             par_sun, 
+                 double             par_sha,
+                 double             rh_can,
+                 energy_bal_struct *energy,
+                 cell_data_struct  *cell,
+                 soil_con_struct   *soil_con,
+                 veg_var_struct    *veg_var,
+                 veg_lib_struct    *veg_lib)
 {
     double ai;                  // 中间协同限制光合速率
     double cs_sun, cs_sha;      // 叶面CO₂分压 (Pa)
@@ -53,7 +69,7 @@ void ci_func_PHS(double cisun, double cisha,
     
     // 如果需要重新计算水分胁迫因子
     if (bflag) {
-        calc_stress(&bsun, &bsha, &vegwp, thm, RS_mol, 
+        calc_stress(&bsun, &bsha, vegwp, thm, RS_mol, 
                     qsat_T, Qair_over,
                     pressure, air_density,
                     energy, cell, 
@@ -142,7 +158,7 @@ void ci_func_PHS(double cisun, double cisha,
     // ========== 基于气孔模型计算导度（仅当an>=0时） ==========
     // 阳叶：计算叶面CO₂分压
     if (an_sun >= 0.0) {
-        cs_sun = atmosCO2 - 1.4 / gb_mol * an_sun * pressure;
+        cs_sun = atmosCO2 - 1.4 / RS_mol * an_sun * pressure;
         cs_sun = max(cs_sun, max_cs);
     }
     
@@ -151,7 +167,7 @@ void ci_func_PHS(double cisun, double cisha,
         term = 1.6 * an_sun / (cs_sun / pressure * 1e6);
         aquad = 1.0;
         bquad = -(2.0 * (medlynint * 1e-6 + term) + 
-                    (medlynslope * term) * (medlynslope * term) / (gb_mol * 1e-6 * rh_can));
+                    (medlynslope * term) * (medlynslope * term) / (RS_mol * 1e-6 * rh_can));
         cquad = medlynint * medlynint * 1e-12 +
                 (2.0 * medlynint * 1e-6 + term * 
                 (1.0 - medlynslope * medlynslope / rh_can)) * term;
@@ -161,13 +177,13 @@ void ci_func_PHS(double cisun, double cisha,
     
     // 阴叶
     if (an_sha >= 0.0) {
-        cs_sha = atmosCO2 - 1.4 / gb_mol * an_sha * pressure;
+        cs_sha = atmosCO2 - 1.4 / RS_mol * an_sha * pressure;
         cs_sha = max(cs_sha, max_cs);
         
         term = 1.6 * an_sha / (cs_sha / pressure * 1e6);
         aquad = 1.0;
         bquad = -(2.0 * (medlynint * 1e-6 + term) + 
-                    (medlynslope * term) * (medlynslope * term) / (gb_mol * 1e-6 * rh_can));
+                    (medlynslope * term) * (medlynslope * term) / (RS_mol * 1e-6 * rh_can));
         cquad = medlynint * medlynint * 1e-12 +
                 (2.0 * medlynint * 1e-6 + term * 
                 (1.0 - medlynslope * medlynslope / rh_can)) * term;
@@ -179,7 +195,7 @@ void ci_func_PHS(double cisun, double cisha,
     if (an_sun >= 0.0) {
         if (*gs_mol_sun > 0.0) {
             *fvalsun = cisun - atmosCO2 + an_sun * pressure * 
-                      (1.4 * (*gs_mol_sun) + 1.6 * gb_mol) / (gb_mol * (*gs_mol_sun));
+                      (1.4 * (*gs_mol_sun) + 1.6 * RS_mol) / (RS_mol * (*gs_mol_sun));
         } else {
             *fvalsun = cisun - atmosCO2;
         }
@@ -188,7 +204,7 @@ void ci_func_PHS(double cisun, double cisha,
     if (an_sha >= 0.0) {
         if (*gs_mol_sha > 0.0) {
             *fvalsha = cisha - atmosCO2 + an_sha * pressure * 
-                      (1.4 * (*gs_mol_sha) + 1.6 * gb_mol) / (gb_mol * (*gs_mol_sha));
+                      (1.4 * (*gs_mol_sha) + 1.6 * RS_mol) / (RS_mol * (*gs_mol_sha));
         } else {
             *fvalsha = cisha - atmosCO2;
         }
