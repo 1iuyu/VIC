@@ -907,8 +907,9 @@ typedef struct {
     double f_shade;
     double ksun_vcmax;          /**< leaf to canopy scaling coefficient, sunlit leaf vcmax */
     double ksha_vcmax;          /**< leaf to canopy scaling coefficient, shaded leaf vcmax */
-    double LAI_z[MAX_CANOPYS];
-    double SAI_z[MAX_CANOPYS];
+    double LAI_z[MAX_CANOPYS];  /**< leaf area index above the center of each canopy layer (m2/m2) */
+    double SAI_z[MAX_CANOPYS];  /**< stem area index above the center of each canopy layer (m2/m2) */
+    double vegwp[MAX_CANOPYS];  /**< vegetation water matric potential (mm) [sun, shade, xylem, root] */
     // Fluxes
     double RainThroughFall;     /**< rain that reaches the ground through
                                     the canopy (mm/s) */
@@ -922,6 +923,8 @@ typedef struct {
     double canopy_swq;          /**< snow water equivalent of the canopy (mm) */
     double RS_sunlit;           /**< sunlit leaf stomatal resistance [s/m] */
     double RS_shade;            /**< shaded leaf stomatal resistance [s/m] */
+    double NetPhotosha;         /**< net shaded leaf photosynthesis (umol CO2/m**2/s) */
+    double NetPhotosun;         /**< net sunlit leaf photosynthesis (umol CO2/m**2/s) */
 } veg_var_struct;
 
 /******************************************************************************

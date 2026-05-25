@@ -10,21 +10,21 @@
  * @brief  Calculate the transpiration stress using a plant hydraulics approach.
  *****************************************************************************/
 int
-calc_stress(double            *bsun,
-            double            *bsha,
-            double            *vegwp,
-            double             thm,
-            double             RS_mol,
-            double             qsat_T,
-            double             Qair_over,
-            double             pressure,
-            double             air_density,
-            double             gs_mol_sun,
-            double             gs_mol_sha,
-            cell_data_struct  *cell,
-            soil_con_struct   *soil_con,
-            veg_var_struct    *veg_var,
-            veg_lib_struct    *veg_lib)
+calc_stress(double           *bsun,
+            double           *bsha,
+            double           *vegwp,
+            double            thm,
+            double            RS_mol,
+            double            qsat_T,
+            double            Qair_over,
+            double            pressure,
+            double            air_density,
+            double            gs_mol_sun,
+            double            gs_mol_sha,
+            cell_data_struct *cell,
+            soil_con_struct  *soil_con,
+            veg_var_struct   *veg_var,
+            veg_lib_struct   *veg_lib)
 {
     extern parameters_struct param;
     // 初始化输出变量
