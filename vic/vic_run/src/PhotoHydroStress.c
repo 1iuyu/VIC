@@ -36,7 +36,7 @@ PhotoHydroStress(double             thm,
     double *dz_soil = soil_con->dz_soil;
     double *root = cell->root;
     double *LAI_z = veg_var->LAI_z;
-    double *hksr_int = cell->hksr_int;
+    double *hksr_int = cell->hksr_int; // soil-root interface conductance (mm/s)
     double *vegwp = veg_var->vegwp; // 水势：0-阳叶，1-阴叶，2-木质部，3-根部
     // initialize variables
     Nsoil = cell->Nsoil;

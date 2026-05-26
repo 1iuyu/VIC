@@ -718,7 +718,7 @@ typedef struct {
     double Ra_grnd[3];
     double Ra_root[MAX_SOILS];
     double Ra_evap;                    /**< ground surface resistance [s/m] to evaporation */
-    double Ra_leaf;
+    double Ra_leaf;                    /**< canopy leaf resistance [s/m] to transpiration */
     double Ra_stem;
     double Z0m_grnd[3];
     double Z0m_sub[3];
