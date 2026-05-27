@@ -250,17 +250,16 @@ func_canopy_energy_bal(double             step_dt,
         else {
             rppdry = 0.0;
         }
+        // 使用Plant Hydraulics Stress计算潜在蒸发量的比例
         double efpot = air_density * ((NetLAI + NetSAI) / Ra_leaf) * (qsat_T - Qair_over);
         double rpp = 0.0;
         if (efpot > 0.0) {
-            if (cell->f_transp > 0.0) {
-                cell->transp = efpot * rppdry;
+            if (cell->transp_fact > 0.0) {
                 rpp = rppdry + wetFrac;
             }
             else {
                 // No transpiration if btran below 1.e-10
                 rpp = wetFrac;
-                cell->transp = 0.0;
             }
             // Check total evapotranspiration from leaves
             rpp = min(rpp, (cell->transp + canopy_swq / step_dt) / efpot);
@@ -268,7 +267,6 @@ func_canopy_energy_bal(double             step_dt,
         else {
             // No transpiration if potential evaporation less than zero
             rpp = 1.0;
-            cell->transp = 0.0;
         }
         wtaq = f_snow_veg / Ra_over[2];
         wtlq = f_snow_veg * (NetLAI + NetSAI) / Ra_leaf * rpp;
@@ -310,14 +308,7 @@ func_canopy_energy_bal(double             step_dt,
                 (wtgaq * (qsat_T + qsatdT * delt_T) -
                  wtgq0 * Qair_grnd - wtaq0 * Qair);
         cell->canopyevap = rpp * efpot;
-        double ecidif = 0.0;
-        if (efpot > 0.0 && cell->f_transp > 0.0) {
-            cell->transp = efpot * rppdry;
-        }
-        else {
-            cell->transp = 0.0;
-        }
-        ecidif = max(0.0, cell->canopyevap - cell->transp - canopy_swq / step_dt);
+        double ecidif = max(0.0, cell->canopyevap - cell->transp - canopy_swq / step_dt);
         cell->canopyevap = min(cell->canopyevap, cell->transp + canopy_swq / step_dt);
 
         // Update SH and lw_leaf for changes in t_veg
