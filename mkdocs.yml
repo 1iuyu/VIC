@@ -1,4 +1,4 @@
-site_name: VIC
+site_name: Sub-VIC
 site_description: Variable Infiltration Capacity Model
 site_author: UW Hydro | Computational Hydrology
 repo_url: https://github.com/UW-Hydro/VIC
@@ -7,7 +7,7 @@ theme:
     name: readthedocs
     analytics:
         gtag: UA-65965729-1
-copyright: 2021
+copyright: 2026
 docs_dir: docs
 site_dir: site
 use_directory_urls: true
@@ -26,8 +26,6 @@ nav:
     - 'VIC Drivers':
         - 'Classic': 'Documentation/Drivers/Classic/ClassicDriver.md'
         - 'Image': 'Documentation/Drivers/Image/ImageDriver.md'
-        - 'CESM': 'Documentation/Drivers/CESM/CESMDriver.md'
-        - 'Python': 'Documentation/Drivers/Python/PythonDriver.md'
     - 'Extensions':
         - 'Routing (Image Driver)': 'Documentation/Drivers/Image/Routing.md'
 - Development:
@@ -50,8 +48,6 @@ nav:
     - 'FrozenSoilOutputFile': 'Documentation/Drivers/Classic/FrozenSoilOutputFile.md'
     - 'GlobalParam': 'Documentation/Drivers/Classic/GlobalParam.md'
     - 'Inputs': 'Documentation/Drivers/Classic/Inputs.md'
-    - 'LakeOutputFile': 'Documentation/Drivers/Classic/LakeOutputFile.md'
-    - 'Lake Param': 'Documentation/Drivers/Classic/LakeParam.md'
     - 'Output Formatting': 'Documentation/Drivers/Classic/OutputFormatting.md'
     - 'Outputs': 'Documentation/Drivers/Classic/Outputs.md'
     - 'RunVIC': 'Documentation/Drivers/Classic/RunVIC.md'
@@ -69,7 +65,6 @@ nav:
     - 'Params': 'Documentation/Drivers/Image/Params.md'
     - 'Domain': 'Documentation/Drivers/Image/Domain.md'
     - 'RunVIC': 'Documentation/Drivers/Image/RunVIC.md'
-    - 'Lake Param': 'Documentation/Drivers/Image/LakeParam.md'
     - 'StateFile': 'Documentation/Drivers/Image/StateFile.md'
     - 'Ascii_to_NetCDF_params.md': 'Documentation/Drivers/Image/Ascii_to_NetCDF_params.md'
     - 'OutputFormatting': 'Documentation/Drivers/Image/OutputFormatting.md'
@@ -77,9 +72,6 @@ nav:
     - 'FluxOutputFiles': 'Documentation/Drivers/Image/FluxOutputFiles.md'
     - 'SnowOutputFile': 'Documentation/Drivers/Image/SnowOutputFile.md'
     - 'FrozenSoilOutputFile': 'Documentation/Drivers/Image/FrozenSoilOutputFile.md'
-    - 'LakeOutputFile': 'Documentation/Drivers/Image/LakeOutputFile.md'
-    # CESM Driver
-    - 'Inputs': 'Documentation/Drivers/CESM/Inputs.md'
 
     # Other
     - 'Constants': 'Documentation/Constants.md'
