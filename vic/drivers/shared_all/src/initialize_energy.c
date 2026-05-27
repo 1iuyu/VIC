@@ -64,8 +64,6 @@ initialize_energy(energy_bal_struct *energy,
         energy[veg].qsdT = 0.0;
         energy[veg].delt_Q = 0.0;
         energy[veg].delt_T = 0.0;
-        energy[veg].aPAR_shade = 0.0;
-        energy[veg].aPAR_sunlit = 0.0;
         // Fluxes
         energy[veg].advection = 0.0;
         energy[veg].AdvectOver = 0.0;
