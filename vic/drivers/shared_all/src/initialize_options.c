@@ -33,7 +33,6 @@ initialize_options()
     options.TFALLBACK = true;
     options.SWRC = SWRC_VAN_GENUCHTEN;
     // Model dimensions
-    options.Ncanopy = 1;
     options.Nlayer = 3;
     options.Nswband = 2;
     options.SNOW_BAND = 1;
