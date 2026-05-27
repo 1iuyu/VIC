@@ -22,7 +22,7 @@ void hybrid_PHS(double           *x0sun,
                 double            KC,
                 double            KO,
                 double            thm, 
-                double            RS_mol,
+                double            gb_mol,
                 double            qsat_T, 
                 double            Qair_over,
                 double            pressure, 
@@ -31,9 +31,7 @@ void hybrid_PHS(double           *x0sun,
                 double            atmosO2,
                 double            lmr_sun, 
                 double            lmr_sha,
-                double            par_sun, 
-                double            par_sha,
-                double            rh_can,
+                double            rh_canopy,
                 double            vcmax_sun,
                 double            vcmax_sha,
                 double            tpu_sun,
@@ -63,9 +61,6 @@ void hybrid_PHS(double           *x0sun,
     double minxsun, minxsha;        // 最小残差对应的ci解
     double soilflux;                // 土壤蒸腾通量 (mm/s)
     double xsun, xsha;              // Brent方法返回的解
-    double Canopy_Upper = veg_lib->Canopy_Upper;  // 叶片分布参数
-    double matric50 = veg_lib->matric50;          // 50%失水点 (MPa)
-    double conduct_max = veg_lib->conduct_max;    // 最大导度 (mm/s)
     // 参数常量
     const double toldb = 1e-2;      // bsun/bsha收敛容差
     const double eps = 1e-2;        // 相对精度
@@ -85,7 +80,7 @@ void hybrid_PHS(double           *x0sun,
     iter1 = 0;
     iter2 = 0;
     
-    // 获取vegwp副本（用于calcstress）
+    // 获取vegwp副本
     for (i = 0; i < 4; i++) {
         x[i] = vegwp[i];
     }
@@ -107,15 +102,15 @@ void hybrid_PHS(double           *x0sun,
         tolsun = fabs(x1sun) * eps;
         tolsha = fabs(x1sha) * eps;
         
-        // 第一次ci_func调用（计算f(x0)）
+        // 第一次ci_func调用
         ci_func_PHS(bflag, *x0sun, *x0sha, &f0sun, &f0sha,
                     bsun, bsha, gs_mol_sun, gs_mol_sha, 
                     vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
                     tpu_sun, tpu_sha, kp_sun, kp_sha, 
-                    CP, KC, KO, thm, RS_mol,
+                    CP, KC, KO, thm, gb_mol,
                     qsat_T, Qair_over, pressure, air_density,
                     jesun, jesha, atmosCO2, atmosO2,
-                    lmr_sun, lmr_sha, par_sun, par_sha, rh_can,
+                    lmr_sun, lmr_sha, rh_canopy,
                     cell, soil_con, veg_var, veg_lib);
         
         // 更新水分胁迫收敛检查变量
@@ -130,10 +125,10 @@ void hybrid_PHS(double           *x0sun,
                     bsun, bsha, gs_mol_sun, gs_mol_sha, 
                     vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
                     tpu_sun, tpu_sha, kp_sun, kp_sha, 
-                    CP, KC, KO, thm, RS_mol,
+                    CP, KC, KO, thm, gb_mol,
                     qsat_T, Qair_over, pressure, air_density,
                     jesun, jesha, atmosCO2, atmosO2,
-                    lmr_sun, lmr_sha, par_sun, par_sha, rh_can,
+                    lmr_sun, lmr_sha, rh_canopy,
                     cell, soil_con, veg_var, veg_lib);
         
         // ========== 内层循环：割线法求解ci ==========
@@ -175,10 +170,10 @@ void hybrid_PHS(double           *x0sun,
                         bsun, bsha, gs_mol_sun, gs_mol_sha, 
                         vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
                         tpu_sun, tpu_sha, kp_sun, kp_sha, 
-                        CP, KC, KO, thm, RS_mol,
+                        CP, KC, KO, thm, gb_mol,
                         qsat_T, Qair_over, pressure, air_density,
                         jesun, jesha, atmosCO2, atmosO2,
-                        lmr_sun, lmr_sha, par_sun, par_sha, rh_can,
+                        lmr_sun, lmr_sha, rh_canopy,
                         cell, soil_con, veg_var, veg_lib);
             
             // 检查增量收敛
@@ -210,14 +205,18 @@ void hybrid_PHS(double           *x0sun,
             if ((f1sun * f0sun < 0.0) && (f1sha * f0sha < 0.0)) {
                 brent_PHS(*x0sun, x1sun, f0sun, f1sun,
                           *x0sha, x1sha, f0sha, f1sha,
-                          tolsun, RS_mol, jesun, jesha, 
+                          tolsun, vegwp, 
+                          vcmax_sun, vcmax_sha,
+                          tpu_sun, tpu_sha, kp_sun, kp_sha,
+                          CP, KC, KO, thm, 
+                          gb_mol, jesun, jesha, 
                           atmosCO2, atmosO2,
                           lmr_sun, lmr_sha,
-                          par_sun, par_sha, rh_can,
-                          qsat_T, Qair_over,
-                          gs_mol_sun, gs_mol_sha,
+                          rh_canopy, qsat_T, Qair_over,
+                          pressure, air_density, 
                           &xsun, &xsha, bsun, bsha,
-                          gs_mol_sun, gs_mol_sha);
+                          gs_mol_sun, gs_mol_sha,
+                          cell, soil_con, veg_var, veg_lib);
 
                 *x0sun = xsun;
                 *x0sha = xsha;
@@ -232,10 +231,10 @@ void hybrid_PHS(double           *x0sun,
                             bsun, bsha, gs_mol_sun, gs_mol_sha, 
                             vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
                             tpu_sun, tpu_sha, kp_sun, kp_sha, 
-                            CP, KC, KO, thm, RS_mol,
+                            CP, KC, KO, thm, gb_mol,
                             qsat_T, Qair_over, pressure, air_density,
                             jesun, jesha, atmosCO2, atmosO2,
-                            lmr_sun, lmr_sha, par_sun, par_sha, rh_can,
+                            lmr_sun, lmr_sha, rh_canopy,
                             cell, soil_con, veg_var, veg_lib);
                 break;
             }
@@ -267,11 +266,10 @@ void hybrid_PHS(double           *x0sun,
     *x0sha = x1sha;
     
     // 根据最终气孔导度更新植被水势
-    getvegwp(vegwp, RS_mol, &gs0sun, &gs0sha, 
-             qsat_T, Qair_over, &soilflux, 
-             Canopy_Upper, matric50, 
-             pressure, conduct_max, air_density,
-             thm, cell, soil_con, veg_var);
+    getvegwp(vegwp, gb_mol, &gs0sun, &gs0sha, 
+             qsat_T, Qair_over, &soilflux,
+             pressure, air_density, thm,
+             cell, soil_con, veg_var, veg_lib);
     
     // 保存vegwp
     for (i = 0; i < 4; i++) {

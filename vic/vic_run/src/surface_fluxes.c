@@ -34,8 +34,8 @@ surface_fluxes(double               air_temp,
     energy_bal_struct iter_energy;
     veg_var_struct    iter_veg_var;
     snow_data_struct  iter_snow;
-    double aPAR_sunlit;
-    double aPAR_shade;
+    double aPAR_sun;
+    double aPAR_sha;
     double transmit_direct;
     double transmit_diffuse;
     double tmp_absorb_grnd;
@@ -143,21 +143,21 @@ surface_fluxes(double               air_temp,
     double f_sun = veg_var->f_sun;
     double f_shade = veg_var->f_shade;
     double leaf_sun = veg_var->leaf_sun;
-    double leaf_shade = veg_var->leaf_shade;
+    double leaf_sha = veg_var->leaf_sha;
     double NetLAI_frac = NetLAI / max(NetLAI + NetSAI, param.TOL_A);
     if (f_sun > 0.0) {
-        aPAR_sunlit = (ShortOverDir[0] + f_sun * ShortOverDfs[0]) *
+        aPAR_sun = (ShortOverDir[0] + f_sun * ShortOverDfs[0]) *
                         NetLAI_frac / max(leaf_sun, param.TOL_A);
-        aPAR_shade = (ShortOverDfs[0] * f_shade) *
-                        NetLAI_frac / max(leaf_shade, param.TOL_A);                      
+        aPAR_sha = (ShortOverDfs[0] * f_shade) *
+                        NetLAI_frac / max(leaf_sha, param.TOL_A);                      
     }
     else {
-        aPAR_sunlit = 0.0;
-        aPAR_shade = (ShortOverDir[0] + ShortOverDfs[0]) *
-                        NetLAI_frac / max(leaf_shade, param.TOL_A);
+        aPAR_sun = 0.0;
+        aPAR_sha = (ShortOverDir[0] + ShortOverDfs[0]) *
+                        NetLAI_frac / max(leaf_sha, param.TOL_A);
     }
-    energy->aPAR_sunlit = aPAR_sunlit;
-    energy->aPAR_shade = aPAR_shade;
+    veg_var->aPAR_sun = aPAR_sun;
+    veg_var->aPAR_sha = aPAR_sha;
     /* reflected solar radiation */
     double refl_vis = energy->AlbedoSurfDir[0] * shortwave_dir[0] + 
                         energy->AlbedoSurfDfs[0] * shortwave_dfs[0];

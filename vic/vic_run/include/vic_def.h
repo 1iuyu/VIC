@@ -620,28 +620,17 @@ typedef struct {
     double m_bb;                  /**< Ball-Berry slope of conductance-photosynthesis relationship */
     double matric50;              /**< matric potential at which stomatal conductance is reduced by 50% (m) */
     double kseg_max;              /**< plant segment max conductance (m/s) */
-    double conduct_max;           /**< maximum canopy conductance (m/s) */
+    double kcano_max;             /**< maximum canopy conductance (m/s) */
+    double kroot_max;             /**< root segment max conductance. mm h2o (transpired)/mm h2o (water potential gradient)/sec */
     double theta_cj;
-    double medlynslope;         /**< slope of Medlyn conductance-photosynthesis relationship */
-    double medlynint;           /**< intercept of Medlyn conductance-photosynthesis relationship */
+    double leaf_CN;               /**< Leaf C:N [gC/gN] */
+    double SLA_top;               /**< specific leaf area at top of canopy [m2/gC] */
+    double fN_rub;                /**< fraction of leaf N in Rubisco enzyme (gN Rubisco/gN leaf) */ 
+    double medlynslope;           /**< slope of Medlyn conductance-photosynthesis relationship */
+    double medlynint;             /**< intercept of Medlyn conductance-photosynthesis relationship */
     unsigned short int veg_class; /**< vegetation class reference number */
     // Carbon terms
     char Ctype;            /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
-    double CO2Specificity; /**< CO2 specificity at 25 deg C (mol(CO2)/m2s)
-                              (C4 plants) */
-    double LightUseEff;    /**< Light-use efficiency (mol(CO2)/mol(photons)) */
-    double MaxCarboxRate;  /**< maximum carboxlyation rate at 25 deg C
-                              (mol(CO2)/m2s) */
-    double MaxETransport;  /**< maximum electron transport rate at 25 deg C
-                              (mol(CO2)/m2s) (C3 plants) */
-    double NPPfactor_sat;  /**< photosynthesis multiplier (fraction of
-                              maximum) when top soil layer is saturated */
-    bool NscaleFlag;       /**< TRUE = nitrogen-scaling factors are
-                              applicable to this veg class */
-    double Wnpp_inhib;     /**< moisture level (fraction of maximum moisture)
-                              above which photosynthesis experiencing
-                              saturation inhibition, i.e. too wet for optimal
-                              photosynthesis; only applies to top soil layer */
 } veg_lib_struct;
 
 /******************************************************************************
@@ -818,8 +807,6 @@ typedef struct {
     double delt_T;
     double delt_Q;
     // Fluxes
-    double aPAR_sunlit;
-    double aPAR_shade;  
     double advection;            /**< advective flux (Wm-2) */
     double AdvectSub;
     double AdvectGrnd;
@@ -890,8 +877,7 @@ typedef struct {
  *****************************************************************************/
 typedef struct {
     // State variables
-    double fcanopy;             /**< current fractional area of plant canopy
-                                   (fraction) */
+    double fcanopy;             /**< current fractional area of plant canopy (fraction) */
     double LAI;                 /**< current leaf area index (m2/m2) */
     double SAI;                 /**< current stem area index (m2/m2) */
     double NetLAI;              /**< net leaf area index (m2/m2) */
@@ -902,27 +888,38 @@ typedef struct {
     double wetFrac;
     double dryFrac;
     double leaf_sun;
-    double leaf_shade;
+    double leaf_sha;
     double f_sun;
     double f_shade;
-    double ksun_vcmax;          /**< leaf to canopy scaling coefficient, sunlit leaf vcmax */
-    double ksha_vcmax;          /**< leaf to canopy scaling coefficient, shaded leaf vcmax */
     double LAI_z[MAX_CANOPYS];  /**< leaf area index above the center of each canopy layer (m2/m2) */
     double SAI_z[MAX_CANOPYS];  /**< stem area index above the center of each canopy layer (m2/m2) */
     double vegwp[MAX_CANOPYS];  /**< vegetation water matric potential (mm) [sun, shade, xylem, root] */
     // Fluxes
-    double RainThroughFall;     /**< rain that reaches the ground through
-                                    the canopy (mm/s) */
-    double SnowThroughFall;     /**< snow that reaches the ground through
-                                    the canopy (mm/s) */
+    double RainThroughFall;     /**< rain that reaches the ground through the canopy (mm/s) */
+    double SnowThroughFall;     /**< snow that reaches the ground through the canopy (mm/s) */
     double SnowUnload;
     double RainDrip;
     double SnowDrip;
     double int_rain;            /**< rain intercepted on canopy (mm) */
     double int_snow;            /**< snow intercepted on canopy (mm) */
     double canopy_swq;          /**< snow water equivalent of the canopy (mm) */
+    // PHS terms
+    double aPAR_sun;            /**< par absorbed per unit lai for canopy layer (w/m**2) */
+    double aPAR_sha;            /**< par absorbed per unit lai for canopy layer (w/m**2) */
+    double ac_sun;              /**< Rubisco-limited gross photosynthesis (umol CO2/m**2/s) */
+    double ac_sha;              /**< Rubisco-limited gross photosynthesis (umol CO2/m**2/s) */
+    double ag_sun;              /**< co-limited gross leaf photosynthesis (umol CO2/m**2/s) */
+    double ag_sha;              /**< co-limited gross leaf photosynthesis (umol CO2/m**2/s) */
+    double aj_sun;              /**< RuBP-limited gross photosynthesis (umol CO2/m**2/s) */
+    double aj_sha;              /**< RuBP-limited gross photosynthesis (umol CO2/m**2/s) */
+    double ap_sun;              /**< product-limited (C3) or CO2-limited (C4) gross photosynthesis (umol CO2/m**2/s) */
+    double ap_sha;              /**< product-limited (C3) or CO2-limited (C4) gross photosynthesis (umol CO2/m**2/s) */
+    double an_sun;              /**< net sunlit leaf photosynthesis (umol CO2/m**2/s) */
+    double an_sha;              /**< net shaded leaf photosynthesis (umol CO2/m**2/s) */
     double RS_sunlit;           /**< sunlit leaf stomatal resistance [s/m] */
     double RS_shade;            /**< shaded leaf stomatal resistance [s/m] */
+    double ksun_vcmax;          /**< leaf to canopy scaling coefficient, sunlit leaf vcmax */
+    double ksha_vcmax;          /**< leaf to canopy scaling coefficient, shaded leaf vcmax */
     double NetPhotosha;         /**< net shaded leaf photosynthesis (umol CO2/m**2/s) */
     double NetPhotosun;         /**< net sunlit leaf photosynthesis (umol CO2/m**2/s) */
 } veg_var_struct;

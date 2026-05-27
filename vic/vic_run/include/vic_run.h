@@ -16,6 +16,12 @@ void AdvectedEnergy(double, double, double, double, double,
 void AdvectedEnergyGlac(double, double, double, double, double *);
 bool assert_close_double(double x, double y, double rtol, double abs_tol);
 bool assert_close_float(float x, float y, float rtol, float abs_tol);
+void brent_PHS(double, double, double, double, double, double, double, double, 
+               double, double *, double, double, double, double, double, double,
+               double, double, double, double, double, double, double, double,
+               double, double, double, double, double, double, double, double,
+               double *, double *, double *, double *, double *, double *,
+               cell_data_struct *, soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_stress(double *, double *, double *, double, double, double, double,
                 double, double, double, double, cell_data_struct *, 
                 soil_con_struct *, veg_var_struct *, veg_lib_struct *);
@@ -54,8 +60,8 @@ void compute_soil_resis(cell_data_struct *, soil_con_struct *);
 void correct_precip(double *, double, double, double, double);
 void ci_func_PHS(bool, double, double, double *, double *, double *, double *,
                  double *, double *, double *, double, double, double, double,
-                 double, double, double, double, double, double, double, double,
-                 double, double, double, double, double, double, double, double,
+                 double, double, double, double, double, double, double,
+                 double, double, double, double, double, double, double,
                  double, double, double, double, double, double,
                  cell_data_struct *, soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 int distribute_node_moisture_properties(bool, cell_data_struct *, soil_con_struct *);
@@ -85,8 +91,15 @@ void GroundAlbedo(double, double, double *, double *, double *,
 void get_qflx(bool, double, double, double, double, double, double, 
               double *, double *, double *, double *, veg_var_struct *);
 void getvegwp(double *, double, double *, double *, double, double, 
-              double *, double, double, double, double, double, double,
-              cell_data_struct *, soil_con_struct *, veg_var_struct *);
+              double *, double, double, double, cell_data_struct *, 
+              soil_con_struct *, veg_var_struct *, veg_lib_struct *);
+void hybrid_PHS(double *, double *, double *, double *, double *,
+                double, double, double, double, double, double,
+                double, double, double, double, double, double,
+                double, double, double, double, double, double,
+                double, double, double, double, double *, double *,
+                cell_data_struct *, soil_con_struct *, 
+                veg_var_struct *, veg_lib_struct *);
 void initialize_roughness(bool, double, double, double *,
                           cell_data_struct *, veg_var_struct *);
 double initialize_MOST(double, double, double, double, double, double *);
@@ -138,8 +151,10 @@ double SoilWaterRetentionCurve(int, size_t, double, double, soil_con_struct *);
 double sign(double a, double b);
 double StabilityFunc1(double);
 double StabilityFunc2(double);
-void spacF(double *, double *, double *, double, double, double, double, double,
-           cell_data_struct *, soil_con_struct *, veg_var_struct *);
+void spacF(double *, double *, double *, double, double, cell_data_struct *, 
+           soil_con_struct *, veg_var_struct *, veg_lib_struct *);
+double solve_quadratic_min(double, double, double);
+void solve_quadratic(double, double, double, double *, double *);
 void update_snow(double, double, double, snow_data_struct *);
 void update_node(cell_data_struct *, snow_data_struct *, soil_con_struct *);
 void update_fluxes(energy_bal_struct *, cell_data_struct *, snow_data_struct *,

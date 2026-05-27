@@ -244,8 +244,8 @@ func_canopy_energy_bal(double             step_dt,
         // 计算叶片潜在蒸发量的比例
         double rppdry = 0.0;
         if (dryFrac > 0.0) {
-            rppdry  = dryFrac * Ra_leaf * (energy->aPAR_sunlit / (Ra_leaf + veg_var->RS_sunlit) + 
-                            energy->aPAR_shade / (Ra_leaf + veg_var->RS_shade)) / NetLAI;
+            rppdry  = dryFrac * Ra_leaf * (veg_var->aPAR_sun / (Ra_leaf + veg_var->RS_sunlit) + 
+                            veg_var->aPAR_sha / (Ra_leaf + veg_var->RS_shade)) / NetLAI;
         }
         else {
             rppdry = 0.0;

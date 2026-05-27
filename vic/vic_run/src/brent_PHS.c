@@ -11,33 +11,48 @@
  * @brief  use a hybrid solver to find the root of the ci_func equation 
  *         for sunlit and shaded leaves
  *****************************************************************************/
-void brent_PHS(double   x1sun, 
-               double   x2sun, 
-               double   f1sun, 
-               double   f2sun, 
-               double   x1sha, 
-               double   x2sha, 
-               double   f1sha, 
-               double   f2sha,
-               double   tol, 
-               double   RS_mol,
-               double   jesun, 
-               double   jesha,
-               double   atmosCO2, 
-               double   atmosO2,
-               double   lmr_sun, 
-               double   lmr_sha,
-               double   par_sun, 
-               double   par_sha,
-               double   rh_can,
-               double   qsat_T, 
-               double   Qair_over,
-               double   *xsun,
-               double   *xsha,
-               double   *bsun, 
-               double   *bsha,
-               double   *gs_mol_sun, 
-               double   *gs_mol_sha)
+void brent_PHS(double            x1sun, 
+               double            x2sun, 
+               double            f1sun, 
+               double            f2sun, 
+               double            x1sha, 
+               double            x2sha, 
+               double            f1sha, 
+               double            f2sha,
+               double            tol,
+               double           *vegwp,
+               double            vcmax_sun,
+               double            vcmax_sha,
+               double            tpu_sun, 
+               double            tpu_sha,
+               double            kp_sun, 
+               double            kp_sha,
+               double            CP, 
+               double            KC, 
+               double            KO,
+               double            thm, 
+               double            gb_mol,
+               double            jesun, 
+               double            jesha,
+               double            atmosCO2, 
+               double            atmosO2,
+               double            lmr_sun, 
+               double            lmr_sha,
+               double            rh_canopy,
+               double            qsat_T, 
+               double            Qair_over,
+               double            pressure, 
+               double            air_density,
+               double           *xsun,
+               double           *xsha,
+               double           *bsun, 
+               double           *bsha,
+               double           *gs_mol_sun, 
+               double           *gs_mol_sha,
+               cell_data_struct *cell,
+               soil_con_struct  *soil_con,
+               veg_var_struct   *veg_var,
+               veg_lib_struct   *veg_lib)
 {
     // 局部变量
     double gs0sun, gs0sha;              // 无水分胁迫的气孔导度副本
@@ -48,7 +63,6 @@ void brent_PHS(double   x1sun,
     double fa[2], fb[2], fc[2];             // 函数值
     double pv[2], qv[2], rv[2], sv[2];      // 反二次插值系数
     double tol1[2], xm[2];                  // 收敛容差和中点
-    
     const int nphs = 2;                     // 晴叶(sun=0)和阴叶(sha=1)
     const int itmax = 20;                   // 最大迭代次数
     const double eps = 1e-4;                // 相对误差容限
@@ -193,14 +207,23 @@ void brent_PHS(double   x1sun,
         gs0sha = *gs_mol_sha;
         
         // 调用ci_func_PHS计算新点的函数值
-        ci_func_PHS(bflag, b[0], b[1], &fb[0], &fb[1],
-                    bsun, bsha, gs_mol_sun, gs_mol_sha,
-                    vegwp, gs0sun, gs0sha, vcmax_sun,
-                    RS_mol, gs0sun, gs0sha,
-                    jesun, jesha, atmosCO2, atmosO2,
+        ci_func_PHS(bflag, b[0], b[1], 
+                    &fb[0], &fb[1],
+                    bsun, bsha, 
+                    gs_mol_sun, gs_mol_sha,
+                    vegwp, gs0sun, gs0sha, 
+                    vcmax_sun, vcmax_sha, 
+                    tpu_sun, tpu_sha,
+                    kp_sun, kp_sha, 
+                    CP, KC, KO, thm,
+                    gb_mol, qsat_T, 
+                    Qair_over, pressure, 
+                    air_density, jesun, jesha, 
+                    atmosCO2, atmosO2, 
                     lmr_sun, lmr_sha,
-                    par_sun, par_sha, rh_can,
-                    qsat_T, Qair_over);
+                    rh_canopy, cell,
+                    soil_con, 
+                    veg_var, veg_lib);
         
         // 如果两个相位的函数值都为零，收敛
         if (fb[0] == 0.0 && fb[1] == 0.0) {

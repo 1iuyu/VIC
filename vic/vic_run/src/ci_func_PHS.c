@@ -27,11 +27,11 @@ void ci_func_PHS(bool              bflag,
                  double            tpu_sha,
                  double            kp_sun, 
                  double            kp_sha,
-                 double            cp, 
-                 double            kc, 
-                 double            ko,
+                 double            CP, 
+                 double            KC, 
+                 double            KO,
                  double            thm, 
-                 double            RS_mol,
+                 double            gb_mol,
                  double            qsat_T, 
                  double            Qair_over,
                  double            pressure, 
@@ -42,9 +42,7 @@ void ci_func_PHS(bool              bflag,
                  double            atmosO2,
                  double            lmr_sun, 
                  double            lmr_sha,
-                 double            par_sun, 
-                 double            par_sha,
-                 double            rh_can,
+                 double            rh_canopy,
                  cell_data_struct *cell,
                  soil_con_struct  *soil_con,
                  veg_var_struct   *veg_var,
@@ -61,9 +59,11 @@ void ci_func_PHS(bool              bflag,
     double ap_sun, ap_sha;      // 产物限制光合
     double ag_sun, ag_sha;      // 协同限制总光合
     double max_cs = 50000.0;    // 最大叶面CO₂分压 (Pa)
-    double qe = 0.0; // Quantum efficiency (mol CO2 / mol photons);
+    double aPAR_sun = veg_var->aPAR_sun;
+    double aPAR_sha = veg_var->aPAR_sha;
+    double qe = 0.0; // Quantum efficiency (mol CO2 / mol photons) C3;
     if (veg_lib->Ctype == 1) {
-        qe = 0.05;
+        qe = 0.05;  // C4
     }
     double medlynslope = veg_lib->medlynslope;
     double medlynint = veg_lib->medlynint;
@@ -72,7 +72,7 @@ void ci_func_PHS(bool              bflag,
     
     // 如果需要重新计算水分胁迫因子
     if (bflag) {
-        calc_stress(&bsun, &bsha, vegwp, thm, RS_mol, 
+        calc_stress(&bsun, &bsha, vegwp, thm, gb_mol, 
                     qsat_T, Qair_over,
                     pressure, air_density, 
                     gsminsun, gsminsha,
@@ -83,12 +83,12 @@ void ci_func_PHS(bool              bflag,
     if (veg_lib->Ctype == 0) {
         // C3植物
         // Rubisco限制
-        ac_sun = (*bsun) * vcmax_sun * max(cisun - cp, 0.0) / (cisun + kc * (1.0 + atmosO2 / ko));
-        ac_sha = (*bsha) * vcmax_sha * max(cisha - cp, 0.0) / (cisha + kc * (1.0 + atmosO2 / ko));
+        ac_sun = (*bsun) * vcmax_sun * max(cisun - CP, 0.0) / (cisun + KC * (1.0 + atmosO2 / KO));
+        ac_sha = (*bsha) * vcmax_sha * max(cisha - CP, 0.0) / (cisha + KC * (1.0 + atmosO2 / KO));
         
         // RuBP限制
-        aj_sun = jesun * max(cisun - cp, 0.0) / (4.0 * cisun + 8.0 * cp);
-        aj_sha = jesha * max(cisha - cp, 0.0) / (4.0 * cisha + 8.0 * cp);
+        aj_sun = jesun * max(cisun - CP, 0.0) / (4.0 * cisun + 8.0 * CP);
+        aj_sha = jesha * max(cisha - CP, 0.0) / (4.0 * cisha + 8.0 * CP);
         
         // 产物限制
         ap_sun = 3.0 * tpu_sun;
@@ -100,8 +100,8 @@ void ci_func_PHS(bool              bflag,
         ac_sha = (*bsha) * vcmax_sha;
         
         // RuBP限制（光响应）
-        aj_sun = qe * par_sun * 4.6;
-        aj_sha = qe * par_sha * 4.6;
+        aj_sun = qe * aPAR_sun * 4.6;
+        aj_sha = qe * aPAR_sha * 4.6;
         
         // PEP羧化酶限制
         ap_sun = kp_sun * max(cisun, 0.0) / pressure;
@@ -161,7 +161,7 @@ void ci_func_PHS(bool              bflag,
     // ========== 基于气孔模型计算导度（仅当an>=0时） ==========
     // 阳叶：计算叶面CO₂分压
     if (an_sun >= 0.0) {
-        cs_sun = atmosCO2 - 1.4 / RS_mol * an_sun * pressure;
+        cs_sun = atmosCO2 - 1.4 / gb_mol * an_sun * pressure;
         cs_sun = max(cs_sun, max_cs);
     }
     
@@ -170,26 +170,26 @@ void ci_func_PHS(bool              bflag,
         term = 1.6 * an_sun / (cs_sun / pressure * 1.0e6);
         aquad = 1.0;
         bquad = -(2.0 * (medlynint * 1.0e-6 + term) + 
-                    (medlynslope * term) * (medlynslope * term) / (RS_mol * 1.0e-6 * rh_can));
+                    (medlynslope * term) * (medlynslope * term) / (gb_mol * 1.0e-6 * rh_canopy));
         cquad = medlynint * medlynint * 1.0e-12 +
                 (2.0 * medlynint * 1.0e-6 + term * 
-                (1.0 - medlynslope * medlynslope / rh_can)) * term;
+                (1.0 - medlynslope * medlynslope / rh_canopy)) * term;
         solve_quadratic(aquad, bquad, cquad, &r1, &r2);
         *gs_mol_sun = max(r1, r2) * 1.0e6;
     }
     
     // 阴叶
     if (an_sha >= 0.0) {
-        cs_sha = atmosCO2 - 1.4 / RS_mol * an_sha * pressure;
+        cs_sha = atmosCO2 - 1.4 / gb_mol * an_sha * pressure;
         cs_sha = max(cs_sha, max_cs);
         
         term = 1.6 * an_sha / (cs_sha / pressure * 1.0e6);
         aquad = 1.0;
         bquad = -(2.0 * (medlynint * 1.0e-6 + term) + 
-                    (medlynslope * term) * (medlynslope * term) / (RS_mol * 1.0e-6 * rh_can));
+                    (medlynslope * term) * (medlynslope * term) / (gb_mol * 1.0e-6 * rh_canopy));
         cquad = medlynint * medlynint * 1.0e-12 +
                 (2.0 * medlynint * 1.0e-6 + term * 
-                (1.0 - medlynslope * medlynslope / rh_can)) * term;
+                (1.0 - medlynslope * medlynslope / rh_canopy)) * term;
         solve_quadratic(aquad, bquad, cquad, &r1, &r2);
         *gs_mol_sha = max(r1, r2) * 1.0e6;
     }
@@ -198,7 +198,7 @@ void ci_func_PHS(bool              bflag,
     if (an_sun >= 0.0) {
         if (*gs_mol_sun > 0.0) {
             *fvalsun = cisun - atmosCO2 + an_sun * pressure * 
-                      (1.4 * (*gs_mol_sun) + 1.6 * RS_mol) / (RS_mol * (*gs_mol_sun));
+                      (1.4 * (*gs_mol_sun) + 1.6 * gb_mol) / (gb_mol * (*gs_mol_sun));
         } else {
             *fvalsun = cisun - atmosCO2;
         }
@@ -207,11 +207,22 @@ void ci_func_PHS(bool              bflag,
     if (an_sha >= 0.0) {
         if (*gs_mol_sha > 0.0) {
             *fvalsha = cisha - atmosCO2 + an_sha * pressure * 
-                      (1.4 * (*gs_mol_sha) + 1.6 * RS_mol) / (RS_mol * (*gs_mol_sha));
+                      (1.4 * (*gs_mol_sha) + 1.6 * gb_mol) / (gb_mol * (*gs_mol_sha));
         } else {
             *fvalsha = cisha - atmosCO2;
         }
-    }   
+    }
+    // 写回结构体
+    veg_var->ac_sun = ac_sun;
+    veg_var->ac_sha = ac_sha;
+    veg_var->ag_sun = ag_sun;
+    veg_var->ag_sha = ag_sha;
+    veg_var->aj_sun = aj_sun;
+    veg_var->aj_sha = aj_sha;
+    veg_var->an_sun = an_sun;
+    veg_var->an_sha = an_sha;
+    veg_var->ap_sun = ap_sun;
+    veg_var->ap_sha = ap_sha;
 }
 
 /******************************************************************************
