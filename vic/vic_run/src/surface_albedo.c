@@ -188,7 +188,7 @@ surface_albedo(double             step_dt,
     veg_var->f_sun = f_sun;
     veg_var->f_shade = f_shade;
     veg_var->leaf_sun = NetLAI * f_sun;
-    veg_var->leaf_shade = NetLAI * f_shade;
+    veg_var->leaf_sha = NetLAI * f_shade;
 
     return (0);
 }

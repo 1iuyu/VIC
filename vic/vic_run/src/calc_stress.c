@@ -396,11 +396,11 @@ void spacF(double           *vegwp,
     double root_soil_pot;      /* 根-土壤水势差累加 */
     double Canopy_Upper = veg_lib->Canopy_Upper;
     double matric50 = veg_lib->matric50;
-    double conduct_max = veg_lib->conduct_max;
-    double kmax_sun = conduct_max;
-    double kmax_sha = conduct_max;
-    double kmax_xyl = conduct_max;
-    double kmax_root = conduct_max;
+    double kcano_max = veg_lib->kcano_max;
+    double kmax_sun = kcano_max;
+    double kmax_sha = kcano_max;
+    double kmax_xyl = kcano_max;
+    double kmax_root = kcano_max;
     double *dz_soil = soil_con->dz_soil;
     double *matric = cell->matric;
     double *hksr_int = cell->hksr_int;
@@ -515,15 +515,15 @@ void getvegwp(double           *vegwp,
     double leaf_sha = veg_var->leaf_sha;
     double Canopy_Upper = veg_lib->Canopy_Upper;
     double matric50 = veg_lib->matric50;
-    double conduct_max = veg_lib->conduct_max;
+    double kcano_max = veg_lib->kcano_max;
     size_t i, j;
     size_t Nsoil = cell->Nsoil;
     double *hksr_int = cell->hksr_int;
     double NetSAI = veg_var->NetSAI;
-    double kmax_sun = conduct_max;
-    double kmax_sha = conduct_max;
-    double kmax_xyl = conduct_max;
-    double kmax_root = conduct_max;
+    double kmax_sun = kcano_max;
+    double kmax_sha = kcano_max;
+    double kmax_xyl = kcano_max;
+    double kmax_root = kcano_max;
     double grav2[MAX_SOILS];
     for (i = 0 ; i < MAX_SOILS; i++) {
         grav2[i] = 0.0;

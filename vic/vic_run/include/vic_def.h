@@ -580,7 +580,6 @@ typedef struct {
     double reflstem[MAX_SWBANDS];
     double transleaf[MAX_SWBANDS];
     double transstem[MAX_SWBANDS];
-    double alpha_canopy;
     double Canopy_Upper;                /**< top of canopy (m) */
     double Canopy_Lower;                /**< bottom of canopy (m) */
     double Canopy_Radius;
@@ -590,21 +589,11 @@ typedef struct {
     double root_a;               /**< Empirical parameter a in eqa(2) */
     double root_b;               /**< Empirical parameter b in eqa(2) */
     double root_d;               /**< Maximum root depth (m) */
+    unsigned short int veg_class; /**< vegetation class reference number */
     size_t NVegLibTypes;   /**< number of vegetation classes defined in
                               library */
-    double rad_atten;      /**< radiation attenuation due to canopy,
-                              default = 0.5 (N/A) */
-    double rmax;           /**< Maximal stomatal resistance (s/m) */
-    double rmin;           /**< minimum stomatal resistance (s/m) */
     double trunk_dia;    /**< ratio of trunk height to tree height,
                               default = 0.2 (fraction) */
-    double wind_atten;     /**< wind attenuation through canopy,
-                              default = 0.5 (N/A) */
-    double RGL;            /**< Value of solar radiation below which there
-                              will be no transpiration (ranges from
-                              ~30 W/m^2 for trees to ~100 W/m^2 for crops) */
-    double m_vpd;
-    double T_opt_trans;
     double liq_bioms;
     double slatop;
     double stem_num;
@@ -615,8 +604,8 @@ typedef struct {
     double Z0sub_cw;
     double smpsc;
     double smpso;
-    double carboxylation;
-    double minPhotosyn;
+    // Carbon terms
+    char Ctype;                   /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
     double m_bb;                  /**< Ball-Berry slope of conductance-photosynthesis relationship */
     double matric50;              /**< matric potential at which stomatal conductance is reduced by 50% (m) */
     double kseg_max;              /**< plant segment max conductance (m/s) */
@@ -628,9 +617,7 @@ typedef struct {
     double fN_rub;                /**< fraction of leaf N in Rubisco enzyme (gN Rubisco/gN leaf) */ 
     double medlynslope;           /**< slope of Medlyn conductance-photosynthesis relationship */
     double medlynint;             /**< intercept of Medlyn conductance-photosynthesis relationship */
-    unsigned short int veg_class; /**< vegetation class reference number */
-    // Carbon terms
-    char Ctype;            /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
+
 } veg_lib_struct;
 
 /******************************************************************************
