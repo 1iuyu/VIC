@@ -2,7 +2,7 @@
  * @section DESCRIPTION
  *
  * This routine computes canopy stomatal resistance and foliage photosynthesis
- * based on Ball-Berry and Jarvis-Montanari scheme
+ * based on plant hydraulic stress scheme.
  *****************************************************************************/
 
 #include "vic_run.h"
@@ -190,7 +190,7 @@ PhotoHydroStress(double             thm,
     double gs_mol_err = 0.0;
     for (i = 0; i < Ncanopy; i++) {
         if (i == 0) {
-            LAIcanopy = 0.5 * NetLAI;
+            LAIcanopy = 0.5 * LAI_z[i];
         }
         else {
             LAIcanopy += 0.5 * (LAI_z[i-1] + LAI_z[i]);
@@ -410,8 +410,8 @@ PhotoHydroStress(double             thm,
             veg_var->ag_sha = 0.0;
             veg_var->aj_sun = 0.0;
             veg_var->aj_sha = 0.0;
-            veg_var->an_sun = 0.0;
-            veg_var->an_sha = 0.0;
+            veg_var->an_sun = veg_var->ag_sun / bsun * lmr_sun;
+            veg_var->an_sha = veg_var->ag_sha / bsha * lmr_sha;
             veg_var->ap_sun = 0.0;
             veg_var->ap_sha = 0.0;
             ci_sun = 0.0;
