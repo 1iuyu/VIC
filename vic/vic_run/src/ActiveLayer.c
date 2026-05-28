@@ -106,9 +106,9 @@ ActiveLayer(cell_data_struct *cell,
  * @brief    Calculate the .
  *****************************************************************************/
 void
-calc_root_moist_stress(cell_data_struct  *cell,
-                       soil_con_struct   *soil_con,
-                       veg_lib_struct    *veg_lib)
+calc_root_moist_stress(cell_data_struct *cell,
+                       soil_con_struct  *soil_con,
+                       veg_lib_struct   *veg_lib)
 {
     extern option_struct options;
     size_t i, Nroot;
@@ -164,7 +164,7 @@ calc_root_moist_stress(cell_data_struct  *cell,
             root_unfrozen[i] = root_unfrozen[i] / total_unfrozen;
         }
     }
-    // 计算计算根部水分胁迫程度
+    // 计算根部水分胁迫程度
     for (i = 0; i < Nroot; i++) {
         if (liq[i] <= 0.0 || soil_T[i] <= CONST_TKFRZ - 2.0) {
             Netroot[i] = 0.0;
@@ -177,7 +177,7 @@ calc_root_moist_stress(cell_data_struct  *cell,
             f_transp += max(Netroot[i], 0.0);
         }
     }
-    cell->f_transp = f_transp;
+    
     for (i = 0; i < Nroot; i++) {
         if (f_transp > 0.0) {
             Netroot[i] /= f_transp;
