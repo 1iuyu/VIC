@@ -12,17 +12,17 @@
 * @brief        This routine computes all surface fluxes.
 ******************************************************************************/
 int
-surface_fluxes(double               air_temp,
-               double               snowfall,
-               double               rainfall,
-               force_data_struct   *force,
-               energy_bal_struct   *energy,
-               global_param_struct *gp,
-               cell_data_struct    *cell,
-               snow_data_struct    *snow,
-               soil_con_struct     *soil_con,
-               veg_var_struct      *veg_var,
-               veg_lib_struct      *veg_lib)
+surface_fluxes(double             step_dt,
+               double             air_temp,
+               double             snowfall,
+               double             rainfall,
+               force_data_struct *force,
+               energy_bal_struct *energy,
+               cell_data_struct  *cell,
+               snow_data_struct  *snow,
+               soil_con_struct   *soil_con,
+               veg_var_struct    *veg_var,
+               veg_lib_struct    *veg_lib)
 {
     extern option_struct     options;
     extern parameters_struct param;
@@ -47,8 +47,7 @@ surface_fluxes(double               air_temp,
     /*******************************************
        Set-up sub-time step controls
     *******************************************/
-    hidx = 0;
-    double step_dt = gp->step_dt;
+    hidx = NR;
     size_t dt_min = 1800; // seconds (half hour)
     size_t iter = 0;
     double time_accum = 0.0;

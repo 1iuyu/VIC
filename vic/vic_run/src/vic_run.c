@@ -182,9 +182,9 @@ vic_run(force_data_struct   *force,
               Solve ground surface fluxes
             ******************************/
             if (veg_con[iveg].IS_GLAC == false) {   // 非冰川HRU
-                ErrorFlag = surface_fluxes(Tair, snowfall, 
-                                           rainfall,
-                                           force, energy, gp, 
+                ErrorFlag = surface_fluxes(step_dt, Tair, 
+                                           snowfall, rainfall,
+                                           force, energy,
                                            cell, snow,
                                            soil_con, veg_var,
                                            &veg_lib[veg_class]);
