@@ -108,7 +108,7 @@ double new_snow_density(double);
 int PhaseChangeGlac(double, energy_bal_struct *, cell_data_struct *,
                     snow_data_struct *, soil_con_struct *);
 int PhotoHydroStress(double, double, double, double, double, double, double,
-                     energy_bal_struct *, cell_data_struct *, soil_con_struct *,
+                     double, cell_data_struct *, soil_con_struct *,
                      veg_var_struct *, veg_lib_struct *);
 void prepare_full_energy(bool, cell_data_struct *, energy_bal_struct *,
                          snow_data_struct *, soil_con_struct *);

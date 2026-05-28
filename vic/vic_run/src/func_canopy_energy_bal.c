@@ -50,7 +50,6 @@ func_canopy_energy_bal(double             step_dt,
     double Tfoliage = energy->Tfoliage;
     double Tstem = energy->Tstem;
     double Tgrnd = energy->Tgrnd;
-    double total_transp = cell->total_transp;
     double SensibleLeaf = energy->SensibleLeaf;
     double SensibleStem = energy->SensibleStem;
     double LatentLeaf = energy->LatentLeaf;
@@ -84,6 +83,7 @@ func_canopy_energy_bal(double             step_dt,
     double L_old = 0.0;
     double coef_latent = 0.0;
     double coef_sensible = 0.0;
+    // 设置临时变量
     double wtgq0, wtlq0, wtaq0, wtl0, wta0, wtal, wtg;
     double wtstem0, wtgq, wtg0, wtalq, wtgaq, wtshi;
     double wtair, wtl, wtstem, wtga, wtaq, wtlq, wtsqi;
@@ -101,14 +101,15 @@ func_canopy_energy_bal(double             step_dt,
     }
     // 调整冠层的空气动力学参数
     double lt = 0.0;
+    double NetVEG = NetLAI + NetSAI;
     if (options.AERO_RESIST == AR_ZENG) {
-        lt = min(NetLAI + NetSAI, 2.0);
+        lt = min(NetVEG, 2.0);
         double egvf =(1.0 - exp(-lt)) / (1.0 - exp(-2.0));
         displacement[1] = egvf * displacement[1];
         Z0m_sub[0] = exp(egvf * log(Z0m_sub[0]) + (1.0 - egvf) * log(Z0m_grnd[0]));
     }
     else if (options.AERO_RESIST == AR_MEIER) {
-        lt = max(NetLAI + NetSAI, 1.e-5);
+        lt = max(NetVEG, 1.e-5);
         displacement[1] = Canopy_Upper * (1.0 - (1.0 - exp(-pow(7.5 * lt, 0.5)) / pow(7.5 * lt, 0.5)));
         lt = min(lt, veg_lib->Z0sub_LAImax);
         double delt = 2.0;
@@ -137,7 +138,7 @@ func_canopy_energy_bal(double             step_dt,
     double thm = air_temp + 0.0098 * ref_height[1];
     // 设置未被积雪覆盖的植被比例
     double f_snow_veg;
-    if (NetLAI + NetSAI > 0.05) {
+    if (NetVEG > 0.05) {
         f_snow_veg = 1.0;
     }
     else {
@@ -199,7 +200,7 @@ func_canopy_energy_bal(double             step_dt,
         Ra_leaf = 1.0 / (h_leaf * wind_over);
         cell->Ra_leaf = Ra_leaf;
         // 计算下垫面土壤与冠层空气之间的湍流传送系数
-        double w_frac = exp(-(NetLAI + NetSAI));
+        double w_frac = exp(-(NetVEG));
         double Cs_bare = CONST_KARMAN / 0.13 * pow((Z0m_sub[1] * wind_over / 1.5e-5), -0.45);
         double ri = (CONST_G * Canopy_Upper * (Tcanopy - Tgrnd)) / pow(Tcanopy * wind_over, 2.0);
         double Cs_dense = 0.004;
@@ -224,7 +225,7 @@ func_canopy_energy_bal(double             step_dt,
         PhotoHydroStress(thm, esat_T, 
                          qsat_T, vp_over, 
                          Qair_over, pressure, 
-                         air_density, energy, 
+                         air_density, Tfoliage,
                          cell, soil_con,
                          veg_var, veg_lib);
 
@@ -250,15 +251,15 @@ func_canopy_energy_bal(double             step_dt,
         else {
             rppdry = 0.0;
         }
-        // 使用Plant Hydraulics Stress计算潜在蒸发量的比例
-        double efpot = air_density * ((NetLAI + NetSAI) / Ra_leaf) * (qsat_T - Qair_over);
+        // 计算潜在蒸发量的比例
+        double efpot = air_density * (NetVEG / Ra_leaf) * (qsat_T - Qair_over);
         double rpp = 0.0;
         if (efpot > 0.0) {
             if (cell->transp_fact > 0.0) {
                 rpp = rppdry + wetFrac;
             }
             else {
-                // No transpiration if btran below 1.e-10
+                // No transpiration if transp_fact below 1.e-10
                 rpp = wetFrac;
             }
             // Check total evapotranspiration from leaves
@@ -269,9 +270,9 @@ func_canopy_energy_bal(double             step_dt,
             rpp = 1.0;
         }
         wtaq = f_snow_veg / Ra_over[2];
-        wtlq = f_snow_veg * (NetLAI + NetSAI) / Ra_leaf * rpp;
+        wtlq = f_snow_veg * NetVEG / Ra_leaf * rpp;
         double fsno_dl = snow->snow_depth / 0.05;    // effective snow cover for (dry)plant litter
-        double elai_dl = 0.5 * (1.0 - min(fsno_dl,1.0)); // exposed (dry)litter area index
+        double elai_dl = 0.5 * (1.0 - min(fsno_dl, 1.0)); // exposed (dry)litter area index
         double rdl = (1.0 - exp(-elai_dl)) / (0.004 * wind_over); // dry litter layer resistance
         if (delt_q < 0.0) {
             wtgq = f_snow_veg / (Ra_sub[2] + rdl);
@@ -304,7 +305,7 @@ func_canopy_energy_bal(double             step_dt,
         delt_T = RestTerm / coef_flux;
         Tfoliage += delt_T;
 
-        efpot = air_density * ((NetLAI + NetSAI) / Ra_sub[1]) *
+        efpot = air_density * (NetVEG / Ra_sub[1]) *
                 (wtgaq * (qsat_T + qsatdT * delt_T) -
                  wtgq0 * Qair_grnd - wtaq0 * Qair);
         cell->canopyevap = rpp * efpot;

@@ -11,18 +11,18 @@
  * @brief    Calculate canopy photosynthesis and stomatal resistance.
  *****************************************************************************/
 int
-PhotoHydroStress(double             thm,
-                 double             esat_T,
-                 double             qsat_T,
-                 double             vp_over,
-                 double             Qair_over,
-                 double             pressure,
-                 double             air_density,
-                 energy_bal_struct *energy,
-                 cell_data_struct  *cell,
-                 soil_con_struct   *soil_con,
-                 veg_var_struct    *veg_var,
-                 veg_lib_struct    *veg_lib)
+PhotoHydroStress(double            thm,
+                 double            esat_T,
+                 double            qsat_T,
+                 double            vp_over,
+                 double            Qair_over,
+                 double            pressure,
+                 double            air_density,
+                 double            Tfoliage,
+                 cell_data_struct *cell,
+                 soil_con_struct  *soil_con,
+                 veg_var_struct   *veg_var,
+                 veg_lib_struct   *veg_lib)
 {   
     extern option_struct     options;
     extern parameters_struct param;
@@ -30,7 +30,6 @@ PhotoHydroStress(double             thm,
     double max_cs = 1.e-6; // Max CO2 partial pressure at leaf surface (Pa) for PHS
     double aPAR_sun = veg_var->aPAR_sun;
     double aPAR_sha = veg_var->aPAR_sha;
-    double Tfoliage = energy->Tfoliage;
     double *dz_soil = soil_con->dz_soil;
     double *root = cell->root;
     double *LAI_z = veg_var->LAI_z;
