@@ -186,23 +186,5 @@ calc_root_moist_stress(cell_data_struct *cell,
             Netroot[i] = 0.0;
         }
     }
-    imax = 0;
-    for (i = 0; i < Nroot; i++) {
-        if (Netroot[i] > 0.0) {
-            if (imax == 0) {
-                imax = i;
-                imin = i;
-            }
-            else {
-                if (matric[i] < matric[imin]) {
-                    imin = i; // 最干层
-                }
-                if (matric[i] > matric[imax]) {
-                    imax = i; // 最湿层
-                }
-            }
-        }
-    }
-    double pxylem = 2.0 * matric[imax];
     
 }
