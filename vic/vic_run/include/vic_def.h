@@ -69,19 +69,6 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-// 通用的any宏
-#define any(arr, size, condition) \
-    ({ \
-        bool result = false; \
-        for (size_t i = 0; i < (size); i++) { \
-            if ((arr)[i] condition) { \
-                result = true; \
-                break; \
-            } \
-        } \
-        result; \
-    })
-
 extern size_t NR;       /**< array index for force struct that indicates
                              the model step avarage or sum */
 extern size_t NF;       /**< array index loop counter limit for force
