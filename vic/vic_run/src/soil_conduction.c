@@ -304,8 +304,7 @@ set_node_parameters(size_t  Nbedrock,
 *           moisture contents.
 ******************************************************************************/
 int
-distribute_node_moisture_properties(bool              IS_GLAC,
-                                    cell_data_struct *cell,
+distribute_node_moisture_properties(cell_data_struct *cell,
                                     soil_con_struct  *soil_con)
 {
     extern option_struct     options;
@@ -322,7 +321,7 @@ distribute_node_moisture_properties(bool              IS_GLAC,
 
     /* node estimates */
     for (nidx = 0; nidx < Nsoil; nidx++) {
-        if (IS_GLAC) {
+        if (cell->IS_GLAC) {
             ice[nidx] = 1.0;
             moist[nidx] = 1.0;
             porosity[nidx] = 0.0;

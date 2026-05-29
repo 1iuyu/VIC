@@ -12,30 +12,32 @@
  *           snow components) to default values.
  *****************************************************************************/
 void
-generate_default_state(all_vars_struct *all_vars,
-                       soil_con_struct *soil_con,
-                       veg_con_struct  *veg_con)
+generate_default_state(force_data_struct *force,
+                       all_vars_struct   *all_vars,
+                       soil_con_struct   *soil_con,
+                       veg_con_struct    *veg_con)
 {
     extern option_struct     options;
-
-    size_t                   Nveg;
-    size_t                   veg;
-    size_t                   band;
-    size_t                   Nsnow;
-    size_t                   lidx;
-    size_t                   i, k;
-    double                   Cv;
-
-    cell_data_struct        *cell;
-    snow_data_struct        *snow;
-    energy_bal_struct       *energy;
+    int         ErrorFlag;
+    size_t      Nveg;
+    size_t      veg;
+    size_t      band;
+    size_t      Nsnow;
+    size_t      lidx;
+    size_t      i, k;
+    double      Cv;
+    double      init_temp;
+    cell_data_struct *cell;
+    snow_data_struct *snow;
+    energy_bal_struct *energy;
     cell = all_vars->cell;
     snow = all_vars->snow;
     energy = all_vars->energy;
     Nveg = veg_con[0].vegetat_type_num;
     double *gravel_node = soil_con->gravel_node;
     double *bulk_dens_node = soil_con->bulk_dens_node;
-
+    double air_temp = force->air_temp[NR];
+    double pressure = force->pressure[NR];
     /*********************************
       Initialize snowpack temperatures
     *********************************/
@@ -96,7 +98,6 @@ generate_default_state(all_vars_struct *all_vars,
     /******************************************************************************
        Initialize soil moistures
        currently setting moist to porosity as default and eliminate init_moist 
-       (require user to use a state file if they want control over initial moist)
     ******************************************************************************/
     for (veg = 0; veg <= Nveg; veg++) {
         Cv = veg_con[veg].Cv;
@@ -134,6 +135,7 @@ generate_default_state(all_vars_struct *all_vars,
         if (Cv > 0) {
             band = veg_con[veg].BandIndex;
             Nsnow = snow[veg].Nsnow;
+            init_temp = air_temp + soil_con->Tfactor[band];
             // Initialize snow node temperatures
             for (i = 0; i < Nsnow; i++) {
                 energy[veg].T[i] = snow[veg].pack_T[i];
@@ -142,8 +144,8 @@ generate_default_state(all_vars_struct *all_vars,
             for (k = Nsnow; k < cell[veg].Nnode; k++) {
                 lidx = k - Nsnow;
                 if (options.FROZEN_SOIL) {
-                    energy[veg].T[k] = 260.0;
-                    cell[veg].soil_T[lidx] = 260.0;
+                    energy[veg].T[k] = air_temp;
+                    cell[veg].soil_T[lidx] = air_temp;
                 }
                 else {
                     energy[veg].T[k] = CONST_TKFRZ;
@@ -151,11 +153,36 @@ generate_default_state(all_vars_struct *all_vars,
                 }
             }
             /* Initial estimate of temperatures */
-            energy[veg].Tfoliage = 260.0 + soil_con->Tfactor[band];
-            energy[veg].Tstem = 260.0 + soil_con->Tfactor[band];
-            energy[veg].Tcanopy = 260.0 + soil_con->Tfactor[band];
-            energy[veg].Tgrnd = 260.0 + soil_con->Tfactor[band];
-            energy[veg].Tsurf = 260.0 + soil_con->Tfactor[band];
+            energy[veg].Tfoliage = init_temp;
+            energy[veg].Tstem = init_temp;
+            energy[veg].Tcanopy = init_temp;
+            energy[veg].Tgrnd = init_temp;
+            energy[veg].Tsurf = init_temp;
         }
-    }  
+    }
+    /******************************************
+       Compute soil thermal node properties
+    ******************************************/
+    for (veg = 0; veg <= Nveg; veg++) {
+        // Initialize soil for existing vegetation types
+        Cv = veg_con[veg].Cv;
+        cell[veg].IS_GLAC = veg_con[veg].IS_GLAC;
+        if (Cv > 0) {
+            // set soil moisture properties for all soil thermal nodes
+            if (options.FROZEN_SOIL) {
+                ErrorFlag =
+                        distribute_node_moisture_properties(
+                            &cell[veg],
+                            soil_con);
+                if (ErrorFlag == ERROR) {
+                    log_err("Error setting physical properties for "
+                            "soil thermal nodes"); 
+                }
+            }
+            /* Soil and ice thermal properties for the layer */
+            prepare_full_energy(pressure, &cell[veg], 
+                                &energy[veg],
+                                &snow[veg], soil_con);
+        }
+    }
 }

@@ -45,11 +45,6 @@ calc_energy_bal(size_t             hidx,
                   snow, 
                   soil_con, veg_lib);
 
-    /************************************
-    Compute soil transpiration factor
-    ************************************/
-    soil_transp(cell, soil_con);
-
     /*****************************
     Compute surface resistance
     *****************************/

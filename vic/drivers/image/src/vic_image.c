@@ -108,9 +108,6 @@ main(int    argc,
         rout_init();    // Routing routine (extension)
     }
 
-    // populate model state, either using a cold start or from a restart file
-    vic_populate_model_state();
-
     // initialize output structures
     vic_init_output(&(dmy[0]));
 
@@ -124,7 +121,8 @@ main(int    argc,
     timer_stop(&(global_timers[TIMER_VIC_INIT]));
     // start vic run timer
     timer_start(&(global_timers[TIMER_VIC_RUN]));
-
+    // Initialize the flag
+    bool IS_INIT = false;
     // loop over all timesteps
     for (current = 0; current < global_param.nrecs; current++) {
         // read forcing data
@@ -132,6 +130,12 @@ main(int    argc,
         vic_force();
         timer_stop(&(global_timers[TIMER_VIC_FORCE]));
 
+        // populate model state, either using a cold start or from a restart file
+        if (IS_INIT == false) {
+            vic_populate_model_state();
+            IS_INIT = true;
+        }
+        
         // run vic over the domain
         vic_image_run(&(dmy[current]));
 

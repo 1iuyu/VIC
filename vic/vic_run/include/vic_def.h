@@ -731,7 +731,6 @@ typedef struct {
     double esoil_sub;
     double esoil_grnd;
     double dewsoil;                    /**< evapotranspiration from soil layer (mm) */
-    double total_transp;               /**< accumulated soil water transpiration factor (0 to 1) */
     double transp_fact;                   /**< soil water transpiration factor (0 to 1) */
     double soil_excess;
     double root[MAX_SOILS];

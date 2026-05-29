@@ -16,7 +16,6 @@ soil_vapor_flux(double             pressure,
                 cell_data_struct  *cell,
                 soil_con_struct   *soil_con)
 {
-    extern parameters_struct param;
     size_t i, Nsoil;
     double air = 0.0;
     double vapor_diff = 0.0;
