@@ -37,12 +37,6 @@ initialize_parameters()
     param.EMISS_SNOW = 0.95;
     param.EMISS_H2O = 0.98;
 
-    // Soil Constraints
-    param.SOIL_RESID_MOIST = 0.0;
-    param.SOIL_SLAB_MOIST_FRACT = 1.0;
-    param.SOIL_RESIST_EXP = 5.0;
-    param.SOIL_FROST = 4.0;
-
     // Vegetation Parameters
     param.VEG_LAI_SNOW_MULTIPLIER = 0.0005;
     param.VEG_LAI_WATER_FACTOR = 0.1;
@@ -134,9 +128,6 @@ initialize_parameters()
     param.PHOTO_SACT = 60.0;
     param.PHOTO_MINCONDUCT = 1.0e-16;
 
-    param.SRESP_PSIWILT = -150; // [m]
-    param.SRESP_EXP = 5.0;
-
     // Surface roughness constants
     param.ROUGH3 = 70.0;
     param.ROUGH_BETA = 7.2;
@@ -154,37 +145,13 @@ initialize_parameters()
     param.SNOW_RELEASE_FAC = 5.0e-5;      // snowpack water release timescale factor (1/s)
     param.SNOW_NEW_SNOW_DENSITY = 50.0;
     param.SNOW_NEW_SNOW_DENS_MAX = 120.0;
-    param.SNOW_DENS_DMLIMIT = 100.0;
-    param.SNOW_DENS_DMLIMIT_FACTOR = 1.15;
-    param.SNOW_DENS_MAX_CHANGE = 0.9;
-    param.SNOW_DENS_ETA0 = 3.6e6;
-    param.SNOW_DENS_C1 = 0.04;
-    param.SNOW_DENS_C2 = 2.778e-6;
-    param.SNOW_DENS_C3 = 1.0;
-    param.SNOW_DENS_C3_CONST = -0.046;
-    param.SNOW_DENS_C4 = 1.0;
-    param.SNOW_DENS_C4WET = 2.0;
-    param.SNOW_DENS_C5 = 0.08;
-    param.SNOW_DENS_C6 = 0.021;
-    param.SNOW_DENS_F = 0.6;
-    param.SNOW_DENS_EXP = 0.35;
-    param.SNOW_DENS_DENOM = 10.;
     param.SNOW_NEW_SNT_C1 = 67.92;
     param.SNOW_NEW_SNT_C2 = 51.25;
     param.SNOW_NEW_SNT_C3 = 2.59;
     param.SNOW_NEW_BRAS_DENOM = 100.;
     param.SNOW_PGRAD = 0.0005;
     param.SNOW_RASNOW = 50.0;
-    param.SNOW_A1 = 0.7;
-    param.SNOW_A2 = 0.3;
-    param.SNOW_L1 = 6.0;
-    param.SNOW_L2 = 20.0;
     param.SNOW_CONDUCT = 2.9302e-6; // ???
-    param.SNOW_NEW_SNOW_ALB = 0.85;
-    param.SNOW_ALB_ACCUM_A = 0.94;
-    param.SNOW_ALB_ACCUM_B = 0.58;
-    param.SNOW_ALB_THAW_A = 0.82;
-    param.SNOW_ALB_THAW_B = 0.46;
     param.SNOW_COMPACT_A = 2.5e-6;
     param.SNOW_COMPACT_B = 0.04;
     param.SNOW_COMPACT_C = 2.0;

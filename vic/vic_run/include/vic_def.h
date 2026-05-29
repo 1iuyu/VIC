@@ -307,13 +307,6 @@ typedef struct {
     double EMISS_SNOW;  /**< Emissivity of snow */
     double EMISS_H2O;  /**< Emissivity of open water surface */
 
-    // Soil Constraints
-    double SOIL_RARC;  /**< Architectural resistance (s/m) of soil when computing soil evaporation via Penman-Monteith eqn */
-    double SOIL_RESID_MOIST;  /**< Default residual moisture content (fraction of porosity) of soil column */
-    double SOIL_SLAB_MOIST_FRACT;  /**< Moisture content (fraction of porosity) in the soil/rock below the bottom soil layer; this assumes that the soil below the bottom layer has the same texture as the bottom layer. */
-    double SOIL_RESIST_EXP;
-    double SOIL_FROST;
-
     // Vegetation Parameters
     double VEG_LAI_SNOW_MULTIPLIER;  /**< multiplier to calculate the amount of available snow interception as a function of LAI (m) */
     double VEG_LAI_WATER_FACTOR;  /**< Coefficient multiplied by the LAI to determine the amount of water that can be stored in the canopy */
@@ -373,9 +366,6 @@ typedef struct {
     double PHOTO_FNR; /**< Mass ratio of total Rubisco molecular mass to N in Rubisco */
     double PHOTO_SACT;
 
-    double SRESP_EXP;
-    double SRESP_PSIWILT; /** metric potential for wilting point (m) */
-
     // Surface roughness constants
     double ROUGH3; 
     double ROUGH_BETA;
@@ -392,34 +382,10 @@ typedef struct {
     double SNOW_LIQUID_WATER_CAPACITY;  /**< water holding capacity of snow as a fraction of snow-water-equivalent */
     double SNOW_NEW_SNOW_DENSITY;  /**< density of new fallen snow */
     double SNOW_NEW_SNOW_DENS_MAX; /**< new snow density max for Hedstrom and Pomeroy 1998 equation [Warren et al. 1999, Bormann et al. 2013, Maidment Figure 7.2.3] */
-    double SNOW_DENS_DMLIMIT;  /**< Density limit used in calculation of destructive metamorphism (kg/m^3) */
-    double SNOW_DENS_DMLIMIT_FACTOR;  /**< Density limit factor used in calculation of destructive metamorphism (kg/m^3) */
-    double SNOW_DENS_MAX_CHANGE;  /**< maximum change in snowfall depth (fraction of swe) */
-    double SNOW_DENS_ETA0;  /**< viscosity of snow at T = 0C and density = 0 used in calculation of true viscosity (Ns/m2) */
-    double SNOW_DENS_C1;  /**< Constant in snow density computation */
-    double SNOW_DENS_C2;  /**< Constant in snow density computation */
-    double SNOW_DENS_C3;  /**< Constant in snow density computation */
-    double SNOW_DENS_C3_CONST;  /**< Constant in snow density computation */
-    double SNOW_DENS_C4;  /**< Constant in snow density computation */
-    double SNOW_DENS_C4WET;  /**< Constant in snow density computation */
-    double SNOW_DENS_C5;  /**< constant used in snow viscosity calculation, taken from SNTHRM.89 (/C) */
-    double SNOW_DENS_C6;  /**< constant used in snow viscosity calculation, taken from SNTHRM.89 (kg/m3) */
-    double SNOW_DENS_F;  /**< internal compaction rate coefficient */
-    double SNOW_DENS_EXP;  /**< exponent in snow density compaction equation [Bras pg. 257 ]*/
-    double SNOW_DENS_DENOM;  /**< denomenator in snow density compaction equation [Bras pg. 257] */
     double SNOW_NEW_SNT_C1; /**< Constant in Sntherm new snow density computation. */
     double SNOW_NEW_SNT_C2; /**< Constant in Sntherm new snow density computation. */
     double SNOW_NEW_SNT_C3; /**< Constant in Sntherm new snow density computation. */
     double SNOW_NEW_BRAS_DENOM;  /**< Constant in Bras new snow density computation. */
-    double SNOW_A1;  /**< Attenuation coefficient for shortwave in a snowpack. Value and equation taken from Patterson and Hamblin, 1988 */
-    double SNOW_A2;  /**< Attenuation coefficient for shortwave in a snowpack. Value and equation taken from Patterson and Hamblin, 1988 */
-    double SNOW_L1;  /**< Attenuation coefficient for shortwave in a snowpack. Value and equation taken from Patterson and Hamblin, 1988 (1/m) */
-    double SNOW_L2;  /**< Attenuation coefficient for shortwave in a snowpack. Value and equation taken from Patterson and Hamblin, 1988 (1/m) */
-    double SNOW_NEW_SNOW_ALB;  /**< Snow albedo curve parameters. */
-    double SNOW_ALB_ACCUM_A;  /**< Snow albedo curve parameters. */
-    double SNOW_ALB_ACCUM_B;  /**< Snow albedo curve parameters. */
-    double SNOW_ALB_THAW_A;  /**< Snow albedo curve parameters. */
-    double SNOW_ALB_THAW_B;  /**< Snow albedo curve parameters. */
     double SNOW_CONDUCT;  /**< conductivity of snow (W/mK) */
     double SNOW_PGRAD;
     double SNOW_COMPACT_A;
