@@ -67,19 +67,9 @@ get_parameters(FILE *paramfile)
             else if (strcasecmp("EMISS_H2O", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.EMISS_H2O);
             }
-            // Soil Constraints
-            else if (strcasecmp("SOIL_RESID_MOIST", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SOIL_RESID_MOIST);
-            }
-            else if (strcasecmp("SOIL_SLAB_MOIST_FRACT", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SOIL_SLAB_MOIST_FRACT);
-            }
             // Vegetation Parameters
             else if (strcasecmp("VEG_LAI_SNOW_MULTIPLIER", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.VEG_LAI_SNOW_MULTIPLIER);
-            }
-            else if (strcasecmp("VEG_MIN_INTERCEPTION_STORAGE", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.VEG_MIN_INTERCEPTION_STORAGE);
             }
             else if (strcasecmp("VEG_LAI_WATER_FACTOR", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.VEG_LAI_WATER_FACTOR);
@@ -90,9 +80,6 @@ get_parameters(FILE *paramfile)
             }
             else if (strcasecmp("CANOPY_RSMAX", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.CANOPY_RSMAX);
-            }
-            else if (strcasecmp("CANOPY_VPDMINFACTOR", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.CANOPY_VPDMINFACTOR);
             }
             // Saturation Vapor Pressure Parameters
             else if (strcasecmp("SVP_A0", optstr) == 0) {
@@ -126,20 +113,11 @@ get_parameters(FILE *paramfile)
             else if (strcasecmp("PHOTO_FCMIN", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.PHOTO_FCMIN);
             }
-            else if (strcasecmp("PHOTO_ZENITHMIN", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_ZENITHMIN);
-            }
-            else if (strcasecmp("PHOTO_ZENITHMINPAR", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_ZENITHMINPAR);
-            }
             else if (strcasecmp("PHOTO_ALBSOIPARMIN", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.PHOTO_ALBSOIPARMIN);
             }
             else if (strcasecmp("PHOTO_MINMAXETRANS", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.PHOTO_MINMAXETRANS);
-            }
-            else if (strcasecmp("PHOTO_MINSTOMCOND", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_MINSTOMCOND);
             }
             else if (strcasecmp("PHOTO_FCI1C3", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.PHOTO_FCI1C3);
@@ -168,67 +146,6 @@ get_parameters(FILE *paramfile)
             else if (strcasecmp("PHOTO_ER", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.PHOTO_ER);
             }
-            else if (strcasecmp("PHOTO_ALC3", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_ALC3);
-            }
-            else if (strcasecmp("PHOTO_FRDC3", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_FRDC3);
-            }
-            else if (strcasecmp("PHOTO_EK", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_EK);
-            }
-            else if (strcasecmp("PHOTO_ALC4", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_ALC4);
-            }
-            else if (strcasecmp("PHOTO_FRDC4", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_FRDC4);
-            }
-            else if (strcasecmp("PHOTO_THETA", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_THETA);
-            }
-            else if (strcasecmp("PHOTO_FRLEAF", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_FRLEAF);
-            }
-            else if (strcasecmp("PHOTO_FRGROWTH", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_FRGROWTH);
-            }
-            // Soil Respiration Parameters
-            else if (strcasecmp("SRESP_E0_LT", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_E0_LT);
-            }
-            else if (strcasecmp("SRESP_T0_LT", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_T0_LT);
-            }
-            else if (strcasecmp("SRESP_WMINFM", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_WMINFM);
-            }
-            else if (strcasecmp("SRESP_WMAXFM", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_WMAXFM);
-            }
-            else if (strcasecmp("SRESP_WOPTFM", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_WOPTFM);
-            }
-            else if (strcasecmp("SRESP_RHSAT", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_RHSAT);
-            }
-            else if (strcasecmp("SRESP_RFACTOR", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_RFACTOR);
-            }
-            else if (strcasecmp("SRESP_TAULITTER", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_TAULITTER);
-            }
-            else if (strcasecmp("SRESP_TAUINTER", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_TAUINTER);
-            }
-            else if (strcasecmp("SRESP_TAUSLOW", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_TAUSLOW);
-            }
-            else if (strcasecmp("SRESP_FAIR", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_FAIR);
-            }
-            else if (strcasecmp("SRESP_FINTER", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SRESP_FINTER);
-            }
             // Snow Parameters
             else if (strcasecmp("SNOW_MAX_SURFACE_SWE", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.SNOW_MAX_SURFACE_SWE);
@@ -245,51 +162,6 @@ get_parameters(FILE *paramfile)
             else if (strcasecmp("SNOW_NEW_SNOW_DENS_MAX", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.SNOW_NEW_SNOW_DENS_MAX);
             }
-            else if (strcasecmp("SNOW_DENS_DMLIMIT", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_DMLIMIT);
-            }
-            else if (strcasecmp("SNOW_DENS_DMLIMIT_FACTOR", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_DMLIMIT_FACTOR);
-            }
-            else if (strcasecmp("SNOW_DENS_MAX_CHANGE", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_MAX_CHANGE);
-            }
-            else if (strcasecmp("SNOW_DENS_ETA0", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_ETA0);
-            }
-            else if (strcasecmp("SNOW_DENS_C1", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_C1);
-            }
-            else if (strcasecmp("SNOW_DENS_C2", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_C2);
-            }
-            else if (strcasecmp("SNOW_DENS_C3", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_C3);
-            }
-            else if (strcasecmp("SNOW_DENS_C3_CONST", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_C3_CONST);
-            }
-            else if (strcasecmp("SNOW_DENS_C4", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_C4);
-            }
-            else if (strcasecmp("SNOW_DENS_C4WET", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_C4WET);
-            }
-            else if (strcasecmp("SNOW_DENS_C5", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_C5);
-            }
-            else if (strcasecmp("SNOW_DENS_C6", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_C6);
-            }
-            else if (strcasecmp("SNOW_DENS_F", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_F);
-            }
-            else if (strcasecmp("SNOW_DENS_EXP", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_EXP);
-            }
-            else if (strcasecmp("SNOW_DENS_DENOM", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_DENS_DENOM);
-            }
             else if (strcasecmp("SNOW_NEW_SNT_C1", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.SNOW_NEW_SNT_C1);
             }
@@ -301,39 +173,6 @@ get_parameters(FILE *paramfile)
             }
             else if (strcasecmp("SNOW_NEW_BRAS_DENOM", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.SNOW_NEW_BRAS_DENOM);
-            }
-            else if (strcasecmp("SNOW_MIN_SWQ_EB_THRES", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_MIN_SWQ_EB_THRES);
-            }
-            else if (strcasecmp("SNOW_A1", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_A1);
-            }
-            else if (strcasecmp("SNOW_A2", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_A2);
-            }
-            else if (strcasecmp("SNOW_L1", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_L1);
-            }
-            else if (strcasecmp("SNOW_L2", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_L2);
-            }
-            else if (strcasecmp("SNOW_NEW_SNOW_ALB", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_NEW_SNOW_ALB);
-            }
-            else if (strcasecmp("SNOW_ALB_ACCUM_A", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_ALB_ACCUM_A);
-            }
-            else if (strcasecmp("SNOW_ALB_ACCUM_B", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_ALB_ACCUM_B);
-            }
-            else if (strcasecmp("SNOW_ALB_THAW_A", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_ALB_THAW_A);
-            }
-            else if (strcasecmp("SNOW_ALB_THAW_B", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_ALB_THAW_B);
-            }
-            else if (strcasecmp("SNOW_TRACESNOW", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_TRACESNOW);
             }
             else if (strcasecmp("SNOW_CONDUCT", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.SNOW_CONDUCT);
@@ -388,23 +227,10 @@ validate_parameters()
     if (!(param.EMISS_H2O >= 0 && param.EMISS_H2O <= 1)) {
         log_err("EMISS_H2O must be defined on the interval [0,1] (-)")
     }
-    // Soil Constraints
-    if (!(param.SOIL_RESID_MOIST >= 0.)) {
-        log_err("SOIL_RESID_MOIST must be defined on the interval [0, inf)");
-    }
-    if (!(param.SOIL_SLAB_MOIST_FRACT >= 0 && param.SOIL_SLAB_MOIST_FRACT <=
-          1)) {
-        log_err(
-            "SOIL_SLAB_MOIST_FRACT must be defined on the interval [0,1] (-)")
-    }
     // Vegetation Parameters
     if (!(param.VEG_LAI_SNOW_MULTIPLIER >= 0.)) {
         log_err(
             "VEG_LAI_SNOW_MULTIPLIER must be defined on the interval [0, inf) (-)");
-    }
-    if (!(param.VEG_MIN_INTERCEPTION_STORAGE >= 0.)) {
-        log_err(
-            "VEG_MIN_INTERCEPTION_STORAGE must be defined on the interval [0, inf) (m)");
     }
     if (!(param.VEG_LAI_WATER_FACTOR >= 0.)) {
         log_err(
@@ -416,10 +242,6 @@ validate_parameters()
     }
     if (!(param.CANOPY_RSMAX >= 0.)) {
         log_err("CANOPY_RSMAX must be defined on the interval [0, inf) (s/m)");
-    }
-    if (!(param.CANOPY_VPDMINFACTOR >= 0.)) {
-        log_err(
-            "CANOPY_VPDMINFACTOR must be defined on the interval [0, inf) (-)");
     }
     // Photosynthesis Parameters
     // PHOTO_OMEGA - Currently, no constraints
@@ -452,10 +274,6 @@ validate_parameters()
         log_err(
             "PHOTO_MINMAXETRANS must be defined on the interval [0, inf) (mol/(m^2 s))");
     }
-    if (!(param.PHOTO_MINSTOMCOND >= 0.)) {
-        log_err(
-            "PHOTO_MINSTOMCOND must be defined on the interval [0, inf) (mol H2O/m2s)");
-    }
     // PHOTO_FCI1C3 - Currently, no constraints
     // PHOTO_FCI1C4 - Currently, no constraints
     if (!(param.PHOTO_OX >= 0.)) {
@@ -477,42 +295,6 @@ validate_parameters()
     // PHOTO_FRLEAF - Currently, no constraints
     // PHOTO_FRGROWTH - Currently, no constraints
 
-    // Soil Respiration Parameters
-    if (!(param.SRESP_E0_LT >= 0.)) {
-        log_err(
-            "SRESP_E0_LT must be defined on the interval [0, inf) (mol H2O/m2s)");
-    }
-    if (!(param.SRESP_T0_LT >= 0.)) {
-        log_err(
-            "SRESP_T0_LT must be defined on the interval [0, inf) (mol H2O/m2s)");
-    }
-    if (!(param.SRESP_WMINFM >= 0 && param.SRESP_WMINFM <= 1)) {
-        log_err("SRESP_WMINFM must be defined on the interval [0,1] (-)")
-    }
-    if (!(param.SRESP_WMAXFM >= 0 && param.SRESP_WMAXFM <= 1)) {
-        log_err("SRESP_WMAXFM must be defined on the interval [0,1] (-)")
-    }
-    if (!(param.SRESP_WOPTFM >= 0 && param.SRESP_WOPTFM <= 1)) {
-        log_err("SRESP_WOPTFM must be defined on the interval [0,1] (-)")
-    }
-    // SRESP_RHSAT - Currently, no constraints
-    // SRESP_RFACTOR - Currently, no constraints
-    if (!(param.SRESP_TAULITTER >= 0.)) {
-        log_err("SRESP_TAULITTER must be defined on the interval [0, inf) (y)");
-    }
-    if (!(param.SRESP_TAUINTER >= 0.)) {
-        log_err("SRESP_TAUINTER must be defined on the interval [0, inf) (y)");
-    }
-    if (!(param.SRESP_TAUSLOW >= 0.)) {
-        log_err("SRESP_TAUSLOW must be defined on the interval [0, inf) (y)");
-    }
-    if (!(param.SRESP_FAIR >= 0 && param.SRESP_FAIR <= 1)) {
-        log_err("SRESP_FAIR must be defined on the interval [0,1] (-)")
-    }
-    if (!(param.SRESP_FINTER >= 0 && param.SRESP_FINTER <= 1)) {
-        log_err("SRESP_FINTER must be defined on the interval [0,1] (-)")
-    }
-
     // Snow Parameters
     if (!(param.SNOW_MAX_SURFACE_SWE >= 0.)) {
         log_err(
@@ -527,21 +309,10 @@ validate_parameters()
         log_err(
             "SNOW_NEW_SNOW_DENSITY must be defined on the interval [0, inf) (kg/m^3)");
     }
-    if (!(param.SNOW_DEPTH_THRES >= 0.)) {
-        log_err(
-            "SNOW_DEPTH_THRES must be defined on the interval [0, inf) (m)");
-    }
-    if (!(param.SNOW_DENS_DMLIMIT >= 0.)) {
-        log_err(
-            "SNOW_DENS_DMLIMIT must be defined on the interval [0, inf) (kg/m^3)");
-    }
     if (!(param.SNOW_NEW_SNOW_DENS_MAX >= 0. &&
           param.SNOW_NEW_SNOW_DENS_MAX <= 700.)) {
         log_err(
             "SNOW_NEW_SNOW_DENS_MAX must be defined on the interval [0, 700) (kg/m^3)");
-    }
-    if (!(param.SNOW_DENS_MAX_CHANGE >= 0 && param.SNOW_DENS_MAX_CHANGE <= 1)) {
-        log_err("SNOW_DENS_MAX_CHANGE must be defined on the interval [0,1] (-)")
     }
     // SNOW_DENS_ETA0 - Currently, no constraints
     // SNOW_DENS_C1 - Currently, no constraints
@@ -549,25 +320,6 @@ validate_parameters()
     // SNOW_DENS_C5 - Currently, no constraints
     // SNOW_DENS_C6 - Currently, no constraints
     // SNOW_DENS_F - Currently, no constraints
-    if (!(param.SNOW_MIN_SWQ_EB_THRES >= 0.)) {
-        log_err(
-            "SNOW_MIN_SWQ_EB_THRES must be defined on the interval [0, inf) (m)");
-    }
-    if (!(param.SNOW_A1 >= 0.)) {
-        log_err("SNOW_A1 must be defined on the interval [0, inf)");
-    }
-    if (!(param.SNOW_A2 >= 0.)) {
-        log_err("SNOW_A2 must be defined on the interval [0, inf)");
-    }
-    if (!(param.SNOW_L1 >= 0.)) {
-        log_err("SNOW_L1 must be defined on the interval [0, inf) (1/m)");
-    }
-    if (!(param.SNOW_L2 >= 0.)) {
-        log_err("SNOW_L2 must be defined on the interval [0, inf) (1/m)");
-    }
-    if (!(param.SNOW_TRACESNOW >= 0.)) {
-        log_err("SNOW_TRACESNOW must be defined on the interval [0, inf) (mm)");
-    }
     if (!(param.SNOW_CONDUCT >= 0.)) {
         log_err("SNOW_CONDUCT must be defined on the interval [0, inf) (W/mK)");
     }

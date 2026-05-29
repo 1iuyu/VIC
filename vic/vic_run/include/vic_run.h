@@ -37,8 +37,6 @@ int calc_water_bal_glac(size_t, double, double, double, double, double, double,
                         force_data_struct *, energy_bal_struct *, cell_data_struct *, 
                         snow_data_struct *, soil_con_struct *);
 void calc_rainonly(double, double, double, double, double, double, double *, double *);
-int CalcPhaseChange(double, energy_bal_struct *, cell_data_struct *,
-                    snow_data_struct *, soil_con_struct *);
 double calc_veg_displacement(double, double, double);
 void calc_root_moist_stress(cell_data_struct *, soil_con_struct *, veg_lib_struct *);
 void calc_snow_coverage(double, bool, double,
@@ -105,8 +103,6 @@ void initialize_roughness(bool, double, double, double *,
 double initialize_MOST(double, double, double, double, double, double *);
 double linear_interp(double, double, double, double, double);
 double new_snow_density(double);
-int PhaseChangeGlac(double, energy_bal_struct *, cell_data_struct *,
-                    snow_data_struct *, soil_con_struct *);
 int PhotoHydroStress(double, double, double, double, double, double, double,
                      double, cell_data_struct *, soil_con_struct *,
                      veg_var_struct *, veg_lib_struct *);

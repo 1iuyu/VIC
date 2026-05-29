@@ -481,10 +481,6 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(option_struct, FROZEN_SOIL);
     mpi_types[i++] = MPI_C_BOOL;
 
-    // size_t Ncanopy;
-    offsets[i] = offsetof(option_struct, Ncanopy);
-    mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent
-
     // size_t Nlayer;
     offsets[i] = offsetof(option_struct, Nlayer);
     mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent
@@ -500,10 +496,6 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     // size_t NVEGTYPES;
     offsets[i] = offsetof(option_struct, NVEGTYPES);
     mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent
-
-    // unsigned short RC_MODE;
-    offsets[i] = offsetof(option_struct, RC_MODE);
-    mpi_types[i++] = MPI_UNSIGNED_SHORT;
 
     // unsigned short SNOW_DENSITY;
     offsets[i] = offsetof(option_struct, SNOW_DENSITY);
@@ -537,10 +529,6 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(option_struct, VEGLIB_FCAN);
     mpi_types[i++] = MPI_C_BOOL;
 
-    // bool VEGLIB_PHOTO;
-    offsets[i] = offsetof(option_struct, VEGLIB_PHOTO);
-    mpi_types[i++] = MPI_C_BOOL;
-
     // bool VEGPARAM_FCAN;
     offsets[i] = offsetof(option_struct, VEGPARAM_FCAN);
     mpi_types[i++] = MPI_C_BOOL;
@@ -558,7 +546,7 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     mpi_types[i++] = MPI_UNSIGNED_SHORT;
 
     // bool DENSITY_FROM_SOIL;
-    offsets[i] = offsetof(option_struct, DENSITY_FROM_SOIL);
+    offsets[i] = offsetof(option_struct, PARAM_FROM_SOIL);
     mpi_types[i++] = MPI_C_BOOL;
 
     // unsigned short STATE_FORMAT;
@@ -571,10 +559,6 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
 
     // bool SAVE_STATE;
     offsets[i] = offsetof(option_struct, SAVE_STATE);
-    mpi_types[i++] = MPI_C_BOOL;
-
-    // bool STATENAME_CESM
-    offsets[i] = offsetof(option_struct, STATENAME_CESM);
     mpi_types[i++] = MPI_C_BOOL;
 
     // make sure that the we have the right number of elements
@@ -652,10 +636,6 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(parameters_struct, REF_HEIGHT_WIND);
     mpi_types[i++] = MPI_DOUBLE;
 
-    // double TOPOINDEX;
-    offsets[i] = offsetof(parameters_struct, TOPOINDEX);
-    mpi_types[i++] = MPI_DOUBLE;
-
     // double ALBEDO_BARE_SOIL;
     offsets[i] = offsetof(parameters_struct, ALBEDO_BARE_SOIL);
     mpi_types[i++] = MPI_DOUBLE;
@@ -680,30 +660,6 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(parameters_struct, EMISS_H2O);
     mpi_types[i++] = MPI_DOUBLE;
 
-    // double SOIL_ARC
-    offsets[i] = offsetof(parameters_struct, SOIL_RARC);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SOIL_RESID_MOIST
-    offsets[i] = offsetof(parameters_struct, SOIL_RESID_MOIST);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SOIL_SLAB_MOIST_FRACT
-    offsets[i] = offsetof(parameters_struct, SOIL_SLAB_MOIST_FRACT);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SOIL_WINDH
-    offsets[i] = offsetof(parameters_struct, SOIL_WINDH);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SOIL_RESIST_EXP
-    offsets[i] = offsetof(parameters_struct, SOIL_RESIST_EXP);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SOIL_FROST
-    offsets[i] = offsetof(parameters_struct, SOIL_FROST);
-    mpi_types[i++] = MPI_DOUBLE;
-
     // double VEG_LAI_SNOW_MULTIPLIER
     offsets[i] = offsetof(parameters_struct, VEG_LAI_SNOW_MULTIPLIER);
     mpi_types[i++] = MPI_DOUBLE;
@@ -712,28 +668,12 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(parameters_struct, VEG_LAI_WATER_FACTOR);
     mpi_types[i++] = MPI_DOUBLE;
 
-    // double VEG_MIN_INTERCEPTION_STORAGE
-    offsets[i] = offsetof(parameters_struct, VEG_MIN_INTERCEPTION_STORAGE);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double VEG_RATIO_DH_HEIGHT
-    offsets[i] = offsetof(parameters_struct, VEG_RATIO_DH_HEIGHT);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double VEG_RATIO_RL_HEIGHT
-    offsets[i] = offsetof(parameters_struct, VEG_RATIO_RL_HEIGHT);
-    mpi_types[i++] = MPI_DOUBLE;
-
     // double CANOPY_CLOSURE
     offsets[i] = offsetof(parameters_struct, CANOPY_CLOSURE);
     mpi_types[i++] = MPI_DOUBLE;
 
     // double CANOPY_RSMAX
     offsets[i] = offsetof(parameters_struct, CANOPY_RSMAX);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double CANOPY_VPDMINFACTOR
-    offsets[i] = offsetof(parameters_struct, CANOPY_VPDMINFACTOR);
     mpi_types[i++] = MPI_DOUBLE;
 
     // double SVP_A0
@@ -916,24 +856,12 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(parameters_struct, PHOTO_FCMIN);
     mpi_types[i++] = MPI_DOUBLE;
 
-    // double PHOTO_ZENITHMIN
-    offsets[i] = offsetof(parameters_struct, PHOTO_ZENITHMIN);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_ZENITHMINPAR
-    offsets[i] = offsetof(parameters_struct, PHOTO_ZENITHMINPAR);
-    mpi_types[i++] = MPI_DOUBLE;
-
     // double PHOTO_ALBSOIPARMIN
     offsets[i] = offsetof(parameters_struct, PHOTO_ALBSOIPARMIN);
     mpi_types[i++] = MPI_DOUBLE;
 
     // double PHOTO_MINMAXETRANS
     offsets[i] = offsetof(parameters_struct, PHOTO_MINMAXETRANS);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_MINSTOMCOND
-    offsets[i] = offsetof(parameters_struct, PHOTO_MINSTOMCOND);
     mpi_types[i++] = MPI_DOUBLE;
 
     // double PHOTO_FCI1C3
@@ -970,94 +898,6 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
 
     // double PHOTO_ER
     offsets[i] = offsetof(parameters_struct, PHOTO_ER);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_ALC3
-    offsets[i] = offsetof(parameters_struct, PHOTO_ALC3);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_FRDC3
-    offsets[i] = offsetof(parameters_struct, PHOTO_FRDC3);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_EK
-    offsets[i] = offsetof(parameters_struct, PHOTO_EK);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_ALC4
-    offsets[i] = offsetof(parameters_struct, PHOTO_ALC4);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_FRDC4
-    offsets[i] = offsetof(parameters_struct, PHOTO_FRDC4);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_THETA
-    offsets[i] = offsetof(parameters_struct, PHOTO_THETA);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_FRLEAF
-    offsets[i] = offsetof(parameters_struct, PHOTO_FRLEAF);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_FRGROWTH
-    offsets[i] = offsetof(parameters_struct, PHOTO_FRGROWTH);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_E0_LT
-    offsets[i] = offsetof(parameters_struct, SRESP_E0_LT);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_T0_LT
-    offsets[i] = offsetof(parameters_struct, SRESP_T0_LT);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_WMINFM
-    offsets[i] = offsetof(parameters_struct, SRESP_WMINFM);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_WMAXFM
-    offsets[i] = offsetof(parameters_struct, SRESP_WMAXFM);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_WOPTFM
-    offsets[i] = offsetof(parameters_struct, SRESP_WOPTFM);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_RHSAT
-    offsets[i] = offsetof(parameters_struct, SRESP_RHSAT);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_RFACTOR
-    offsets[i] = offsetof(parameters_struct, SRESP_RFACTOR);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_TAULITTER
-    offsets[i] = offsetof(parameters_struct, SRESP_TAULITTER);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_TAUINTER
-    offsets[i] = offsetof(parameters_struct, SRESP_TAUINTER);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_TAUSLOW
-    offsets[i] = offsetof(parameters_struct, SRESP_TAUSLOW);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_FAIR
-    offsets[i] = offsetof(parameters_struct, SRESP_FAIR);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_FINTER
-    offsets[i] = offsetof(parameters_struct, SRESP_FINTER);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_PSIWILT
-    offsets[i] = offsetof(parameters_struct, SRESP_PSIWILT);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SRESP_EXP
-    offsets[i] = offsetof(parameters_struct, SRESP_EXP);
     mpi_types[i++] = MPI_DOUBLE;
 
     // double ROUGH3
@@ -1108,70 +948,6 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(parameters_struct, SNOW_NEW_SNOW_DENS_MAX);
     mpi_types[i++] = MPI_DOUBLE;
 
-    // double SNOW_DEPTH_THRES
-    offsets[i] = offsetof(parameters_struct, SNOW_DEPTH_THRES);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_DMLIMIT
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_DMLIMIT);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_DMLIMIT_FACTOR
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_DMLIMIT_FACTOR);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_MAX_CHANGE
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_MAX_CHANGE);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_ETA0
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_ETA0);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_C1
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_C1);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_C2
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_C2);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_C3
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_C3);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_C3_CONST
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_C3_CONST);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_C4
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_C4);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_C4WET
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_C4WET);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_C5
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_C5);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_C6
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_C6);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_F
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_F);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_EXP
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_EXP);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_DENS_DENOM
-    offsets[i] = offsetof(parameters_struct, SNOW_DENS_DENOM);
-    mpi_types[i++] = MPI_DOUBLE;
-
     // double SNOW_NEW_SNT_C1
     offsets[i] = offsetof(parameters_struct, SNOW_NEW_SNT_C1);
     mpi_types[i++] = MPI_DOUBLE;
@@ -1186,46 +962,6 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
 
     // double SNOW_NEW_BRAS_DENOM
     offsets[i] = offsetof(parameters_struct, SNOW_NEW_BRAS_DENOM);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_MIN_SWQ_EB_THRES
-    offsets[i] = offsetof(parameters_struct, SNOW_MIN_SWQ_EB_THRES);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_A1
-    offsets[i] = offsetof(parameters_struct, SNOW_A1);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_A2
-    offsets[i] = offsetof(parameters_struct, SNOW_A2);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_L1
-    offsets[i] = offsetof(parameters_struct, SNOW_L1);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_L2
-    offsets[i] = offsetof(parameters_struct, SNOW_L2);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_NEW_SNOW_ALB
-    offsets[i] = offsetof(parameters_struct, SNOW_NEW_SNOW_ALB);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_ALB_ACCUM_A
-    offsets[i] = offsetof(parameters_struct, SNOW_ALB_ACCUM_A);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_ALB_ACCUM_B
-    offsets[i] = offsetof(parameters_struct, SNOW_ALB_ACCUM_B);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_ALB_THAW_A
-    offsets[i] = offsetof(parameters_struct, SNOW_ALB_THAW_A);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_ALB_THAW_B
-    offsets[i] = offsetof(parameters_struct, SNOW_ALB_THAW_B);
     mpi_types[i++] = MPI_DOUBLE;
 
     // double SNOW_COMPACT_A
@@ -1310,10 +1046,6 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
 
     // double SNOW_NEW_SNOW_NIR
     offsets[i] = offsetof(parameters_struct, SNOW_NEW_SNOW_NIR);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double SNOW_TRACESNOW
-    offsets[i] = offsetof(parameters_struct, SNOW_TRACESNOW);
     mpi_types[i++] = MPI_DOUBLE;
 
     // double SNOW_CONDUCT

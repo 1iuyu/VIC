@@ -366,7 +366,7 @@ vic_init(void)
     
     /*  bulk density and soil density (particle density) read from 
         soil parameter file; otherwise campute from PedoTransfer.c */
-    if (options.DENSITY_FROM_SOIL) {
+    if (options.PARAM_FROM_SOIL) {
         // bulk_density: mineral bulk density for each soil layer
 
         // alpha: retention shape parameter in van Genuchten equation [1/m]

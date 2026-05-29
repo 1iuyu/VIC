@@ -79,13 +79,6 @@ vic_alloc(void)
         check_alloc_status(veg_con[i], "Memory allocation error.");
 
         for (j = 0; j < nv_active; j++) {
-            if (options.CARBON) {
-                veg_con[i][j].CanopLayerBnd = calloc(options.Ncanopy,
-                                                     sizeof(*(veg_con[i][j].
-                                                              CanopLayerBnd)));
-                check_alloc_status(veg_con[i][j].CanopLayerBnd,
-                                   "Memory allocation error.");
-            }
             initialize_veg_con(&(veg_con[i][j]));
         }
 

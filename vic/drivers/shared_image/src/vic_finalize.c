@@ -63,9 +63,6 @@ vic_finalize(void)
         free(soil_con[i].Tfactor);
         free(soil_con[i].Pfactor);
         for (j = 0; j < local_domain.locations[i].nveg + 1; j++) {
-            if (options.CARBON) {
-                free(veg_con[i][j].CanopLayerBnd);
-            }
             free_veg_hist(&(veg_hist[i][j]));
         }
         free_all_vars(&(all_vars[i]));

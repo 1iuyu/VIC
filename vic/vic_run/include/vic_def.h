@@ -286,27 +286,21 @@ typedef struct {
 typedef struct {
     // Lapse Rate
     double LAPSE_RATE;  /**< temperature lapse rate (C/m) */
-
     // Precipitation Guage Height
     double GAUGE_HEIGHT;   /**< precipitation gauge height (m) */
-
     // REF_HEIGHT
     double REF_HEIGHT;
     double REF_HEIGHT_WIND;
-
     // Huge Resistance Term
     double HUGE_RESIST;  /**< Extermely large resistance term (s/m) */
-
     // Surface Albedo Parameters
     double ALBEDO_BARE_SOIL;  /**< Broadband albedo of bare soil */
-
     // Surface Emissivities
     double EMISS_GRND;  /**< Emissivity of bare soil */
     double EMISS_VEG;  /**< Emissivity of vegetation */
     double EMISS_ICE;  /**< Emissivity of bare ice */
     double EMISS_SNOW;  /**< Emissivity of snow */
     double EMISS_H2O;  /**< Emissivity of open water surface */
-
     // Vegetation Parameters
     double VEG_LAI_SNOW_MULTIPLIER;  /**< multiplier to calculate the amount of available snow interception as a function of LAI (m) */
     double VEG_LAI_WATER_FACTOR;  /**< Coefficient multiplied by the LAI to determine the amount of water that can be stored in the canopy */
@@ -317,7 +311,6 @@ typedef struct {
     // Canopy Parameters
     double CANOPY_CLOSURE;  /**< Threshold vapor pressure deficit for stomatal closure (Pa) */
     double CANOPY_RSMAX;  /**< Maximum allowable resistance (s/m) */
-
     // Saturation Vapor Pressure Parameters
     double SVP_A0, SVP_A1, SVP_A2, SVP_A3, SVP_A4, SVP_A5, SVP_A6, SVP_A7, SVP_A8;  /**< constant for saturated vapor pressure curve (kPa) */
     double SVP_B0, SVP_B1, SVP_B2, SVP_B3, SVP_B4, SVP_B5, SVP_B6, SVP_B7, SVP_B8;  /**< constant for saturated vapor pressure curve (kPa) */
@@ -325,7 +318,6 @@ typedef struct {
     double SVP_D0, SVP_D1, SVP_D2, SVP_D3, SVP_D4, SVP_D5, SVP_D6, SVP_D7, SVP_D8;  /**< constant for saturated vapor pressure curve (kPa) */
     double SVP_FRZ;
     double SVP_RDAIR;
-
     // Photosynthesis Parameters
     double PHOTO_OMEGA;  /**< single leaf scattering albedo */
     double PHOTO_LAIMAX;  /**< Maximum LAI in nitrogen scaling */
@@ -365,7 +357,6 @@ typedef struct {
     double PHOTO_ER;  /**< ACTIVATION ENERGY FOR DARK RESPIRATION [J / MOL] */
     double PHOTO_FNR; /**< Mass ratio of total Rubisco molecular mass to N in Rubisco */
     double PHOTO_SACT;
-
     // Surface roughness constants
     double ROUGH3; 
     double ROUGH_BETA;
@@ -375,7 +366,6 @@ typedef struct {
     double GLAC_ROUGH;
     double SOIL_RROOT;
     double SOIL_RHOROOT;
-
     // Snow Parameters
     double SNOW_MAX_SURFACE_SWE;  /**< maximum depth of the surface layer in water equivalent (m) */
     double SNOW_MAX_LIQUID_FRAC;
@@ -415,11 +405,9 @@ typedef struct {
     double SNOW_BETAIS;
     double SNOW_OMEGAS[MAX_SWBANDS];
     double GLAC_ALBEDO[MAX_SWBANDS];
-
     // Solar radiation fraction
     double RAD_DIR_F;
     double RAD_VIS_F;
-
     // Convergence Tolerances
     double TOL_A;
     double TOL_B;
@@ -428,7 +416,6 @@ typedef struct {
     double MAX_ITER_WETBULB;
     double MAX_ITER_MOST;
     double MAX_ITER_OVER;
-
     // Crank Nicholson factor between 0 and 1
     double CN_FACTOR;
 } parameters_struct;
@@ -494,8 +481,6 @@ typedef struct {
                                                             canopy (fraction) */
     double LAI[MONTHS_PER_YEAR];        /**< leaf area index */
     double SAI[MONTHS_PER_YEAR];        /**< stem area index */
-    double *CanopLayerBnd;  /**< Upper boundary of each canopy layer,
-                               expressed as fraction of total LAI */
     double Cv;              /**< fraction of vegetation coverage */
     int veg_class;          /**< vegetation class id number */
     double root[MAX_SOILS];
@@ -555,7 +540,6 @@ typedef struct {
     double fN_rub;                /**< fraction of leaf N in Rubisco enzyme (gN Rubisco/gN leaf) */ 
     double medlynslope;           /**< slope of Medlyn conductance-photosynthesis relationship */
     double medlynint;             /**< intercept of Medlyn conductance-photosynthesis relationship */
-
 } veg_lib_struct;
 
 /******************************************************************************

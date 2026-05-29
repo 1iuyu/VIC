@@ -367,19 +367,12 @@ print_parameters(parameters_struct *param)
     fprintf(LOG_DEST, "\tEMISS_ICE: %.4f\n", param->EMISS_ICE);
     fprintf(LOG_DEST, "\tEMISS_SNOW: %.4f\n", param->EMISS_SNOW);
     fprintf(LOG_DEST, "\tEMISS_H2O: %.4f\n", param->EMISS_H2O);
-    fprintf(LOG_DEST, "\tSOIL_RESID_MOIST: %.4f\n", param->SOIL_RESID_MOIST);
-    fprintf(LOG_DEST, "\tSOIL_SLAB_MOIST_FRACT: %.4f\n",
-            param->SOIL_SLAB_MOIST_FRACT);
     fprintf(LOG_DEST, "\tVEG_LAI_SNOW_MULTIPLIER: %.4f\n",
             param->VEG_LAI_SNOW_MULTIPLIER);
-    fprintf(LOG_DEST, "\tVEG_MIN_INTERCEPTION_STORAGE: %.4f\n",
-            param->VEG_MIN_INTERCEPTION_STORAGE);
     fprintf(LOG_DEST, "\tVEG_LAI_WATER_FACTOR: %.4f\n",
             param->VEG_LAI_WATER_FACTOR);
     fprintf(LOG_DEST, "\tCANOPY_CLOSURE: %.4f\n", param->CANOPY_CLOSURE);
     fprintf(LOG_DEST, "\tCANOPY_RSMAX: %.4f\n", param->CANOPY_RSMAX);
-    fprintf(LOG_DEST, "\tCANOPY_VPDMINFACTOR: %.4f\n",
-            param->CANOPY_VPDMINFACTOR);
     fprintf(LOG_DEST, "\tPHOTO_OMEGA: %.4f\n", param->PHOTO_OMEGA);
     fprintf(LOG_DEST, "\tPHOTO_LAIMAX: %.4f\n", param->PHOTO_LAIMAX);
     fprintf(LOG_DEST, "\tPHOTO_LAILIMIT: %.4f\n", param->PHOTO_LAILIMIT);
@@ -387,14 +380,10 @@ print_parameters(parameters_struct *param)
     fprintf(LOG_DEST, "\tPHOTO_EPAR: %.4f\n", param->PHOTO_EPAR);
     fprintf(LOG_DEST, "\tPHOTO_FCMAX: %.4f\n", param->PHOTO_FCMAX);
     fprintf(LOG_DEST, "\tPHOTO_FCMIN: %.4f\n", param->PHOTO_FCMIN);
-    fprintf(LOG_DEST, "\tPHOTO_ZENITHMIN: %.4f\n", param->PHOTO_ZENITHMIN);
-    fprintf(LOG_DEST, "\tPHOTO_ZENITHMINPAR: %.4f\n",
-            param->PHOTO_ZENITHMINPAR);
     fprintf(LOG_DEST, "\tPHOTO_ALBSOIPARMIN: %.4f\n",
             param->PHOTO_ALBSOIPARMIN);
     fprintf(LOG_DEST, "\tPHOTO_MINMAXETRANS: %.4f\n",
             param->PHOTO_MINMAXETRANS);
-    fprintf(LOG_DEST, "\tPHOTO_MINSTOMCOND: %.4f\n", param->PHOTO_MINSTOMCOND);
     fprintf(LOG_DEST, "\tPHOTO_FCI1C3: %.4f\n", param->PHOTO_FCI1C3);
     fprintf(LOG_DEST, "\tPHOTO_FCI1C4: %.4f\n", param->PHOTO_FCI1C4);
     fprintf(LOG_DEST, "\tPHOTO_OX: %.4f\n", param->PHOTO_OX);
@@ -404,26 +393,6 @@ print_parameters(parameters_struct *param)
     fprintf(LOG_DEST, "\tPHOTO_EO: %.4f\n", param->PHOTO_EO);
     fprintf(LOG_DEST, "\tPHOTO_EV: %.4f\n", param->PHOTO_EV);
     fprintf(LOG_DEST, "\tPHOTO_ER: %.4f\n", param->PHOTO_ER);
-    fprintf(LOG_DEST, "\tPHOTO_ALC3: %.4f\n", param->PHOTO_ALC3);
-    fprintf(LOG_DEST, "\tPHOTO_FRDC3: %.4f\n", param->PHOTO_FRDC3);
-    fprintf(LOG_DEST, "\tPHOTO_EK: %.4f\n", param->PHOTO_EK);
-    fprintf(LOG_DEST, "\tPHOTO_ALC4: %.4f\n", param->PHOTO_ALC4);
-    fprintf(LOG_DEST, "\tPHOTO_FRDC4: %.4f\n", param->PHOTO_FRDC4);
-    fprintf(LOG_DEST, "\tPHOTO_THETA: %.4f\n", param->PHOTO_THETA);
-    fprintf(LOG_DEST, "\tPHOTO_FRLEAF: %.4f\n", param->PHOTO_FRLEAF);
-    fprintf(LOG_DEST, "\tPHOTO_FRGROWTH: %.4f\n", param->PHOTO_FRGROWTH);
-    fprintf(LOG_DEST, "\tSRESP_E0_LT: %.4f\n", param->SRESP_E0_LT);
-    fprintf(LOG_DEST, "\tSRESP_T0_LT: %.4f\n", param->SRESP_T0_LT);
-    fprintf(LOG_DEST, "\tSRESP_WMINFM: %.4f\n", param->SRESP_WMINFM);
-    fprintf(LOG_DEST, "\tSRESP_WMAXFM: %.4f\n", param->SRESP_WMAXFM);
-    fprintf(LOG_DEST, "\tSRESP_WOPTFM: %.4f\n", param->SRESP_WOPTFM);
-    fprintf(LOG_DEST, "\tSRESP_RHSAT: %.4f\n", param->SRESP_RHSAT);
-    fprintf(LOG_DEST, "\tSRESP_RFACTOR: %.4f\n", param->SRESP_RFACTOR);
-    fprintf(LOG_DEST, "\tSRESP_TAULITTER: %.4f\n", param->SRESP_TAULITTER);
-    fprintf(LOG_DEST, "\tSRESP_TAUINTER: %.4f\n", param->SRESP_TAUINTER);
-    fprintf(LOG_DEST, "\tSRESP_TAUSLOW: %.4f\n", param->SRESP_TAUSLOW);
-    fprintf(LOG_DEST, "\tSRESP_FAIR: %.4f\n", param->SRESP_FAIR);
-    fprintf(LOG_DEST, "\tSRESP_FINTER: %.4f\n", param->SRESP_FINTER);
     fprintf(LOG_DEST, "\tSNOW_MAX_SURFACE_SWE: %.4f\n",
             param->SNOW_MAX_SURFACE_SWE);
     fprintf(LOG_DEST, "\tSNOW_LIQUID_WATER_CAPACITY: %.4f\n",
@@ -432,31 +401,7 @@ print_parameters(parameters_struct *param)
             param->SNOW_NEW_SNOW_DENSITY);
     fprintf(LOG_DEST, "\tSNOW_NEW_SNOW_DENS_MAX: %.4f\n",
             param->SNOW_NEW_SNOW_DENS_MAX);
-    fprintf(LOG_DEST, "\tSNOW_DEPTH_THRES: %.12f\n",
-            param->SNOW_DEPTH_THRES);
-    fprintf(LOG_DEST, "\tSNOW_DENS_DMLIMIT: %.4f\n", param->SNOW_DENS_DMLIMIT);
-    fprintf(LOG_DEST, "\tSNOW_DENS_MAX_CHANGE: %.4f\n",
-            param->SNOW_DENS_MAX_CHANGE);
-    fprintf(LOG_DEST, "\tSNOW_DENS_ETA0: %.4f\n", param->SNOW_DENS_ETA0);
-    fprintf(LOG_DEST, "\tSNOW_DENS_C1: %.4f\n", param->SNOW_DENS_C1);
-    fprintf(LOG_DEST, "\tSNOW_DENS_C2: %.4f\n", param->SNOW_DENS_C2);
-    fprintf(LOG_DEST, "\tSNOW_DENS_C5: %.4f\n", param->SNOW_DENS_C5);
-    fprintf(LOG_DEST, "\tSNOW_DENS_C6: %.4f\n", param->SNOW_DENS_C6);
-    fprintf(LOG_DEST, "\tSNOW_DENS_F: %.4f\n", param->SNOW_DENS_F);
-    fprintf(LOG_DEST, "\tSNOW_MIN_SWQ_EB_THRES: %.4f\n",
-            param->SNOW_MIN_SWQ_EB_THRES);
-    fprintf(LOG_DEST, "\tSNOW_A1: %.4f\n", param->SNOW_A1);
-    fprintf(LOG_DEST, "\tSNOW_A2: %.4f\n", param->SNOW_A2);
-    fprintf(LOG_DEST, "\tSNOW_L1: %.4f\n", param->SNOW_L1);
-    fprintf(LOG_DEST, "\tSNOW_L2: %.4f\n", param->SNOW_L2);
-
-    fprintf(LOG_DEST, "\tSNOW_TRACESNOW: %.4f\n", param->SNOW_TRACESNOW);
     fprintf(LOG_DEST, "\tSNOW_CONDUCT: %.4f\n", param->SNOW_CONDUCT);
-    fprintf(LOG_DEST, "\tSNOW_NEW_SNOW_ALB: %.4f\n", param->SNOW_NEW_SNOW_ALB);
-    fprintf(LOG_DEST, "\tSNOW_ALB_ACCUM_A: %.4f\n", param->SNOW_ALB_ACCUM_A);
-    fprintf(LOG_DEST, "\tSNOW_ALB_ACCUM_B: %.4f\n", param->SNOW_ALB_ACCUM_B);
-    fprintf(LOG_DEST, "\tSNOW_ALB_THAW_A: %.4f\n", param->SNOW_ALB_THAW_A);
-    fprintf(LOG_DEST, "\tSNOW_ALB_THAW_B: %.4f\n", param->SNOW_ALB_THAW_B);
 }
 
 /******************************************************************************

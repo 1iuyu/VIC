@@ -189,11 +189,6 @@ calc_energy_bal_glac(size_t             hidx,
     if (ErrorFlag == ERROR) {
         return (ERROR);
     }
-    /*********************************
-      Phase change of glacier ice
-    **********************************/
-    PhaseChangeGlac(step_dt, energy,
-                    cell, snow, soil_con);
 
     return(0); 
 }

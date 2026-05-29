@@ -69,8 +69,7 @@ initialize_soil_con(soil_con_struct *soil_con)
 void
 initialize_veg_con(veg_con_struct *veg_con)
 {
-    extern option_struct options;
-    size_t               i;
+    size_t   i;
 
     veg_con->Cv = 0.;
     veg_con->veg_class = NODATA_VEG; // -1 to force a crash if inappropriate
@@ -78,14 +77,13 @@ initialize_veg_con(veg_con_struct *veg_con)
     veg_con->BandIndex = 0;
     veg_con->IS_GLAC = false;
     veg_con->Nroot = 0;
-
-    for (i = 0; i < MAX_SOILS; i++) {
-        veg_con->root[i] = 0.;
+    for (i = 0; i < MONTHS_PER_YEAR; i++) {
+        veg_con->LAI[i] = 0.0;
+        veg_con->SAI[i] = 0.0;
+        veg_con->fcanopy[i] = 0.0;
     }
-    if (options.CARBON) {
-        for (i = 0; i < options.Ncanopy; i++) {
-            veg_con->CanopLayerBnd[i] = 0.;
-        }
+    for (i = 0; i < MAX_SOILS; i++) {
+        veg_con->root[i] = 0.0;
     }
 }
 
