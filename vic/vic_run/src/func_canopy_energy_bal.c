@@ -156,8 +156,7 @@ func_canopy_energy_bal(double             step_dt,
     double esat_T = 0.0;
     svp_flags(Tfoliage, pressure,
                 &esat_T, &qsat_T, 
-                NULL, NULL, 
-                &qsatdT, NULL, 
+                NULL, &qsatdT,
                 ESAT| QSAT | QSDT);
     // 初始化植被/地面表面温度、树冠内部空气温度
     Tcanopy = (Tgrnd + thm) / 2.0; // 初始猜测
@@ -316,9 +315,8 @@ func_canopy_energy_bal(double             step_dt,
         SensibleStem += air_density * CONST_CPDAIR * wtstem * (-wtl0 * delt_T);
 
         svp_flags(Tfoliage, pressure, 
-                  NULL, &qsat_T,
-                  NULL, NULL,
-                  &qsatdT, NULL, QSAT | QSDT);
+                  NULL, &qsat_T, NULL, 
+                  &qsatdT, QSAT | QSDT);
         // 更新冠层温度和水汽含量的加权平均值
         Tcanopy = wtg0 * Tgrnd + wta0 * thm + wtl0 * Tfoliage + wtstem0 * Tstem;
         Qair_over = wtlq0 * qsat_T + Qair * wtaq0 + wtgq0 * Qair_grnd;

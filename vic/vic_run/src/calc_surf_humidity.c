@@ -35,8 +35,7 @@ calc_surf_humidity(double             Tgrnd,
     // compute humidities individually for snow, soil for vegetated
     svp_flags(Tgrnd, pressure, 
               NULL, &qsat_Tgrnd, 
-              NULL, NULL, &qsdT, 
-              NULL, QSAT | QSDT);
+              NULL, &qsdT, QSAT | QSDT);
     // soil humidity
     cell->Qair_soil = qsat_Tgrnd * alpha_soil;
     /* 2) snow 顶层饱和比湿 */

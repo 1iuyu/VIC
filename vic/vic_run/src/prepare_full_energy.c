@@ -13,7 +13,7 @@
  *           ice contents for the layers.
  *****************************************************************************/
 void
-prepare_full_energy(bool               IS_GLAC,
+prepare_full_energy(double             pressure,
                     cell_data_struct  *cell,
                     energy_bal_struct *energy,
                     snow_data_struct  *snow,
@@ -70,7 +70,7 @@ prepare_full_energy(bool               IS_GLAC,
     }
 
     // 计算土壤和冰川热导率和热容量
-    if (IS_GLAC) {  
+    if (cell->IS_GLAC) {  
         // 计算冰川热属性
         for (i = 0; i < Nsoil; i++) {
             lidx = Nsnow + i;
@@ -80,7 +80,7 @@ prepare_full_energy(bool               IS_GLAC,
         }
     }
     else {
-        // 计算土壤热属性  
+        // 计算土壤热属性
         for (i = 0; i < Nsoil; i++) {
             lidx = Nsnow + i;
             tmp_ice = max(moist[i] - liq[i], 0.0);
@@ -89,6 +89,7 @@ prepare_full_energy(bool               IS_GLAC,
                                                      liq[i], tmp_ice, 
                                                      soil_T[i], 
                                                      moist[i], matric[i],
+                                                     pressure,
                                                      organic_node[i],
                                                      bulk_dens_node[i]);
             // 土壤节点导热率

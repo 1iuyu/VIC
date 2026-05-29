@@ -219,18 +219,20 @@ volumetric_heat_capacity(double Wsat_node,
                          double soil_T,
                          double moist,
                          double matric,
+                         double pressure,
                          double organic_node,
                          double bulk_dens_node)
 {
     double Cs = 0.0;
-    double slope = 0.0;
+    double esat_T = 0.0;
+    double qsdT = 0.0;
     double mineral = 1.0 - organic_node;
     double air = Wsat_node - ice - liq;
     if (air < 0.0) {
         air = 0.0;
     }
     // Constant values are volumetric heat capacities in J/m^3/K
-    Cs =  CONST_CPFWICE * liq * CONST_RHOFW; // water
+    Cs =  CONST_CPFWICE * liq * CONST_RHOFW; // liquid water
     Cs += CONST_CPMINE * mineral * bulk_dens_node; // soil
     Cs += CONST_CPDAIR * air * CONST_RHODAIR; // air
     Cs += CONST_CPICE * ice * CONST_RHOICE; // ice
@@ -238,8 +240,13 @@ volumetric_heat_capacity(double Wsat_node,
     if (matric < 0.0 && air > 0.0 && moist < Wsat_node) {
         double rel_humid = exp(CONST_MWWV * CONST_G / CONST_RGAS / soil_T * matric);
         // 潜热贡献
-        svp_flags(soil_T, 0, NULL, NULL, NULL, NULL, NULL, &slope, VSAT);
-        Cs += air * CONST_LATVAP * rel_humid * slope;
+        svp_flags(soil_T, pressure,
+                  &esat_T, NULL, 
+                  NULL, &qsdT, 
+                  ESAT | QSDT);
+        double e_actual = esat_T * rel_humid;
+        double air_density = (pressure - 0.378 * e_actual) / (CONST_RDAIR * soil_T);
+        Cs += air * CONST_LATVAP * rel_humid * qsdT * air_density;
     }
 
     return (Cs);

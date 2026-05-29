@@ -12,6 +12,7 @@
  *****************************************************************************/
 int
 SoilTemperature(double   		   step_dt,
+                double             pressure,
 				cell_data_struct  *cell,
 				energy_bal_struct *energy,
 				snow_data_struct  *snow,
@@ -160,7 +161,7 @@ SoilTemperature(double   		   step_dt,
         }
     }
     /* Soil and ice thermal properties for the layer */
-    prepare_full_energy(cell->IS_GLAC, 
+    prepare_full_energy(pressure, 
                         cell, energy,
                         snow, soil_con);
     

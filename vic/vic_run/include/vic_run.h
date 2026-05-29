@@ -110,7 +110,7 @@ int PhaseChangeGlac(double, energy_bal_struct *, cell_data_struct *,
 int PhotoHydroStress(double, double, double, double, double, double, double,
                      double, cell_data_struct *, soil_con_struct *,
                      veg_var_struct *, veg_lib_struct *);
-void prepare_full_energy(bool, cell_data_struct *, energy_bal_struct *,
+void prepare_full_energy(double, cell_data_struct *, energy_bal_struct *,
                          snow_data_struct *, soil_con_struct *);
 double plc(double, double);
 int runoff(double, double, cell_data_struct *, soil_con_struct *);
@@ -128,7 +128,7 @@ void snow_compaction(double, double, double, energy_bal_struct *, snow_data_stru
 void snow_division(snow_data_struct *);
 double soil_conductivity(double, double, double, double, double, 
                          double, double, double, double, double);
-int SoilTemperature(double, cell_data_struct *, energy_bal_struct *,
+int SoilTemperature(double, double, cell_data_struct *, energy_bal_struct *,
                     snow_data_struct *, soil_con_struct *);
 int soil_transp(cell_data_struct *, soil_con_struct *);
 int soil_thermal_fluxes(double, double, double, cell_data_struct *, energy_bal_struct *, 
@@ -145,8 +145,7 @@ int surface_fluxes(double, double, double, double, force_data_struct *,
 int surface_fluxes_glac(double, double, double, force_data_struct *, 
                         energy_bal_struct *, global_param_struct *,
                         cell_data_struct *, snow_data_struct *, soil_con_struct *);                        
-void svp_flags(double, double, double *, double *, double *, 
-               double *, double *, double *, int);
+void svp_flags(double, double, double *, double *, double *, double *, int);
 double SoilWaterRetentionCurve(int, size_t, double, double, soil_con_struct *);
 double sign(double a, double b);
 double StabilityFunc1(double);
@@ -164,7 +163,7 @@ void update_snow_fluxes(double *, double *, double *, double *,
 int vic_run(force_data_struct *, all_vars_struct *,
             global_param_struct *, soil_con_struct *,
             veg_con_struct *, veg_lib_struct *);
-double volumetric_heat_capacity(double, double, double, double,
+double volumetric_heat_capacity(double, double, double, double, double,
                                 double, double, double, double);
 double water_curve_deriv(size_t, double, double, double, soil_con_struct *);
 double wrap_compute_zwt(double, cell_data_struct *, soil_con_struct *);

@@ -165,7 +165,7 @@ calc_energy_bal(size_t             hidx,
     /************************************
     Compute snow and soil temperature
     ************************************/
-    ErrorFlag = SoilTemperature(step_dt, cell,
+    ErrorFlag = SoilTemperature(step_dt, pressure, cell,
                                 energy, snow, soil_con);
 
     if (ErrorFlag == ERROR) {

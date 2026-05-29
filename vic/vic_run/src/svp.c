@@ -16,10 +16,8 @@ svp_flags(double  TK,
           double  pressure,
           double *esat_T,
           double *qsat_T,
-          double *vapor_sat,
           double *esdT,
           double *qsdT,
-          double *slope,
           int     flags)
 {
     extern parameters_struct param;
@@ -30,7 +28,7 @@ svp_flags(double  TK,
     temp = min(100.0, max(-75.0, temp));
     
     // 计算饱和水汽压（如果需要）
-    if (flags & (ESAT | QSAT | VSAT | QSDT | RHODT)) {
+    if (flags & (ESAT | QSAT | QSDT)) {
         if (temp > 0.0) {
             es_local = param.SVP_A0 + temp * (param.SVP_A1 + temp * 
                           (param.SVP_A2 + temp * (param.SVP_A3 + temp * 
@@ -48,7 +46,7 @@ svp_flags(double  TK,
     }
     
     // 计算esat_T
-    if ((flags & (ESAT | QSAT | QSDT | VSAT | RHODT)) && esat_T != NULL) {
+    if ((flags & (ESAT | QSAT | QSDT)) && esat_T != NULL) {
         *esat_T = es_local * 100.0;
     }
     
@@ -84,38 +82,6 @@ svp_flags(double  TK,
         if (flags & QSDT) {
             double vp2 = vp1 * vp;
             *qsdT = esdT_local * 100.0 * vp2 * pressure;
-        }
-    }
-    // 计算vapor_sat和vapordT（如果需要）
-    if (flags & (VSAT  | RHODT)) {
-        double es_value;
-        
-        // 获取饱和水汽压值
-        if (esat_T != NULL && (flags & (VSAT | RHODT))) {
-            es_value = *esat_T;
-        } else {
-            es_value = es_local * 100.0;
-        }
-        if ((flags & VSAT) && vapor_sat != NULL) {
-            *vapor_sat = es_value * CONST_MWWV / (CONST_RGAS * TK);
-        }
-        if ((flags & RHODT) && slope != NULL) {
-            double vapor_sat_local;
-            if ((flags & VSAT) && vapor_sat != NULL) {
-                vapor_sat_local = *vapor_sat;
-            } else {
-                vapor_sat_local = es_value * CONST_MWWV / (CONST_RGAS * TK);
-            }
-            if (temp > 45.0) {
-                // 高温时解析求导
-                *slope = (0.4442351 + temp * (0.028604198 + temp * (7.9364124e-4 
-                    + temp * (1.2142839e-5 + temp * (1.0486134e-7 + temp * (3.6292556e-10 
-                    - 1.0287809e-12 * temp)))))) * 100.0 * CONST_MWWV / (CONST_RGAS * TK) 
-                    - vapor_sat_local / TK;
-            } else {
-                // 低温时使用经验公式
-                *slope = 0.0000165 + 4944.43 * vapor_sat_local / (TK * TK);
-            }
         }
     }
 }

@@ -16,15 +16,16 @@ soil_vapor_flux(double             pressure,
                 cell_data_struct  *cell,
                 soil_con_struct   *soil_con)
 {
-    size_t i;
-    size_t Nsoil = cell->Nsoil;
+    extern parameters_struct param;
+    size_t i, Nsoil;
     double air = 0.0;
     double vapor_diff = 0.0;
     double coef_vapor = 0.6;
     double vapor_exp  = 1.0;
     double enhance = 0.0;
-    double slope = 0.0;
-    double vapor_sat = 0.0;
+    double qsdT = 0.0;
+    double qsat_T = 0.0;
+    double esat_T = 0.0;
     double enhanc_fact1 = 9.5;
     double enhanc_fact2 = 3.0;
     double enhanc_fact3 = 0.0;
@@ -39,7 +40,6 @@ soil_vapor_flux(double             pressure,
     double *liq = cell->liq;
     double *soil_T= cell->soil_T;
     double *Wsat_node = soil_con->Wsat_node;
-    double *psisat_node = soil_con->psisat_node;
     double *zc_soil = soil_con->zc_soil;
     double *Zsum_soil = soil_con->Zsum_soil;
     double *matric = cell->matric;
@@ -54,20 +54,30 @@ soil_vapor_flux(double             pressure,
         conv_temp[i] = 0.0;
         conv_vapor[i] = 0.0;
     }
-
+    Nsoil = cell->Nsoil;
     for (i = 0; i < Nsoil; i++) {
         air = Wsat_node[i] - ice[i] - liq[i];
-        if (air > 0.0 && matric[i] < psisat_node[i]) {
+        if (air > 0.0 && matric[i] < 0.0) {
             // Calculate vapor fluxes due to temperature gradient
             vapor_diff = 2.12e-5 *
                 pow(soil_T[i] / CONST_TKFRZ, 2.0) *
                 (CONST_PSTD / pressure);
             vapor_diff *= coef_vapor * pow(air, vapor_exp);
 
-            svp_flags(soil_T[i], 0, NULL, NULL, &vapor_sat, NULL, NULL, &slope, VSAT | RHODT);
+            svp_flags(soil_T[i], pressure, 
+                      &esat_T, &qsat_T, 
+                      NULL, &qsdT, 
+                      ESAT | QSAT | QSDT);
 
             // Calculate relative humidity
             rel_humid[i] = exp(CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * matric[i]);
+
+            // 计算实际水汽压
+            double e_actual = esat_T * rel_humid[i];
+            
+            // 计算土层空气密度
+            double air_density = (pressure - 0.378 * e_actual) / (CONST_RDAIR * soil_T[i]);
+
             // Calculate vapor fluxes due to potential gradient
             if (clay_node[i] <= 0.02) {
                 enhanc_fact3 = Wsat_node[i] * (1.0 + 2.6 / sqrt(0.02));
@@ -84,8 +94,8 @@ soil_vapor_flux(double             pressure,
             enhance = enhanc_fact1 + enhanc_fact2 * liq[i] / Wsat_node[i] 
                         - (enhanc_fact1 - enhanc_fact4) * expon;
 
-            diff_therm[i] = vapor_diff * enhance * rel_humid[i] * slope;
-            diff_vapor[i] = vapor_diff * vapor_sat;
+            diff_therm[i] = vapor_diff * enhance * rel_humid[i] * qsdT * air_density;
+            diff_vapor[i] = vapor_diff * qsat_T * air_density;
         }
         else {
             diff_therm[i] = 0.0;
