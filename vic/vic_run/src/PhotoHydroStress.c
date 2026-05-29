@@ -61,12 +61,12 @@ PhotoHydroStress(double            thm,
     // 计算常数：根横截面积 (m2)
     double xsec_root = CONST_PI * root_radius * root_radius;
     
-    for (i = 0; i < Nsoil; i++) {
-        // 根生物量密度：g biomass / m^3 soil
+    for (i = 0; i < cell->Nroot; i++) {
+        // 根生物量密度：g biomass/m3 soil
         rho_root = 2.0 * froot_carbon * root[i] / dz_soil[i];
-        // 确保最小根生物量 (1 gC/m^2)
+        // 确保最小根生物量 (1 gC/m2)
         rho_root = max(2.0, rho_root);
-        // 根长密度：m root / m^3 soil
+        // 根长密度：m root/m3 soil
         double rlen_dens = rho_root / (xsec_root * root_density);
         // 根面积指数 (RAI)
         double rai = (NetLAI + NetSAI) * froot_leaf * root[i];
@@ -75,7 +75,6 @@ PhotoHydroStress(double            thm,
         double r_soil = sqrt(1.0 / (CONST_PI * rlen_dens));
         // 土壤导水率 (m/s)
         double hk_soil = conductivity[i] / r_soil;
-        // 使用植被PLC函数调整根区导水率
         // fs: 由于根水势降低（更负）导致的导水率减少因子
         double fs = plc(matric[i], veg_lib->matric50);
         // 根导水率：单位面积单位长度的导水率 (m/s)
