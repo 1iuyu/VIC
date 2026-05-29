@@ -103,7 +103,7 @@ generate_default_state(force_data_struct *force,
         Cv = veg_con[veg].Cv;
         if (Cv > 0) {
             // 初始化土壤水力学参数
-            if (options.DENSITY_FROM_SOIL) {
+            if (options.PARAM_FROM_SOIL) {
                 for (lidx = 0; lidx < Nsoil; lidx++) {
                     bulk_dens_node[lidx] = (bulk_dens_node[lidx] * 
                         (1.0 - gravel_node[lidx]) + gravel_node[lidx] * 2650);

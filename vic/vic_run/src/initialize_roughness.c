@@ -38,12 +38,12 @@ initialize_roughness(bool              IS_GLAC,
         Z0m_grnd[2] = Z0m_grnd[0];  // veg cover
         if (IS_GLAC == false) {
             if (Canopy_Upper > 0.0 && Canopy_Upper <= 1.0) {
-                ratio_Z0 = 0.12;
-                ratio_dis = 0.68;
+                ratio_Z0 = param.VEG_RATIO_RL_A;
+                ratio_dis = param.VEG_RATIO_DH_A;
             }
             else {
-                ratio_Z0 = 0.075;
-                ratio_dis = 0.67;
+                ratio_Z0 = param.VEG_RATIO_RL_B;
+                ratio_dis = param.VEG_RATIO_DH_B;
             }
             V = (1 - exp(-beta * min(Net_VAI, 2.0))) / (1 - exp(-beta * 2.0));
             Z0m_sub[0] = exp(V * log(Canopy_Upper * ratio_Z0) + (1 - V) * Z0m_grnd[0]);
@@ -71,12 +71,12 @@ initialize_roughness(bool              IS_GLAC,
         Z0m_grnd[2] = Z0m_grnd[0];  // veg cover
         if (IS_GLAC == false) {
             if (Canopy_Upper > 0.0 && Canopy_Upper <= 1.0) {
-                ratio_Z0 = 0.12;
-                ratio_dis = 0.68;
+                ratio_Z0 = param.VEG_RATIO_RL_A;
+                ratio_dis = param.VEG_RATIO_DH_A;
             }
             else {
-                ratio_Z0 = 0.075;
-                ratio_dis = 0.67;
+                ratio_Z0 = param.VEG_RATIO_RL_B;
+                ratio_dis = param.VEG_RATIO_DH_B;
             }
             V = (1 - exp(-beta * min(Net_VAI, 2.0))) / (1 - exp(-beta * 2.0));
             Z0m_sub[0] = exp(V * log(Canopy_Upper * ratio_Z0) + (1 - V) * Z0m_grnd[0]);

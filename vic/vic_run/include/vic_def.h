@@ -203,8 +203,6 @@ typedef struct {
     bool NOFLUX;         /**< TRUE = Use no flux lower bondary when computing
                             soil thermal fluxes */
     size_t NVEGTYPES;    /**< number of vegetation types in veg_param file */
-    unsigned short int RC_MODE;        /**< RC_JARVIS = compute canopy resistance via Jarvis formulation (default)
-                                          RC_PHOTO = compute canopy resistance based on photosynthetic activity */
     unsigned short int SNOW_DENSITY;   /**< DENS_BRAS: Use algorithm of Bras, 1990; DENS_SNTHRM: Use algorithm of SNTHRM89 adapted for 1-layer pack */
     size_t SNOW_BAND;    /**< Number of elevation bands over which to solve the
                             snow model */
@@ -223,7 +221,6 @@ typedef struct {
     unsigned short int SNOW_AGING;    /**< BATS and SNICAR */
     unsigned short int GRID_DECIMAL; /**< Number of decimal places in grid file extensions */
     bool VEGLIB_FCAN;    /**< TRUE = veg library file contains monthly fcanopy values */
-    bool VEGLIB_PHOTO;   /**< TRUE = veg library contains photosynthesis parameters */
     bool VEGPARAM_FCAN;  /**< TRUE = veg param file contains monthly fcanopy values */
     bool VEGPARAM_LAI;   /**< TRUE = veg param file contains monthly LAI values */
 
@@ -231,13 +228,12 @@ typedef struct {
                                           FROM_VEGPARAM = use fcanopy values from the veg param file */
     unsigned short int LAI_SRC;        /**< FROM_VEGLIB = use LAI values from veg library file
                                           FROM_VEGPARAM = use LAI values from the veg param file */
-    bool DENSITY_FROM_SOIL; /**< TRUE = bulk density and soil density (particle density) read from soil parameter file; otherwise set to 0.0 */
+    bool PARAM_FROM_SOIL; /**< TRUE = bulk density and soil density (particle density) read from soil parameter file; otherwise set to 0.0 */
 
     // state options
     unsigned short int STATE_FORMAT;  /**< TRUE = model state file is binary (default) */
     bool INIT_STATE;     /**< TRUE = initialize model state from file */
     bool SAVE_STATE;     /**< TRUE = save state file */
-    bool STATENAME_CESM; /**< TRUE = use CESM statefile naming conventions */
 
     // output options
     size_t Noutstreams;  /**< Number of output stream */
@@ -298,8 +294,6 @@ typedef struct {
     double REF_HEIGHT;
     double REF_HEIGHT_WIND;
 
-    double TOPOINDEX;
-
     // Huge Resistance Term
     double HUGE_RESIST;  /**< Extermely large resistance term (s/m) */
 
@@ -317,21 +311,19 @@ typedef struct {
     double SOIL_RARC;  /**< Architectural resistance (s/m) of soil when computing soil evaporation via Penman-Monteith eqn */
     double SOIL_RESID_MOIST;  /**< Default residual moisture content (fraction of porosity) of soil column */
     double SOIL_SLAB_MOIST_FRACT;  /**< Moisture content (fraction of porosity) in the soil/rock below the bottom soil layer; this assumes that the soil below the bottom layer has the same texture as the bottom layer. */
-    double SOIL_WINDH;  /**< Default wind measurement height over soil (m) */
     double SOIL_RESIST_EXP;
     double SOIL_FROST;
 
     // Vegetation Parameters
     double VEG_LAI_SNOW_MULTIPLIER;  /**< multiplier to calculate the amount of available snow interception as a function of LAI (m) */
     double VEG_LAI_WATER_FACTOR;  /**< Coefficient multiplied by the LAI to determine the amount of water that can be stored in the canopy */
-    double VEG_MIN_INTERCEPTION_STORAGE;  /**< the amount of snow on the canopy that can only be melted off. (m) */
-    double VEG_RATIO_DH_HEIGHT;  /**< Ratio of displacement height (m) to vegetation height (m) */
-    double VEG_RATIO_RL_HEIGHT;  /**< Ratio of roughness length (m) to vegetation height (m) */
-
+    double VEG_RATIO_DH_A;  /**< Ratio of displacement height (m) to vegetation height (m). Canopy_Upper <= 1.0 */
+    double VEG_RATIO_DH_B;  /**< Ratio of displacement height (m) to vegetation height (m). Canopy_Upper > 1.0 */
+    double VEG_RATIO_RL_A;  /**< Ratio of roughness length (m) to vegetation height (m). Canopy_Upper <= 1.0 */
+    double VEG_RATIO_RL_B;  /**< Ratio of roughness length (m) to vegetation height (m). Canopy_Upper > 1.0 */
     // Canopy Parameters
     double CANOPY_CLOSURE;  /**< Threshold vapor pressure deficit for stomatal closure (Pa) */
     double CANOPY_RSMAX;  /**< Maximum allowable resistance (s/m) */
-    double CANOPY_VPDMINFACTOR;  /**< Minimum allowable vapor pressure deficit factor */
 
     // Saturation Vapor Pressure Parameters
     double SVP_A0, SVP_A1, SVP_A2, SVP_A3, SVP_A4, SVP_A5, SVP_A6, SVP_A7, SVP_A8;  /**< constant for saturated vapor pressure curve (kPa) */
@@ -340,8 +332,8 @@ typedef struct {
     double SVP_D0, SVP_D1, SVP_D2, SVP_D3, SVP_D4, SVP_D5, SVP_D6, SVP_D7, SVP_D8;  /**< constant for saturated vapor pressure curve (kPa) */
     double SVP_FRZ;
     double SVP_RDAIR;
-//    double SVP1, SVP2, SVP3;
-    // Photosynthesis Parameters (not used)
+
+    // Photosynthesis Parameters
     double PHOTO_OMEGA;  /**< single leaf scattering albedo */
     double PHOTO_LAIMAX;  /**< Maximum LAI in nitrogen scaling */
     double PHOTO_LAILIMIT;  /**< Minimum LAI in nitrogen scaling and maximum LAI in PAR computation */
@@ -349,42 +341,38 @@ typedef struct {
     double PHOTO_EPAR;  /**< Energy content of PAR [J/mol photons] = (4.6 mol/MJ PAR)^-1 */
     double PHOTO_FCMAX;  /**< Maximum fractional veg cover; (1-FcMax) = min amount of ground visible */
     double PHOTO_FCMIN;  /**< Minimum fractional veg cover; (1-FcMin) = max amount of ground visible */
-    double PHOTO_ZENITHMIN;  /**< Check for solar zenith angle > 89 deg */
-    double PHOTO_ZENITHMINPAR;  /**< Cosine of the minimum solar zenith angle for photosynthesis to take place */
     double PHOTO_ALBSOIPARMIN;  /**< Minimum soil reflectivity in PAR range */
     double PHOTO_MINMAXETRANS;  /**< Minimum of maximum electron transport rate [10e-12 mol/(m^2 s)] */
-    double PHOTO_MINSTOMCOND;  /**< Minimum stomatal conductance [mol H2O/m2s] */
+
+    double PHOTO_MINCONDUCT;  /**< Minimum stomatal conductance [mol H2O/m2s] */
     double PHOTO_FCI1C3;  /**< C3 Plants factor that relate leaf internal CO2 concentration to ambient CO2 concentration */
     double PHOTO_FCI1C4;  /**< C4 Plants factor that relate leaf internal CO2 concentration to ambient CO2 concentration */
+    double PHOTO_MAXCS;
     double PHOTO_OX;  /**< OXYGEN CONCENTRATION [MOL(O2) / MOL(AIR)] */
+    double PHOTO_CX;
     double PHOTO_KC;  /**< MICHAELIS-MENTEN CONSTANT FOR CO2 AT 25C [MOL(CO2) / MOL(AIR)] */
     double PHOTO_KO;  /**< MICHAELIS-MENTEN CONSTANT FOR O2 AT 25C [MOL(O2) / MOL(AIR)] */
+    double PHOTO_CP;  /**< CO2 compensation point at 25degC at present day O2 [mol/mol] */
     double PHOTO_EC;  /**< ACTIVATION ENERGY FOR KC [J / MOL] */
     double PHOTO_EO;  /**< ACTIVATION ENERGY FOR KO [J / MOL] */
+    double PHOTO_EP;  /**< ACTIVATION ENERGY FOR CP [J / MOL] */
+    double PHOTO_EL;  /**< ACTIVATION ENERGY FOR LMR [J / MOL] */
     double PHOTO_EV;  /**< ACTIVATION ENERGY FOR VCMAX [J / MOL] */
+    double PHOTO_EJ;  /**< ACTIVATION ENERGY FOR JMAX [J / MOL] */
+    double PHOTO_ET;  /**< ACTIVATION ENERGY FOR TPU [J / MOL] */
+    double PHOTO_DV;
+    double PHOTO_DJ;
+    double PHOTO_DT;
+    double PHOTO_FTPU;
+    double PHOTO_FKP;
+    double PHOTO_FNPS;
+    double PHOTO_LMRHD;
+    double PHOTO_LMRSE;
+    double PHOTO_CROOT;
     double PHOTO_ER;  /**< ACTIVATION ENERGY FOR DARK RESPIRATION [J / MOL] */
-    double PHOTO_ALC3;  /**< EFFICIENCY OF OF PHOTON CAPTURE */
-    double PHOTO_FRDC3;  /**< RATIO OF DARK RESPIRATION TO "PVM" AT 25C for C3 */
-    double PHOTO_EK;  /**< = Q10=2 (Collatz et al. 1992) */
-    double PHOTO_ALC4;  /**< EFFECTIVE QUANTUM EFFICIENCY */
-    double PHOTO_FRDC4;  /**< RATIO OF DARK RESPIRATION TO "PVM" AT 25C for C4 */
-    double PHOTO_THETA;  /**< CURVATURE PARAMETER */
-    double PHOTO_FRLEAF;  /**< Ratio of canopy leaf respiration to whole plant maintenance respiration */
-    double PHOTO_FRGROWTH;  /**< Ratio of plant growth respiration to NPP */
+    double PHOTO_FNR; /**< Mass ratio of total Rubisco molecular mass to N in Rubisco */
+    double PHOTO_SACT;
 
-    // Soil Respiration Parameters
-    double SRESP_E0_LT;  /**< Lloyd-Taylor E0 parameter [K] */
-    double SRESP_T0_LT;  /**< Lloyd-Taylor T0 parameter [K] */
-    double SRESP_WMINFM;  /**< minimum soil moisture (fraction) at which soil respiration can occur */
-    double SRESP_WMAXFM;  /**< maximum soil moisture (fraction) at which soil respiration can occur */
-    double SRESP_WOPTFM;  /**< soil moisture (fraction) at which maximum soil respiration occurs */
-    double SRESP_RHSAT;  /**< ratio of soil respiration rate under saturated conditions (w=wmaxFM) to that under optimal conditions (w=woptFM) */
-    double SRESP_RFACTOR;  /**< scaling factor to account for other (non-moisture) sources of inhibition of respiration */
-    double SRESP_TAULITTER;  /**< Litter pool turnover time [y] */
-    double SRESP_TAUINTER;  /**< Intermediate pool turnover time [y] */
-    double SRESP_TAUSLOW;  /**< Slow pool turnover time [y] */
-    double SRESP_FAIR;  /**< Fraction of respired carbon from litter pool that is lost to atmosphere */
-    double SRESP_FINTER;  /**< Fraction of [respired carbon from litter pool that goes to soil] that goes to intermediate pool */
     double SRESP_EXP;
     double SRESP_PSIWILT; /** metric potential for wilting point (m) */
 
@@ -395,6 +383,8 @@ typedef struct {
     double SNOW_ROUGH;
     double SOIL_ROUGH;
     double GLAC_ROUGH;
+    double SOIL_RROOT;
+    double SOIL_RHOROOT;
 
     // Snow Parameters
     double SNOW_MAX_SURFACE_SWE;  /**< maximum depth of the surface layer in water equivalent (m) */
@@ -402,7 +392,6 @@ typedef struct {
     double SNOW_LIQUID_WATER_CAPACITY;  /**< water holding capacity of snow as a fraction of snow-water-equivalent */
     double SNOW_NEW_SNOW_DENSITY;  /**< density of new fallen snow */
     double SNOW_NEW_SNOW_DENS_MAX; /**< new snow density max for Hedstrom and Pomeroy 1998 equation [Warren et al. 1999, Bormann et al. 2013, Maidment Figure 7.2.3] */
-    double SNOW_DEPTH_THRES;  /**< Snow depth threshold below which we do not consider the ground flux out of the snowpack in calculating change in cold content (m) */
     double SNOW_DENS_DMLIMIT;  /**< Density limit used in calculation of destructive metamorphism (kg/m^3) */
     double SNOW_DENS_DMLIMIT_FACTOR;  /**< Density limit factor used in calculation of destructive metamorphism (kg/m^3) */
     double SNOW_DENS_MAX_CHANGE;  /**< maximum change in snowfall depth (fraction of swe) */
@@ -422,12 +411,10 @@ typedef struct {
     double SNOW_NEW_SNT_C2; /**< Constant in Sntherm new snow density computation. */
     double SNOW_NEW_SNT_C3; /**< Constant in Sntherm new snow density computation. */
     double SNOW_NEW_BRAS_DENOM;  /**< Constant in Bras new snow density computation. */
-    double SNOW_MIN_SWQ_EB_THRES;  /**< Minimum SWQ for which the snowpack energy balance is computed independent of the soil surface temperature */
     double SNOW_A1;  /**< Attenuation coefficient for shortwave in a snowpack. Value and equation taken from Patterson and Hamblin, 1988 */
     double SNOW_A2;  /**< Attenuation coefficient for shortwave in a snowpack. Value and equation taken from Patterson and Hamblin, 1988 */
     double SNOW_L1;  /**< Attenuation coefficient for shortwave in a snowpack. Value and equation taken from Patterson and Hamblin, 1988 (1/m) */
     double SNOW_L2;  /**< Attenuation coefficient for shortwave in a snowpack. Value and equation taken from Patterson and Hamblin, 1988 (1/m) */
-    double SNOW_TRACESNOW;  /**< Defines the minimum amount of new snow (mm) which will reset the snowpack albedo to new snow */
     double SNOW_NEW_SNOW_ALB;  /**< Snow albedo curve parameters. */
     double SNOW_ALB_ACCUM_A;  /**< Snow albedo curve parameters. */
     double SNOW_ALB_ACCUM_B;  /**< Snow albedo curve parameters. */

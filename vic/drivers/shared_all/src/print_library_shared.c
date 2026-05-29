@@ -106,8 +106,6 @@ print_energy_bal(energy_bal_struct *eb,
 
     // Print energy_bal - fluxes
     fprintf(LOG_DEST, "energy_bal - fluxes:\n");
-    fprintf(LOG_DEST, "\tAPAR_sunlit         : %f\n", eb->aPAR_sunlit);
-    fprintf(LOG_DEST, "\tAPAR_shade          : %f\n", eb->aPAR_shade);
     fprintf(LOG_DEST, "\tadvection           : %f\n", eb->advection);
     fprintf(LOG_DEST, "\tAdvectSub           : %f\n", eb->AdvectSub);
     fprintf(LOG_DEST, "\tAdvectGrnd          : %f\n", eb->AdvectGrnd);
@@ -199,19 +197,15 @@ print_option(option_struct *option)
             option->CORRPREC ? "true" : "false");
     fprintf(LOG_DEST, "\tFROZEN_SOIL          : %s\n",
             option->FROZEN_SOIL ? "true" : "false");
-    fprintf(LOG_DEST, "\tNcanopy              : %zu\n", option->Ncanopy);
     fprintf(LOG_DEST, "\tNlayer               : %zu\n", option->Nlayer);
     fprintf(LOG_DEST, "\tNOFLUX               : %s\n",
             option->NOFLUX ? "true" : "false");
     fprintf(LOG_DEST, "\tNVEGTYPES            : %zu\n", option->NVEGTYPES);
-    fprintf(LOG_DEST, "\tRC_MODE              : %d\n", option->RC_MODE);
     fprintf(LOG_DEST, "\tSNOW_DENSITY         : %d\n", option->SNOW_DENSITY);
     fprintf(LOG_DEST, "\tSNOW_BAND            : %zu\n", option->SNOW_BAND);
     fprintf(LOG_DEST, "\tTFALLBACK            : %s\n",
             option->TFALLBACK ? "true" : "false");
     fprintf(LOG_DEST, "\tGRID_DECIMAL         : %d\n", option->GRID_DECIMAL);
-    fprintf(LOG_DEST, "\tVEGLIB_PHOTO         : %s\n",
-            option->VEGLIB_PHOTO ? "true" : "false");
     fprintf(LOG_DEST, "\tVEGLIB_FCAN          : %s\n",
             option->VEGLIB_FCAN ? "true" : "false");
     fprintf(LOG_DEST, "\tVEGPARAM_LAI         : %s\n",
@@ -220,15 +214,13 @@ print_option(option_struct *option)
             option->VEGPARAM_FCAN ? "true" : "false");
     fprintf(LOG_DEST, "\tLAI_SRC              : %d\n", option->LAI_SRC);
     fprintf(LOG_DEST, "\tFCAN_SRC             : %d\n", option->FCAN_SRC);
-    fprintf(LOG_DEST, "\tDENSITY_FROM_SOIL    : %s\n",
-            option->DENSITY_FROM_SOIL ? "true" : "false");
+    fprintf(LOG_DEST, "\tPARAM_FROM_SOIL    : %s\n",
+            option->PARAM_FROM_SOIL ? "true" : "false");
     fprintf(LOG_DEST, "\tSTATE_FORMAT         : %d\n", option->STATE_FORMAT);
     fprintf(LOG_DEST, "\tINIT_STATE           : %s\n",
             option->INIT_STATE ? "true" : "false");
     fprintf(LOG_DEST, "\tSAVE_STATE           : %s\n",
             option->SAVE_STATE ? "true" : "false");
-    fprintf(LOG_DEST, "\tSTATENAME_CESM       : %s\n",
-            option->STATENAME_CESM ? "true" : "false");
     fprintf(LOG_DEST, "\tNoutstreams          : %zu\n", option->Noutstreams);
 }
 
@@ -640,6 +632,7 @@ print_veg_lib(veg_lib_struct *vlib,
     for (i = 0; i < MONTHS_PER_YEAR; i++) {
         fprintf(LOG_DEST, "\t%.2f", vlib->LAI[i]);
     }
+    fprintf(LOG_DEST, "veg_lib:\n");
     fprintf(LOG_DEST, "\tSAI           :");
     for (i = 0; i < MONTHS_PER_YEAR; i++) {
         fprintf(LOG_DEST, "\t%.2f", vlib->SAI[i]);
@@ -649,30 +642,63 @@ print_veg_lib(veg_lib_struct *vlib,
     for (i = 0; i < MONTHS_PER_YEAR; i++) {
         fprintf(LOG_DEST, "\t%.2f", vlib->fcanopy[i]);
     }
+    fprintf(LOG_DEST, "\n");
+    fprintf(LOG_DEST, "\treflleaf       :");
+    for (i = 0; i < MAX_SWBANDS; i++) {
+        fprintf(LOG_DEST, "\t%.2f", vlib->reflleaf[i]);
+    }
+    fprintf(LOG_DEST, "\n");
+    fprintf(LOG_DEST, "\treflstem       :");
+    for (i = 0; i < MAX_SWBANDS; i++) {
+        fprintf(LOG_DEST, "\t%.2f", vlib->reflstem[i]);
+    }
+    fprintf(LOG_DEST, "\n");
+    fprintf(LOG_DEST, "\ttransleaf      :");
+    for (i = 0; i < MAX_SWBANDS; i++) {
+        fprintf(LOG_DEST, "\t%.2f", vlib->transleaf[i]);
+    }
+    fprintf(LOG_DEST, "\n");
+    fprintf(LOG_DEST, "\ttransstem      :");
+    for (i = 0; i < MAX_SWBANDS; i++) {
+        fprintf(LOG_DEST, "\t%.2f", vlib->transstem[i]);
+    }
 
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "\tNVegLibTypes  : %zu\n", vlib->NVegLibTypes);
-    fprintf(LOG_DEST, "\trad_atten     : %.4f\n", vlib->rad_atten);
-    fprintf(LOG_DEST, "\trmax          : %.4f\n", vlib->rmax);
-    fprintf(LOG_DEST, "\trmin          : %.4f\n", vlib->rmin);
+    fprintf(LOG_DEST, "\tCanopy_Radius : %.4f\n", vlib->Canopy_Radius);
     fprintf(LOG_DEST, "\tCanopy_Upper  : %.4f\n", vlib->Canopy_Upper);
     fprintf(LOG_DEST, "\tCanopy_Lower  : %.4f\n", vlib->Canopy_Lower);
-    fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "\ttrunk_dia     : %.4f\n", vlib->trunk_dia);
-    fprintf(LOG_DEST, "\twind_atten    : %.4f\n", vlib->wind_atten);
-    fprintf(LOG_DEST, "\tRGL           : %.4f\n", vlib->RGL);
+    fprintf(LOG_DEST, "\tc_biomass     : %.4f\n", vlib->c_biomass);
+    fprintf(LOG_DEST, "\tCOI           : %.4f\n", vlib->COI);
+    fprintf(LOG_DEST, "\td_leaf        : %.4f\n", vlib->d_leaf);
+    fprintf(LOG_DEST, "\troot_a        : %.4f\n", vlib->root_a);
+    fprintf(LOG_DEST, "\troot_b        : %.4f\n", vlib->root_b);
+    fprintf(LOG_DEST, "\troot_d        : %.4f\n", vlib->root_d);
+    fprintf(LOG_DEST, "\tliq_bioms     : %.4f\n", vlib->liq_bioms);
+    fprintf(LOG_DEST, "\tslatop        : %.4f\n", vlib->slatop);
+    fprintf(LOG_DEST, "\tstem_num      : %.4f\n", vlib->stem_num);
+    fprintf(LOG_DEST, "\tZ0sub_LAImax  : %.4f\n", vlib->Z0sub_LAImax);
+    fprintf(LOG_DEST, "\tZ0sub_Cs      : %.4f\n", vlib->Z0sub_Cs);
+    fprintf(LOG_DEST, "\tZ0sub_Cr      : %.4f\n", vlib->Z0sub_Cr);
+    fprintf(LOG_DEST, "\tZ0sub_c       : %.4f\n", vlib->Z0sub_c);
+    fprintf(LOG_DEST, "\tZ0sub_cw      : %.4f\n", vlib->Z0sub_cw);
+    fprintf(LOG_DEST, "\tsmpsc         : %.4f\n", vlib->smpsc);
+    fprintf(LOG_DEST, "\tsmpso         : %.4f\n", vlib->smpso);
+
+    fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "\tveg_class     : %d\n", vlib->veg_class);
-    if (carbon) {
-        fprintf(LOG_DEST, "\tCtype         : %d\n", vlib->Ctype);
-        fprintf(LOG_DEST, "\tMaxCarboxRate : %.4f\n", vlib->MaxCarboxRate);
-        fprintf(LOG_DEST, "\tMaxETransport : %.4f\n", vlib->MaxETransport);
-        fprintf(LOG_DEST, "\tCO2Specificity: %.4f\n", vlib->CO2Specificity);
-        fprintf(LOG_DEST, "\tLightUseEff   : %.4f\n", vlib->LightUseEff);
-        fprintf(LOG_DEST, "\tNscaleFlag    : %s\n",
-                vlib->NscaleFlag ? "true" : "false");
-        fprintf(LOG_DEST, "\tWnpp_inhib    : %.4f\n", vlib->Wnpp_inhib);
-        fprintf(LOG_DEST, "\tNPPfactor_sat : %.4f\n", vlib->NPPfactor_sat);
-    }
+    fprintf(LOG_DEST, "\tCtype         : %d\n", vlib->Ctype);
+    fprintf(LOG_DEST, "\tm_bb          : %.4f\n", vlib->m_bb);
+    fprintf(LOG_DEST, "\tmatric50      : %.4f\n", vlib->matric50);
+    fprintf(LOG_DEST, "\tkcano_max     : %.4f\n", vlib->kcano_max);
+    fprintf(LOG_DEST, "\tkroot_max     : %.4f\n", vlib->kroot_max);
+    fprintf(LOG_DEST, "\ttheta_cj      : %.4f\n", vlib->theta_cj);
+    fprintf(LOG_DEST, "\tleaf_CN       : %.4f\n", vlib->leaf_CN);
+    fprintf(LOG_DEST, "\tSLA_top       : %.4f\n", vlib->SLA_top);
+    fprintf(LOG_DEST, "\tfN_rub        : %.4f\n", vlib->fN_rub);
+    fprintf(LOG_DEST, "\tmedlynslope   : %.4f\n", vlib->medlynslope);
+    fprintf(LOG_DEST, "\tmedlynint     : %.4f\n", vlib->medlynint);
 }
 
 /******************************************************************************
@@ -691,7 +717,7 @@ print_veg_var(veg_var_struct *vvar,
     fprintf(LOG_DEST, "\tMaxSnowInt   : %f\n", vvar->MaxSnowInt);
     fprintf(LOG_DEST, "\tMaxRainInt   : %f\n", vvar->MaxRainInt);
     fprintf(LOG_DEST, "\twetFrac      : %f\n", vvar->wetFrac);
-
+    fprintf(LOG_DEST, "\twetFrac      : %f\n", vvar->dryFrac);
     // Print fluxes
     fprintf(LOG_DEST, "veg_var - fluxes:\n");
     fprintf(LOG_DEST, "\tRainThroughFall  : %f\n", vvar->RainThroughFall);

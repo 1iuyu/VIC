@@ -62,7 +62,6 @@ initialize_soil(cell_data_struct *cell,
             cell[veg].conductivity[lidx] = 0.0;
             cell[veg].conduct_int[lidx] = 0.0;
             cell[veg].transp_sink[lidx] = 0.0;
-            cell[veg].transp_fact[lidx] = 0.0;
             cell[veg].root[lidx] = 0.0;
             cell[veg].Netroot[lidx] = 0.0;
         }
@@ -88,8 +87,7 @@ initialize_soil(cell_data_struct *cell,
         cell[veg].esoil = 0.0;
         cell[veg].dewsoil = 0.0;
         cell[veg].soil_excess = 0.0;
-        cell[veg].f_transp = 0.0;
-        cell[veg].total_transp = 0.0;
+        cell[veg].transp_fact = 0.0;
         // Canopy terms
         cell[veg].transp = 0.0;
         cell[veg].canopyevap = 0.0;

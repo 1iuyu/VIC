@@ -23,10 +23,9 @@ initialize_options()
     options.CARBON = false;
     options.CONTINUEONERROR = true;
     options.CORRPREC = false;
-    options.FROZEN_SOIL = false;
+    options.FROZEN_SOIL = true;
     options.NOFLUX = false;
     options.BIOMASST = true;
-    options.RC_MODE = RC_PHOTO;
     options.SNOW_DENSITY = DENS_BRAS;
     options.SNOW_AGING = BATS;
     options.CANOPY_INTERCEP = NOAH;
@@ -42,15 +41,13 @@ initialize_options()
     options.FCAN_SRC = FROM_DEFAULT;
     options.GRID_DECIMAL = 2;
     options.LAI_SRC = FROM_VEGLIB;
-    options.DENSITY_FROM_SOIL = true;
+    options.PARAM_FROM_SOIL = true;
     options.ROUT = false;
     options.VEGLIB_FCAN = false;
-    options.VEGLIB_PHOTO = false;
     options.VEGPARAM_FCAN = false;
     options.VEGPARAM_LAI = false;
     // state options
     options.STATE_FORMAT = UNSET_FILE_FORMAT;
-    options.STATENAME_CESM = false;
     options.INIT_STATE = false;
     options.SAVE_STATE = false;
     // output options
