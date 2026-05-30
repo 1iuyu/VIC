@@ -401,7 +401,7 @@ void spacF(double           *vegwp,
     double kmax_sha = kcano_max;
     double kmax_xyl = kcano_max;
     double kmax_root = kcano_max;
-    double *dz_soil = soil_con->dz_soil;
+    double *zc_soil = soil_con->zc_soil;
     double *matric = cell->matric;
     double *hksr_int = cell->hksr_int;
     double NetSAI = veg_var->NetSAI;
@@ -416,7 +416,7 @@ void spacF(double           *vegwp,
     // 计算重力势
     double grav1 = Canopy_Upper * MM_PER_M;
     for (i = 0; i < Nsoil; i++) {
-        grav2[i] = dz_soil[i] * MM_PER_M;
+        grav2[i] = zc_soil[i] * MM_PER_M;
     }
     // 计算土壤相关项的累加
     k_root_soil = 0.0;

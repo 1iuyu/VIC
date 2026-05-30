@@ -158,7 +158,7 @@ calc_energy_bal(size_t             hidx,
     soil_hydraulic_conductivity(cell, soil_con);
 
     /************************************
-    Compute snow and soil temperature
+      Compute snow and soil temperature
     ************************************/
     ErrorFlag = SoilTemperature(step_dt, pressure, cell,
                                 energy, snow, soil_con);
@@ -166,6 +166,11 @@ calc_energy_bal(size_t             hidx,
     if (ErrorFlag == ERROR) {
         return (ERROR);
     }
+
+    /************************************
+      Compute plant transpiration sink
+    ************************************/
+    calc_transp_sink(cell, soil_con, veg_var);
 
     return (0);
 }
