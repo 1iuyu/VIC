@@ -104,9 +104,9 @@ void initialize_roughness(bool, double, double, double *,
 double initialize_MOST(double, double, double, double, double, double *);
 double linear_interp(double, double, double, double, double);
 double new_snow_density(double);
-int PhotoHydroStress(double, double, double, double, double, double, double,
-                     double, cell_data_struct *, soil_con_struct *,
-                     veg_var_struct *, veg_lib_struct *);
+int photosynth_hydrostress(double, double, double, double, double, double, 
+                           double, double, cell_data_struct *, soil_con_struct *,
+                           veg_var_struct *, veg_lib_struct *);
 void prepare_full_energy(double, cell_data_struct *, energy_bal_struct *,
                          snow_data_struct *, soil_con_struct *);
 double plc(double, double);

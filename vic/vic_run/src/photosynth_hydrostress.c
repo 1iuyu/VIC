@@ -11,18 +11,18 @@
  * @brief    Calculate canopy photosynthesis and stomatal resistance.
  *****************************************************************************/
 int
-PhotoHydroStress(double            thm,
-                 double            esat_T,
-                 double            qsat_T,
-                 double            vp_over,
-                 double            Qair_over,
-                 double            pressure,
-                 double            air_density,
-                 double            Tfoliage,
-                 cell_data_struct *cell,
-                 soil_con_struct  *soil_con,
-                 veg_var_struct   *veg_var,
-                 veg_lib_struct   *veg_lib)
+photosynth_hydrostress(double            thm,
+                       double            esat_T,
+                       double            qsat_T,
+                       double            vp_over,
+                       double            Qair_over,
+                       double            pressure,
+                       double            air_density,
+                       double            Tfoliage,
+                       cell_data_struct *cell,
+                       soil_con_struct  *soil_con,
+                       veg_var_struct   *veg_var,
+                       veg_lib_struct   *veg_lib)
 {   
     extern option_struct     options;
     extern parameters_struct param;
