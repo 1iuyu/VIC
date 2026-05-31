@@ -21,7 +21,7 @@
       },
 
       "osx": {
-        "program": "/Volumes/myExFAT/10km/VIC-master/vic/drivers/image/vic_image.exe",
+        "program": "/Volumes/myExFAT/VIC-master/vic/drivers/image/vic_image.exe",
         "args": ["-g", "/Volumes/myExFAT/jinzhu_VIC/test/global_param.txt"],
         "cwd": "${workspaceFolder}",
         "MIMode": "lldb"
