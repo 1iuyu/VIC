@@ -12,6 +12,7 @@
  *****************************************************************************/
 int
 photosynth_hydrostress(double            thm,
+                       double            daylen,
                        double            esat_T,
                        double            qsat_T,
                        double            vp_over,
@@ -51,7 +52,8 @@ photosynth_hydrostress(double            thm,
     double *conductivity = cell->conductivity;
     double lmrc = fth25(param.PHOTO_LMRHD, param.PHOTO_LMRSE);
     double hk_total = 0.0;
-    double daylen_fact = 0.0;
+    double max_daylen = cell->max_daylen;
+    double daylen_fact = min(1.0, max(0.01, (daylen * daylen) / (max_daylen * max_daylen)));
     // 计算常数：根横截面积 (m2)
     double xsec_root = CONST_PI * pow(param.SOIL_RROOT, 2.0);
     
@@ -234,7 +236,7 @@ photosynth_hydrostress(double            thm,
             
             // 调用混合求解器计算Ci和gs
             double ceair = min(vp_over, esat_T);
-            double rh_over = ceair / esat_T; // ???
+            double rh_over = max((esat_T - ceair), 50.0) * 0.001;
             
             // 阳叶
             double theta_psii = 0.7;  // 经验曲率参数

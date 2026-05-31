@@ -11,13 +11,8 @@
   *          approach for a two layer model
  *****************************************************************************/
 int
-calc_water_bal_glac(size_t            hidx,
-                    double            air_temp,
-                    double            step_dt,
-                    double            snowfall,
-                    double            rainfall,
-                    double            latent,
-                    double            LatentVapGrnd,
+calc_water_bal_glac(size_t             hidx,
+                    double             step_dt,
                     force_data_struct *force,
                     energy_bal_struct *energy,
                     cell_data_struct  *cell,
@@ -43,6 +38,11 @@ calc_water_bal_glac(size_t            hidx,
     double *theta_ice = snow->theta_ice;
     double *dz_soil = soil_con->dz_soil;
     double pressure = force->pressure[hidx];
+    double snowfall = force->snowf[hidx];
+    double rainfall = force->rainf[hidx];
+    double air_temp = force->air_temp[hidx];
+    double latent = energy->latent;
+    double LatentVapGrnd = energy->LatentVapGrnd;
     double *pack_outflow = snow->pack_outflow;  
 
     /* initialize */

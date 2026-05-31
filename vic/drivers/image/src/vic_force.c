@@ -353,12 +353,20 @@ vic_force(void)
                                               force[i].pressure[j],
                                               force[i].vp[j]);
             // Cosine of solar zenith angle: coszen
-            force[i].coszen[j] = compute_coszen(
-                local_domain.locations[i].latitude,
-                local_domain.locations[i].longitude,
-                soil_con[i].time_zone_lng, dmy[current].day_in_year,
-                dmy[current].dayseconds);
-
+            compute_coszen(
+                    local_domain.locations[i].latitude,
+                    local_domain.locations[i].longitude,
+                    soil_con[i].time_zone_lng, 
+                    dmy[current].day_in_year,
+                    dmy[current].dayseconds,
+                    &force[i].coszen[j],
+                    &force[i].daylen[j]);
+            // atmospheric potential temperature (K)
+            force[i].theta_pot[j] = compute_theta(force[i].air_temp[j],
+                                                  force[i].pressure[j]);
+            // atmospheric virtual potential temperature (K)
+            force[i].theta_v[j] = compute_theta_v(force[i].Qair[j],
+                                                  force[i].theta_pot[j]);
         }
     }
 
@@ -402,11 +410,13 @@ vic_force(void)
                                             force[i].pressure[NR],
                                             force[i].vp[NR]);
             // for coszen, use value at noon
-            force[i].coszen[NR] = compute_coszen(soil_con->lat,
-                                                soil_con->lng,
-                                                soil_con->time_zone_lng,
-                                                dmy[current].day_in_year,
-                                                SEC_PER_DAY / 2);
+            compute_coszen(local_domain.locations[i].latitude,
+                           local_domain.locations[i].longitude,
+                           soil_con[i].time_zone_lng,
+                           dmy[current].day_in_year,
+                           SEC_PER_DAY / 2,
+                           &force[i].coszen[NR],
+                           &force[i].daylen[NR]);
 
             for (v = 0; v < local_domain.locations[i].nveg; v++) {
                     // not the correct way to calculate average albedo in general,

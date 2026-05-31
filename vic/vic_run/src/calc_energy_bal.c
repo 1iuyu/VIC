@@ -16,8 +16,6 @@
 int
 calc_energy_bal(size_t             hidx,
                 double             step_dt,
-                double             air_temp,
-                double             theta,
                 force_data_struct *force,
                 energy_bal_struct *energy,
                 cell_data_struct  *cell,
@@ -27,15 +25,11 @@ calc_energy_bal(size_t             hidx,
                 veg_lib_struct    *veg_lib)
 {
     int    ErrorFlag;
-
     /***************
      MAIN ROUTINE
     ***************/
-    double Qair = force->Qair[hidx];
-    double wind = force->wind[hidx];
     double pressure = force->pressure[hidx];
     double longwave = force->longwave[hidx];
-    double air_density = force->density[hidx];
     double Tfoliage = energy->Tfoliage;
     double fcanopy = veg_var->fcanopy;
     /************************************
@@ -75,13 +69,10 @@ calc_energy_bal(size_t             hidx,
     /**********************************
       Bare ground surface energy flux
     **********************************/
-    ErrorFlag = func_surf_energy_bal(air_density,
-                                     longwave,
-                                     air_temp,
-                                     theta, pressure, 
-                                     Qair, wind, 
-                                     energy, cell, 
-                                     snow, soil_con);
+    ErrorFlag = func_surf_energy_bal(hidx, force,
+                                     energy,
+                                     cell, snow, 
+                                     soil_con);
 
     if (ErrorFlag == ERROR) {
         return (ERROR);
@@ -91,12 +82,7 @@ calc_energy_bal(size_t             hidx,
       Vegetation surface energy flux
     **********************************/
     if (cell->IS_VEG == true) {
-        ErrorFlag = func_canopy_energy_bal(step_dt, wind,
-                                           Qair, theta, 
-                                           longwave,
-                                           air_temp,
-                                           air_density,
-                                           pressure,
+        ErrorFlag = func_canopy_energy_bal(hidx, step_dt, force,
                                            energy, cell, 
                                            snow, soil_con,
                                            veg_var, veg_lib);

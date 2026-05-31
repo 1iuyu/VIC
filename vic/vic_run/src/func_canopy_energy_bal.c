@@ -12,14 +12,9 @@
  * @brief    Calculate the canopy energy balance.
  *****************************************************************************/
 int
-func_canopy_energy_bal(double             step_dt,
-                       double             wind,
-                       double             Qair,
-                       double             theta,
-                       double             longwave,
-                       double             air_temp,
-                       double             air_density,
-                       double             pressure,
+func_canopy_energy_bal(size_t             hidx,
+                       double             step_dt,
+                       force_data_struct *force,
                        energy_bal_struct *energy,
                        cell_data_struct  *cell,
                        snow_data_struct  *snow,
@@ -33,6 +28,15 @@ func_canopy_energy_bal(double             step_dt,
     int         ErrorFlag;
     double      Ra_leaf;
     /* Initialization */
+    double Qair = force->Qair[hidx];
+    double wind = force->wind[hidx];
+    double pressure = force->pressure[hidx];
+    double longwave = force->longwave[hidx];
+    double air_density = force->density[hidx];
+    double theta_pot = force->theta_pot[hidx];
+    double air_temp = force->air_temp[hidx];
+    double theta_v = force->theta_v[hidx];
+    double daylen = force->daylen[hidx];
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
     double wetFrac = veg_var->wetFrac;
@@ -134,7 +138,6 @@ func_canopy_energy_bal(double             step_dt,
     ref_height[0] = param.REF_HEIGHT_WIND + Z0m_sub[0] + displacement[1];
     ref_height[1] = param.REF_HEIGHT + Z0m_sub[1] + displacement[1];
     ref_height[2] = param.REF_HEIGHT + Z0m_sub[2] + displacement[1];
-    double theta_v = theta * (1.0 + 0.61 * Qair);
     double thm = air_temp + 0.0098 * ref_height[1];
     // 设置未被积雪覆盖的植被比例
     double f_snow_veg;
@@ -165,7 +168,7 @@ func_canopy_energy_bal(double             step_dt,
     double dth = thm - Tcanopy;
     double dqh = Qair - Qair_over;
     double delt_q = Qair_grnd - Qair_over;
-    double dthv = dth * (1.0 + 0.61 * Qair) + 0.61 * dqh * theta;  // 虚位温差
+    double dthv = dth * (1.0 + 0.61 * Qair) + 0.61 * dqh * theta_pot;  // 虚位温差
     double zL_over = ref_height[0] - displacement[1];
 
     /* Initialize Obukhov length scale */
@@ -221,7 +224,7 @@ func_canopy_energy_bal(double             step_dt,
         /**********************
           Stomatal Resistance
         **********************/
-        PhotoHydroStress(thm, esat_T, 
+        PhotoHydroStress(thm, daylen, esat_T,
                          qsat_T, vp_over, 
                          Qair_over, pressure, 
                          air_density, Tfoliage,
@@ -328,7 +331,7 @@ func_canopy_energy_bal(double             step_dt,
         double tstar = temp_profile * dth;
         double qstar = Qair_profile * dqh;
 
-        double thvstar = tstar * (1.0 + 0.61 * Qair) + 0.61 * theta * qstar;
+        double thvstar = tstar * (1.0 + 0.61 * Qair) + 0.61 * theta_pot * qstar;
         double zeta = zL_over * CONST_KARMAN * CONST_G * thvstar / (pow(ustar, 2.0) * theta_v);
 
         if (zeta >= 0.0) {

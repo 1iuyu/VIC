@@ -12,10 +12,8 @@
 * @brief        This routine computes all surface fluxes.
 ******************************************************************************/
 int
-surface_fluxes(double             step_dt,
-               double             air_temp,
-               double             snowfall,
-               double             rainfall,
+surface_fluxes(size_t             hidx,
+               double             step_dt,
                force_data_struct *force,
                energy_bal_struct *energy,
                cell_data_struct  *cell,
@@ -47,7 +45,6 @@ surface_fluxes(double             step_dt,
     /*******************************************
        Set-up sub-time step controls
     *******************************************/
-    hidx = NR;
     size_t dt_min = 1800; // seconds (half hour)
     size_t iter = 0;
     double time_accum = 0.0;
@@ -57,6 +54,8 @@ surface_fluxes(double             step_dt,
        Compute surface fluxes
     ***************************/
     double coszen = force->coszen[hidx];
+    double snowfall = force->snowf[hidx];
+    double rainfall = force->rainf[hidx];
     double pressure = force->pressure[hidx];
     double shortwave = force->shortwave[hidx];
     double Tfoliage = energy->Tfoliage;
@@ -64,11 +63,6 @@ surface_fluxes(double             step_dt,
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
     double fcanopy = veg_var->fcanopy;
-
-    // 计算位温
-    double P0 = 100000.0; // reference pressure in Pa
-    double theta = air_temp * pow((P0 / pressure),
-                            CONST_RDAIR / CONST_CPDAIR);
 
     /**************************************
       计算直射和漫射辐射通量[0]-vis, [1]-nir.
@@ -81,16 +75,8 @@ surface_fluxes(double             step_dt,
     /*******************************
       Advected heat flux from Prec
     *******************************/
-    AdvectedEnergy(fcanopy, Tfoliage,
-                   energy->Tsurf, air_temp,
-                   rainfall, snowfall,
-                   veg_var->RainThroughFall,
-                   veg_var->SnowThroughFall,
-                   veg_var->RainDrip,
-                   veg_var->SnowDrip,
-                   &energy->AdvectOver,
-                   &energy->AdvectGrnd,
-                   &energy->AdvectSub);
+    AdvectedEnergy(hidx, force, 
+                   energy, veg_var);
                     
     /***************************
       Surface shortwave albedo
@@ -216,8 +202,7 @@ surface_fluxes(double             step_dt,
             /**********************************************
              Solve Energy Balance Components
             **********************************************/
-            ErrorFlag = calc_energy_bal(hidx, step_dt, air_temp, 
-                                        theta, force, 
+            ErrorFlag = calc_energy_bal(hidx, step_dt, force, 
                                         &iter_energy, &iter_cell,
                                         &iter_snow, soil_con, 
                                         &iter_veg_var, veg_lib);
@@ -237,11 +222,9 @@ surface_fluxes(double             step_dt,
             /*******************************************
              Solve Water Balance Components
             ********************************************/
-            ErrorFlag = calc_water_bal(step_dt, 
-                                       pressure,
+            ErrorFlag = calc_water_bal(step_dt, pressure,
                                        &iter_energy, 
-                                       &iter_cell,
-                                       soil_con);
+                                       &iter_cell, soil_con);
 
             if (ErrorFlag == ERROR) {
                 // Return error flag to skip rest of grid cell
@@ -293,9 +276,7 @@ surface_fluxes(double             step_dt,
       Compute Runoff, Baseflow, and Soil Moisture Transport
     ********************************************************/
     snow_hydrology(hidx, step_dt, 
-                   air_temp, 
-                   snowfall,
-                   rainfall, force, 
+                   force, 
                    energy, cell, 
                    snow, soil_con);
     /* 计算进入土层表面的水量 */

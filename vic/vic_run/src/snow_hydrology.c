@@ -15,9 +15,6 @@
 int
 snow_hydrology(size_t             hidx,
                double             step_dt,
-               double             air_temp,
-               double             snowfall,
-               double             rainfall,
                force_data_struct *force,
                energy_bal_struct *energy,
                cell_data_struct  *cell,
@@ -50,6 +47,9 @@ snow_hydrology(size_t             hidx,
     double latent = energy->latent;
     double liquid_capacity = 0.0;
     double pressure = force->pressure[hidx];
+    double snowfall = force->snowf[hidx];
+    double rainfall = force->snowf[hidx];
+    double air_temp = force->air_temp[hidx];
     double LatentVapGrnd = energy->LatentVapGrnd;
     /** compute soil/snow surface evap,
         dew rate based on energy flux. **/

@@ -10,12 +10,14 @@
 /******************************************************************************
  * @brief    This subroutine computes the cosine of the solar zenith angle.
  *****************************************************************************/
-double
+int
 compute_coszen(double         lat,
                double         lng,
                double         time_zone_lng,
                unsigned short day_in_year,
-               unsigned       second)
+               unsigned       second,
+               double        *coszen,
+               double        *daylen)
 {
     double coslat;
     double sinlat;
@@ -52,14 +54,14 @@ compute_coszen(double         lat,
     if (coshss > 1.0) {
         coshss = 1.0; /* 0-hr daylight */
     }
-
+    (*daylen) = 2.0 * CONST_SECPERRAD * acos(coshss);
     /* calculate cos of hour angle */
     // hour_offset = (time_zone_lng - lng) * HOURS_PER_DAY / 360;
     hour_offset = lng / 15.;
     cosh = cos((hour + hour_offset - 12) * CONST_PI / 12);
 
     /* calculate cosine of solar zenith angle */
-    coszen = cosegeom * cosh + sinegeom;
+    (*coszen) = cosegeom * cosh + sinegeom;
 
-    return coszen;
+    return (0);
 }

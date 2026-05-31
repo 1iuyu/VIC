@@ -15,8 +15,6 @@
 int
 calc_energy_bal_glac(size_t             hidx,
                      double             step_dt,
-                     double             air_temp,
-                     double             theta,
                      force_data_struct *force,
                      energy_bal_struct *energy,
                      cell_data_struct  *cell,
@@ -37,13 +35,14 @@ calc_energy_bal_glac(size_t             hidx,
     double pressure = force->pressure[hidx];
     double longwave = force->longwave[hidx];
     double air_density = force->density[hidx];
+    double air_temp = force->air_temp[hidx];
+    double theta_pot = force->theta_pot[hidx];
+    double theta_v = force->theta_v[hidx];
     double coverage = snow->coverage;
     double *Z0m_grnd = cell->Z0m_grnd;
     double *ref_height = cell->ref_height;
     double *displacement = cell->displacement;
     double *Ra_grnd = cell->Ra_grnd;
-    double *zc_node = cell->zc_node;
-    double *Zsum_node = cell->Zsum_node;
     // 更新地表温度
     if (snow->Nsnow > 0) {
         Tgrnd = (1.0 - coverage) * 
@@ -83,8 +82,7 @@ calc_energy_bal_glac(size_t             hidx,
     double thm = air_temp + 0.0098 * ref_height[1];
     double dth = thm - Tgrnd;
     double dqh = Qair - cell->Qair_grnd;  // 比湿差
-    double dthv = dth * (1 + 0.61 * Qair) + 0.61 * dqh * theta;  // 虚位温差
-    double theta_v = theta * (1.0 + 0.61 * Qair);
+    double dthv = dth * (1 + 0.61 * Qair) + 0.61 * dqh * theta_pot;  // 虚位温差
     double zL_glac = ref_height[0];
     /* Initialize Obukhov length scale */
     L_disp = initialize_MOST(wind, dthv,
@@ -107,7 +105,7 @@ calc_energy_bal_glac(size_t             hidx,
 
         double tstar = temp_profile * dth;
         double qstar = Qair_profile * dqh;
-        double thvstar = tstar * (1.0 + 0.61 * Qair) + 0.61 * theta * qstar;
+        double thvstar = tstar * (1.0 + 0.61 * Qair) + 0.61 * theta_pot * qstar;
         double zeta = zL_glac * CONST_KARMAN * CONST_G * thvstar / 
                                             (pow(ustar, 2.0) * theta_v);
         

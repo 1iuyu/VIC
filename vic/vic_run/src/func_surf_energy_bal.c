@@ -13,13 +13,8 @@
  * @brief    Calculate the surface energy balance.
  *****************************************************************************/
 int
-func_surf_energy_bal(double             air_density,
-                     double             longwave,
-                     double             air_temp,
-                     double             theta,          // 位温 (Kelvin)
-                     double             pressure,
-                     double             Qair,
-                     double             wind,
+func_surf_energy_bal(size_t             hidx,
+                     force_data_struct *force,
                      energy_bal_struct *energy,
                      cell_data_struct  *cell,
                      snow_data_struct  *snow,
@@ -36,6 +31,14 @@ func_surf_energy_bal(double             air_density,
     double *Z0m_grnd = cell->Z0m_grnd;
     double *ref_height = cell->ref_height;
     double *displacement = cell->displacement;
+    double Qair = force->Qair[hidx];
+    double wind = force->wind[hidx];
+    double pressure = force->pressure[hidx];
+    double longwave = force->longwave[hidx];
+    double air_density = force->density[hidx];
+    double theta_pot = force->theta_pot[hidx];
+    double air_temp = force->air_temp[hidx];
+    double theta_v = force->theta_v[hidx];
     double corr_wind = 0.0;
     double ustar = 0.06;
     double wstar = 0.0;
@@ -58,11 +61,10 @@ func_surf_energy_bal(double             air_density,
     ref_height[0] = param.REF_HEIGHT_WIND + Z0m_grnd[0] + displacement[0]; // 动量
     ref_height[1] = param.REF_HEIGHT + Z0m_grnd[1] + displacement[0];  // 感热
     ref_height[2] = param.REF_HEIGHT + Z0m_grnd[2] + displacement[0];  // 潜热
-    double theta_v = theta * (1.0 + 0.61 * Qair);
     double thm = air_temp + 0.0098 * ref_height[1];
     double dth = thm - Tgrnd;
     double dqh = Qair - cell->Qair_grnd;  // 比湿差
-    double dthv = dth * (1 + 0.61 * Qair) + 0.61 * dqh * theta;  // 虚位温差
+    double dthv = dth * (1 + 0.61 * Qair) + 0.61 * dqh * theta_pot;  // 虚位温差
     double zL_grnd = ref_height[0];
     /* Initialize Obukhov length scale */
     L_disp = initialize_MOST(wind, dthv,
@@ -86,7 +88,7 @@ func_surf_energy_bal(double             air_density,
 
         double tstar = temp_profile * dth;
         double qstar = Qair_profile * dqh;
-        double thvstar = tstar * (1.0 + 0.61 * Qair) + 0.61 * theta * qstar;
+        double thvstar = tstar * (1.0 + 0.61 * Qair) + 0.61 * theta_pot * qstar;
         double zeta = zL_grnd * CONST_KARMAN * CONST_G * thvstar / 
                                             (pow(ustar, 2.0) * theta_v);
 
@@ -143,8 +145,7 @@ func_surf_energy_bal(double             air_density,
     double coef_sensible = CONST_CPDAIR * air_density / Ra_grnd[1];
     
     svp_flags(Tgrnd, pressure,
-              &esat_Tgrnd, NULL, 
-              NULL, NULL,
+              &esat_Tgrnd, NULL,
               NULL, NULL, ESAT);
     double vp = max(Qair * pressure / (0.622 + Qair), esat_Tgrnd * 0.01);
     // 计算露点温度

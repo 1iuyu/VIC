@@ -245,9 +245,8 @@ typedef struct {
  * @brief   This structure stores all model run global parameters.
  *****************************************************************************/
 typedef struct {
-    double wind_h;                 /**< height of wind measurements (m) */
     double resolution;             /**< Model resolution (degrees) */
-    double step_dt;                     /**< Time step in seconds */
+    double step_dt;                /**< Time step in seconds */
     size_t model_steps_per_day;    /**< Number of model timesteps per day */
     unsigned short int endday;     /**< Last day of model simulation */
     unsigned short int endmonth;   /**< Last month of model simulation */
@@ -565,23 +564,26 @@ typedef struct {
  *****************************************************************************/
 typedef struct {
     double *air_temp;   /**< air temperature (K) */
-    double *Catm;       /**< atmospheric CO2 mixing ratio (mol CO2/ mol air) */
-    double *channel_in; /**< upstream input river channel inflow for time step (m/s) */
-    double *coszen;     /**< cosine of the solar zenith angle */
-    double *density;    /**< atmospheric density (kg/m^3) */
-    double *fdir;       /**< fraction of incoming shortwave that is direct (fraction) */
-    double *longwave;   /**< incoming longwave radiation (W/m^2) (net incoming
-                                           longwave for water balance model) */
-    double *Qair;       /**< specific humidity (kg/kg) */
-    double *par;        /**< incoming photosynthetically active radiation (μmol/m^2/s) */
     double *prec;       /**< average precipitation in grid cell (mm/s) */
     double *snowf;      /**< snowfall partitioned from precipitation (mm/s) */
     double *rainf;      /**< rainfall partitioned from precipitation (mm/s) */
+    double *wind;       /**< wind speed (m/s) */
+    double *Qair;       /**< specific humidity (kg/kg) */
     double *pressure;   /**< atmospheric pressure (kPa) */
     double *shortwave;  /**< incoming shortwave radiation (W/m^2) */
+    double *longwave;   /**< incoming longwave radiation (W/m^2) (net incoming
+                                           longwave for water balance model) */
+    double *Catm;       /**< atmospheric CO2 mixing ratio (mol CO2/ mol air) */
+    double *channel_in; /**< upstream input river channel inflow for time step (m/s) */
+    double *coszen;     /**< cosine of the solar zenith angle */
+    double *daylen;     /**< day length in seconds */
+    double *density;    /**< atmospheric density (kg/m^3) */
+    double *fdir;       /**< fraction of incoming shortwave that is direct (fraction) */
+    double *par;        /**< incoming photosynthetically active radiation (μmol/m^2/s) */
     double *vp;         /**< atmospheric vapor pressure (kPa) */
     double *rel_humid;  /**< atmospheric relative humidity (%) */
-    double *wind;       /**< wind speed (m/s) */
+    double *theta_pot;  /**< atmospheric potential temperature (K) */
+    double *theta_v;    /**< atmospheric virtual potential temperature (K) */
 } force_data_struct;
 
 /******************************************************************************
@@ -626,6 +628,7 @@ typedef struct {
     double asat;                       /**< saturated area fraction */
     double rootmoist;                  /**< total of layer.moist over all layers in the root zone (mm) */
     double zwt;                        /**< average water table position [cm] - using lowest unsaturated layer */
+    double max_daylen;                 /**< maximum daylength for this grid cell (s) */
     //double Qair_over;                  /**< specific humidity of the air at the canopy layer (kg/kg) */
     double Qair_grnd;                  /**< specific humidity of the air at the ground surface (kg/kg) */
     double Qair_soil;                  /**< specific humidity of the air at the soil surface (kg/kg) */

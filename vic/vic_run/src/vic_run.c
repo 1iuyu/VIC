@@ -24,14 +24,9 @@ vic_run(force_data_struct   *force,
     extern parameters_struct param;
 
     size_t     iveg;
-    size_t     Nveg;
     size_t     veg_class;
-    size_t     band;
     int        ErrorFlag;
-    double     step_dt;
     double     Tfoliage;
-    double     Tair; 
-    double     step_prec;
     double     wind;
     double     Cv;
     double     gauge_correction[2];
@@ -42,19 +37,19 @@ vic_run(force_data_struct   *force,
     snow_data_struct  *snow;
 
     /* Set number of vegetation tiles */
-    Nveg = veg_con[0].vegetat_type_num;
+    size_t Nveg = veg_con[0].vegetat_type_num;
 
     /** Set global step times **/
-    step_dt = gp->step_dt;
-    double rainfall = 0.0;
-    double snowfall = 0.0;
+    size_t hidx = NR;
+    double step_dt = gp->step_dt;
     double Canopy_Lower = 0.0;
     double Canopy_Upper = 0.0;
     /* Compute gauge undercatch correction factors
        - this assumes that the gauge is free of vegetation effects, so gauge
        correction is constant for the entire grid cell */
-    if (options.CORRPREC && force->prec[NR] > 0) {
-        correct_precip(gauge_correction, force->wind[NR], gp->wind_h,
+    if (options.CORRPREC && force->prec[hidx] > 0) {
+        correct_precip(gauge_correction, force->wind[hidx], 
+                       param.REF_HEIGHT_WIND,
                        param.SOIL_ROUGH, param.SNOW_ROUGH);
     }
     else {
@@ -89,37 +84,34 @@ vic_run(force_data_struct   *force,
             /**************************************************
                Define vegetation elevation bands
             **************************************************/
-            band = veg_con[iveg].BandIndex;
-            Tair = force->air_temp[NR] + soil_con->Tfactor[band];
+            size_t band = veg_con[iveg].BandIndex;
+            double Tair = force->air_temp[hidx] + soil_con->Tfactor[band];
+            force->air_temp[hidx] = Tair;
             int has_prec = param_set.TYPE[PREC].SUPPLIED;
             int has_rain = param_set.TYPE[RAINF].SUPPLIED;
             int has_snow = param_set.TYPE[SNOWF].SUPPLIED;
             // 根据输入的气象数据计算降雨和降雪
             if (has_prec && !has_rain && !has_snow) {
                 /* set air temperature and precipitation for this snow band */
-                step_prec = force->prec[NR] * soil_con->Pfactor[band];
+                force->prec[hidx] *= soil_con->Pfactor[band];
 
                 /** Calculate Fraction of Precipitation that falls as Rain **/
-                calc_rainonly(Tair, step_prec, force->vp[NR],
-                                    force->pressure[NR],
-                                    force->rel_humid[NR],
-                                    soil_con->elevation,
-                                    &snowfall, &rainfall);
-                force->rainf[NR] = rainfall;
-                force->snowf[NR] = snowfall;
+                calc_rainonly(force->air_temp[hidx], force->prec[hidx], 
+                              force->vp[hidx], force->pressure[hidx],
+                              force->rel_humid[hidx], soil_con->elevation,
+                              &force->snowf[hidx], &force->rainf[hidx]);
             }
             else if (has_rain && has_snow) {
-                force->rainf[NR] *= soil_con->Pfactor[band];
-                force->snowf[NR] *= soil_con->Pfactor[band];
-                snowfall = force->snowf[NR];
-                rainfall = force->rainf[NR];
+                force->rainf[hidx] *= soil_con->Pfactor[band];
+                force->snowf[hidx] *= soil_con->Pfactor[band];
             }
             // 校正降雨和降雪
-            snowfall *= gauge_correction[SNOW];
-            rainfall *= gauge_correction[RAIN];
-
+            if (options.CORRPREC && force->prec[NR] > 0) {
+                force->snowf[hidx] *= gauge_correction[SNOW];
+                force->rainf[hidx] *= gauge_correction[RAIN];
+            }
             // 计算新雪密度
-            if (snowfall > 0.0) {
+            if (force->snowf[hidx] > 0.0) {
                 snow->new_snow_density = new_snow_density(Tair);
             }
             else {
@@ -133,7 +125,7 @@ vic_run(force_data_struct   *force,
                 Tfoliage = energy->Tfoliage;
             
                 /* Initialize wind speeds */
-                wind = force->wind[NR];
+                wind = force->wind[hidx];
 
                 /** Assign Canopy **/
                 Canopy_Upper = veg_lib[veg_class].Canopy_Upper;
@@ -148,9 +140,9 @@ vic_run(force_data_struct   *force,
                              snow->snow_depth,
                              veg_var);
 
-                ErrorFlag = snow_intercept(step_dt, Tfoliage,
-                                           &snowfall, &rainfall,
-                                           wind, snow, veg_var);
+                ErrorFlag = snow_intercept(hidx, step_dt, Tfoliage, 
+                                           force, snow, veg_var);
+
                 if (ErrorFlag == ERROR) {
                     return (ERROR);
                 }
@@ -166,7 +158,7 @@ vic_run(force_data_struct   *force,
             
             /* Initialize snow coverage */
             calc_snow_coverage(Cv, veg_con[iveg].IS_GLAC,
-                               snowfall * step_dt,  // (mm H2O)
+                               force->snowf[hidx] * step_dt,  // (mm H2O)
                                snow, soil_con);
 
             // 初始化粗糙度
@@ -180,8 +172,7 @@ vic_run(force_data_struct   *force,
               Solve ground surface fluxes
             ******************************/
             if (veg_con[iveg].IS_GLAC == false) {   // 非冰川HRU
-                ErrorFlag = surface_fluxes(step_dt, Tair, 
-                                           snowfall, rainfall,
+                ErrorFlag = surface_fluxes(hidx, step_dt,
                                            force, energy,
                                            cell, snow,
                                            soil_con, veg_var,
@@ -189,8 +180,7 @@ vic_run(force_data_struct   *force,
 
             }
             else {  // 冰川HRU
-                ErrorFlag = surface_fluxes_glac(Tair, snowfall,
-                                                rainfall,
+                ErrorFlag = surface_fluxes_glac(hidx, step_dt,
                                                 force, energy, 
                                                 gp, cell,
                                                 snow, soil_con);

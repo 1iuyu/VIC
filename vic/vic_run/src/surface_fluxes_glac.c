@@ -12,15 +12,13 @@
 * @brief  This is a modified version of surface_fluxes.c specific for glaciers.
 ******************************************************************************/
 int
-surface_fluxes_glac(double               air_temp,
-                    double               snowfall,
-                    double               rainfall,
-                    force_data_struct   *force,
-                    energy_bal_struct   *energy,
-                    global_param_struct *gp,
-                    cell_data_struct    *cell,
-                    snow_data_struct    *snow,
-                    soil_con_struct     *soil_con)
+surface_fluxes_glac(size_t             hidx,
+                    double             step_dt,
+                    force_data_struct *force,
+                    energy_bal_struct *energy,
+                    cell_data_struct  *cell,
+                    snow_data_struct  *snow,
+                    soil_con_struct   *soil_con)
 {
     extern parameters_struct param;
     extern option_struct     options;
@@ -30,11 +28,9 @@ surface_fluxes_glac(double               air_temp,
     int    ErrorFlag;
     size_t i;
     size_t iter = 0;
-    size_t hidx = 0;
     size_t dt_min = 1800; // seconds (half hour)
     double time_accum = 0.0;
     double tol_error = 0.1;    // 0.01K
-    double step_dt = gp->step_dt;
     double f_snowage = 0.0;
     double shortwave_dir[MAX_SWBANDS];
     double shortwave_dfs[MAX_SWBANDS];
@@ -49,11 +45,7 @@ surface_fluxes_glac(double               air_temp,
 
     /***************
       MAIN ROUTINE
-    ***************/ 
-    double P0 = 100000.0; // reference pressure in Pa
-    double theta = air_temp * pow((P0 / pressure),
-                            CONST_RDAIR / CONST_CPDAIR);
-                            
+    ***************/                             
     shortwave_dir[0] = shortwave * param.RAD_DIR_F * param.RAD_VIS_F;                 // 直射-可见光
     shortwave_dir[1] = shortwave * param.RAD_DIR_F * (1.0 - param.RAD_VIS_F);         // 直射-近红外
     shortwave_dfs[0] = shortwave * (1.0 - param.RAD_DIR_F) * param.RAD_VIS_F;         // 漫射-可见光
@@ -62,9 +54,7 @@ surface_fluxes_glac(double               air_temp,
     /*******************************
       Advected heat flux from Prec
     *******************************/
-    AdvectedEnergyGlac(Tgrnd, air_temp,
-                       rainfall, snowfall, 
-                      &energy->AdvectGrnd);
+    AdvectedEnergyGlac(hidx, force, energy);
     
     /*******************************
     Thermal properties for the layer
@@ -77,7 +67,7 @@ surface_fluxes_glac(double               air_temp,
       Surface shortwave albedo
     ***************************/
     f_snowage = snow_aging(step_dt, Tgrnd,
-                           snowfall, snow);
+                           force->snowf[hidx], snow);
 
     /** compute understory albedo and net shortwave radiation **/
     if (coszen > 0.) {
@@ -155,7 +145,6 @@ surface_fluxes_glac(double               air_temp,
         while (iter_flag == false) {        
             /** Solve energy balence processes **/
             ErrorFlag = calc_energy_bal_glac(hidx, iter_dt,
-                                             air_temp, theta,
                                              force,
                                             &iter_energy, 
                                             &iter_cell,
@@ -218,11 +207,9 @@ surface_fluxes_glac(double               air_temp,
     (*snow) = iter_snow;
 
     /** Solve water balence processes **/
-    ErrorFlag = calc_water_bal_glac(hidx, air_temp, step_dt,
-                                    snowfall, rainfall,
-                                    energy->latent,
-                                    energy->LatentVapGrnd,
-                                    force, energy, cell, 
+    ErrorFlag = calc_water_bal_glac(hidx, step_dt,
+                                    force, 
+                                    energy, cell, 
                                     snow, soil_con);
     if (ErrorFlag == ERROR) {
 

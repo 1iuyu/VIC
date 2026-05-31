@@ -74,6 +74,48 @@ air_density(double t,
 }
 
 /******************************************************************************
+ * @brief   compute atmospheric potential temperature (K) based on
+ *          pressure (p), and temperature
+ *
+ * @param t temperature
+ * @param p pressure
+ *
+ * @return theta atmospheric potential temperature (K)
+ *****************************************************************************/
+double
+compute_theta(double t,
+              double p)
+{
+    double theta;
+
+    // full equation
+    theta = t * pow((100000.0 / p), CONST_RDAIR / CONST_CPDAIR);
+
+    return theta;
+}
+
+/******************************************************************************
+ * @brief   compute atmospheric virtual potential temperature (K) based on
+ *          specific humidity (kg/kg), and potential temperature (K)
+ *
+ * @param q specific humidity (kg/kg)
+ * @param theta potential temperature (K)
+ *
+ * @return theta_v atmospheric virtual potential temperature (K)
+ *****************************************************************************/
+double
+compute_theta_v(double q,
+                double theta)
+{
+    double theta_v;
+
+    // full equation
+    theta_v = theta * (1.0 + 0.61 * q);
+
+    return theta_v;
+}
+
+/******************************************************************************
  * @brief    This routine determines the counts the number of forcing variables
              in each forcing file specified in the global parameter file.
  *****************************************************************************/
