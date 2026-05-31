@@ -1,1 +1,0 @@
-Release Tests Configuration
