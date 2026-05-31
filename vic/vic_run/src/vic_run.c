@@ -23,18 +23,18 @@ vic_run(force_data_struct   *force,
     extern param_set_struct  param_set;
     extern parameters_struct param;
 
-    unsigned short     iveg;
-    size_t             Nveg;
-    unsigned short     veg_class;
-    unsigned short     band;
-    int                ErrorFlag;
-    double             step_dt;
-    double             Tfoliage;
-    double             Tair; 
-    double             step_prec;
-    double             wind;
-    double             Cv;
-    double             gauge_correction[2];
+    size_t     iveg;
+    size_t     Nveg;
+    size_t     veg_class;
+    size_t     band;
+    int        ErrorFlag;
+    double     step_dt;
+    double     Tfoliage;
+    double     Tair; 
+    double     step_prec;
+    double     wind;
+    double     Cv;
+    double     gauge_correction[2];
 
     cell_data_struct  *cell;
     veg_var_struct    *veg_var;
@@ -108,13 +108,11 @@ vic_run(force_data_struct   *force,
                 force->rainf[NR] = rainfall;
                 force->snowf[NR] = snowfall;
             }
-            else {
-                if (has_rain && has_snow) {
-                    force->rainf[NR] *= soil_con->Pfactor[band];
-                    force->snowf[NR] *= soil_con->Pfactor[band];
-                    snowfall = force->snowf[NR];
-                    rainfall = force->rainf[NR];
-                }
+            else if (has_rain && has_snow) {
+                force->rainf[NR] *= soil_con->Pfactor[band];
+                force->snowf[NR] *= soil_con->Pfactor[band];
+                snowfall = force->snowf[NR];
+                rainfall = force->rainf[NR];
             }
             // 校正降雨和降雪
             snowfall *= gauge_correction[SNOW];
