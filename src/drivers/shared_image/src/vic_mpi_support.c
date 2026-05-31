@@ -98,10 +98,6 @@ create_MPI_global_struct_type(MPI_Datatype *mpi_type)
     // reset i
     i = 0;
 
-    // double wind_h;
-    offsets[i] = offsetof(global_param_struct, wind_h);
-    mpi_types[i++] = MPI_DOUBLE;
-
     // double resolution;
     offsets[i] = offsetof(global_param_struct, resolution);
     mpi_types[i++] = MPI_DOUBLE;

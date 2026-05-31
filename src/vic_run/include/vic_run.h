@@ -130,7 +130,6 @@ int surface_fluxes(size_t, double, force_data_struct *, energy_bal_struct *,
                    cell_data_struct *, snow_data_struct *, soil_con_struct *, 
                    veg_var_struct *, veg_lib_struct *);
 int surface_fluxes_glac(size_t, double, force_data_struct *, energy_bal_struct *, 
-                        global_param_struct *,
                         cell_data_struct *, snow_data_struct *, soil_con_struct *);                        
 void svp_flags(double, double, double *, double *, double *, double *, int);
 double SoilWaterRetentionCurve(int, size_t, double, double, soil_con_struct *);

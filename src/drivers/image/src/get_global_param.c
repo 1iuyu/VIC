@@ -137,18 +137,6 @@ get_global_param(FILE *gp)
                 sscanf(cmdstr, "%*s %s", flgstr);
                 options.CARBON = str_to_bool(flgstr);
             }
-            else if (strcasecmp("RC_MODE", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                if (strcasecmp("RC_PHOTO", flgstr) == 0) {
-                    options.RC_MODE = RC_PHOTO;
-                }
-                else if (strcasecmp("RC_JARVIS", flgstr) == 0) {
-                    options.RC_MODE = RC_JARVIS;
-                }
-                else {
-                    log_err("Unknown RC_MODE option: %s", flgstr);
-                }
-            }
 
             /*************************************
                Define log directory
@@ -252,9 +240,6 @@ get_global_param(FILE *gp)
             else if (strcasecmp("FORCESEC", optstr) == 0) {
                 sscanf(cmdstr, "%*s %u", &global_param.forcesec[file_num]);
             }
-            else if (strcasecmp("WIND_H", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &global_param.wind_h);
-            }
 
             /*************************************
                Define parameter files
@@ -283,14 +268,10 @@ get_global_param(FILE *gp)
             }
             else if (strcasecmp("DENSITY_FROM_SOIL", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
-                options.DENSITY_FROM_SOIL = str_to_bool(flgstr);
+                options.PARAM_FROM_SOIL = str_to_bool(flgstr);
             }
             else if (strcasecmp("VEGLIB", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", filenames.veglib);
-            }
-            else if (strcasecmp("VEGLIB_PHOTO", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.VEGLIB_PHOTO = str_to_bool(flgstr);
             }
             else if (strcasecmp("VEGLIB_FCAN", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);

@@ -106,7 +106,7 @@ vic_run(force_data_struct   *force,
                 force->snowf[hidx] *= soil_con->Pfactor[band];
             }
             // 校正降雨和降雪
-            if (options.CORRPREC && force->prec[NR] > 0) {
+            if (options.CORRPREC && force->prec[hidx] > 0) {
                 force->snowf[hidx] *= gauge_correction[SNOW];
                 force->rainf[hidx] *= gauge_correction[RAIN];
             }
@@ -182,7 +182,7 @@ vic_run(force_data_struct   *force,
             else {  // 冰川HRU
                 ErrorFlag = surface_fluxes_glac(hidx, step_dt,
                                                 force, energy, 
-                                                gp, cell,
+                                                cell,
                                                 snow, soil_con);
             }
 
