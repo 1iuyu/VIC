@@ -143,14 +143,8 @@ generate_default_state(force_data_struct *force,
             /* Initialize soil node temperatures */
             for (k = Nsnow; k < cell[veg].Nnode; k++) {
                 lidx = k - Nsnow;
-                if (options.FROZEN_SOIL) {
-                    energy[veg].T[k] = air_temp;
-                    cell[veg].soil_T[lidx] = air_temp;
-                }
-                else {
-                    energy[veg].T[k] = CONST_TKFRZ;
-                    cell[veg].soil_T[lidx] = CONST_TKFRZ;
-                }
+                energy[veg].T[k] = air_temp;
+                cell[veg].soil_T[lidx] = air_temp;
             }
             /* Initial estimate of temperatures */
             energy[veg].Tfoliage = init_temp;
@@ -169,20 +163,28 @@ generate_default_state(force_data_struct *force,
         cell[veg].IS_GLAC = veg_con[veg].IS_GLAC;
         if (Cv > 0) {
             // set soil moisture properties for all soil thermal nodes
-            if (options.FROZEN_SOIL) {
-                ErrorFlag =
-                        distribute_node_moisture_properties(
-                            &cell[veg],
-                            soil_con);
-                if (ErrorFlag == ERROR) {
-                    log_err("Error setting physical properties for "
-                            "soil thermal nodes"); 
-                }
+            ErrorFlag =
+                    distribute_node_moisture_properties(
+                        &cell[veg],
+                        soil_con);
+            if (ErrorFlag == ERROR) {
+                log_err("Error setting physical properties for "
+                        "soil thermal nodes"); 
             }
             /* Soil and ice thermal properties for the layer */
             prepare_full_energy(pressure, &cell[veg], 
                                 &energy[veg],
                                 &snow[veg], soil_con);
+        }
+    }
+    /******************************************
+       Compute maximum daylight duration
+    ******************************************/
+    double max_daylen = calc_max_daylength(soil_con->lat);
+    for (veg = 0; veg <= Nveg; veg++) {
+        Cv = veg_con[veg].Cv;
+        if (Cv > 0.0) {
+            cell[veg].max_daylen = max_daylen;
         }
     }
 }

@@ -54,7 +54,7 @@
 #define CONST_RADPERDEG 0.01745329  /**< radians per degree */
 #define CONST_MINDECL -0.4092797  /**< minimum declination (radians) */
 #define CONST_DAYSOFF 11.25  /**< julian day offset of winter solstice */
-
+#define CONST_OBLIQUITY 0.4090928 /**< earth's obliquity (radians) IAU 1976 (J2000.0) */ 
 /***** Physical Constants *****/
 #define CONST_REARTH 6.37122e6  /**< radius of the earth ~ m */
 #define CONST_G 9.80616  /**< (m s-2) standard gravitational accel. */

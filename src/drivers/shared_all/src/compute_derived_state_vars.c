@@ -41,31 +41,29 @@ compute_derived_state_vars(all_vars_struct *all_vars,
             // (note this is only approximate since heat capacity and
             // conductivity can change considerably during the
             // simulation depending on soil moisture and ice content)
-            if (options.FROZEN_SOIL) {
-                // in seconds
-                dt_thresh = 0.5 * energy[veg].Cs_node[0] /
-                            energy[veg].kappa_node[0] *
-                            pow((soil_con->dz_soil[0]), 2.0);
+            // in seconds
+            dt_thresh = 0.5 * energy[veg].Cs_node[0] /
+                        energy[veg].kappa_node[0] *
+                        pow((soil_con->dz_soil[0]), 2.0);
 
-                if (global_param.step_dt > dt_thresh) {
-                    log_warn("Crank-Nicolson stability condition is violated. "
-                             "The current dimensionless parameter "
-                             "exceeds the critical threshold of 0.5. "
-                             "This may cause spurious oscillations or unphysical "
-                             "decay in the numerical solution. "
-                             "Now switch to the implicit method "
-                             "Current settings: time step = %f s, "
-                             "first layer node spacing = %f m, "
-                             "soil heat capacity = %f J/m3/K, "
-                             "soil thermal conductivity = %f J/m/s/K. "
-                             "Recommended maximum stable time step: %f s. "
-                             "To resolve this: Reduce the time step to <= %f s,",
-                             global_param.step_dt,
-                             soil_con->dz_soil[0],
-                             energy[veg].Cs_node[0],
-                             energy[veg].kappa_node[0],
-                             dt_thresh, dt_thresh);
-                }
+            if (global_param.step_dt > dt_thresh) {
+                log_warn("Crank-Nicolson stability condition is violated. "
+                            "The current dimensionless parameter "
+                            "exceeds the critical threshold of 0.5. "
+                            "This may cause spurious oscillations or unphysical "
+                            "decay in the numerical solution. "
+                            "Now switch to the implicit method "
+                            "Current settings: time step = %f s, "
+                            "first layer node spacing = %f m, "
+                            "soil heat capacity = %f J/m3/K, "
+                            "soil thermal conductivity = %f J/m/s/K. "
+                            "Recommended maximum stable time step: %f s. "
+                            "To resolve this: Reduce the time step to <= %f s,",
+                            global_param.step_dt,
+                            soil_con->dz_soil[0],
+                            energy[veg].Cs_node[0],
+                            energy[veg].kappa_node[0],
+                            dt_thresh, dt_thresh);
             }
         }
     }

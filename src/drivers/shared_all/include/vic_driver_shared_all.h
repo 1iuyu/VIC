@@ -538,6 +538,7 @@ double average(double *ar, size_t n);
 double calc_energy_balance_error(double, double, double, double, double);
 void calc_root_fractions(veg_con_struct *veg_con, soil_con_struct *soil_con);
 double calc_water_balance_error(double, double, double, double);
+double calc_max_daylength(double);
 bool cell_method_from_agg_type(unsigned short int aggtype, char cell_method[]);
 bool check_write_flag(int rec);
 void collect_eb_terms(energy_bal_struct, snow_data_struct,

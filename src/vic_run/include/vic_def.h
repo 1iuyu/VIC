@@ -113,15 +113,6 @@ enum
 };
 
 /******************************************************************************
- * @brief   Canopy resistance parametrizations
- *****************************************************************************/
-enum
-{
-    RC_PHOTO,
-    RC_JARVIS
-};
-
-/******************************************************************************
  * @brief   Photosynthesis parametrizations
  *****************************************************************************/
 enum
@@ -187,19 +178,17 @@ typedef enum {
  *****************************************************************************/
 typedef struct {
     // simulation modes
-    unsigned short int AERO_RESIST;
     bool ACTIVE_LAYER;
     bool CARBON;         /**< TRUE = simulate carbon cycling processes;
                             FALSE = no carbon cycling (default) */
     bool CONTINUEONERROR; /**< TRUE = VIC will continue to run after a cell has an error */
     bool CORRPREC;       /**< TRUE = correct precipitation for gage undercatch */
-    bool FROZEN_SOIL;    /**< TRUE = Use frozen soils code */
     bool BIOMASST;          /**< TRUE = Use biomass code to calculate canopy heat capacity and absorbed radiation */
-
     size_t Nlayer;       /**< Number of layers in model */
-    size_t Nswband;
-    size_t Nfrost;
-    size_t MAX_HRU;
+    size_t Nswband;      /**< Number of waveband in model */
+    size_t Nfrost;       /**< Number of frost layer in model */
+    size_t Ncanopy;      /**< Number of canopy layer in model */
+    size_t MAX_HRU;      /**< maximum number of hydrological response units */
     bool NOFLUX;         /**< TRUE = Use no flux lower bondary when computing
                             soil thermal fluxes */
     size_t NVEGTYPES;    /**< number of vegetation types in veg_param file */
@@ -216,20 +205,19 @@ typedef struct {
                                     and abort simulation for current grid cell
                             Default = TRUE */
     // input options
-    unsigned short int SWRC;         /**< SWRC_CAMPBELL, SWRC_BROOKS_COREY, SWRC_VAN_GENUCHTEN */
+    unsigned short int AERO_RESIST;
+    unsigned short int SWRC;         /**< SWRC_CAMPBELL, SWRC_VAN_GENUCHTEN */
     unsigned short int CANOPY_INTERCEP;
     unsigned short int SNOW_AGING;    /**< BATS and SNICAR */
     unsigned short int GRID_DECIMAL; /**< Number of decimal places in grid file extensions */
-    bool VEGLIB_FCAN;    /**< TRUE = veg library file contains monthly fcanopy values */
-    bool VEGPARAM_FCAN;  /**< TRUE = veg param file contains monthly fcanopy values */
-    bool VEGPARAM_LAI;   /**< TRUE = veg param file contains monthly LAI values */
-
     unsigned short int FCAN_SRC;       /**< FROM_VEGLIB = use fcanopy values from veg library file
                                           FROM_VEGPARAM = use fcanopy values from the veg param file */
     unsigned short int LAI_SRC;        /**< FROM_VEGLIB = use LAI values from veg library file
                                           FROM_VEGPARAM = use LAI values from the veg param file */
+    unsigned short int SAI_SRC;        /**< FROM_VEGLIB = use SAI values from veg library file
+                                          FROM_VEGPARAM = use SAI values from the veg param file */
     bool PARAM_FROM_SOIL; /**< TRUE = bulk density and soil density (particle density) read from soil parameter file; otherwise set to 0.0 */
-
+    bool ROUT;            /**< TRUE = */
     // state options
     unsigned short int STATE_FORMAT;  /**< TRUE = model state file is binary (default) */
     bool INIT_STATE;     /**< TRUE = initialize model state from file */
@@ -238,7 +226,7 @@ typedef struct {
     // output options
     size_t Noutstreams;  /**< Number of output stream */
     bool   PRT_HEADER;     /* TRUE = insert header at beginning of output file; FALSE = no header */
-    bool   ROUT;
+
 } option_struct;
 
 /******************************************************************************

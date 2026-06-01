@@ -79,7 +79,7 @@ create_MPI_global_struct_type(MPI_Datatype *mpi_type)
     MPI_Datatype   *mpi_types;
 
     // nitems has to equal the number of elements in global_param_struct
-    nitems = 26;
+    nitems = 25;
     blocklengths = malloc(nitems * sizeof(*blocklengths));
     check_alloc_status(blocklengths, "Memory allocation error.");
 
@@ -439,7 +439,7 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     MPI_Datatype   *mpi_types;
 
     // nitems has to equal the number of elements in option_struct
-    nitems = 29;
+    nitems = 26;
     blocklengths = malloc(nitems * sizeof(*blocklengths));
     check_alloc_status(blocklengths, "Memory allocation error.");
 
@@ -473,17 +473,25 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(option_struct, CORRPREC);
     mpi_types[i++] = MPI_C_BOOL;
 
-    // bool FROZEN_SOIL;
-    offsets[i] = offsetof(option_struct, FROZEN_SOIL);
-    mpi_types[i++] = MPI_C_BOOL;
-
     // size_t Nlayer;
     offsets[i] = offsetof(option_struct, Nlayer);
     mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent
 
     // size_t Nswband;
     offsets[i] = offsetof(option_struct, Nswband);
-    mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent  
+    mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent 
+    
+    // size_t Nfrost;
+    offsets[i] = offsetof(option_struct, Nfrost);
+    mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent 
+
+    // size_t Ncanopy;
+    offsets[i] = offsetof(option_struct, Ncanopy);
+    mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent
+
+    // size_t MAX_HRU;
+    offsets[i] = offsetof(option_struct, MAX_HRU);
+    mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent 
 
     // bool NOFLUX;
     offsets[i] = offsetof(option_struct, NOFLUX);
@@ -521,24 +529,16 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(option_struct, GRID_DECIMAL);
     mpi_types[i++] = MPI_UNSIGNED_SHORT;
 
-    // bool VEGLIB_FCAN;
-    offsets[i] = offsetof(option_struct, VEGLIB_FCAN);
-    mpi_types[i++] = MPI_C_BOOL;
-
-    // bool VEGPARAM_FCAN;
-    offsets[i] = offsetof(option_struct, VEGPARAM_FCAN);
-    mpi_types[i++] = MPI_C_BOOL;
-
-    // bool VEGPARAM_LAI;
-    offsets[i] = offsetof(option_struct, VEGPARAM_LAI);
-    mpi_types[i++] = MPI_C_BOOL;
-
     // unsigned short FCAN_SRC;
     offsets[i] = offsetof(option_struct, FCAN_SRC);
     mpi_types[i++] = MPI_UNSIGNED_SHORT;
 
     // unsigned short LAI_SRC;
     offsets[i] = offsetof(option_struct, LAI_SRC);
+    mpi_types[i++] = MPI_UNSIGNED_SHORT;
+
+    // unsigned short SAI_SRC;
+    offsets[i] = offsetof(option_struct, SAI_SRC);
     mpi_types[i++] = MPI_UNSIGNED_SHORT;
 
     // bool DENSITY_FROM_SOIL;
@@ -555,6 +555,10 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
 
     // bool SAVE_STATE;
     offsets[i] = offsetof(option_struct, SAVE_STATE);
+    mpi_types[i++] = MPI_C_BOOL;
+
+    // bool ROUT;
+    offsets[i] = offsetof(option_struct, ROUT);
     mpi_types[i++] = MPI_C_BOOL;
 
     // make sure that the we have the right number of elements

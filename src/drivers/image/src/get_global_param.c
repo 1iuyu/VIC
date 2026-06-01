@@ -85,10 +85,6 @@ get_global_param(FILE *gp)
                 sscanf(cmdstr, "%*s %s", flgstr);
                 global_param.time_units = str_to_timeunits(flgstr);
             }
-            else if (strcasecmp("FROZEN_SOIL", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.FROZEN_SOIL = str_to_bool(flgstr);
-            }
             else if ((strcasecmp("NOFLUX",
                                  optstr) == 0) ||
                      (strcasecmp("NO_FLUX", optstr) == 0)) {
@@ -266,20 +262,12 @@ get_global_param(FILE *gp)
                     strcpy(filenames.rout_params.nc_filename, flgstr);
                 }
             }
-            else if (strcasecmp("DENSITY_FROM_SOIL", optstr) == 0) {
+            else if (strcasecmp("PARAM_FROM_SOIL", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
                 options.PARAM_FROM_SOIL = str_to_bool(flgstr);
             }
             else if (strcasecmp("VEGLIB", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", filenames.veglib);
-            }
-            else if (strcasecmp("VEGLIB_FCAN", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.VEGLIB_FCAN = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("VEGPARAM_LAI", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.VEGPARAM_LAI = str_to_bool(flgstr);
             }
             else if (strcasecmp("LAI_SRC", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
@@ -294,6 +282,22 @@ get_global_param(FILE *gp)
                 }
                 else {
                     log_err("Unrecognized value of LAI_SRC in the global "
+                            "control file.");
+                }
+            }
+            else if (strcasecmp("SAI_SRC", optstr) == 0) {
+                sscanf(cmdstr, "%*s %s", flgstr);
+                if (strcasecmp("FROM_VEGHIST", flgstr) == 0) {
+                    options.SAI_SRC = FROM_VEGHIST;
+                }
+                else if (strcasecmp("FROM_VEGPARAM", flgstr) == 0) {
+                    options.SAI_SRC = FROM_VEGPARAM;
+                }
+                else if (strcasecmp("FROM_VEGLIB", flgstr) == 0) {
+                    options.SAI_SRC = FROM_VEGLIB;
+                }
+                else {
+                    log_err("Unrecognized value of SAI_SRC in the global "
                             "control file.");
                 }
             }

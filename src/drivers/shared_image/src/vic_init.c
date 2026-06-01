@@ -83,12 +83,7 @@ vic_init(void)
     // read_soilparam()
     
     // Validate Nlayer
-    if ((options.FROZEN_SOIL) && options.Nlayer < 3) {
-        log_err("You must define at least 3 soil moisture layers to run "
-                "the model in FULL_ENERGY or FROZEN_SOIL modes.  "
-                "Currently Nlayers is set to  %zu.", options.Nlayer);
-    }
-    if ((!options.FROZEN_SOIL) && options.Nlayer < 1) {
+    if (options.Nlayer < 1) {
         log_err("You must define at least 1 soil moisture layer to run "
                 "the model.  Currently Nlayers is set to %zu.",
                 options.Nlayer);

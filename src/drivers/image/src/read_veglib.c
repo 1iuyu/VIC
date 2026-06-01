@@ -65,6 +65,31 @@ read_veglib(FILE   *veglib,
             fscanf(veglib, "%lf", &temp[i].Z0sub_cw);
             fscanf(veglib, "%lf", &temp[i].smpsc);
             fscanf(veglib, "%lf", &temp[i].smpso);
+            fscanf(veglib, "%lf", &temp[i].trunk_dia);
+
+            /* Carbon-cycling parameters */
+            fscanf(veglib, "%s", tmpstr); /* photosynthetic pathway */
+            if (!strcmp(tmpstr, "0") || !strcmp(tmpstr, "C3")) {
+                temp[i].Ctype = PHOTO_C3;
+            }
+            else if (!strcmp(tmpstr, "1") || !strcmp(tmpstr, "C4")) {
+                temp[i].Ctype = PHOTO_C4;
+            }
+            if (!strcmp(tmpstr, "C3") || !strcmp(tmpstr, "C4")) {
+                log_warn("Use of strings \"C3\" and \"C4\" as values of "
+                            "Ctype is deprecated.  Please replace these with "
+                            "\"0\" and \"1\", respectively");
+            }
+            fscanf(veglib, "%lf", &temp[i].theta_cj);
+            fscanf(veglib, "%lf", &temp[i].kcano_max);
+            fscanf(veglib, "%lf", &temp[i].kroot_max);
+            fscanf(veglib, "%lf", &temp[i].m_bb);
+            fscanf(veglib, "%lf", &temp[i].matric50);
+            fscanf(veglib, "%lf", &temp[i].leaf_CN);
+            fscanf(veglib, "%lf", &temp[i].SLA_top);
+            fscanf(veglib, "%lf", &temp[i].fN_rub);
+            fscanf(veglib, "%lf", &temp[i].medlynslope);
+            fscanf(veglib, "%lf", &temp[i].medlynint);
 
             for (j = 0; j < MONTHS_PER_YEAR; j++) {
                 fscanf(veglib, "%lf", &temp[i].LAI[j]);
@@ -82,19 +107,14 @@ read_veglib(FILE   *veglib,
             }
             /* Default values of fcanopy */
             for (j = 0; j < MONTHS_PER_YEAR; j++) {
-                temp[i].fcanopy[j] = 1.00;
-            }
-            if (options.VEGLIB_FCAN) {
-                for (j = 0; j < MONTHS_PER_YEAR; j++) {
-                    fscanf(veglib, "%lf", &tmp_double);
-                    if (options.FCAN_SRC != FROM_DEFAULT) {
-                        temp[i].fcanopy[j] = tmp_double;
-                        if (temp[i].fcanopy[j] < 0 ||
-                            temp[i].fcanopy[j] > 1) {
-                            log_err(
-                                "Veg cover fraction must be between 0 and 1 " "(%f)",
-                                temp[i].fcanopy[j]);
-                        }
+                fscanf(veglib, "%lf", &tmp_double);
+                if (options.FCAN_SRC != FROM_DEFAULT) {
+                    temp[i].fcanopy[j] = tmp_double;
+                    if (temp[i].fcanopy[j] < 0 ||
+                        temp[i].fcanopy[j] > 1) {
+                        log_err(
+                            "Veg cover fraction must be between 0 and 1 " "(%f)",
+                            temp[i].fcanopy[j]);
                     }
                 }
             }
@@ -109,33 +129,6 @@ read_veglib(FILE   *veglib,
             }
             for (j = 0; j < MAX_SWBANDS; j++) {
                 fscanf(veglib, "%lf", &temp[i].transstem[j]);
-            }
-            fscanf(veglib, "%lf", &temp[i].trunk_dia);
-            /* Carbon-cycling parameters */
-            if (options.VEGLIB_PHOTO) {
-                fscanf(veglib, "%s", tmpstr); /* photosynthetic pathway */
-                if (!strcmp(tmpstr, "0") || !strcmp(tmpstr, "C3")) {
-                    temp[i].Ctype = PHOTO_C3;
-                }
-                else if (!strcmp(tmpstr, "1") || !strcmp(tmpstr, "C4")) {
-                    temp[i].Ctype = PHOTO_C4;
-                }
-                if (!strcmp(tmpstr, "C3") || !strcmp(tmpstr, "C4")) {
-                    log_warn("Use of strings \"C3\" and \"C4\" as values of "
-                             "Ctype is deprecated.  Please replace these with "
-                             "\"0\" and \"1\", respectively");
-                }
-                fscanf(veglib, "%lf", &temp[i].m_bb);
-                fscanf(veglib, "%lf", &temp[i].matric50);
-                fscanf(veglib, "%lf", &temp[i].kseg_max);
-                fscanf(veglib, "%lf", &temp[i].kcano_max);
-                fscanf(veglib, "%lf", &temp[i].kroot_max);
-                fscanf(veglib, "%lf", &temp[i].theta_cj);
-                fscanf(veglib, "%lf", &temp[i].leaf_CN);
-                fscanf(veglib, "%lf", &temp[i].SLA_top);
-                fscanf(veglib, "%lf", &temp[i].fN_rub);
-                fscanf(veglib, "%lf", &temp[i].medlynslope);
-                fscanf(veglib, "%lf", &temp[i].medlynint);
             }
 
             fgets(str, MAXSTRING, veglib); /* skip over end of line comments */
@@ -159,15 +152,40 @@ read_veglib(FILE   *veglib,
         temp[i].LAI[j] = 0.0;
         temp[i].SAI[j] = 0.0;
         temp[i].fcanopy[j] = MIN_FCANOPY;
-        // These will be assigned in read_soilparam.c
-
     }
+    temp[i].Canopy_Upper = 0.0;
+    temp[i].Canopy_Lower = 0.0;
+    temp[i].Canopy_Radius = 0.0;
+    temp[i].COI = 0.0;
+    temp[i].c_biomass = 0.0;
+    temp[i].d_leaf = 0.0;
+    temp[i].root_a = 0.0;
+    temp[i].root_b = 0.0;
+    temp[i].root_d = 0.0;
+    temp[i].liq_bioms = 0.0;
+    temp[i].slatop = 0.0;
+    temp[i].stem_num = 0.0;
+    temp[i].Z0sub_c = 0.0;
+    temp[i].Z0sub_Cr = 0.0;
+    temp[i].Z0sub_Cs = 0.0;
+    temp[i].Z0sub_cw = 0.0;
+    temp[i].Z0sub_LAImax = 0.0;
+    temp[i].smpsc = 0.0;
+    temp[i].smpso = 0.0;
     temp[i].trunk_dia = 0.0;
-    if (options.VEGLIB_PHOTO) {
-        temp[i].Ctype = PHOTO_C3;
-    }
+    temp[i].Ctype = PHOTO_C3;
+    temp[i].theta_cj = 0.0;
+    temp[i].kcano_max = 0.0;
+    temp[i].kroot_max = 0.0;
+    temp[i].m_bb = 0.0;
+    temp[i].matric50 = 0.0;
+    temp[i].leaf_CN = 0.0;
+    temp[i].SLA_top = 0.0;
+    temp[i].fN_rub = 0.0;
+    temp[i].medlynint = 0.0;
+    temp[i].medlynslope = 0.0;
 
-    return temp;
+    return (temp);
 }
 
 /******************************************************************************
