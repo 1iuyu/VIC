@@ -14,6 +14,9 @@
 int
 surface_fluxes(size_t             hidx,
                double             step_dt,
+               double             air_temp,
+               double             snowfall,
+               double             rainfall,
                force_data_struct *force,
                energy_bal_struct *energy,
                cell_data_struct  *cell,
@@ -26,7 +29,7 @@ surface_fluxes(size_t             hidx,
     extern parameters_struct param;
 
     int    ErrorFlag;
-    size_t i, hidx; // index of initial element of atmos array
+    size_t i;
     // Structures holding values for current iteration
     cell_data_struct  iter_cell;
     energy_bal_struct iter_energy;
@@ -54,11 +57,8 @@ surface_fluxes(size_t             hidx,
        Compute surface fluxes
     ***************************/
     double coszen = force->coszen[hidx];
-    double snowfall = force->snowf[hidx];
-    double rainfall = force->rainf[hidx];
     double pressure = force->pressure[hidx];
     double shortwave = force->shortwave[hidx];
-    double Tfoliage = energy->Tfoliage;
     double coverage = snow->coverage;
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
@@ -75,7 +75,9 @@ surface_fluxes(size_t             hidx,
     /*******************************
       Advected heat flux from Prec
     *******************************/
-    AdvectedEnergy(hidx, force, 
+    AdvectedEnergy(air_temp, 
+                   snowfall,
+                   rainfall,
                    energy, veg_var);
                     
     /***************************
@@ -202,8 +204,10 @@ surface_fluxes(size_t             hidx,
             /**********************************************
              Solve Energy Balance Components
             **********************************************/
-            ErrorFlag = calc_energy_bal(hidx, step_dt, force, 
-                                        &iter_energy, &iter_cell,
+            ErrorFlag = calc_energy_bal(hidx, step_dt, 
+                                        air_temp, force, 
+                                        &iter_energy, 
+                                        &iter_cell,
                                         &iter_snow, soil_con, 
                                         &iter_veg_var, veg_lib);
 
@@ -275,8 +279,9 @@ surface_fluxes(size_t             hidx,
     /********************************************************
       Compute Runoff, Baseflow, and Soil Moisture Transport
     ********************************************************/
-    snow_hydrology(hidx, step_dt, 
-                   force, 
+    snow_hydrology(step_dt, air_temp,
+                   snowfall, rainfall,
+                   pressure,
                    energy, cell, 
                    snow, soil_con);
     /* 计算进入土层表面的水量 */

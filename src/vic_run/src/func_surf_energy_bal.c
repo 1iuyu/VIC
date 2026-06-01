@@ -14,6 +14,7 @@
  *****************************************************************************/
 int
 func_surf_energy_bal(size_t             hidx,
+                     double             air_temp,
                      force_data_struct *force,
                      energy_bal_struct *energy,
                      cell_data_struct  *cell,
@@ -37,7 +38,6 @@ func_surf_energy_bal(size_t             hidx,
     double longwave = force->longwave[hidx];
     double air_density = force->density[hidx];
     double theta_pot = force->theta_pot[hidx];
-    double air_temp = force->air_temp[hidx];
     double theta_v = force->theta_v[hidx];
     double corr_wind = 0.0;
     double ustar = 0.06;

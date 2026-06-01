@@ -685,8 +685,11 @@ vic_init(void)
                 if (options.LAI_SRC == FROM_VEGLIB ||
                     options.LAI_SRC == FROM_VEGPARAM) {
                     veg_con[i][j].LAI[m] = veg_lib[k].LAI[m];
-                    veg_con[i][j].SAI[m] = veg_lib[k].SAI[m];
                 }
+                if (options.LAI_SRC == FROM_VEGLIB ||
+                    options.LAI_SRC == FROM_VEGPARAM) { 
+                    veg_con[i][j].SAI[m] = veg_lib[k].SAI[m];
+                }           
             }
         }
         // check the number of nonzero veg tiles

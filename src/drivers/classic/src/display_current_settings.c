@@ -37,8 +37,6 @@ display_current_settings(int mode)
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "LOG_LEVEL:\t\t%d\n", LOG_LVL);
     fprintf(LOG_DEST, "\n");
-    fprintf(LOG_DEST, "Maximum Array Sizes:\n");
-    fprintf(LOG_DEST, "MAX_ZWTVMOIST\t\t%2d\n", MAX_ZWTVMOIST);
     fprintf(LOG_DEST, "MAX_LAYERS\t\t%2d\n", MAX_LAYERS);
     fprintf(LOG_DEST, "MAX_NODES\t\t%2d\n", MAX_NODES);
     fprintf(LOG_DEST, "\n");
@@ -60,17 +58,8 @@ display_current_settings(int mode)
 
     fprintf(LOG_DEST, "Simulation Dimensions:\n");
     fprintf(LOG_DEST, "NLAYER\t\t\t%zu\n", options.Nlayer);
-    if (options.EQUAL_AREA) {
-        fprintf(LOG_DEST, "EQUAL_AREA\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "EQUAL_AREA\t\tFALSE\n");
-    }
     fprintf(LOG_DEST, "RESOLUTION\t\t%f\n", global_param.resolution);
-    fprintf(LOG_DEST, "MODEL_DT\t\t%f\n", global_param.dt);
-    fprintf(LOG_DEST, "SNOW_DT\t\t%f\n", global_param.snow_dt);
-    fprintf(LOG_DEST, "RUNOFF_DT\t\t%f\n", global_param.runoff_dt);
-    fprintf(LOG_DEST, "ATMOS_DT\t\t%f\n", global_param.atmos_dt);
+    fprintf(LOG_DEST, "MODEL_DT\t\t%f\n", global_param.step_dt);
     fprintf(LOG_DEST, "STARTYEAR\t\t%d\n", global_param.startyear);
     fprintf(LOG_DEST, "STARTMONTH\t\t%d\n", global_param.startmonth);
     fprintf(LOG_DEST, "STARTDAY\t\t%d\n", global_param.startday);
@@ -86,12 +75,6 @@ display_current_settings(int mode)
 
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "Simulation Parameters:\n");
-    if (options.BLOWING) {
-        fprintf(LOG_DEST, "BLOWING\t\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "BLOWING\t\t\tFALSE\n");
-    }
     if (options.CONTINUEONERROR) {
         fprintf(LOG_DEST, "CONTINUEONERROR\t\tTRUE\n");
     }
@@ -103,18 +86,6 @@ display_current_settings(int mode)
     }
     else {
         fprintf(LOG_DEST, "CORRPREC\t\tFALSE\n");
-    }
-    if (options.EXP_TRANS) {
-        fprintf(LOG_DEST, "EXP_TRANS\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "EXP_TRANS\t\tFALSE\n");
-    }
-    if (options.FROZEN_SOIL) {
-        fprintf(LOG_DEST, "FROZEN_SOIL\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "FROZEN_SOIL\t\tFALSE\n");
     }
     if (options.NOFLUX) {
         fprintf(LOG_DEST, "NOFLUX\t\t\tTRUE\n");
@@ -134,7 +105,6 @@ display_current_settings(int mode)
     else {
         fprintf(LOG_DEST, "TFALLBACK\t\tFALSE\n");
     }
-    fprintf(LOG_DEST, "WIND_H\t\t\t%f\n", global_param.wind_h);
     if (options.CARBON) {
         fprintf(LOG_DEST, "CARBON\t\tTRUE\n");
     }
@@ -180,42 +150,11 @@ display_current_settings(int mode)
     fprintf(LOG_DEST, "Constants File\t\t%s\n", filenames.constants);
     fprintf(LOG_DEST, "Input Soil Data:\n");
     fprintf(LOG_DEST, "Soil file\t\t%s\n", filenames.soil);
-    if (options.ORGANIC_FRACT) {
-        fprintf(LOG_DEST, "ORGANIC_FRACT\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "ORGANIC_FRACT\t\tFALSE\n");
-    }
-    if (options.BULK_DENSITY_COMB) {
-        fprintf(LOG_DEST, "BULK_DENSITY_COMB\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "BULK_DENSITY_COMB\t\tFALSE\n");
-    }
-
-
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "Input Veg Data:\n");
     fprintf(LOG_DEST, "Veg library file\t%s\n", filenames.veglib);
-    if (options.VEGLIB_PHOTO) {
-        fprintf(LOG_DEST, "VEGLIB_PHOTO\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "VEGLIB_PHOTO\t\tFALSE\n");
-    }
-    if (options.VEGLIB_FCAN) {
-        fprintf(LOG_DEST, "VEGLIB_FCAN\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "VEGLIB_FCAN\t\tFALSE\n");
-    }
+
     fprintf(LOG_DEST, "Veg param file\t\t%s\n", filenames.veg);
-    if (options.VEGPARAM_LAI) {
-        fprintf(LOG_DEST, "VEGPARAM_LAI\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "VEGPARAM_LAI\t\tFALSE\n");
-    }
     if (options.LAI_SRC == FROM_VEGHIST) {
         fprintf(LOG_DEST, "LAI_SRC\t\tFROM_VEGHIST\n");
     }
@@ -224,12 +163,6 @@ display_current_settings(int mode)
     }
     else if (options.LAI_SRC == FROM_VEGLIB) {
         fprintf(LOG_DEST, "LAI_SRC\t\tFROM_VEGLIB\n");
-    }
-    if (options.VEGPARAM_FCAN) {
-        fprintf(LOG_DEST, "VEGPARAM_FCAN\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "VEGPARAM_FCAN\t\tFALSE\n");
     }
     if (options.FCAN_SRC == FROM_VEGHIST) {
         fprintf(LOG_DEST, "FCAN_SRC\t\tFROM_VEGHIST\n");
@@ -242,21 +175,6 @@ display_current_settings(int mode)
     }
     else if (options.FCAN_SRC == FROM_DEFAULT) {
         fprintf(LOG_DEST, "FCAN_SRC\t\tFROM_DEFAULT\n");
-    }
-    if (options.VEGPARAM_ALB) {
-        fprintf(LOG_DEST, "VEGPARAM_ALB\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "VEGPARAM_ALB\t\tFALSE\n");
-    }
-    if (options.ALB_SRC == FROM_VEGHIST) {
-        fprintf(LOG_DEST, "ALB_SRC\t\tFROM_VEGHIST\n");
-    }
-    else if (options.ALB_SRC == FROM_VEGPARAM) {
-        fprintf(LOG_DEST, "ALB_SRC\t\tFROM_VEGPARAM\n");
-    }
-    else if (options.ALB_SRC == FROM_VEGLIB) {
-        fprintf(LOG_DEST, "ALB_SRC\t\tFROM_VEGLIB\n");
     }
 
     fprintf(LOG_DEST, "\n");

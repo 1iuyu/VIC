@@ -327,7 +327,7 @@ distribute_node_moisture_properties(cell_data_struct *cell,
             porosity[nidx] = 0.0;
         }
         else {
-            if (soil_T[nidx] < CONST_TKFRZ && options.FROZEN_SOIL) {
+            if (soil_T[nidx] < CONST_TKFRZ) {
                 /* compute moisture and ice contents */
                 frozen_soil(nidx, soil_T[nidx],
                             liq, ice,

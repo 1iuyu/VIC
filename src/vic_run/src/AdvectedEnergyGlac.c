@@ -10,16 +10,13 @@
 * @brief    Calculates the heat flux advected from precipitation
 ******************************************************************************/
 void
-AdvectedEnergyGlac(size_t             hidx,
-                   force_data_struct *force,
+AdvectedEnergyGlac(double             air_temp,
+                   double             snowfall,
+                   double             rainfall,
                    energy_bal_struct *energy)
 
 {
     double Tgrnd = energy->Tgrnd;
-    double rainfall = force->rainf[hidx];
-    double snowfall = force->snowf[hidx];
-    double air_temp = force->air_temp[hidx];
-
     /* initialization */
     double AdvectGrnd = 0.;
     

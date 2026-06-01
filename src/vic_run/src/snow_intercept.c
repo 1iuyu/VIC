@@ -11,12 +11,13 @@
 * @brief    Calculate snow interception and release by the canopy
 ******************************************************************************/
 int
-snow_intercept(size_t             hidx,
-               double             step_dt,
-               double             Tcanopy,  // canopy air temperature
-               force_data_struct *force,
-               snow_data_struct  *snow,
-               veg_var_struct    *veg_var)
+snow_intercept(double            step_dt,
+               double            Tcanopy,  // canopy air temperature
+               double           *SnowFall,
+               double           *RainFall,
+               double            Wind,
+               snow_data_struct *snow,
+               veg_var_struct   *veg_var)
 {
     extern option_struct     options;   
     extern parameters_struct param;
@@ -45,26 +46,24 @@ snow_intercept(size_t             hidx,
     double int_snow = veg_var->int_snow;    // intercepted rain
     double int_rain = veg_var->int_rain;    // intercepted snow
     double new_snow_density = snow->new_snow_density;
-    double wind = force->wind[hidx];
-    double snowfall = force->snowf[hidx];
-    double rainfall = force->rainf[hidx];
+
     /* Determine the maximum canopy capacity for snow interception [mm] */
     MaxSnowInt = fcanopy * 6.6 * (0.27 + 46.0 / new_snow_density) *
                                                     (NetLAI + NetSAI);
 
     /* Calculate snow interception. */
     if (NetLAI + NetSAI > 0.) {
-        DeltaSnowInt = fcanopy * snowfall;
+        DeltaSnowInt = fcanopy * (*SnowFall);
         DeltaSnowInt = min(DeltaSnowInt, (MaxSnowInt - int_snow) / step_dt * 
-                            (1.0 - exp(-snowfall * step_dt / MaxSnowInt)));
+                            (1.0 - exp(-*SnowFall * step_dt / MaxSnowInt)));
         DeltaSnowInt = max(DeltaSnowInt, 0.0);
         /* Reduce the amount of intercepted snow if windy and cold. */
         SnowDriptemp = max(0.0, (Tcanopy - 270.15) / 1.87e5);
-        SnowDripwind = max(0.0, wind / 1.56e5);
+        SnowDripwind = max(0.0, Wind / 1.56e5);
         SnowUnload = max(0, int_snow) * (SnowDriptemp + SnowDripwind);
         SnowUnload = min(SnowUnload, int_snow / step_dt + DeltaSnowInt);
-        SnowDrip = (snowfall * fcanopy - DeltaSnowInt);
-        SnowThroughFall = snowfall * (1 - fcanopy);
+        SnowDrip = (*SnowFall * fcanopy - DeltaSnowInt);
+        SnowThroughFall = (*SnowFall) * (1 - fcanopy);
 
         /* now update snowfall and total accumulated intercepted snow amounts */
         int_snow += (DeltaSnowInt - SnowUnload) * step_dt;
@@ -75,7 +74,7 @@ snow_intercept(size_t             hidx,
     else {
         DeltaSnowInt = 0.;
         SnowDrip = 0.;
-        SnowThroughFall = snowfall;
+        SnowThroughFall = (*SnowFall);
         /* canopy gets buried by snow */
         if (int_snow > 0.) {
             SnowDrip += int_snow / step_dt;
@@ -86,12 +85,12 @@ snow_intercept(size_t             hidx,
     intercepted snow. */
     MaxRainInt = fcanopy * Wdew * (NetLAI + NetSAI);
     if ((NetLAI + NetSAI) > 0.) {
-        DeltaRainInt = fcanopy * rainfall;
+        DeltaRainInt = fcanopy * (*RainFall);
         DeltaRainInt = min(DeltaRainInt, (MaxRainInt - int_rain) / step_dt *
-                                        (1.0 - exp(-rainfall * step_dt / MaxRainInt)));
+                                        (1.0 - exp(-*RainFall * step_dt / MaxRainInt)));
         DeltaRainInt = max(DeltaRainInt, 0.0);
-        RainDrip = rainfall * fcanopy - DeltaRainInt;
-        RainThroughFall = rainfall * (1 - fcanopy);
+        RainDrip = (*RainFall) * fcanopy - DeltaRainInt;
+        RainThroughFall = (*RainFall) * (1 - fcanopy);
         int_rain += DeltaRainInt * step_dt;
         if (int_rain < 0.) {
             int_rain = 0.;
@@ -100,7 +99,7 @@ snow_intercept(size_t             hidx,
     else {
         DeltaRainInt = 0.;
         RainDrip = 0.;
-        RainThroughFall = rainfall;
+        RainThroughFall = (*RainFall);
         /* canopy gets buried by rain */
         if (int_rain > 0.) {
             RainDrip += int_rain / step_dt;
@@ -163,11 +162,11 @@ snow_intercept(size_t             hidx,
     veg_var->MaxRainInt = MaxRainInt;
     veg_var->SnowUnload = SnowUnload;
     /* rain or snow on the ground [mm/s] */
-    force->rainf[hidx] = RainDrip + RainThroughFall;
-    force->snowf[hidx] = SnowDrip + SnowThroughFall + SnowUnload;
+    (*RainFall) = RainDrip + RainThroughFall; 
+    (*SnowFall) = SnowDrip + SnowThroughFall + SnowUnload;
     /* Update snow water equivalent and snow depth */
-    if (force->snowf[hidx] > 0.0) {
-        snow->delta_depth = force->snowf[hidx] / new_snow_density;
+    if (*SnowFall > 0.0) {
+        snow->delta_depth = *SnowFall / new_snow_density;
     }
     else {
         snow->delta_depth = 0.0;

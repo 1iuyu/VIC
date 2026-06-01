@@ -14,6 +14,9 @@
 int
 surface_fluxes_glac(size_t             hidx,
                     double             step_dt,
+                    double             air_temp,
+                    double             snowfall,
+                    double             rainfall,
                     force_data_struct *force,
                     energy_bal_struct *energy,
                     cell_data_struct  *cell,
@@ -54,7 +57,8 @@ surface_fluxes_glac(size_t             hidx,
     /*******************************
       Advected heat flux from Prec
     *******************************/
-    AdvectedEnergyGlac(hidx, force, energy);
+    AdvectedEnergyGlac(air_temp, snowfall, 
+                       rainfall, energy);
     
     /*******************************
     Thermal properties for the layer
@@ -67,15 +71,13 @@ surface_fluxes_glac(size_t             hidx,
       Surface shortwave albedo
     ***************************/
     f_snowage = snow_aging(step_dt, Tgrnd,
-                           force->snowf[hidx], snow);
+                           snowfall, snow);
 
     /** compute understory albedo and net shortwave radiation **/
     if (coszen > 0.) {
         // age snow albedo if no new snowfall
         // solar radiation process is only done if there is light
-        snow_albedo(coszen, f_snowage,
-                    energy->AlbedoSnowDir,
-                    energy->AlbedoSnowDfs);
+        snow_albedo(coszen, f_snowage, energy);
 
         for (i = 0; i < options.Nswband; i++) {
             AlbedoGrndDir[i] =
@@ -102,8 +104,8 @@ surface_fluxes_glac(size_t             hidx,
     double ReflShortSurf = 0.0;
     for (i = 0; i < options.Nswband; i++) {
         NetShortGrnd += 
-            shortwave_dir[i] * (1. - AlbedoGrndDir[i]) +
-                shortwave_dfs[i] * (1. - AlbedoGrndDfs[i]);
+            shortwave_dir[i] * (1.0 - AlbedoGrndDir[i]) +
+                shortwave_dfs[i] * (1.0 - AlbedoGrndDfs[i]);
         ReflShortSurf +=
             shortwave_dir[i] * AlbedoGrndDir[i] +
                 shortwave_dfs[i] * AlbedoGrndDfs[i];
@@ -115,7 +117,7 @@ surface_fluxes_glac(size_t             hidx,
     /******************************
       Compute longwave emissivity
     ******************************/
-    double EmissLongGrnd = param.EMISS_ICE * (1. - coverage) + 
+    double EmissLongGrnd = param.EMISS_ICE * (1.0 - coverage) + 
                                     param.EMISS_SNOW * coverage;
     energy->EmissLongGrnd = EmissLongGrnd;
     double Ra_evap = 1.0;
@@ -145,7 +147,7 @@ surface_fluxes_glac(size_t             hidx,
         while (iter_flag == false) {        
             /** Solve energy balence processes **/
             ErrorFlag = calc_energy_bal_glac(hidx, iter_dt,
-                                             force,
+                                             air_temp, force,
                                             &iter_energy, 
                                             &iter_cell,
                                             &iter_snow, soil_con);
@@ -207,8 +209,9 @@ surface_fluxes_glac(size_t             hidx,
     (*snow) = iter_snow;
 
     /** Solve water balence processes **/
-    ErrorFlag = calc_water_bal_glac(hidx, step_dt,
-                                    force, 
+    ErrorFlag = calc_water_bal_glac(step_dt, air_temp,
+                                    snowfall, rainfall,
+                                    pressure,
                                     energy, cell, 
                                     snow, soil_con);
     if (ErrorFlag == ERROR) {

@@ -12,6 +12,6 @@
 void
 free_vegcon(veg_con_struct **veg_con)
 {
-    
-    free((char *) veg_con[0]);
+
+    free(veg_con[0]);
 }

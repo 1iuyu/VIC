@@ -83,7 +83,6 @@ read_veglib(FILE   *veglib,
             fscanf(veglib, "%lf", &temp[i].theta_cj);
             fscanf(veglib, "%lf", &temp[i].kcano_max);
             fscanf(veglib, "%lf", &temp[i].kroot_max);
-            fscanf(veglib, "%lf", &temp[i].m_bb);
             fscanf(veglib, "%lf", &temp[i].matric50);
             fscanf(veglib, "%lf", &temp[i].leaf_CN);
             fscanf(veglib, "%lf", &temp[i].SLA_top);
@@ -177,7 +176,6 @@ read_veglib(FILE   *veglib,
     temp[i].theta_cj = 0.0;
     temp[i].kcano_max = 0.0;
     temp[i].kroot_max = 0.0;
-    temp[i].m_bb = 0.0;
     temp[i].matric50 = 0.0;
     temp[i].leaf_CN = 0.0;
     temp[i].SLA_top = 0.0;
@@ -194,5 +192,5 @@ read_veglib(FILE   *veglib,
 void
 free_veglib(veg_lib_struct **veg_lib)
 {
-    free((char*)(*veg_lib));
+    free(*veg_lib);
 }

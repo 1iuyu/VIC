@@ -62,7 +62,7 @@ void ci_func_PHS(bool              bflag,
     double aPAR_sun = veg_var->aPAR_sun;
     double aPAR_sha = veg_var->aPAR_sha;
     double qe = 0.0; // Quantum efficiency (mol CO2 / mol photons) C3;
-    if (veg_lib->Ctype == 1) {
+    if (veg_lib->Ctype == PHOTO_C4) {
         qe = 0.05;  // C4
     }
     double medlynslope = veg_lib->medlynslope;
@@ -80,7 +80,7 @@ void ci_func_PHS(bool              bflag,
     }
     
     // ========== 计算三种限制下的光合速率 ==========
-    if (veg_lib->Ctype == 0) {
+    if (veg_lib->Ctype == PHOTO_C3) {
         // C3植物
         // Rubisco限制
         ac_sun = (*bsun) * vcmax_sun * max(cisun - CP, 0.0) / (cisun + KC * (1.0 + atmosO2 / KO));

@@ -37,7 +37,7 @@ photosynth_hydrostress(double            thm,
     double *vegwp = veg_var->vegwp; // 水势：0-阳叶，1-阴叶，2-木质部，3-根部
     // initialize variables
     Nsoil = cell->Nsoil;
-    Ncanopy = cell->Ncanopy;
+    Ncanopy = options.Ncanopy;
     double f_N = 0.0;
     double CF = pressure / (CONST_RGAS * thm) * 1.0e6;
     double gb_mol = 1.0 / cell->Ra_leaf * CF;
@@ -60,20 +60,15 @@ photosynth_hydrostress(double            thm,
     for (i = 0; i < cell->Nroot; i++) {
         // 根生物量密度：g biomass/m3 soil
         rho_root = 2.0 * param.PHOTO_CROOT * root[i] / dz_soil[i];
-        // 确保最小根生物量 (1 gC/m2)
         rho_root = max(2.0, rho_root);
-        // 根长密度：m root/m3 soil
         double rlen_dens = rho_root / (xsec_root * param.SOIL_RHOROOT);
         // 根面积指数 (RAI)
         double rai = (NetLAI + NetSAI) * froot_leaf * root[i];
         // 粗根长度 - 使用指定的侧向长度
         double croot_length = 0.25; // specified lateral coarse root length [m]
         double r_soil = sqrt(1.0 / (CONST_PI * rlen_dens));
-        // 土壤导水率 (m/s)
         double hk_soil = conductivity[i] / r_soil;
-        // fs: 由于根水势降低（更负）导致的导水率减少因子
         double fs = plc(matric[i], veg_lib->matric50);
-        // 根导水率(m/s)
         double hk_root = (fs * rai * veg_lib->kroot_max) / (croot_length + Zsum_soil[i]);
         hk_soil = max(hk_soil, param.PHOTO_MINCONDUCT);
         hk_root = max(hk_root, param.PHOTO_MINCONDUCT);
@@ -109,7 +104,7 @@ photosynth_hydrostress(double            thm,
     }
     // Leaf maintenance respiration in proportion to vcmax25
     double lmr25top = 0.0;
-    if (veg_lib->Ctype == 0) {
+    if (veg_lib->Ctype == PHOTO_C3) {
         lmr25top = vcmax25 * 0.015; // C3_veg = 0.015;
     }
     else {
@@ -176,7 +171,7 @@ photosynth_hydrostress(double            thm,
         double lmr25_sun = lmr25top * nscaler_sun;
         double lmr25_sha = lmr25top * nscaler_sha;
 
-        if (veg_lib->Ctype == 0) {
+        if (veg_lib->Ctype == PHOTO_C3) {
             lmr_sun = lmr25_sun * ft(Tfoliage, param.PHOTO_EL) * 
                         fth(Tfoliage, param.PHOTO_LMRHD, param.PHOTO_LMRSE, lmrc);
             lmr_sha = lmr25_sha * ft(Tfoliage, param.PHOTO_EL) * 
@@ -218,7 +213,7 @@ photosynth_hydrostress(double            thm,
             jmax_sha = jmax25 * nscaler_sha * ft(Tfoliage, param.PHOTO_EJ) * fth(Tfoliage, param.PHOTO_DJ, jmaxse, jmaxc);
             tpu_sha = tpu25 * nscaler_sha * ft(Tfoliage, param.PHOTO_ET) * fth(Tfoliage, param.PHOTO_DT, tpuse, tpuc);
             
-            if (veg_lib->Ctype == 1) {
+            if (veg_lib->Ctype == PHOTO_C4) {
                 // C4植物的温度响应
                 double temp_factor_sun = pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
                 temp_factor_sun = temp_factor_sun / (1.0 + exp(0.2 * ((CONST_TKFRZ + 15.0) - Tfoliage)));
@@ -256,7 +251,7 @@ photosynth_hydrostress(double            thm,
             solve_quadratic(aquad, bquad, cquad, &r1, &r2);
             double je_sha = min(r1, r2);
             // 初始猜测Ci和气孔导度，后续迭代更新
-            if (veg_lib->Ctype == 0) {
+            if (veg_lib->Ctype == PHOTO_C3) {
                 ci_sun = 0.7 * atmosCO2; // 初始猜测Ci为大气CO2的70%
                 ci_sha = 0.7 * atmosCO2;
             }

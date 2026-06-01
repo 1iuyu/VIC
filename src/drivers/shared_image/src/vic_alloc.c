@@ -72,7 +72,7 @@ vic_alloc(void)
 
         initialize_soil_con(&(soil_con[i]));
 
-        // vegetation tile allocation
+        // vegetation tile (HRU + 1) allocation
         size_t nv_active = local_domain.locations[i].nveg + 1;
     
         veg_con[i] = malloc((nv_active) * sizeof(*(veg_con[i])));

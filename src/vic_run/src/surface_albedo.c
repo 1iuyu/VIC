@@ -85,46 +85,38 @@ surface_albedo(double             step_dt,
         }
         // age snow albedo if no new snowfall
         // solar radiation process is only done if there is light
-        snow_albedo(coszen, f_snowage,
-                    energy->AlbedoSnowDir,
-                    energy->AlbedoSnowDfs);
+        snow_albedo(coszen, f_snowage, energy);
 
         /* Compute ground albedo based on soil and snow albedo */
         GroundAlbedo(cell->moist[0],
                      coverage,
-                     soil_con->AlbedoSat,
-                     soil_con->AlbedoDry,
-                     energy->AlbedoSoilDir,
-                     energy->AlbedoSoilDfs,
-                     energy->AlbedoSnowDir,
-                     energy->AlbedoSnowDfs,
-                     energy->AlbedoGrndDir,
-                     energy->AlbedoGrndDfs);
+                     energy, soil_con);
         
         // Diagnose number of canopy layers for radiative transfer
+        size_t nrad = 0;
         double frac_veg = 0.25;
         double veg_sum = 0.0;
         for (i = 0; i < MAX_CANOPYS; i++) {
-            if (MAX_CANOPYS == 1) {
-                cell->Ncanopy = 1;
+            if (options.Ncanopy == 1) {
+                nrad = 1;
                 LAI_z[i] = NetLAI;
                 SAI_z[i] = NetSAI;
             }
-            else if (MAX_CANOPYS > 1) {
+            else if (options.Ncanopy > 1) {
                 if (NetLAI + NetSAI <= 0.0) {
-                    cell->Ncanopy = 0;
+                    nrad = 0;
                     LAI_z[i] = 0.0;
                     SAI_z[i] = 0.0;
                 }
                 else {
                     veg_sum += frac_veg;
                     if (NetLAI + NetSAI - veg_sum > param.TOL_A) {
-                        cell->Ncanopy = i + 1;
+                        nrad = i + 1;
                         LAI_z[i] = NetLAI * frac_veg / max(NetLAI + NetSAI, param.TOL_A);
                         SAI_z[i] = NetSAI * frac_veg / max(NetLAI + NetSAI, param.TOL_A);
                     }
                     else {
-                        cell->Ncanopy = i + 1;
+                        nrad = i + 1;
                         LAI_z[i] = max(NetLAI - LAI_z[i - 1], 0.0);
                         SAI_z[i] = max(NetSAI - SAI_z[i - 1], 0.0);
                         break;
@@ -133,8 +125,8 @@ surface_albedo(double             step_dt,
             }
         }
         // if the canopy is too sparse, set it to 4 layers with equal LAI and SAI
-        if (cell->Ncanopy < 4) {
-            cell->Ncanopy = 4;
+        if (nrad < 4) {
+            options.Ncanopy = 4;
             for (i = 0; i < 4; i++) {
                 LAI_z[i] = NetLAI / 4.0;
                 SAI_z[i] = NetSAI / 4.0;
@@ -142,7 +134,7 @@ surface_albedo(double             step_dt,
         }
         double sum_LAI = 0.0;
         double sum_SAI = 0.0;
-        for (i = 0; i < cell->Ncanopy; i++) {
+        for (i = 0; i < options.Ncanopy; i++) {
             sum_LAI += LAI_z[i];
             sum_SAI += SAI_z[i];
         }

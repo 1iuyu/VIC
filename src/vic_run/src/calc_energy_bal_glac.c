@@ -15,6 +15,7 @@
 int
 calc_energy_bal_glac(size_t             hidx,
                      double             step_dt,
+                     double             air_temp,
                      force_data_struct *force,
                      energy_bal_struct *energy,
                      cell_data_struct  *cell,
@@ -35,7 +36,6 @@ calc_energy_bal_glac(size_t             hidx,
     double pressure = force->pressure[hidx];
     double longwave = force->longwave[hidx];
     double air_density = force->density[hidx];
-    double air_temp = force->air_temp[hidx];
     double theta_pot = force->theta_pot[hidx];
     double theta_v = force->theta_v[hidx];
     double coverage = snow->coverage;

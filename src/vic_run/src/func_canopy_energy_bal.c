@@ -14,6 +14,7 @@
 int
 func_canopy_energy_bal(size_t             hidx,
                        double             step_dt,
+                       double             air_temp,
                        force_data_struct *force,
                        energy_bal_struct *energy,
                        cell_data_struct  *cell,
@@ -34,7 +35,6 @@ func_canopy_energy_bal(size_t             hidx,
     double longwave = force->longwave[hidx];
     double air_density = force->density[hidx];
     double theta_pot = force->theta_pot[hidx];
-    double air_temp = force->air_temp[hidx];
     double theta_v = force->theta_v[hidx];
     double daylen = force->daylen[hidx];
     double NetLAI = veg_var->NetLAI;
@@ -224,12 +224,12 @@ func_canopy_energy_bal(size_t             hidx,
         /**********************
           Stomatal Resistance
         **********************/
-        PhotoHydroStress(thm, daylen, esat_T,
-                         qsat_T, vp_over, 
-                         Qair_over, pressure, 
-                         air_density, Tfoliage,
-                         cell, soil_con,
-                         veg_var, veg_lib);
+        photosynth_hydrostress(thm, daylen, esat_T,
+                               qsat_T, vp_over, 
+                               Qair_over, pressure, 
+                               air_density, Tfoliage,
+                               cell, soil_con,
+                               veg_var, veg_lib);
 
         // 计算感热通量传导
         wtair = 1.0 / Ra_over[1];

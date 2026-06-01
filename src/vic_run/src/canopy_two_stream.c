@@ -24,7 +24,7 @@ canopy_two_stream(size_t	         lidx,
                   veg_lib_struct    *veg_lib)
 {
 	extern parameters_struct param;
-
+    extern option_struct     options;
 	double		gap_frac_direct;
 	double		gap_frac_diffuse;
 	double		veg_density;
@@ -201,7 +201,7 @@ canopy_two_stream(size_t	         lidx,
     H9 = tmp_4 / (D2 * S1);
     H10 = (-tmp_5 * S1) / D2;
 
-    if (cell->Ncanopy == 1) {
+    if (options.Ncanopy == 1) {
         double fsun_z = (1.0 - S2) / min(tau_leaf_direct * NetVEG, 40.0);
         double ksun_vcmax = (1.0 - exp(-(tau_leaf_direct + 0.30) * NetLAI)) / (tau_leaf_direct + 0.30);
         double ksha_vcmax = (1.0 - exp(-0.30 * NetLAI)) / 0.30 - ksun_vcmax;

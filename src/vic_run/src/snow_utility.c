@@ -66,15 +66,16 @@ new_snow_density(double air_temp)
 *           algorithm of the US Army Corps of Engineers.
 ******************************************************************************/
 void
-snow_albedo(double      coszen,
-            double      SnowAge_fact,
-            double     *AlbedoSnowDir,
-            double     *AlbedoSnowDfs)
+snow_albedo(double             coszen,
+            double             SnowAge_fact,
+            energy_bal_struct *energy)
 {
     extern parameters_struct param;
     extern option_struct     options;
-    double      solar_fact;
-    double      coszen_fact;
+    double solar_fact = 0.0;
+    double coszen_fact = 0.0;
+    double *AlbedoSnowDir = energy->AlbedoSnowDir;
+    double *AlbedoSnowDfs = energy->AlbedoSnowDfs;
     // initialize albedo values for each band
     for (size_t band = 0; band < options.Nswband; band++) {
         AlbedoSnowDir[band] = 0.0;

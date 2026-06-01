@@ -15,7 +15,7 @@ void
 snow_division(snow_data_struct *snow)
 
 {              
-    size_t      i;
+    size_t      i, tmp_Nsnow;
     double      grad_temp;
     double      extra_frac;
     double      tmp_pack_ice[MAX_SNOWS];
@@ -40,7 +40,7 @@ snow_division(snow_data_struct *snow)
         tmp_pack_liq[i] = snow->pack_liq[i];
         tmp_pack_T[i] = snow->pack_T[i];
     }
-    size_t tmp_Nsnow = snow->Nsnow;
+    tmp_Nsnow = snow->Nsnow;
 
     if (tmp_Nsnow == 1) {
         if (tmp_depth[0] > 0.05) {

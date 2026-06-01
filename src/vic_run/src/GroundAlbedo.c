@@ -13,20 +13,22 @@
 *           algorithm of the US Army Corps of Engineers.
 ******************************************************************************/
 void
-GroundAlbedo(double      moist,
-             double      coverage,
-             double     *AlbedoSat,
-             double     *AlbedoDry,
-             double     *AlbedoSoilDir,
-             double     *AlbedoSoilDfs,
-             double     *AlbedoSnowDir,
-             double     *AlbedoSnowDfs,
-             double     *AlbedoGrndDir,
-             double     *AlbedoGrndDfs)
+GroundAlbedo(double             moist,
+             double             coverage,
+             energy_bal_struct *energy,
+             soil_con_struct   *soil_con)
 {
     extern option_struct options;
     size_t      i; 
     double      swcf_albedo;
+    double *AlbedoSat = soil_con->AlbedoSat;
+    double *AlbedoDry = soil_con->AlbedoDry;
+    double *AlbedoSoilDir = energy->AlbedoSoilDir;
+    double *AlbedoSoilDfs = energy->AlbedoSoilDfs;
+    double *AlbedoGrndDir = energy->AlbedoGrndDir;
+    double *AlbedoGrndDfs = energy->AlbedoGrndDfs;
+    double *AlbedoSnowDir = energy->AlbedoSnowDir;
+    double *AlbedoSnowDfs = energy->AlbedoSnowDfs;
 
     for (i = 0; i < options.Nswband; i++) {
 

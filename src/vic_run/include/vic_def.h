@@ -516,7 +516,6 @@ typedef struct {
     double smpso;
     // Carbon terms
     char Ctype;                   /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
-    double m_bb;                  /**< Ball-Berry slope of conductance-photosynthesis relationship */
     double matric50;              /**< matric potential at which stomatal conductance is reduced by 50% (m) */
     // double kseg_max;              /**< plant segment max conductance (m/s) */
     double kcano_max;             /**< maximum canopy conductance (m/s) */

@@ -26,7 +26,7 @@ calc_rainonly(double  air_temp,
     size_t      iter;
     double      snowfrac;
     double      svp;         
-    double      Twet;        // wetbulb temperature ℃
+    double      Twet;        // wetbulb temperature [C]
     double      latent;      // latent heat of vapor or sublimation
     double      PsychConst;  // psychrometric constant
     double      delta;
@@ -41,7 +41,7 @@ calc_rainonly(double  air_temp,
     snowfrac = 0.;
     (*snowfall) = 0.;
     (*rainfall) = 0.;
-    // 转换为摄氏温度 [K->℃]
+    // 转换为摄氏温度
     air_temp = K_TO_C(air_temp);
     /* Ding et al. 2014, JH Eq.7.8.9 */
     delta_T = 0.215 - 0.099 * rel_humid + 1.018 * rel_humid * rel_humid;

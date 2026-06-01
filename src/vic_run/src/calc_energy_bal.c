@@ -16,6 +16,7 @@
 int
 calc_energy_bal(size_t             hidx,
                 double             step_dt,
+                double             air_temp,
                 force_data_struct *force,
                 energy_bal_struct *energy,
                 cell_data_struct  *cell,
@@ -69,7 +70,8 @@ calc_energy_bal(size_t             hidx,
     /**********************************
       Bare ground surface energy flux
     **********************************/
-    ErrorFlag = func_surf_energy_bal(hidx, force,
+    ErrorFlag = func_surf_energy_bal(hidx, air_temp, 
+                                     force,
                                      energy,
                                      cell, snow, 
                                      soil_con);
@@ -82,7 +84,8 @@ calc_energy_bal(size_t             hidx,
       Vegetation surface energy flux
     **********************************/
     if (cell->IS_VEG == true) {
-        ErrorFlag = func_canopy_energy_bal(hidx, step_dt, force,
+        ErrorFlag = func_canopy_energy_bal(hidx, step_dt, 
+                                           air_temp, force,
                                            energy, cell, 
                                            snow, soil_con,
                                            veg_var, veg_lib);
@@ -146,8 +149,10 @@ calc_energy_bal(size_t             hidx,
     /************************************
       Compute snow and soil temperature
     ************************************/
-    ErrorFlag = SoilTemperature(step_dt, pressure, cell,
-                                energy, snow, soil_con);
+    ErrorFlag = SoilTemperature(step_dt, 
+                                pressure, cell,
+                                energy, 
+                                snow, soil_con);
 
     if (ErrorFlag == ERROR) {
         return (ERROR);

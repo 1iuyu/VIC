@@ -28,6 +28,8 @@ vic_run(force_data_struct   *force,
     int        ErrorFlag;
     double     Tfoliage;
     double     wind;
+    double     Tair; 
+    double     step_prec;
     double     Cv;
     double     gauge_correction[2];
 
@@ -41,6 +43,8 @@ vic_run(force_data_struct   *force,
 
     /** Set global step times **/
     size_t hidx = NR;
+    double rainfall = 0.0;
+    double snowfall = 0.0;
     double step_dt = gp->step_dt;
     double Canopy_Lower = 0.0;
     double Canopy_Upper = 0.0;
@@ -85,33 +89,35 @@ vic_run(force_data_struct   *force,
                Define vegetation elevation bands
             **************************************************/
             size_t band = veg_con[iveg].BandIndex;
-            double Tair = force->air_temp[hidx] + soil_con->Tfactor[band];
-            force->air_temp[hidx] = Tair;
+            Tair = force->air_temp[hidx] + soil_con->Tfactor[band];
             int has_prec = param_set.TYPE[PREC].SUPPLIED;
             int has_rain = param_set.TYPE[RAINF].SUPPLIED;
             int has_snow = param_set.TYPE[SNOWF].SUPPLIED;
             // 根据输入的气象数据计算降雨和降雪
             if (has_prec && !has_rain && !has_snow) {
                 /* set air temperature and precipitation for this snow band */
-                force->prec[hidx] *= soil_con->Pfactor[band];
+                step_prec = force->prec[hidx] * soil_con->Pfactor[band];
 
                 /** Calculate Fraction of Precipitation that falls as Rain **/
-                calc_rainonly(force->air_temp[hidx], force->prec[hidx], 
-                              force->vp[hidx], force->pressure[hidx],
-                              force->rel_humid[hidx], soil_con->elevation,
-                              &force->snowf[hidx], &force->rainf[hidx]);
+                calc_rainonly(Tair, step_prec, force->vp[hidx],
+                                    force->pressure[hidx],
+                                    force->rel_humid[hidx],
+                                    soil_con->elevation,
+                                    &snowfall, &rainfall);
+                force->rainf[hidx] += rainfall * Cv;
+                force->snowf[hidx] += snowfall * Cv;
             }
             else if (has_rain && has_snow) {
-                force->rainf[hidx] *= soil_con->Pfactor[band];
-                force->snowf[hidx] *= soil_con->Pfactor[band];
+                snowfall = force->rainf[hidx] * soil_con->Pfactor[band];
+                rainfall = force->snowf[hidx] * soil_con->Pfactor[band];
             }
             // 校正降雨和降雪
-            if (options.CORRPREC && force->prec[hidx] > 0) {
-                force->snowf[hidx] *= gauge_correction[SNOW];
-                force->rainf[hidx] *= gauge_correction[RAIN];
+            if (options.CORRPREC) {
+                snowfall *= gauge_correction[SNOW];
+                rainfall *= gauge_correction[RAIN];
             }
             // 计算新雪密度
-            if (force->snowf[hidx] > 0.0) {
+            if (snowfall > 0.0) {
                 snow->new_snow_density = new_snow_density(Tair);
             }
             else {
@@ -140,8 +146,9 @@ vic_run(force_data_struct   *force,
                              snow->snow_depth,
                              veg_var);
 
-                ErrorFlag = snow_intercept(hidx, step_dt, Tfoliage, 
-                                           force, snow, veg_var);
+                ErrorFlag = snow_intercept(step_dt, Tfoliage,
+                                           &snowfall, &rainfall,
+                                           wind, snow, veg_var);
 
                 if (ErrorFlag == ERROR) {
                     return (ERROR);
@@ -158,7 +165,7 @@ vic_run(force_data_struct   *force,
             
             /* Initialize snow coverage */
             calc_snow_coverage(Cv, veg_con[iveg].IS_GLAC,
-                               force->snowf[hidx] * step_dt,  // (mm H2O)
+                               snowfall * step_dt,  // (mm H2O)
                                snow, soil_con);
 
             // 初始化粗糙度
@@ -173,6 +180,8 @@ vic_run(force_data_struct   *force,
             ******************************/
             if (veg_con[iveg].IS_GLAC == false) {   // 非冰川HRU
                 ErrorFlag = surface_fluxes(hidx, step_dt,
+                                           Tair, snowfall,
+                                           rainfall,
                                            force, energy,
                                            cell, snow,
                                            soil_con, veg_var,
@@ -181,8 +190,9 @@ vic_run(force_data_struct   *force,
             }
             else {  // 冰川HRU
                 ErrorFlag = surface_fluxes_glac(hidx, step_dt,
-                                                force, energy, 
-                                                cell,
+                                                Tair, snowfall,
+                                                rainfall, force, 
+                                                energy, cell,
                                                 snow, soil_con);
             }
 
