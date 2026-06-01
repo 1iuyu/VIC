@@ -586,7 +586,6 @@ typedef struct {
     unsigned int dayseconds;        /**< seconds since midnight */
 } dmy_struct;                       /**< array of length nrec created */
 
-
 /******************************************************************************
  * @brief   This structure stores soil variables for the complete soil column
  *          for each grid cell.
@@ -598,7 +597,6 @@ typedef struct {
     size_t Nsoil;                       /**< Number of soil nodes in the model */
     size_t Nroot;                       /**< Number of root nodes in the model */
     size_t Nnode;                       /**< Number of thermal nodes in the model */
-    size_t Ncanopy;                     /**< Number of canopy layers in the model. */
     double Ra_over[3];                  /**< The aerodynamic resistance (s/m) that was actually used
                                           in flux calculations. [0] = wind speed at reference height, 
                                           [1] = sensible heat flux, [2] = latent heat flux */

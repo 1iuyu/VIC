@@ -76,9 +76,9 @@ enum
     LAI,         /**< leaf area index [m2/m2] */
     LWDOWN,      /**< incoming longwave radiation [W/m2] */
     PAR,         /**< incoming photosynthetically active radiation [W/m2] */
-    PREC,        /**< total precipitation (rain and snow) [mm] */
-    RAINF,       /**< rain [mm] */
-    SNOWF,       /**< snow [mm] */
+    PREC,        /**< total precipitation (rain and snow) [mm/s] */
+    RAINF,       /**< rain [mm/s] */
+    SNOWF,       /**< snow [mm/s] */
     PRESSURE,    /**< atmospheric pressure [kPa] */
     QAIR,        /**< specific humidity [kg/kg] */
     REL_HUMID,   /**< rel_humid [%] */

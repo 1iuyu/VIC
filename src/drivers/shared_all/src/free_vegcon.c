@@ -12,13 +12,6 @@
 void
 free_vegcon(veg_con_struct **veg_con)
 {
-    extern option_struct options;
-    size_t               i;
-
-    for (i = 0; i < veg_con[0][0].vegetat_type_num; i++) {
-        if (options.CARBON) {
-            free((char *) veg_con[0][i].CanopLayerBnd);
-        }
-    }
+    
     free((char *) veg_con[0]);
 }

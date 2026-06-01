@@ -28,10 +28,15 @@ print_force_data(force_data_struct *force)
     fprintf(LOG_DEST, "\tvp        : %.4f\n", force->vp[0]);
     fprintf(LOG_DEST, "\tcoszen    : %.4f\n", force->coszen[0]);
     fprintf(LOG_DEST, "\twind      : %.4f\n", force->wind[0]);
+    fprintf(LOG_DEST, "\ttheta_pot : %.4f\n", force->theta_pot[0]);
+    fprintf(LOG_DEST, "\ttheta_v   : %.4f\n", force->theta_v[0]);
     if (options.CARBON) {
         fprintf(LOG_DEST, "\tCatm      : %.4f\n", force->Catm[0]);
         fprintf(LOG_DEST, "\tfdir      : %.4f\n", force->fdir[0]);
         fprintf(LOG_DEST, "\tpar       : %.4f\n", force->par[0]);
+    }
+    if (options.ROUT) {
+        fprintf(LOG_DEST, "\tchannel_in      : %.4f\n", force->channel_in[0]);
     }
 }
 

@@ -23,7 +23,6 @@ initialize_options()
     options.CARBON = false;
     options.CONTINUEONERROR = true;
     options.CORRPREC = false;
-    options.FROZEN_SOIL = true;
     options.NOFLUX = false;
     options.BIOMASST = true;
     options.SNOW_DENSITY = DENS_BRAS;
@@ -34,6 +33,9 @@ initialize_options()
     // Model dimensions
     options.Nlayer = 3;
     options.Nswband = 2;
+    options.Nfrost = 1;
+    options.Ncanopy = 4;
+    options.MAX_HRU = 50;
     options.SNOW_BAND = 1;
     options.GLACIER_ID = 0;
     // input options
@@ -43,9 +45,6 @@ initialize_options()
     options.LAI_SRC = FROM_VEGLIB;
     options.PARAM_FROM_SOIL = true;
     options.ROUT = false;
-    options.VEGLIB_FCAN = false;
-    options.VEGPARAM_FCAN = false;
-    options.VEGPARAM_LAI = false;
     // state options
     options.STATE_FORMAT = UNSET_FILE_FORMAT;
     options.INIT_STATE = false;

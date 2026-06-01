@@ -45,7 +45,6 @@ display_current_settings(int mode)
     fprintf(LOG_DEST, "MAX_SNOWS\t\t%2d\n", MAX_SNOWS);
     fprintf(LOG_DEST, "MAX_SOILS\t\t%2d\n", MAX_SOILS);
     fprintf(LOG_DEST, "MAX_SWBANDS\t\t%2d\n", MAX_SWBANDS);
-    fprintf(LOG_DEST, "MAX_THERM\t\t%2d\n", MAX_THERM);
     fprintf(LOG_DEST, "MAX_NODES\t\t%2d\n", MAX_NODES);
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "MINSOILDEPTH\t\t%f\n", MINSOILDEPTH);
@@ -108,12 +107,6 @@ display_current_settings(int mode)
     else {
         fprintf(LOG_DEST, "CORRPREC\t\tFALSE\n");
     }
-    if (options.FROZEN_SOIL) {
-        fprintf(LOG_DEST, "FROZEN_SOIL\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "FROZEN_SOIL\t\tFALSE\n");
-    }
     if (options.NOFLUX) {
         fprintf(LOG_DEST, "NOFLUX\t\t\tTRUE\n");
     }
@@ -132,7 +125,6 @@ display_current_settings(int mode)
     else {
         fprintf(LOG_DEST, "TFALLBACK\t\tFALSE\n");
     }
-    fprintf(LOG_DEST, "WIND_H\t\t\t%f\n", global_param.wind_h);
     if (options.CARBON) {
         fprintf(LOG_DEST, "CARBON\t\tTRUE\n");
     }
@@ -168,26 +160,14 @@ display_current_settings(int mode)
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "Constants File\t\t%s\n", filenames.constants);
     fprintf(LOG_DEST, "Parameters file\t\t%s\n", filenames.params.nc_filename);
-    if (options.DENSITY_FROM_SOIL) {
-        fprintf(LOG_DEST, "DENSITY_FROM_SOIL\t\tTRUE\n");
+    if (options.PARAM_FROM_SOIL) {
+        fprintf(LOG_DEST, "PARAM_FROM_SOIL\t\tTRUE\n");
     }
     else {
-        fprintf(LOG_DEST, "DENSITY_FROM_SOIL\t\tFALSE\n");
+        fprintf(LOG_DEST, "PARAM_FROM_SOIL\t\tFALSE\n");
     }
 
     fprintf(LOG_DEST, "\n");
-    if (options.VEGLIB_PHOTO) {
-        fprintf(LOG_DEST, "VEGLIB_PHOTO\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "VEGLIB_PHOTO\t\tFALSE\n");
-    }
-    if (options.VEGPARAM_LAI) {
-        fprintf(LOG_DEST, "VEGPARAM_LAI\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "VEGPARAM_LAI\t\tFALSE\n");
-    }
     if (options.LAI_SRC == FROM_VEGHIST) {
         fprintf(LOG_DEST, "LAI_SRC\t\tFROM_VEGHIST\n");
     }
@@ -197,11 +177,14 @@ display_current_settings(int mode)
     else if (options.LAI_SRC == FROM_VEGLIB) {
         fprintf(LOG_DEST, "LAI_SRC\t\tFROM_VEGLIB\n");
     }
-    if (options.VEGPARAM_FCAN) {
-        fprintf(LOG_DEST, "VEGPARAM_FCAN\t\tTRUE\n");
+    if (options.SAI_SRC == FROM_VEGHIST) {
+        fprintf(LOG_DEST, "SAI_SRC\t\tFROM_VEGHIST\n");
     }
-    else {
-        fprintf(LOG_DEST, "VEGPARAM_FCAN\t\tFALSE\n");
+    else if (options.SAI_SRC == FROM_VEGPARAM) {
+        fprintf(LOG_DEST, "SAI_SRC\t\tFROM_VEGPARAM\n");
+    }
+    else if (options.SAI_SRC == FROM_VEGLIB) {
+        fprintf(LOG_DEST, "SAI_SRC\t\tFROM_VEGLIB\n");
     }
     if (options.FCAN_SRC == FROM_VEGHIST) {
         fprintf(LOG_DEST, "FCAN_SRC\t\tFROM_VEGHIST\n");

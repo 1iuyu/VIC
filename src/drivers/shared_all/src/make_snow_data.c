@@ -17,6 +17,7 @@ make_snow_data(size_t nveg)
     snow_data_struct    *temp = NULL;
 
     temp = calloc(nveg, sizeof(*temp));
-
+    check_alloc_status(temp, "Memory allocation error.");
+    
     return temp;
 }

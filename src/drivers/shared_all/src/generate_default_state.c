@@ -110,7 +110,8 @@ generate_default_state(force_data_struct *force,
                 }
             }
             else {
-                PedoTransfer(soil_con); // 土壤参数从PedoTransfer函数中计算得到
+                // 土壤参数从PedoTransfer函数中计算得到
+                PedoTransfer(soil_con); 
             }
             
             /* Initialize soil moistures */

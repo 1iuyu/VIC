@@ -18,6 +18,7 @@ make_cell_data(size_t veg_type_num)
     cell_data_struct    *temp;
 
     temp = calloc(veg_type_num, sizeof(*temp));
+    check_alloc_status(temp, "Memory allocation error.");
 
     return temp;
 }

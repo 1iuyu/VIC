@@ -53,6 +53,12 @@ alloc_force(force_data_struct *force)
     force->coszen = calloc(NR + 1, sizeof(*(force->coszen)));
     check_alloc_status(force->coszen, "Memory allocation error.");
 
+    force->theta_pot = calloc(NR + 1, sizeof(*(force->theta_pot)));
+    check_alloc_status(force->theta_pot, "Memory allocation error.");
+
+    force->theta_v = calloc(NR + 1, sizeof(*(force->theta_v)));
+    check_alloc_status(force->theta_v, "Memory allocation error.");
+
     if (options.CARBON) {
         force->Catm = calloc(NR + 1, sizeof(*(force->Catm)));
         check_alloc_status(force->Catm, "Memory allocation error.");
@@ -95,6 +101,8 @@ free_force(force_data_struct *force)
     free(force->rel_humid);
     free(force->wind);
     free(force->coszen);
+    free(force->theta_pot);
+    free(force->theta_v);
     if (options.CARBON) {
         free(force->Catm);
         free(force->fdir);

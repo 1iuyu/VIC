@@ -153,7 +153,6 @@ print_global_param(global_param_struct *gp)
     size_t i;
 
     fprintf(LOG_DEST, "global_param:\n");
-    fprintf(LOG_DEST, "\twind_h               : %.4f\n", gp->wind_h);
     fprintf(LOG_DEST, "\tresolution           : %.4f\n", gp->resolution);
     fprintf(LOG_DEST, "\tstep_dt              : %.4f\n", gp->step_dt);
     fprintf(LOG_DEST, "\tmodel_steps_per_day  : %zu\n", gp->model_steps_per_day);
@@ -195,8 +194,6 @@ print_option(option_struct *option)
             option->CONTINUEONERROR ? "true" : "false");
     fprintf(LOG_DEST, "\tCORRPREC             : %s\n",
             option->CORRPREC ? "true" : "false");
-    fprintf(LOG_DEST, "\tFROZEN_SOIL          : %s\n",
-            option->FROZEN_SOIL ? "true" : "false");
     fprintf(LOG_DEST, "\tNlayer               : %zu\n", option->Nlayer);
     fprintf(LOG_DEST, "\tNOFLUX               : %s\n",
             option->NOFLUX ? "true" : "false");
@@ -206,13 +203,8 @@ print_option(option_struct *option)
     fprintf(LOG_DEST, "\tTFALLBACK            : %s\n",
             option->TFALLBACK ? "true" : "false");
     fprintf(LOG_DEST, "\tGRID_DECIMAL         : %d\n", option->GRID_DECIMAL);
-    fprintf(LOG_DEST, "\tVEGLIB_FCAN          : %s\n",
-            option->VEGLIB_FCAN ? "true" : "false");
-    fprintf(LOG_DEST, "\tVEGPARAM_LAI         : %s\n",
-            option->VEGPARAM_LAI ? "true" : "false");
-    fprintf(LOG_DEST, "\tVEGPARAM_FCAN        : %s\n",
-            option->VEGPARAM_FCAN ? "true" : "false");
     fprintf(LOG_DEST, "\tLAI_SRC              : %d\n", option->LAI_SRC);
+    fprintf(LOG_DEST, "\tSAI_SRC              : %d\n", option->SAI_SRC);
     fprintf(LOG_DEST, "\tFCAN_SRC             : %d\n", option->FCAN_SRC);
     fprintf(LOG_DEST, "\tPARAM_FROM_SOIL    : %s\n",
             option->PARAM_FROM_SOIL ? "true" : "false");
@@ -555,12 +547,6 @@ print_veg_con(veg_con_struct *vcon,
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "\tveg_class       : %d\n", vcon->veg_class);
     fprintf(LOG_DEST, "\tvegetat_type_num: %zu\n", vcon->vegetat_type_num);
-    if (carbon) {
-        fprintf(LOG_DEST, "\tCanopLayerBnd   :");
-        for (i = 0; i < ncanopy; i++) {
-            fprintf(LOG_DEST, "\t%.2f", vcon->CanopLayerBnd[i]);
-        }
-    }
 }
 
 /******************************************************************************
