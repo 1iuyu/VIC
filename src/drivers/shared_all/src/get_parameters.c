@@ -92,38 +92,11 @@ get_parameters(FILE *paramfile)
                 sscanf(cmdstr, "%*s %lf", &param.SVP_A2);
             }
             // Photosynthesis Parameters
-            else if (strcasecmp("PHOTO_OMEGA", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_OMEGA);
+            else if (strcasecmp("PHOTO_LRESC3", optstr) == 0) {
+                sscanf(cmdstr, "%*s %lf", &param.PHOTO_LRESC3);
             }
-            else if (strcasecmp("PHOTO_LAIMAX", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_LAIMAX);
-            }
-            else if (strcasecmp("PHOTO_LAILIMIT", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_LAILIMIT);
-            }
-            else if (strcasecmp("PHOTO_LAIMIN", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_LAIMIN);
-            }
-            else if (strcasecmp("PHOTO_EPAR", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_EPAR);
-            }
-            else if (strcasecmp("PHOTO_FCMAX", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_FCMAX);
-            }
-            else if (strcasecmp("PHOTO_FCMIN", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_FCMIN);
-            }
-            else if (strcasecmp("PHOTO_ALBSOIPARMIN", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_ALBSOIPARMIN);
-            }
-            else if (strcasecmp("PHOTO_MINMAXETRANS", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_MINMAXETRANS);
-            }
-            else if (strcasecmp("PHOTO_FCI1C3", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_FCI1C3);
-            }
-            else if (strcasecmp("PHOTO_FCI1C4", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.PHOTO_FCI1C4);
+            else if (strcasecmp("PHOTO_LRESC4", optstr) == 0) {
+                sscanf(cmdstr, "%*s %lf", &param.PHOTO_LRESC4);
             }
             else if (strcasecmp("PHOTO_OX", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.PHOTO_OX);
@@ -245,35 +218,6 @@ validate_parameters()
     }
     // Photosynthesis Parameters
     // PHOTO_OMEGA - Currently, no constraints
-    if (!(param.PHOTO_LAIMAX >= 0.)) {
-        log_err("PHOTO_LAIMAX must be defined on the interval [0, inf) (-)");
-    }
-    // PHOTO_LAILIMIT - Currently, no constraints
-    if (!(param.PHOTO_LAILIMIT >= 0.)) {
-        log_err("PHOTO_LAILIMIT must be defined on the interval [0, inf) (-)");
-    }
-    if (!(param.PHOTO_LAIMIN >= 0.)) {
-        log_err("PHOTO_LAIMIN must be defined on the interval [0, inf) (-)");
-    }
-    if (!(param.PHOTO_EPAR >= 0.)) {
-        log_err(
-            "PHOTO_EPAR must be defined on the interval [0, inf) (mol/MJ PAR)");
-    }
-    if (!(param.PHOTO_FCMAX >= 0 && param.PHOTO_FCMAX <= 1)) {
-        log_err("PHOTO_FCMAX must be defined on the interval [0,1] (-)")
-    }
-    if (!(param.PHOTO_FCMIN >= 0 && param.PHOTO_FCMIN <= 1)) {
-        log_err("PHOTO_FCMIN must be defined on the interval [0,1] (-)")
-    }
-    // PHOTO_ZENITHMIN - Currently, no constraints
-    // PHOTO_ZENITHMINPAR - Currently, no constraints
-    if (!(param.PHOTO_ALBSOIPARMIN >= 0 && param.PHOTO_ALBSOIPARMIN <= 1)) {
-        log_err("PHOTO_ALBSOIPARMIN must be defined on the interval [0,1] (-)")
-    }
-    if (!(param.PHOTO_MINMAXETRANS >= 0.)) {
-        log_err(
-            "PHOTO_MINMAXETRANS must be defined on the interval [0, inf) (mol/(m^2 s))");
-    }
     // PHOTO_FCI1C3 - Currently, no constraints
     // PHOTO_FCI1C4 - Currently, no constraints
     if (!(param.PHOTO_OX >= 0.)) {

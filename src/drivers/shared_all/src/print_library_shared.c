@@ -365,19 +365,8 @@ print_parameters(parameters_struct *param)
             param->VEG_LAI_WATER_FACTOR);
     fprintf(LOG_DEST, "\tCANOPY_CLOSURE: %.4f\n", param->CANOPY_CLOSURE);
     fprintf(LOG_DEST, "\tCANOPY_RSMAX: %.4f\n", param->CANOPY_RSMAX);
-    fprintf(LOG_DEST, "\tPHOTO_OMEGA: %.4f\n", param->PHOTO_OMEGA);
-    fprintf(LOG_DEST, "\tPHOTO_LAIMAX: %.4f\n", param->PHOTO_LAIMAX);
-    fprintf(LOG_DEST, "\tPHOTO_LAILIMIT: %.4f\n", param->PHOTO_LAILIMIT);
-    fprintf(LOG_DEST, "\tPHOTO_LAIMIN: %.4f\n", param->PHOTO_LAIMIN);
-    fprintf(LOG_DEST, "\tPHOTO_EPAR: %.4f\n", param->PHOTO_EPAR);
-    fprintf(LOG_DEST, "\tPHOTO_FCMAX: %.4f\n", param->PHOTO_FCMAX);
-    fprintf(LOG_DEST, "\tPHOTO_FCMIN: %.4f\n", param->PHOTO_FCMIN);
-    fprintf(LOG_DEST, "\tPHOTO_ALBSOIPARMIN: %.4f\n",
-            param->PHOTO_ALBSOIPARMIN);
-    fprintf(LOG_DEST, "\tPHOTO_MINMAXETRANS: %.4f\n",
-            param->PHOTO_MINMAXETRANS);
-    fprintf(LOG_DEST, "\tPHOTO_FCI1C3: %.4f\n", param->PHOTO_FCI1C3);
-    fprintf(LOG_DEST, "\tPHOTO_FCI1C4: %.4f\n", param->PHOTO_FCI1C4);
+    fprintf(LOG_DEST, "\tPHOTO_LRESC3: %.4f\n", param->PHOTO_LRESC3);
+    fprintf(LOG_DEST, "\tPHOTO_LRESC4: %.4f\n", param->PHOTO_LRESC4);
     fprintf(LOG_DEST, "\tPHOTO_OX: %.4f\n", param->PHOTO_OX);
     fprintf(LOG_DEST, "\tPHOTO_KC: %.4f\n", param->PHOTO_KC);
     fprintf(LOG_DEST, "\tPHOTO_KO: %.4f\n", param->PHOTO_KO);
@@ -620,7 +609,6 @@ print_veg_lib(veg_lib_struct *vlib,
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "\tveg_class     : %d\n", vlib->veg_class);
     fprintf(LOG_DEST, "\tCtype         : %d\n", vlib->Ctype);
-    fprintf(LOG_DEST, "\tm_bb          : %.4f\n", vlib->m_bb);
     fprintf(LOG_DEST, "\tmatric50      : %.4f\n", vlib->matric50);
     fprintf(LOG_DEST, "\tkcano_max     : %.4f\n", vlib->kcano_max);
     fprintf(LOG_DEST, "\tkroot_max     : %.4f\n", vlib->kroot_max);

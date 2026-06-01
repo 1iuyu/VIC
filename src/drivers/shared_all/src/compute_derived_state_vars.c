@@ -22,7 +22,6 @@ compute_derived_state_vars(all_vars_struct *all_vars,
     extern option_struct       options;
 
     size_t veg, Nveg;
-    int    ErrorFlag;
     double Cv;
     double dt_thresh;
 

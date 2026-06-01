@@ -39,7 +39,6 @@ surface_fluxes_glac(size_t             hidx,
     double shortwave_dfs[MAX_SWBANDS];
     double Tgrnd = energy->Tgrnd;
     double coverage = snow->coverage;
-    double Qair = force->Qair[hidx];
     double coszen = force->coszen[hidx];
     double pressure = force->pressure[hidx];
     double shortwave = force->shortwave[hidx];

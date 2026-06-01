@@ -15,7 +15,7 @@ calc_max_daylength(double lat)
 {
     double coslat;
     double sinlat;
-    double decl;
+    double decl = 0.0;
     double cosdecl;
     double sindecl;
     double cosegeom;

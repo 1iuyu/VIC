@@ -112,12 +112,9 @@ calc_root_moist_stress(cell_data_struct *cell,
 {
     extern option_struct options;
     size_t i, Nroot;
-    size_t imax, imin;
     double tmp_matric = 0.0;
     double total_unfrozen = 0.0;
     double f_transp = 0.0;
-    double matric_max = -1.0e10;
-    double matric_min = 0.0;
     double smpsc = veg_lib->smpsc; // 叶片气孔关闭时的土壤水势[m]
     double smpso = veg_lib->smpso; // 叶片气孔打开时的土壤水势[m]
     double *soil_T = cell->soil_T;

@@ -35,8 +35,6 @@ surface_albedo(double             step_dt,
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
     double wetFrac = veg_var->wetFrac;
-    double fcanopy = veg_var->fcanopy;
-    double Tfoliage = energy->Tfoliage;
     double *LAI_z = veg_var->LAI_z;
     double *SAI_z = veg_var->SAI_z;
 
