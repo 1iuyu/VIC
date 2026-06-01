@@ -58,7 +58,7 @@ soil_vapor_flux(double             pressure,
         air = Wsat_node[i] - ice[i] - liq[i];
         if (air > 0.0 && matric[i] < 0.0) {
             // Calculate vapor fluxes due to temperature gradient
-            vapor_diff = 2.12e-5 *
+            vapor_diff = CONST_VAPDIFF *
                 pow(soil_T[i] / CONST_TKFRZ, 2.0) *
                 (CONST_PSTD / pressure);
             vapor_diff *= coef_vapor * pow(air, vapor_exp);

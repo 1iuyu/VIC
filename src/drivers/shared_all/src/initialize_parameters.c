@@ -90,17 +90,8 @@ initialize_parameters()
     param.SVP_RDAIR = 0.622;
 
     // Photosynthesis Parameters
-    param.PHOTO_OMEGA = 0.12;
-    param.PHOTO_LAIMAX = 8.0;
-    param.PHOTO_LAIMIN = 1.0e-9;
-    param.PHOTO_EPAR = 2.2e5;
-    param.PHOTO_FCMAX = 0.9;
-    param.PHOTO_FCMIN = 1.0e-3;
-    param.PHOTO_ALBSOIPARMIN = 0.0;
-    param.PHOTO_MINMAXETRANS = 1.0e-16;
-    param.PHOTO_FCI1C3 = 0.87;
-    param.PHOTO_FCI1C4 = 0.67;
-
+    param.PHOTO_LRESC3 = 0.015;
+    param.PHOTO_LRESC4 = 0.025;
     param.PHOTO_OX = 0.209;
     param.PHOTO_CX = 395.0e-06;
     param.PHOTO_KC = 404.9e-6;
@@ -127,7 +118,7 @@ initialize_parameters()
     param.PHOTO_ER = 45000.0;
     param.PHOTO_SACT = 60.0;
     param.PHOTO_MINCONDUCT = 1.0e-16;
-
+    param.PHOTO_RSMAX = 2.0e4;
     // Surface roughness constants
     param.ROUGH3 = 70.0;
     param.ROUGH_BETA = 7.2;

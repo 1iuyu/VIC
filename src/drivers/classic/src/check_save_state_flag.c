@@ -24,7 +24,7 @@ check_save_state_flag(dmy_struct *dmy,
     // Advance dmy by one timestep because dmy is the "timestep-beginning"
     // timestamp, but we want to check whether the end of the current
     // time step is the user-specified output state time
-    offset = global_param.dt / (double) SEC_PER_DAY;
+    offset = global_param.step_dt / (double) SEC_PER_DAY;
     time_num = date2num(global_param.time_origin_num, &dmy[current], 0,
                         global_param.calendar, TIME_UNITS_DAYS);
     time_num += offset;

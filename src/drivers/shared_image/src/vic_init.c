@@ -241,15 +241,7 @@ vic_init(void)
 
         /* Central Longitude of Current Time Zone */ 
         soil_con[i].time_zone_lng = soil_con[i].off_gmt * 360. / HOURS_PER_DAY;
-        
-        // Carbon parameters
-        if (options.CARBON) {
-            // TBD Remove hardcoded parameter values
-            soil_con[i].AlbedoPar = 0.92 * param.ALBEDO_BARE_SOIL - 0.015;
-            if (soil_con[i].AlbedoPar < param.PHOTO_ALBSOIPARMIN) {
-                soil_con[i].AlbedoPar = param.PHOTO_ALBSOIPARMIN;
-            }
-        }
+
     }
     size_t Nlayer = options.Nlayer;
     // clay: clay content for each soil layer

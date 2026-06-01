@@ -51,7 +51,7 @@ photosynth_hydrostress(double            thm,
     double *Zsum_soil = soil_con->Zsum_soil;
     double *conductivity = cell->conductivity;
     double lmrc = fth25(param.PHOTO_LMRHD, param.PHOTO_LMRSE);
-    double hk_total = 0.0;
+//    double hk_total = 0.0;
     double max_daylen = cell->max_daylen;
     double daylen_fact = min(1.0, max(0.01, (daylen * daylen) / (max_daylen * max_daylen)));
     // 计算常数：根横截面积 (m2)
@@ -105,14 +105,13 @@ photosynth_hydrostress(double            thm,
     // Leaf maintenance respiration in proportion to vcmax25
     double lmr25top = 0.0;
     if (veg_lib->Ctype == PHOTO_C3) {
-        lmr25top = vcmax25 * 0.015; // C3_veg = 0.015;
+        lmr25top = vcmax25 * param.PHOTO_LRESC3; // C3_veg = 0.015;
     }
     else {
-        lmr25top = vcmax25 * 0.025; // C4_veg = 0.025;
+        lmr25top = vcmax25 * param.PHOTO_LRESC4; // C4_veg = 0.025;
     }
     // 遍历冠层
     bool light_inhibit = false; // 是否存在光抑制
-    double rsmax0 = 2.0e4; // Maximum stomatal resistance (s/m)
     double bsun, bsha;
     double ci_sun, ci_sha;
     double lmr_sun, lmr_sha;
@@ -304,10 +303,10 @@ photosynth_hydrostress(double            thm,
             
             // ========== 转换为气孔阻力 ==========
             gs = gs_mol_sun / CF;
-            Ra_sun[i] = min(1.0 / gs, rsmax0);
+            Ra_sun[i] = min(1.0 / gs, param.PHOTO_RSMAX);
             
             gs = gs_mol_sha / CF;
-            Ra_sha[i] = min(1.0 / gs, rsmax0);
+            Ra_sha[i] = min(1.0 / gs, param.PHOTO_RSMAX);
             
             // ========== 记录光合速率和限制因子 ==========
             // 阳叶
@@ -384,8 +383,8 @@ photosynth_hydrostress(double            thm,
             ci_sha = 0.0;
             gs_mol_sun = 0.0;
             gs_mol_sha = 0.0;
-            Ra_sun[i] = min(rsmax0, 1.0 / (max(bsun * gsminsun, 1.0)) * CF);
-            Ra_sha[i] = min(rsmax0, 1.0 / (max(bsha * gsminsha, 1.0)) * CF);
+            Ra_sun[i] = min(param.PHOTO_RSMAX, 1.0 / (max(bsun * gsminsun, 1.0)) * CF);
+            Ra_sha[i] = min(param.PHOTO_RSMAX, 1.0 / (max(bsha * gsminsha, 1.0)) * CF);
             psn_sun[i] = 0.0;
             psn_sha[i] = 0.0;
             psn_wc_sun[i] = 0.0;

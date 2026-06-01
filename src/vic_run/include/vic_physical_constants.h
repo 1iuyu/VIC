@@ -97,7 +97,7 @@
 #define CONST_KICE 2.29        /**< thermal conductivity of ice [W/m/K] */
 #define CONST_KDAIR 0.023      /**< thermal conductivity of air [W/m/K] */
 #define CONST_KSILT 2.92       /**< thermal conductivity of silts [W/m/K] */
-#define CONST_KCLAY 2.92      /**< thermal conductivity of clays [W/m/K] */
+#define CONST_KCLAY 2.92       /**< thermal conductivity of clays [W/m/K] */
 #define CONST_KORGANIC 0.25    /**< thermal conductivity of organic matter [W/m/K] */
 #define CONST_KQUARTZ 7.7      /**< thermal conductivity for quartz [W/m/K] */
 #define CONST_KGRAVEL 8.8      /**< thermal conductivity of saturated granitic rock [W/m/K] */

@@ -53,20 +53,8 @@ get_global_param(FILE *gp)
             if (strcasecmp("NLAYER", optstr) == 0) {
                 sscanf(cmdstr, "%*s %zu", &options.Nlayer);
             }
-            else if (strcasecmp("NODES", optstr) == 0) {
-                sscanf(cmdstr, "%*s %zu", &options.Nsoil);
-            }
             else if (strcasecmp("MODEL_STEPS_PER_DAY", optstr) == 0) {
                 sscanf(cmdstr, "%*s %zu", &global_param.model_steps_per_day);
-            }
-            else if (strcasecmp("SNOW_STEPS_PER_DAY", optstr) == 0) {
-                sscanf(cmdstr, "%*s %zu", &global_param.snow_steps_per_day);
-            }
-            else if (strcasecmp("RUNOFF_STEPS_PER_DAY", optstr) == 0) {
-                sscanf(cmdstr, "%*s %zu", &global_param.runoff_steps_per_day);
-            }
-            else if (strcasecmp("ATMOS_STEPS_PER_DAY", optstr) == 0) {
-                sscanf(cmdstr, "%*s %zu", &global_param.atmos_steps_per_day);
             }
             else if (strcasecmp("STARTYEAR", optstr) == 0) {
                 sscanf(cmdstr, "%*s %hu", &global_param.startyear);
@@ -100,10 +88,6 @@ get_global_param(FILE *gp)
                 sscanf(cmdstr, "%*s %s", flgstr);
                 global_param.time_units = str_to_timeunits(flgstr);
             }
-            else if (strcasecmp("FROZEN_SOIL", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.FROZEN_SOIL = str_to_bool(flgstr);
-            }
             else if ((strcasecmp("NOFLUX",
                                  optstr) == 0) ||
                      (strcasecmp("NO_FLUX", optstr) == 0)) {
@@ -122,30 +106,6 @@ get_global_param(FILE *gp)
                     log_err("Unknown SNOW_DENSITY option: %s", flgstr);
                 }
             }
-            else if (strcasecmp("BLOWING", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.BLOWING = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("BLOWING_VAR_THRESHOLD", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.BLOWING_VAR_THRESHOLD = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("BLOWING_CALC_PROB", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.BLOWING_CALC_PROB = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("BLOWING_SIMPLE", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.BLOWING_SIMPLE = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("BLOWING_FETCH", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.BLOWING_FETCH = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("BLOWING_SPATIAL_WIND", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.BLOWING_SPATIAL_WIND = str_to_bool(flgstr);
-            }
             else if (strcasecmp("CORRPREC", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
                 options.CORRPREC = str_to_bool(flgstr);
@@ -153,10 +113,6 @@ get_global_param(FILE *gp)
             else if (strcasecmp("CONTINUEONERROR", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
                 options.CONTINUEONERROR = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("EQUAL_AREA", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.EQUAL_AREA = str_to_bool(flgstr);
             }
             else if (strcasecmp("RESOLUTION", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &global_param.resolution);
@@ -171,18 +127,6 @@ get_global_param(FILE *gp)
             else if (strcasecmp("CARBON", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
                 options.CARBON = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("RC_MODE", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                if (strcasecmp("RC_PHOTO", flgstr) == 0) {
-                    options.RC_MODE = RC_PHOTO;
-                }
-                else if (strcasecmp("RC_JARVIS", flgstr) == 0) {
-                    options.RC_MODE = RC_JARVIS;
-                }
-                else {
-                    log_err("Unknown RC_MODE option: %s", flgstr);
-                }
             }
 
             /*************************************
@@ -308,9 +252,6 @@ get_global_param(FILE *gp)
             else if (strcasecmp("GRID_DECIMAL", optstr) == 0) {
                 sscanf(cmdstr, "%*s %hu", &options.GRID_DECIMAL);
             }
-            else if (strcasecmp("WIND_H", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &global_param.wind_h);
-            }
 
             /*************************************
                Define parameter files
@@ -322,35 +263,11 @@ get_global_param(FILE *gp)
             else if (strcasecmp("SOIL", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", filenames.soil);
             }
-            else if (strcasecmp("ORGANIC_FRACT", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.ORGANIC_FRACT = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("BULK_DENSITY_COMB", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.BULK_DENSITY_COMB = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("MAX_SNOW_ALBEDO", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.MAX_SNOW_ALBEDO = str_to_bool(flgstr);
-            }
             else if (strcasecmp("VEGLIB", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", filenames.veglib);
             }
-            else if (strcasecmp("VEGLIB_PHOTO", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.VEGLIB_PHOTO = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("VEGLIB_FCAN", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.VEGLIB_FCAN = str_to_bool(flgstr);
-            }
             else if (strcasecmp("VEGPARAM", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", filenames.veg);
-            }
-            else if (strcasecmp("VEGPARAM_LAI", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.VEGPARAM_LAI = str_to_bool(flgstr);
             }
             else if (strcasecmp("LAI_SRC", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
@@ -367,10 +284,6 @@ get_global_param(FILE *gp)
                     log_err("Unrecognized value of LAI_SRC in the global "
                             "control file.");
                 }
-            }
-            else if (strcasecmp("VEGPARAM_FCAN", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.VEGPARAM_FCAN = str_to_bool(flgstr);
             }
             else if (strcasecmp("FCAN_SRC", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
@@ -391,26 +304,6 @@ get_global_param(FILE *gp)
                             "control file.");
                 }
             }
-            else if (strcasecmp("VEGPARAM_ALB", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.VEGPARAM_ALB = str_to_bool(flgstr);
-            }
-            else if (strcasecmp("ALB_SRC", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                if (strcasecmp("FROM_VEGHIST", flgstr) == 0) {
-                    options.ALB_SRC = FROM_VEGHIST;
-                }
-                else if (strcasecmp("FROM_VEGPARAM", flgstr) == 0) {
-                    options.ALB_SRC = FROM_VEGPARAM;
-                }
-                else if (strcasecmp("FROM_VEGLIB", flgstr) == 0) {
-                    options.ALB_SRC = FROM_VEGLIB;
-                }
-                else {
-                    log_err("Unrecognized value of ALB_SRC in the global "
-                            "control file.");
-                }
-            }
             else if (strcasecmp("GLACIER_ID", optstr) == 0) {
                 sscanf(cmdstr,"%*s %d", &options.GLACIER_ID);
             }
@@ -421,11 +314,11 @@ get_global_param(FILE *gp)
             else if (strcasecmp("ROUT_PARAM", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
                 if (strcasecmp("FALSE", flgstr) == 0) {
-                    options.ROUT_PARAM = false;
+                    options.ROUT = false;
                 }
                 else {
-                    options.ROUT_PARAM = true;
-                    sscanf(cmdstr, "%*s %s", filenames.rout_params.nc_filename);
+                    options.ROUT = true;
+                    sscanf(cmdstr, "%*s %s", filenames.rout.nc_filename);
                 }
             }
             /*************************************
@@ -616,143 +509,12 @@ get_global_param(FILE *gp)
                 global_param.model_steps_per_day);
     }
     else {
-        global_param.dt = SEC_PER_DAY /
+        global_param.step_dt = SEC_PER_DAY /
                           (double) global_param.model_steps_per_day;
     }
 
-    // Validate snow model time step
-    if (global_param.snow_steps_per_day == 0) {
-        log_err("Snow model time steps per day has not been defined.  Make "
-                "sure that the global file defines SNOW_STEPS_PER_DAY.");
-    }
-    else if (global_param.model_steps_per_day != 1 &&
-             global_param.snow_steps_per_day !=
-             global_param.model_steps_per_day) {
-        log_err("If the model step is smaller than daily, the snow model "
-                "should run at the same time step as the rest of the model.");
-    }
-    else if (global_param.snow_steps_per_day < MIN_SUBDAILY_STEPS_PER_DAY) {
-        log_err("The specified number of snow model steps per day (%zu) < "
-                "the minimum number of subdaily steps per day (%d).  Make "
-                "sure that the global file defines SNOW_STEPS_PER_DAY of at "
-                "least (%d).", global_param.snow_steps_per_day,
-                MIN_SUBDAILY_STEPS_PER_DAY,
-                MIN_SUBDAILY_STEPS_PER_DAY);
-    }
-    else if (global_param.snow_steps_per_day > MAX_SUBDAILY_STEPS_PER_DAY) {
-        log_err("The specified number of snow steps per day (%zu) > the "
-                "the maximum number of subdaily steps per day (%d).  Make "
-                "sure that the global file defines SNOW_STEPS_PER_DAY of at "
-                "most (%d).", global_param.snow_steps_per_day,
-                MAX_SUBDAILY_STEPS_PER_DAY,
-                MAX_SUBDAILY_STEPS_PER_DAY);
-    }
-    else if (global_param.snow_steps_per_day > HOURS_PER_DAY &&
-             global_param.snow_steps_per_day % HOURS_PER_DAY != 0) {
-        log_err("The specified number of snow model steps per day (%zu) is > "
-                "24 and is not evenly divided by 24.",
-                global_param.snow_steps_per_day);
-    }
-    else if (global_param.snow_steps_per_day %
-             global_param.model_steps_per_day != 0) {
-        log_err("The specified number of snow model timesteps (%zu) must be "
-                "evenly divisible by the number of model timesteps per day "
-                "(%zu)", global_param.snow_steps_per_day,
-                global_param.model_steps_per_day);
-    }
-    else {
-        global_param.snow_dt = SEC_PER_DAY /
-                               (double) global_param.snow_steps_per_day;
-    }
-
-    // Validate runoff time step
-    if (global_param.runoff_steps_per_day == 0) {
-        log_err("Runoff time steps per day has not been defined.  Make "
-                "sure that the global file defines RUNOFF_STEPS_PER_DAY.");
-    }
-    else if (global_param.runoff_steps_per_day <
-             MIN_SUBDAILY_STEPS_PER_DAY) {
-        log_err("The specified number of runoff steps per day (%zu) < "
-                "the minimum number of subdaily steps per day (%d).  Make "
-                "sure that the global file defines RUNOFF_STEPS_PER_DAY of at "
-                "least (%d).", global_param.runoff_steps_per_day,
-                MIN_SUBDAILY_STEPS_PER_DAY,
-                MIN_SUBDAILY_STEPS_PER_DAY);
-    }
-    else if (global_param.runoff_steps_per_day > HOURS_PER_DAY &&
-             global_param.runoff_steps_per_day % HOURS_PER_DAY != 0) {
-        log_err("The specified number of runoff steps per day (%zu) is > "
-                "24 and is not evenly divided by 24.",
-                global_param.runoff_steps_per_day);
-    }
-    else if (global_param.runoff_steps_per_day >
-             MAX_SUBDAILY_STEPS_PER_DAY) {
-        log_err("The specified number of runoff steps per day (%zu) > the "
-                "the maximum number of subdaily steps per day (%d).  Make "
-                "sure that the global file defines RUNOFF_STEPS_PER_DAY of at "
-                "most (%d).", global_param.runoff_steps_per_day,
-                MAX_SUBDAILY_STEPS_PER_DAY,
-                MAX_SUBDAILY_STEPS_PER_DAY);
-    }
-    else if (global_param.runoff_steps_per_day %
-             global_param.model_steps_per_day != 0) {
-        log_err("The specified number of runoff timesteps (%zu) must be "
-                "evenly divisible by the number of model timesteps per day "
-                "(%zu)", global_param.runoff_steps_per_day,
-                global_param.model_steps_per_day);
-    }
-    else {
-        global_param.runoff_dt = SEC_PER_DAY /
-                                 (double) global_param.runoff_steps_per_day;
-    }
-    // Validate atmos time step
-    if (global_param.atmos_steps_per_day == 0) {
-        // For classic driver default to hourly atmos timestep
-        global_param.atmos_steps_per_day = HOURS_PER_DAY;
-    }
-    if (global_param.atmos_steps_per_day < MIN_SUBDAILY_STEPS_PER_DAY) {
-        log_err("The specified number of atmos steps per day (%zu) < "
-                "the minimum number of subdaily steps per day (%d).  Make "
-                "sure that the global file defines ATMOS_STEPS_PER_DAY of at "
-                "least (%d).", global_param.atmos_steps_per_day,
-                MIN_SUBDAILY_STEPS_PER_DAY,
-                MIN_SUBDAILY_STEPS_PER_DAY);
-    }
-    else if (global_param.atmos_steps_per_day > HOURS_PER_DAY &&
-             global_param.atmos_steps_per_day % HOURS_PER_DAY != 0) {
-        log_err("The specified number of atmos steps per day (%zu) is > "
-                "24 and is not evenly divided by 24.",
-                global_param.atmos_steps_per_day);
-    }
-    else if (global_param.atmos_steps_per_day > MAX_SUBDAILY_STEPS_PER_DAY) {
-        log_err("The specified number of atmos timesteps per day (%zu) > the "
-                "the maximum number of subdaily steps per day (%d).  Make "
-                "sure that the global file defines ATMOS_STEPS_PER_DAY of at "
-                "most (%d).", global_param.atmos_steps_per_day,
-                MAX_SUBDAILY_STEPS_PER_DAY,
-                MAX_SUBDAILY_STEPS_PER_DAY);
-    }
-    else if (global_param.atmos_steps_per_day %
-             global_param.model_steps_per_day != 0) {
-        log_err("The specified number of atmos timesteps (%zu) must be "
-                "evenly divisible by the number of model timesteps per day "
-                "(%zu)", global_param.atmos_steps_per_day,
-                global_param.model_steps_per_day);
-    }
-    else if (global_param.atmos_steps_per_day %
-             global_param.snow_steps_per_day != 0) {
-        log_err("The specified number of atmos timesteps (%zu) must be evenly "
-                "divisible by the number of snow model timesteps per day (%zu)",
-                global_param.atmos_steps_per_day,
-                global_param.model_steps_per_day);
-    }
-    else {
-        global_param.atmos_dt = SEC_PER_DAY /
-                                (double) global_param.atmos_steps_per_day;
-    }
-
     // set NR and NF
-    NF = global_param.snow_steps_per_day / global_param.model_steps_per_day;
+    NF = (double) param_set.force_steps_per_day / global_param.model_steps_per_day;
     if (NF == 1) {
         NR = 0;
     }
@@ -871,15 +633,6 @@ get_global_param(FILE *gp)
                         "defined.  Make sure that the global file defines "
                         "FORCE_STEPS_PER_DAY.", i);
             }
-            if (param_set.force_steps_per_day[i] !=
-                global_param.snow_steps_per_day) {
-                log_err("FORCE_STEPS_PER_DAY must match SNOW_STEPS_PER_DAY");
-            }
-            else {
-                param_set.FORCE_DT[i] = SEC_PER_DAY /
-                                        (double) param_set.force_steps_per_day[i
-                                        ];
-            }
         }
     }
     if (param_set.N_TYPES[1] != MISSING && global_param.forceyear[1] == 0) {
@@ -932,46 +685,6 @@ get_global_param(FILE *gp)
                 "forcing variable in the veg_hist forcing file in the "
                 "global parameter file.");
     }
-    if (options.LAI_SRC == FROM_VEGPARAM && !options.VEGPARAM_LAI) {
-        log_err("\"LAI_SRC\" was specified as \"FROM_VEGPARAM\", but "
-                "\"VEGPARAM_LAI\" was set to \"FALSE\" in the global "
-                "parameter file.  If you want VIC to read LAI values from "
-                "the vegparam file, you MUST make sure the veg param file "
-                "contains 1 line of 12 monthly LAI values for EACH veg "
-                "tile in EACH grid cell, and you MUST specify "
-                "\"VEGPARAM_LAI\" as \"TRUE\" in the global parameter "
-                "file.  Alternatively, if you want VIC to read LAI values "
-                "from the veg library file, set \"LAI_SRC\" to "
-                "\"FROM_VEGLIB\" in the global parameter file.  In "
-                "either case, the setting of \"VEGPARAM_LAI\" must be "
-                "consistent with the contents of the veg param file (i.e. "
-                "whether or not it contains LAI values).");
-    }
-    if (options.ALB_SRC == FROM_VEGHIST && !param_set.TYPE[ALBEDO].SUPPLIED) {
-        log_err("\"ALB_SRC\" was specified as \"FROM_VEGHIST\", but "
-                "\"ALBEDO\" was not specified as an input forcing in the "
-                "global parameter file.  If you want VIC to read ALBEDO "
-                "values from the veg_hist file, you MUST make sure the veg "
-                "hist file contains Nveg columns of ALBEDO values, 1 for "
-                "each veg tile in the grid cell, AND specify ALBEDO as a "
-                "forcing variable in the veg_hist forcing file in the "
-                "global parameter file.");
-    }
-    if (options.ALB_SRC == FROM_VEGPARAM && !options.VEGPARAM_ALB) {
-        log_err("\"ALB_SRC\" was specified as \"FROM_VEGPARAM\", but "
-                "\"VEGPARAM_ALB\" was set to \"FALSE\" in the global "
-                "parameter file.  If you want VIC to read albedo values from "
-                "the vegparam file, you MUST make sure the veg param file "
-                "contains 1 line of 12 monthly albedo values for EACH veg "
-                "tile in EACH grid cell, and you MUST specify "
-                "\"VEGPARAM_ALB\" as \"TRUE\" in the global parameter "
-                "file.  Alternatively, if you want VIC to read albedo values "
-                "from the veg library file, set \"ALB_SRC\" to "
-                "\"FROM_VEGLIB\" in the global parameter file.  In "
-                "either case, the setting of \"VEGPARAM_ALB\" must be "
-                "consistent with the contents of the veg param file (i.e. "
-                "whether or not it contains albedo values).");
-    }
     if (options.FCAN_SRC == FROM_VEGHIST &&
         !param_set.TYPE[FCANOPY].SUPPLIED) {
         log_err("\"FCAN_SRC\" was specified as \"FROM_VEGHIST\", but "
@@ -982,53 +695,6 @@ get_global_param(FILE *gp)
                 "each veg tile in the grid cell, AND specify FCANOPY as a "
                 "forcing variable in the veg_hist forcing file in the "
                 "global parameter file.");
-    }
-    if (options.FCAN_SRC == FROM_VEGPARAM && !options.VEGPARAM_FCAN) {
-        log_err("\"FCAN_SRC\" was specified as \"FROM_VEGPARAM\", but "
-                "\"VEGPARAM_FCAN\" was set to \"FALSE\" in the global "
-                "parameter file.  If you want VIC to read fcanopy values from "
-                "the vegparam file, you MUST make sure the veg param file "
-                "contains 1 line of 12 monthly fcanopy values for EACH veg "
-                "tile in EACH grid cell, and you MUST specify "
-                "\"VEGPARAM_FCAN\" as \"TRUE\" in the global parameter "
-                "file.  Alternatively, if you want VIC to read fcanopy values "
-                "from the veg library file, set \"FCAN_SRC\" to "
-                "\"FROM_VEGLIB\" in the global parameter file.  In "
-                "either case, the setting of \"VEGPARAM_FCAN\" must be "
-                "consistent with the contents of the veg param file (i.e. "
-                "whether or not it contains fcanopy values).");
-    }
-    if (options.FCAN_SRC == FROM_VEGLIB && !options.VEGLIB_FCAN) {
-        log_err("\"FCAN_SRC\" was specified as \"FROM_VEGLIB\", but "
-                "\"VEGLIB_FCAN\" was set to \"FALSE\" in the global "
-                "parameter file.  If you want VIC to read fcanopy values from "
-                "the veglib file, you MUST make sure the veg lib file "
-                "contains 1 line of 12 monthly fcanopy values for EACH veg "
-                "class, and you MUST specify "
-                "\"VEGLIB_FCAN\" as \"TRUE\" in the global parameter "
-                "file.  Alternatively, if you want VIC to read fcanopy values "
-                "from the veg param file, set \"FCAN_SRC\" to "
-                "\"FROM_VEGPARAM\" in the global parameter file.  In "
-                "either case, the setting of \"VEGLIB_FCAN\" must be "
-                "consistent with the contents of the veg lib file (i.e. "
-                "whether or not it contains fcanopy values).");
-    }
-
-    // Carbon-cycling options
-    if (!options.CARBON) {
-        if (options.RC_MODE == RC_PHOTO) {
-            log_warn("If CARBON==FALSE, RC_MODE must be set to "
-                     "RC_JARVIS.  Setting RC_MODE to set to RC_JARVIS.");
-            options.RC_MODE = RC_JARVIS;
-        }
-    }
-    else {
-        if (!options.VEGLIB_PHOTO) {
-            log_err("Currently, CARBON==TRUE and VEGLIB_PHOTO==FALSE.  If "
-                    "CARBON==TRUE, VEGLIB_PHOTO must be set to TRUE and "
-                    "carbon-specific veg parameters must be listed in "
-                    "your veg library file.");
-        }
     }
 
     // Validate the elevation band file information
@@ -1115,27 +781,11 @@ get_global_param(FILE *gp)
     }
 
     // Validate soil parameter/simulation mode combinations
-    if (options.FROZEN_SOIL && options.Nlayer < 3) {
-        log_err("You must define at least 3 soil moisture layers to run "
-                "the model in FULL_ENERGY or FROZEN_SOIL modes.  "
-                "Currently Nlayers is set to %zu.", options.Nlayer);
-    }
-    if (!options.FROZEN_SOIL && options.Nlayer < 1) {
-        log_err("You must define at least 1 soil moisture layer to run "
-                "the model.  Currently Nlayers is set to  %zu.",
-                options.Nlayer);
-    }
     if (options.Nlayer > MAX_LAYERS) {
         log_err("Global file wants more soil moisture layers (%zu) than "
                 "are defined by MAX_LAYERS (%d).  Edit vic_run/include/vic_def.h "
                 "and recompile.", options.Nlayer,
                 MAX_LAYERS);
-    }
-    if (options.Nsoil > MAX_SOILS) {
-        log_err("Global file wants more soil thermal nodes (%zu) than are "
-                "defined by MAX_NODES (%d).  Edit vic_run/include/vic_def.h and "
-                "recompile.", options.Nsoil,
-                MAX_SOILS);
     }
 
     /*********************************

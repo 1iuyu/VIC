@@ -113,15 +113,6 @@ enum
 };
 
 /******************************************************************************
- * @brief   Photosynthesis parametrizations
- *****************************************************************************/
-enum
-{
-    PS_FARQUHAR,
-    PS_MONTEITH
-};
-
-/******************************************************************************
  * @brief   Photosynthetic pathways
  *****************************************************************************/
 enum
@@ -153,6 +144,15 @@ enum
 };
 
 /******************************************************************************
+ * @brief   Calculation of canopy type options
+ *****************************************************************************/
+enum 
+{
+    SUNLIT,
+    SHADE
+};
+
+/******************************************************************************
  * @brief   Calculation of saturation vapor pressure options
  *****************************************************************************/
 typedef enum {
@@ -162,14 +162,7 @@ typedef enum {
     ESDT = 1 << 2,  // 4
     QSDT = 1 << 3,  // 8
 
-} SVPFlag;
-/******************************************************************************
- * @brief   Calculation of canopy type options
- *****************************************************************************/
-typedef enum {
-    SUNLIT = 0,
-    SHADE = 1
-};
+} svp_flag;
 
 /***** Data Structures *****/
 
@@ -306,19 +299,10 @@ typedef struct {
     double SVP_FRZ;
     double SVP_RDAIR;
     // Photosynthesis Parameters
-    double PHOTO_OMEGA;  /**< single leaf scattering albedo */
-    double PHOTO_LAIMAX;  /**< Maximum LAI in nitrogen scaling */
-    double PHOTO_LAILIMIT;  /**< Minimum LAI in nitrogen scaling and maximum LAI in PAR computation */
-    double PHOTO_LAIMIN;  /**< Minimum LAI in PAR computation */
-    double PHOTO_EPAR;  /**< Energy content of PAR [J/mol photons] = (4.6 mol/MJ PAR)^-1 */
-    double PHOTO_FCMAX;  /**< Maximum fractional veg cover; (1-FcMax) = min amount of ground visible */
-    double PHOTO_FCMIN;  /**< Minimum fractional veg cover; (1-FcMin) = max amount of ground visible */
-    double PHOTO_ALBSOIPARMIN;  /**< Minimum soil reflectivity in PAR range */
-    double PHOTO_MINMAXETRANS;  /**< Minimum of maximum electron transport rate [10e-12 mol/(m^2 s)] */
-
     double PHOTO_MINCONDUCT;  /**< Minimum stomatal conductance [mol H2O/m2s] */
-    double PHOTO_FCI1C3;  /**< C3 Plants factor that relate leaf internal CO2 concentration to ambient CO2 concentration */
-    double PHOTO_FCI1C4;  /**< C4 Plants factor that relate leaf internal CO2 concentration to ambient CO2 concentration */
+    double PHOTO_RSMAX;  /**< Maximum stomatal resistance (s/m) */
+    double PHOTO_LRESC3;  /**< C3 Plants factor for scalar constant of leaf respiration with Vcmax */
+    double PHOTO_LRESC4;  /**< C4 Plants factor for scalar constant of leaf respiration with Vcmax */
     double PHOTO_MAXCS;
     double PHOTO_OX;  /**< OXYGEN CONCENTRATION [MOL(O2) / MOL(AIR)] */
     double PHOTO_CX;

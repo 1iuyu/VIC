@@ -598,7 +598,7 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
     MPI_Datatype   *mpi_types;
 
     // nitems has to equal the number of elements in parameters_struct
-    nitems = 186;
+    nitems = 143;
     blocklengths = malloc(nitems * sizeof(*blocklengths));
     check_alloc_status(blocklengths, "Memory allocation error.");
 
@@ -666,6 +666,22 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
 
     // double VEG_LAI_WATER_FACTOR
     offsets[i] = offsetof(parameters_struct, VEG_LAI_WATER_FACTOR);
+    mpi_types[i++] = MPI_DOUBLE;
+
+    // double VEG_RATIO_DH_A
+    offsets[i] = offsetof(parameters_struct, VEG_RATIO_DH_A);
+    mpi_types[i++] = MPI_DOUBLE;
+
+    // double VEG_RATIO_DH_B
+    offsets[i] = offsetof(parameters_struct, VEG_RATIO_DH_B);
+    mpi_types[i++] = MPI_DOUBLE;
+
+    // double VEG_RATIO_RL_A
+    offsets[i] = offsetof(parameters_struct, VEG_RATIO_RL_A);
+    mpi_types[i++] = MPI_DOUBLE;
+
+    // double VEG_RATIO_RL_B
+    offsets[i] = offsetof(parameters_struct, VEG_RATIO_RL_B);
     mpi_types[i++] = MPI_DOUBLE;
 
     // double CANOPY_CLOSURE
@@ -828,48 +844,12 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(parameters_struct, SVP_RDAIR);
     mpi_types[i++] = MPI_DOUBLE;
 
-    // double PHOTO_OMEGA
-    offsets[i] = offsetof(parameters_struct, PHOTO_OMEGA);
+    // double PHOTO_LRESC3
+    offsets[i] = offsetof(parameters_struct, PHOTO_LRESC3);
     mpi_types[i++] = MPI_DOUBLE;
 
-    // double PHOTO_LAIMAX
-    offsets[i] = offsetof(parameters_struct, PHOTO_LAIMAX);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_LAILIMIT
-    offsets[i] = offsetof(parameters_struct, PHOTO_LAILIMIT);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_LAIMIN
-    offsets[i] = offsetof(parameters_struct, PHOTO_LAIMIN);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_EPAR
-    offsets[i] = offsetof(parameters_struct, PHOTO_EPAR);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_FCMAX
-    offsets[i] = offsetof(parameters_struct, PHOTO_FCMAX);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_FCMIN
-    offsets[i] = offsetof(parameters_struct, PHOTO_FCMIN);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_ALBSOIPARMIN
-    offsets[i] = offsetof(parameters_struct, PHOTO_ALBSOIPARMIN);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_MINMAXETRANS
-    offsets[i] = offsetof(parameters_struct, PHOTO_MINMAXETRANS);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_FCI1C3
-    offsets[i] = offsetof(parameters_struct, PHOTO_FCI1C3);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double PHOTO_FCI1C4
-    offsets[i] = offsetof(parameters_struct, PHOTO_FCI1C4);
+    // double PHOTO_LRESC4
+    offsets[i] = offsetof(parameters_struct, PHOTO_LRESC4);
     mpi_types[i++] = MPI_DOUBLE;
 
     // double PHOTO_OX
