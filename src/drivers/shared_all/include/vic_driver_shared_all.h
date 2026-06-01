@@ -548,6 +548,8 @@ void collect_wb_terms(cell_data_struct, veg_var_struct, snow_data_struct,
                         double, bool, bool, double, double **);
 void compute_derived_state_vars(all_vars_struct *, soil_con_struct *,
                                 veg_con_struct *);
+double compute_theta(double t, double p);
+double compute_theta_v(double q, double theta);
 size_t count_force_vars(FILE *gp);
 void count_nstreams_nvars(FILE *gp, size_t *nstreams, size_t nvars[]);
 void cmd_proc(int argc, char **argv, char *globalfilename);
