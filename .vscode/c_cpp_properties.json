@@ -21,7 +21,7 @@
                 "/usr/include/**",
                 "/usr/local/include/**",
                 "/usr/lib/x86_64-linux-gnu/openmpi/include/**",
-                "${workspaceFolder}/vic/drivers/classic/include/**"
+                "${workspaceFolder}/src/drivers/classic/include/**"
             ],
             "compilerPath": "/usr/bin/cc",
             "cStandard": "c17",
