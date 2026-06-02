@@ -90,9 +90,9 @@ vic_run(force_data_struct   *force,
             **************************************************/
             size_t band = veg_con[iveg].BandIndex;
             Tair = force->air_temp[hidx] + soil_con->Tfactor[band];
-            int has_prec = param_set.TYPE[PREC].SUPPLIED;
-            int has_rain = param_set.TYPE[RAINF].SUPPLIED;
-            int has_snow = param_set.TYPE[SNOWF].SUPPLIED;
+            bool has_prec = param_set.TYPE[PREC].SUPPLIED;
+            bool has_rain = param_set.TYPE[RAINF].SUPPLIED;
+            bool has_snow = param_set.TYPE[SNOWF].SUPPLIED;
             // 根据输入的气象数据计算降雨和降雪
             if (has_prec && !has_rain && !has_snow) {
                 /* set air temperature and precipitation for this snow band */

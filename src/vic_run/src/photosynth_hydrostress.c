@@ -49,7 +49,6 @@ photosynth_hydrostress(double            thm,
     double *zc_soil = soil_con->zc_soil;
     double *conductivity = cell->conductivity;
     double lmrc = fth25(param.PHOTO_LMRHD, param.PHOTO_LMRSE);
-//    double hk_total = 0.0;
     double max_daylen = cell->max_daylen;
     double daylen_fact = min(1.0, max(0.01, (daylen * daylen) / (max_daylen * max_daylen)));
     // 计算常数：根横截面积 (m2)
