@@ -34,7 +34,6 @@ initialize_options()
     options.Nlayer = 3;
     options.Nswband = 2;
     options.Nfrost = 1;
-    options.Ncanopy = 4;
     options.MAX_HRU = 50;
     options.SNOW_BAND = 1;
     options.GLACIER_ID = 0;

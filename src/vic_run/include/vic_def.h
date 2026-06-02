@@ -180,7 +180,6 @@ typedef struct {
     size_t Nlayer;       /**< Number of layers in model */
     size_t Nswband;      /**< Number of waveband in model */
     size_t Nfrost;       /**< Number of frost layer in model */
-    size_t Ncanopy;      /**< Number of canopy layer in model */
     size_t MAX_HRU;      /**< maximum number of hydrological response units */
     bool NOFLUX;         /**< TRUE = Use no flux lower bondary when computing
                             soil thermal fluxes */
@@ -352,7 +351,6 @@ typedef struct {
     double SNOW_COMPACT_A;
     double SNOW_COMPACT_B;
     double SNOW_COMPACT_C;
-    double SNOW_COMPACT_P;
     double SNOW_COMPACT_DM;
     double SNOW_COMPACT_ETA;
     double SNOW_RADIUS_MIN;
@@ -580,6 +578,7 @@ typedef struct {
     size_t Nsoil;                       /**< Number of soil nodes in the model */
     size_t Nroot;                       /**< Number of root nodes in the model */
     size_t Nnode;                       /**< Number of thermal nodes in the model */
+    size_t Ncanopy;                     /**< Number of canopy layer in model */
     double Ra_over[3];                  /**< The aerodynamic resistance (s/m) that was actually used
                                           in flux calculations. [0] = wind speed at reference height, 
                                           [1] = sensible heat flux, [2] = latent heat flux */
@@ -668,10 +667,8 @@ typedef struct {
     double last_Cs[MAX_NODES]; 
     double T[MAX_NODES];               /**< thermal node temperatures (k) */
     double last_T[MAX_NODES];
-    int MELTING[MAX_NODES];            /**< 1 = node is melted, 2 = node is frozen, 0 = node is not melted */
     double kappa_int[MAX_NODES];       /**< thermal conductivity used for interface between nodes (W/m/K) */
     double fact[MAX_NODES];            /**< thermal diffusivity of each soil thermal node (m^2/s) */
-    double fusion_flux[MAX_NODES];
     double Tcanopy;              /**< temperature of the canopy */
     double Tsurf;                /**< temperature of the understory */
     double Tgrnd;

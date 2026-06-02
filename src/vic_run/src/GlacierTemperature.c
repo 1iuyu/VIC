@@ -17,7 +17,6 @@ GlacierTemperature(double   		  step_dt,
 				   snow_data_struct  *snow,
 				   soil_con_struct   *soil_con)
 {	
-	extern parameters_struct param;
 	/* Initialize variables */
 	size_t i, idx;
 	size_t Nsnow = snow->Nsnow;

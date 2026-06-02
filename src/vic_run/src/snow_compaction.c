@@ -12,15 +12,14 @@
 *           overburden, & melt.
 ******************************************************************************/
 void 
-snow_compaction(double             step_dt,
-                double             air_temp,
-                double             pressure,
-                energy_bal_struct *energy,
-                snow_data_struct  *snow)
+snow_compaction(double            step_dt,
+                double            air_temp,
+                double            pressure,
+                snow_data_struct *snow)
 {
     extern parameters_struct   param;
 
-    size_t      i;                          // Snow layer loop index
+    size_t      i, Nsnow;                   
     double      pack_press;                 // Pressure of overlying snow [kg/m2]
     double      TempDiff;                   // ConstFreezePoint - [K]
     double      SnowVoid;                   // Void (1 - pack_ice - pack_water)
@@ -39,10 +38,9 @@ snow_compaction(double             step_dt,
     double *snow_frac = snow->snow_frac;
     double *density = snow->density;  // Partial density of ice [kg/m3]
     double *last_snowfrac = snow->last_snowfrac;
-    int *MELTING = energy->MELTING;
-
+    Nsnow = snow->Nsnow;
     // Initialization for output variables
-    for (i = 0; i < snow->Nsnow; i++) {
+    for (i = 0; i < Nsnow; i++) {
         SnowAging[i]  = 0.0;
         SnowBurden[i] = 0.0;
         SnowMelt[i]   = 0.0;
@@ -59,10 +57,10 @@ snow_compaction(double             step_dt,
     if (pressure < 80000.0) {
         SNOW_COMPACT_P = max(SNOW_COMPACT_P, 0.019);
     }
-    param.SNOW_COMPACT_P = max(SNOW_COMPACT_P, 0.0315);
+    SNOW_COMPACT_P = max(SNOW_COMPACT_P, 0.0315);
 
     // Start snow compaction
-    for (i = 0; i < snow->Nsnow; i++) {
+    for (i = 0; i < Nsnow; i++) {
         SnowMass = pack_ice[i] + pack_liq[i];
         snow_frac[i] = pack_ice[i] / SnowMass;
         // 计算雪空隙率
@@ -88,11 +86,11 @@ snow_compaction(double             step_dt,
 
             // Compaction due to overburden
             SnowBurden[i] = -(pack_press + 0.5 * SnowMass) * 
-                                    exp(-0.08 * TempDiff - param.SNOW_COMPACT_P * 
+                                    exp(-0.08 * TempDiff - SNOW_COMPACT_P * 
                                         density[i]) / param.SNOW_COMPACT_ETA;
 
             // Compaction occurring during melt
-            if (MELTING[i] == 1) {
+            if (snow->last_swq - snow->swq) {
                 SnowMelt[i] = max(0.0, (last_snowfrac[i] - snow_frac[i]) / 
                                                 max(param.TOL_A, last_snowfrac[i]));
                 SnowMelt[i] = -SnowMelt[i] / step_dt;

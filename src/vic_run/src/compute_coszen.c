@@ -29,7 +29,6 @@ compute_coszen(double         lat,
     double coshss;
     double hour_offset;
     double cosh;
-    double coszen;
     double hour;
 
     hour = second / SEC_PER_HOUR;

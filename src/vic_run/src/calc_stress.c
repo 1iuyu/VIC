@@ -28,7 +28,7 @@ calc_stress(double           *bsun,
 {
     extern parameters_struct param;
     // 初始化输出变量
-    size_t i, j, k;
+    size_t i, j;
     size_t iter;
     bool flag = false;
     bool night = false;
@@ -196,7 +196,11 @@ calc_stress(double           *bsun,
             }
             
             /* 检查水势变化是否足够小 */
-            double dx_norm = sqrt(sum_of_squares(dx, 4));
+            sum = 0.0;
+            for (j = 0; j < 4; j++) {
+                sum += dx[j] * dx[j];
+            }
+            double dx_norm = sqrt(sum);
             if (dx_norm < 1.0e-9) {
                 break;
             }
@@ -281,6 +285,8 @@ calc_stress(double           *bsun,
         }
         cell->transp = soilflux;
     }
+
+    return 0;
 }
 
 /******************************************************************************
@@ -400,7 +406,6 @@ void spacF(double           *vegwp,
     double kmax_sun = kcano_max;
     double kmax_sha = kcano_max;
     double kmax_xyl = kcano_max;
-    double kmax_root = kcano_max;
     double *zc_soil = soil_con->zc_soil;
     double *matric = cell->matric;
     double *hksr_int = cell->hksr_int;
@@ -522,7 +527,6 @@ void getvegwp(double           *vegwp,
     double NetSAI = veg_var->NetSAI;
     double kmax_sun = kcano_max;
     double kmax_sha = kcano_max;
-    double kmax_xyl = kcano_max;
     double kmax_root = kcano_max;
     double grav2[MAX_SOILS];
     for (i = 0 ; i < MAX_SOILS; i++) {
@@ -535,12 +539,12 @@ void getvegwp(double           *vegwp,
     }
     
     bool CALC_TRANSP = true;
-    getqflx(CALC_TRANSP, gb_mol, 
-            qsat_T, Qair_over, 
-            pressure, air_density, 
-            thm, &gs_mol_sun, 
-            &gs_mol_sha, &qflx_sun,
-            &qflx_sha, veg_var);
+    get_qflx(CALC_TRANSP, gb_mol, 
+             qsat_T, Qair_over, 
+             pressure, air_density, 
+             thm, gs_mol_sun, 
+             gs_mol_sha, &qflx_sun,
+             &qflx_sha, veg_var);
     
     // 计算土壤-根导度总和
     sum_k_soil_root = 0.0;

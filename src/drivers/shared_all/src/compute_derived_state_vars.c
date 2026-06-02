@@ -19,7 +19,6 @@ compute_derived_state_vars(all_vars_struct *all_vars,
                            veg_con_struct  *veg_con)
 {
     extern global_param_struct global_param;
-    extern option_struct       options;
 
     size_t veg, Nveg;
     double Cv;

@@ -66,7 +66,6 @@ calc_energy_bal_glac(size_t             hidx,
     double conv_h = 1000.0;  // convective boundary height [m]
     double conv_beta = 1.0;  // coefficient of convective velocity
     size_t moz_signchg_count = 0;
-    double deriv_grnd = 0.0;
     double LatentVapGrnd = energy->LatentVapGrnd;
     /* 计算地表比湿 */
     ErrorFlag = calc_surf_humidity(Tgrnd, pressure,

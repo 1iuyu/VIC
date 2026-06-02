@@ -19,7 +19,7 @@ wrap_compute_zwt(double            step_dt,
     size_t  Nfrost;
     double  decay_fator;
     double  discharge;
-    double  baseflow;
+    double  baseflow = 0.0;
     double  recharge;
     double  recharge_layer;
     double  aqf_yield;  // aquifer yield [m]

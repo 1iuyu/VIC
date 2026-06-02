@@ -56,7 +56,6 @@ void brent_PHS(double            x1sun,
 {
     // 局部变量
     double gs0sun, gs0sha;              // 无水分胁迫的气孔导度副本
-    double x[4];
     
     // Brent方法变量（分别对应晴叶和阴叶）
     double a[2], b[2], c[2], d[2], e[2];    // 区间和插值变量

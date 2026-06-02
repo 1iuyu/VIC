@@ -25,9 +25,8 @@ photosynth_hydrostress(double            thm,
                        veg_var_struct   *veg_var,
                        veg_lib_struct   *veg_lib)
 {   
-    extern option_struct     options;
     extern parameters_struct param;
-    size_t i, Nsoil, Ncanopy;
+    size_t i, Ncanopy;
     double aPAR_sun = veg_var->aPAR_sun;
     double aPAR_sha = veg_var->aPAR_sha;
     double *dz_soil = soil_con->dz_soil;
@@ -36,8 +35,7 @@ photosynth_hydrostress(double            thm,
     double *hksr_int = cell->hksr_int; // soil-root interface conductance (mm/s)
     double *vegwp = veg_var->vegwp; // 水势：0-阳叶，1-阴叶，2-木质部，3-根部
     // initialize variables
-    Nsoil = cell->Nsoil;
-    Ncanopy = options.Ncanopy;
+    Ncanopy = cell->Ncanopy;
     double f_N = 0.0;
     double CF = pressure / (CONST_RGAS * thm) * 1.0e6;
     double gb_mol = 1.0 / cell->Ra_leaf * CF;

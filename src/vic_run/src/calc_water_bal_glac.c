@@ -92,8 +92,7 @@ calc_water_bal_glac(double             step_dt,
         /* snow layer combination */
         snow_compaction(step_dt,
                         air_temp,
-                        pressure, energy,
-                        snow);
+                        pressure, snow);
         /* snow layer combination */
         snow_combination(dz_soil[0], cell, snow);
         /* snow layer division */

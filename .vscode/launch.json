@@ -6,14 +6,14 @@
       "name": "Debug VIC",
       "type": "cppdbg",
       "request": "launch",
-      "program": "/mnt/c/Users/liuyu/Downloads/VIC-master/vic/drivers/image/vic_image.exe",
+      "program": "/mnt/c/Users/liuyu/Downloads/VIC-master/src/drivers/image/vic_image.exe",
       "stopAtEntry": false,
       "externalConsole": false,
 
       "args": ["-g"],
       
       "linux": {
-        "program": "/mnt/c/Users/liuyu/Downloads/VIC-master/vic/drivers/image/vic_image.exe",
+        "program": "/mnt/c/Users/liuyu/Downloads/VIC-master/src/drivers/image/vic_image.exe",
         "args": ["-g", "/mnt/d/VIC_GL/test/global_param.txt"],
         "cwd": "/mnt/d/VIC_GL/test",
         "MIMode": "gdb",

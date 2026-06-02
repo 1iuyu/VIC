@@ -62,10 +62,10 @@ void hybrid_PHS(double           *x0sun,
     double soilflux;                // 土壤蒸腾通量 (mm/s)
     double xsun, xsha;              // Brent方法返回的解
     // 参数常量
-    const double toldb = 1e-2;      // bsun/bsha收敛容差
-    const double eps = 1e-2;        // 相对精度
-    const double eps1 = 1e-4;       // 绝对精度阈值
-    const int itmax = 3;            // 最大迭代次数
+    double toldb = 1e-2;      // bsun/bsha收敛容差
+    double eps = 1e-2;        // 相对精度
+    double eps1 = 1e-4;       // 绝对精度阈值
+    size_t itmax = 3;            // 最大迭代次数
     
     // 初始化
     x1sun = *x0sun;

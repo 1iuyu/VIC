@@ -518,9 +518,7 @@ print_soil_con(soil_con_struct *scon,
  *****************************************************************************/
 void
 print_veg_con(veg_con_struct *vcon,
-              size_t          nroots,
-              char            carbon,
-              size_t          ncanopy)
+              size_t          nroots)
 {
     size_t i;
 
@@ -542,8 +540,7 @@ print_veg_con(veg_con_struct *vcon,
  * @brief    Print vegetation library variables.
  *****************************************************************************/
 void
-print_veg_lib(veg_lib_struct *vlib,
-              char            carbon)
+print_veg_lib(veg_lib_struct *vlib)
 {
     size_t i;
 
@@ -645,4 +642,14 @@ print_veg_var(veg_var_struct *vvar,
     fprintf(LOG_DEST, "\tSnowDrip  : %f\n", vvar->SnowDrip);
     fprintf(LOG_DEST, "\tint_rain  : %f\n", vvar->int_rain);
     fprintf(LOG_DEST, "\tint_snow  : %f\n", vvar->int_snow);
+    fprintf(LOG_DEST, "\n");
+    fprintf(LOG_DEST, "\tLAI_z      :");
+    for (size_t i = 0; i < ncanopy; i++) {
+        fprintf(LOG_DEST, "\t%.2f", vvar->LAI_z[i]);
+    }
+    fprintf(LOG_DEST, "\n");
+    fprintf(LOG_DEST, "\tSAI_z      :");
+    for (size_t i = 0; i < ncanopy; i++) {
+        fprintf(LOG_DEST, "\t%.2f", vvar->SAI_z[i]);
+    }    
 }

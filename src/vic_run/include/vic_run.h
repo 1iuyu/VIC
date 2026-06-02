@@ -62,7 +62,7 @@ void ci_func_PHS(bool, double, double, double *, double *, double *, double *,
 int distribute_node_moisture_properties(cell_data_struct *, soil_con_struct *);
 void distribute_snow_state(snow_data_struct *);
 double devries_weight(double, double, double);
-double dlplc(double, double, double);
+double d1plc(double, double, double);
 int FrictionVelocity(double, double, double *, double *, double *, double *,
                       double *, double);
 int frozen_soil(size_t, double, double *, double *, double *, soil_con_struct *);
@@ -111,7 +111,7 @@ int snow_intercept(double, double, double *, double *, double,
                    snow_data_struct *, veg_var_struct *);
 double snow_aging(double, double, double, snow_data_struct *);
 void snow_combination(double, cell_data_struct *, snow_data_struct *);
-void snow_compaction(double, double, double, energy_bal_struct *, snow_data_struct *);
+void snow_compaction(double, double, double, snow_data_struct *);
 void snow_division(snow_data_struct *);
 double soil_conductivity(double, double, double, double, double, 
                          double, double, double, double, double);

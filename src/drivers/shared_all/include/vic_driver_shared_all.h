@@ -630,9 +630,8 @@ void print_snow_data(snow_data_struct *snow);
 void print_soil_con(soil_con_struct *scon, size_t nlayers, size_t nnodes,
                     size_t nbands);
 void print_stream(stream_struct *stream, metadata_struct *metadata);
-void print_veg_con(veg_con_struct *vcon, size_t nroots,
-                   char carbon, size_t ncanopy);
-void print_veg_lib(veg_lib_struct *vlib, char carbon);
+void print_veg_con(veg_con_struct *vcon, size_t nroots);
+void print_veg_lib(veg_lib_struct *vlib);
 void print_veg_var(veg_var_struct *vvar, size_t ncanopy);
 void print_version(char *);
 void print_usage(char *);

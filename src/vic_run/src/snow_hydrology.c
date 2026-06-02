@@ -23,7 +23,6 @@ snow_hydrology(double             step_dt,
                snow_data_struct  *snow,        
                soil_con_struct   *soil_con)
 {
-    extern option_struct     options;
     extern parameters_struct param;
     size_t      i;  
     double      vapor_grnd;
@@ -83,8 +82,7 @@ snow_hydrology(double             step_dt,
         /* snow layer combination */
         snow_compaction(step_dt, 
                         air_temp,
-                        pressure, energy,
-                        snow);
+                        pressure, snow);
         /* snow layer combination */
         snow_combination(dz_soil[0], cell, snow);
         /* snow layer division */

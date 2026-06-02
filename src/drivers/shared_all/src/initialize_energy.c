@@ -56,8 +56,6 @@ initialize_energy(energy_bal_struct *energy,
             energy[veg].kappa_node[lidx] = 0.0;
             energy[veg].T[lidx] = 0.0;
             energy[veg].last_T[lidx] = 0.0;
-            energy[veg].MELTING[lidx] = 0;
-            energy[veg].fusion_flux[lidx] = 0.0;
             energy[veg].kappa_int[lidx] = 0.0;
             energy[veg].fact[lidx] = 0.0;
         }

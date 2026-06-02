@@ -146,7 +146,6 @@ initialize_parameters()
     param.SNOW_COMPACT_A = 2.5e-6;
     param.SNOW_COMPACT_B = 0.04;
     param.SNOW_COMPACT_C = 2.0;
-    param.SNOW_COMPACT_P = 21.0e-3;
     param.SNOW_COMPACT_DM = 100.0;
     param.SNOW_COMPACT_ETA = 1.33e+6;
     param.SNOW_RADIUS_MIN = 54.526;

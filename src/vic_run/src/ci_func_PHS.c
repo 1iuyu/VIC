@@ -72,7 +72,7 @@ void ci_func_PHS(bool              bflag,
     
     // 如果需要重新计算水分胁迫因子
     if (bflag) {
-        calc_stress(&bsun, &bsha, vegwp, thm, gb_mol, 
+        calc_stress(bsun, bsha, vegwp, thm, gb_mol, 
                     qsat_T, Qair_over,
                     pressure, air_density, 
                     gsminsun, gsminsha,
