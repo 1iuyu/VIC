@@ -131,7 +131,6 @@ display_current_settings(int mode)
     else {
         fprintf(LOG_DEST, "CARBON\t\tFALSE\n");
     }
-    fprintf(LOG_DEST, "Ncanopy\t\t%zu\n", options.Ncanopy);
 
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "Input Forcing Data:\n");

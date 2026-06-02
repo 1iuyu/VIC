@@ -126,9 +126,6 @@ get_global_param(FILE *gp)
                 sscanf(cmdstr, "%*s %s", flgstr);
                 options.TFALLBACK = str_to_bool(flgstr);
             }
-            else if (strcasecmp("CANOPY_LAYERS", optstr) == 0) {
-                sscanf(cmdstr, "%*s %zu", &options.Ncanopy);
-            }
             else if (strcasecmp("CARBON", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
                 options.CARBON = str_to_bool(flgstr);
