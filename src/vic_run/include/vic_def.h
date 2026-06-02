@@ -46,7 +46,7 @@
 #define MAX_SNOWS       3      /**< maximum number of snowpack layers */
 #define MAX_SOILS       45     /**< maximum number of soil nodes */
 #define MAX_SWBANDS     2      /**< maximum number of solar radiation wave bands */
-#define MAX_CANOPYS     4      /**< maximum number of canopy layers for radiative transfer */
+#define MAX_CANOPYS     10     /**< maximum number of canopy layers for radiative transfer */
 #define MAX_HRUS        50     /**< maximum number of hydrological response units */
 
 /***** Define minimum values for model parameters *****/
@@ -498,6 +498,7 @@ typedef struct {
     double smpso;
     // Carbon terms
     char Ctype;                   /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
+    double froot_leaf;            /**< ratio of fine root mass to leaf mass */
     double matric50;              /**< matric potential at which stomatal conductance is reduced by 50% (m) */
     // double kseg_max;              /**< plant segment max conductance (m/s) */
     double kcano_max;             /**< maximum canopy conductance (m/s) */

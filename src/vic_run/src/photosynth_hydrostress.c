@@ -42,11 +42,11 @@ photosynth_hydrostress(double            thm,
     double atmosO2 = pressure * param.PHOTO_OX;
     double atmosCO2 = pressure * param.PHOTO_CX;
     double rho_root = 0.0;
-    double froot_leaf = 0.0;
+    double froot_leaf = veg_lib->froot_leaf;
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
     double *matric = cell->matric;
-    double *Zsum_soil = soil_con->Zsum_soil;
+    double *zc_soil = soil_con->zc_soil;
     double *conductivity = cell->conductivity;
     double lmrc = fth25(param.PHOTO_LMRHD, param.PHOTO_LMRSE);
 //    double hk_total = 0.0;
@@ -67,7 +67,7 @@ photosynth_hydrostress(double            thm,
         double r_soil = sqrt(1.0 / (CONST_PI * rlen_dens));
         double hk_soil = conductivity[i] / r_soil;
         double fs = plc(matric[i], veg_lib->matric50);
-        double hk_root = (fs * rai * veg_lib->kroot_max) / (croot_length + Zsum_soil[i]);
+        double hk_root = (fs * rai * veg_lib->kroot_max) / (croot_length + zc_soil[i]);
         hk_soil = max(hk_soil, param.PHOTO_MINCONDUCT);
         hk_root = max(hk_root, param.PHOTO_MINCONDUCT);
         // 计算土壤和根的总阻力，然后取倒数得到总导水率
@@ -271,7 +271,7 @@ photosynth_hydrostress(double            thm,
                         tpu_sun, tpu_sha,
                         kp_sun, kp_sha,
                         &gs_mol_sun, &gs_mol_sha,
-                        cell, soil_con, 
+                        cell, soil_con,
                         veg_var, veg_lib);
 
             if (veg_var->an_sun < 0.0) {
@@ -367,6 +367,16 @@ photosynth_hydrostress(double            thm,
             vegwp[0] = 1.0; // temporary signal for night time
             double gsminsun = veg_lib->medlynint;
             double gsminsha = veg_lib->medlynint;
+            // 调用calc_stress函数计算水分胁迫因子
+            calc_stress(&bsun, &bsha, 
+                        vegwp, thm, gb_mol, 
+                        qsat_T, Qair_over,
+                        pressure, 
+                        air_density,
+                        gsminsun, gsminsha, 
+                        cell, soil_con, 
+                        veg_var, veg_lib);
+
             veg_var->ac_sun = 0.0;
             veg_var->ac_sha = 0.0;
             veg_var->ag_sun = 0.0;
@@ -391,16 +401,6 @@ photosynth_hydrostress(double            thm,
             psn_wc_sha[i] = 0.0;
             psn_wj_sha[i] = 0.0;
             psn_wp_sha[i] = 0.0;
-            // 调用calc_stress函数计算水分胁迫因子
-            calc_stress(&bsun, &bsha, 
-                        vegwp, thm, gb_mol, 
-                        qsat_T, Qair_over,
-                        pressure, 
-                        air_density,
-                        gsminsun, gsminsha, 
-                        cell, soil_con, 
-                        veg_var, veg_lib);
-
         }
     }
     // 计算冠层阻力

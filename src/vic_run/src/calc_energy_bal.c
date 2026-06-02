@@ -45,6 +45,16 @@ calc_energy_bal(size_t             hidx,
     *****************************/
     compute_soil_resis(cell, soil_con);
 
+    /***************************************
+      Compute the vapor flux between nodes
+    ***************************************/
+    soil_vapor_flux(pressure, cell, soil_con);
+
+    /***************************************
+      Compute the hydraulic conductivity
+    ***************************************/
+    soil_hydraulic_conductivity(cell, soil_con);
+
     /**********************************
     Compute psychrometric variables
     **********************************/
@@ -135,16 +145,6 @@ calc_energy_bal(size_t             hidx,
         log_err("Emitted longwave <= 0 (value: %.4f). Components: lw_out = %.4f, lw_in = %.4f",
         lw_emit, energy->longwave, longwave);
     }
-
-    /***************************************
-      Compute the vapor flux between nodes
-    ***************************************/
-    soil_vapor_flux(pressure, cell, soil_con);
-
-    /***************************************
-      Compute the hydraulic conductivity between nodes
-    ***************************************/
-    soil_hydraulic_conductivity(cell, soil_con);
 
     /************************************
       Compute snow and soil temperature

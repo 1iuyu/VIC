@@ -80,6 +80,7 @@ read_veglib(FILE   *veglib,
                             "Ctype is deprecated.  Please replace these with "
                             "\"0\" and \"1\", respectively");
             }
+            fscanf(veglib, "%lf", &temp[i].froot_leaf);
             fscanf(veglib, "%lf", &temp[i].theta_cj);
             fscanf(veglib, "%lf", &temp[i].kcano_max);
             fscanf(veglib, "%lf", &temp[i].kroot_max);
@@ -173,6 +174,7 @@ read_veglib(FILE   *veglib,
     temp[i].smpso = 0.0;
     temp[i].trunk_dia = 0.0;
     temp[i].Ctype = PHOTO_C3;
+    temp[i].froot_leaf = 0.0;
     temp[i].theta_cj = 0.0;
     temp[i].kcano_max = 0.0;
     temp[i].kroot_max = 0.0;

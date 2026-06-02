@@ -206,7 +206,7 @@ print_option(option_struct *option)
     fprintf(LOG_DEST, "\tLAI_SRC              : %d\n", option->LAI_SRC);
     fprintf(LOG_DEST, "\tSAI_SRC              : %d\n", option->SAI_SRC);
     fprintf(LOG_DEST, "\tFCAN_SRC             : %d\n", option->FCAN_SRC);
-    fprintf(LOG_DEST, "\tPARAM_FROM_SOIL    : %s\n",
+    fprintf(LOG_DEST, "\tPARAM_FROM_SOIL      : %s\n",
             option->PARAM_FROM_SOIL ? "true" : "false");
     fprintf(LOG_DEST, "\tSTATE_FORMAT         : %d\n", option->STATE_FORMAT);
     fprintf(LOG_DEST, "\tINIT_STATE           : %s\n",

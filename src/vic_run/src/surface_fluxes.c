@@ -202,7 +202,7 @@ surface_fluxes(size_t             hidx,
         while (energy_flag == false || moist_flag == false) {
 
             /**********************************************
-             Solve Energy Balance Components
+                Solve Energy Balance Components
             **********************************************/
             ErrorFlag = calc_energy_bal(hidx, step_dt, 
                                         air_temp, force, 
@@ -224,7 +224,7 @@ surface_fluxes(size_t             hidx,
             }
             
             /*******************************************
-             Solve Water Balance Components
+                Solve Water Balance Components
             ********************************************/
             ErrorFlag = calc_water_bal(step_dt, pressure,
                                        &iter_energy, 

@@ -42,6 +42,13 @@ calc_stress(double           *bsun,
     double matric50 = veg_lib->matric50; // 50%失水点的水势
     double leaf_sun = veg_var->leaf_sun;
     double leaf_sha = veg_var->leaf_sha;
+    for (int i = 0; i < 4; i++) {
+        dx[i] = 0.0;
+        mat_RHS[i] = 0.0;
+    }
+    for (int i = 0; i < 16; i++) {
+        mat_A[i] = 0.0;
+    }
     // 夜间处理：如果阳叶水势为正，说明植物处于夜间状态，使用阴叶水势作为阳叶水势的近似值
     if (vegwp[0] > 0.0) {
         night = true;
@@ -419,9 +426,9 @@ void spacF(double           *vegwp,
         grav2[i] = 0.0;
     }
     // 计算重力势
-    double grav1 = Canopy_Upper * MM_PER_M;
+    double grav1 = Canopy_Upper;
     for (i = 0; i < Nsoil; i++) {
-        grav2[i] = zc_soil[i] * MM_PER_M;
+        grav2[i] = zc_soil[i];
     }
     // 计算土壤相关项的累加
     k_root_soil = 0.0;

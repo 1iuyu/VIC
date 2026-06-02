@@ -103,7 +103,7 @@ ActiveLayer(cell_data_struct *cell,
 }
 
 /******************************************************************************
- * @brief    Calculate the .
+ * @brief    Calculate the root moisture stress based on the active layer depth and soil moisture conditions.
  *****************************************************************************/
 void
 calc_root_moist_stress(cell_data_struct *cell,
