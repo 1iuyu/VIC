@@ -123,26 +123,10 @@ photosynth_hydrostress(double            thm,
     double gs_mol_sha = 0.0;
     double Ra_sun[MAX_CANOPYS];
     double Ra_sha[MAX_CANOPYS];
-    double psn_sun[MAX_CANOPYS];
-    double psn_sha[MAX_CANOPYS];
-    double psn_wc_sun[MAX_CANOPYS];
-    double psn_wj_sun[MAX_CANOPYS];
-    double psn_wp_sun[MAX_CANOPYS];
-    double psn_wc_sha[MAX_CANOPYS];
-    double psn_wj_sha[MAX_CANOPYS];
-    double psn_wp_sha[MAX_CANOPYS];
     // 初始化光合作用和水分胁迫变量
-    for (i = 0; i < Ncanopy; i++) {
+    for (i = 0; i < MAX_CANOPYS; i++) {
         Ra_sun[i] = 0.0;
         Ra_sha[i] = 0.0;
-        psn_sun[i] = 0.0;
-        psn_sha[i] = 0.0;
-        psn_wc_sun[i] = 0.0;
-        psn_wj_sun[i] = 0.0;
-        psn_wp_sun[i] = 0.0;
-        psn_wc_sha[i] = 0.0;
-        psn_wj_sha[i] = 0.0;
-        psn_wp_sha[i] = 0.0;
     }
     double LAIcanopy = 0.0;
     double nscaler_sun = 0.0;
@@ -305,48 +289,6 @@ photosynth_hydrostress(double            thm,
             gs = gs_mol_sha / CF;
             Ra_sha[i] = min(1.0 / gs, param.PHOTO_RSMAX);
             
-            // ========== 记录光合速率和限制因子 ==========
-            // 阳叶
-            psn_sun[i] = veg_var->ag_sun;
-            psn_wc_sun[i] = 0.0;
-            psn_wj_sun[i] = 0.0;
-            psn_wp_sun[i] = 0.0;
-            // 根据限制因子分配光合速率
-            if (veg_var->ac_sun <= veg_var->aj_sun && 
-                                veg_var->ac_sun <= veg_var->ap_sun) {
-                psn_wc_sun[i] = psn_sun[i];
-            } 
-            else if (veg_var->aj_sun < veg_var->ac_sun && 
-                                veg_var->aj_sun <= veg_var->ap_sun) {
-                psn_wj_sun[i] = psn_sun[i];
-            } 
-            else if (veg_var->ap_sun < veg_var->ac_sun && 
-                                veg_var->ap_sun < veg_var->aj_sun) {
-                psn_wp_sun[i] = psn_sun[i];
-            } 
-            else if (veg_var->ap_sun < veg_var->ac_sun && 
-                                veg_var->ap_sun < veg_var->aj_sun) {
-                psn_wp_sun[i] = psn_sun[i];
-            }
-            // 阴叶
-            psn_sha[i] = veg_var->ag_sha;
-            psn_wc_sha[i] = 0.0;
-            psn_wj_sha[i] = 0.0;
-            psn_wp_sha[i] = 0.0;
-            
-            if (veg_var->ac_sha <= veg_var->aj_sha && 
-                                veg_var->ac_sha <= veg_var->ap_sha) {
-                psn_wc_sha[i] = psn_sha[i];
-            } 
-            else if (veg_var->aj_sha < veg_var->ac_sha && 
-                                veg_var->aj_sha <= veg_var->ap_sha) {
-                psn_wj_sha[i] = psn_sha[i];
-            } 
-            else if (veg_var->ap_sha < veg_var->ac_sha && 
-                                veg_var->ap_sha < veg_var->aj_sha) {
-                psn_wp_sha[i] = psn_sha[i];
-            }
-            
             // ========== Ball-Berry 一致性校验 ==========
             // 阳叶
             hs = (gb_mol * ceair + gs_mol_sun * Qair_over) / ((gb_mol + gs_mol_sun) * Qair_over);
@@ -392,14 +334,6 @@ photosynth_hydrostress(double            thm,
             gs_mol_sha = 0.0;
             Ra_sun[i] = min(param.PHOTO_RSMAX, 1.0 / (max(bsun * gsminsun, 1.0)) * CF);
             Ra_sha[i] = min(param.PHOTO_RSMAX, 1.0 / (max(bsha * gsminsha, 1.0)) * CF);
-            psn_sun[i] = 0.0;
-            psn_sha[i] = 0.0;
-            psn_wc_sun[i] = 0.0;
-            psn_wj_sun[i] = 0.0;
-            psn_wp_sun[i] = 0.0;
-            psn_wc_sha[i] = 0.0;
-            psn_wj_sha[i] = 0.0;
-            psn_wp_sha[i] = 0.0;
         }
     }
     // 计算冠层阻力

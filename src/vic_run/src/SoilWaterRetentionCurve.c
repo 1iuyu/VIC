@@ -17,11 +17,11 @@
  * and the matric potential.
  *****************************************************************************/
 double
-SoilWaterRetentionCurve(int               flag,
-                        size_t            idx,
-                        double            liq,
-                        double            matric,
-                        soil_con_struct  *soil_con)
+SoilWaterRetentionCurve(int              flag,
+                        size_t           idx,
+                        double           liq,
+                        double           matric,
+                        soil_con_struct *soil_con)
 {
     extern option_struct options;
     double Se, tmp;
