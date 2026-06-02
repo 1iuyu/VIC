@@ -366,7 +366,7 @@ func_canopy_energy_bal(size_t             hidx,
     /********************************
       Vegetated surface energy flux
     ********************************/
-    double error = (1.0 - f_abs_stem) * (NetShortSub + coef_lw_atmos + coef_lw_canopy * pow(Tfoliage, 3.0) *
+    energy->error = (1.0 - f_abs_stem) * (NetShortSub + coef_lw_atmos + coef_lw_canopy * pow(Tfoliage, 3.0) *
                 (Tfoliage + 4.0 * delt_T) + coef_lw_grnd * pow(Tgrnd, 4.0)) -
                 SensibleLeaf - CONST_LATVAP * cell->canopyevap - 
                         ((Tfoliage - Tfoliage_init) * cp_leaf / step_dt);

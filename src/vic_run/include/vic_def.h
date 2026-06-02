@@ -683,7 +683,8 @@ typedef struct {
     double deriv_evap;
     double qsdT;                /**< temperature derivative of "Qair_grnd" */
     double delt_T;
-    double delt_Q;
+    double delt_Q;              
+    double error;                /**< energy balance error (W/m^2) */
     // Fluxes
     double advection;            /**< advective flux (Wm-2) */
     double AdvectSub;
@@ -800,6 +801,7 @@ typedef struct {
     double ksha_vcmax;          /**< leaf to canopy scaling coefficient, shaded leaf vcmax */
     double NetPhotosha;         /**< net shaded leaf photosynthesis (umol CO2/m**2/s) */
     double NetPhotosun;         /**< net sunlit leaf photosynthesis (umol CO2/m**2/s) */
+    double PhotoError[2];          /**< photo synthetic error */
 } veg_var_struct;
 
 /******************************************************************************

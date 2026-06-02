@@ -131,7 +131,6 @@ photosynth_hydrostress(double            thm,
     double LAIcanopy = 0.0;
     double nscaler_sun = 0.0;
     double nscaler_sha = 0.0;
-    double gs_mol_err = 0.0;
     for (i = 0; i < Ncanopy; i++) {
         if (i == 0) {
             LAIcanopy = 0.5 * LAI_z[i];
@@ -293,13 +292,13 @@ photosynth_hydrostress(double            thm,
             // 阳叶
             hs = (gb_mol * ceair + gs_mol_sun * Qair_over) / ((gb_mol + gs_mol_sun) * Qair_over);
             
-            gs_mol_err = veg_lib->medlynslope * max(veg_var->an_sun, 0.0) * hs / cs_sun *
+            veg_var->PhotoError[0] = veg_lib->medlynslope * max(veg_var->an_sun, 0.0) * hs / cs_sun *
                             pressure + max(bsun * veg_lib->medlynint, 1.0);
             
             // 阴叶
             hs = (gb_mol * ceair + gs_mol_sha * Qair_over) / ((gb_mol + gs_mol_sha) * Qair_over);
             
-            gs_mol_err = veg_lib->medlynslope * max(veg_var->an_sha, 0.0) * hs / cs_sha *
+            veg_var->PhotoError[1] = veg_lib->medlynslope * max(veg_var->an_sha, 0.0) * hs / cs_sha *
                             pressure + max(bsha * veg_lib->medlynint, 1.0);
                 
         }
