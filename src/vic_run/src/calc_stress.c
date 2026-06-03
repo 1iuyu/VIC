@@ -42,11 +42,11 @@ calc_stress(double           *bsun,
     double matric50 = veg_lib->matric50; // 50%失水点的水势
     double leaf_sun = veg_var->leaf_sun;
     double leaf_sha = veg_var->leaf_sha;
-    for (int i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++) {
         dx[i] = 0.0;
         mat_RHS[i] = 0.0;
     }
-    for (int i = 0; i < 16; i++) {
+    for (i = 0; i < 16; i++) {
         mat_A[i] = 0.0;
     }
     // 夜间处理：如果阳叶水势为正，说明植物处于夜间状态，使用阴叶水势作为阳叶水势的近似值
@@ -71,7 +71,7 @@ calc_stress(double           *bsun,
              &qflx_sha, veg_var);
     
     // 检查是否存在足够的叶面积和正的蒸腾需求
-    if ((leaf_sun > MIN_VEG_LAI || leaf_sha > MIN_VEG_LAI) &&
+    if ((leaf_sun > MIN_TOL_LAI || leaf_sha > MIN_TOL_LAI) &&
         (qflx_sun > 0.0 || qflx_sha > 0.0)) {
 
         iter = 0;
@@ -103,7 +103,7 @@ calc_stress(double           *bsun,
             }
             
             // 根据叶面积情况计算dx
-            if (leaf_sun > MIN_VEG_LAI && leaf_sha > MIN_VEG_LAI) {
+            if (leaf_sun > MIN_TOL_LAI && leaf_sha > MIN_TOL_LAI) {
                 int ipiv[4];
                 int info = LAPACKE_dgesv(LAPACK_COL_MAJOR, 
                                          4, 1, mat_A, 4, ipiv, mat_RHS, 4);
@@ -121,7 +121,7 @@ calc_stress(double           *bsun,
                 // 根据哪个叶面积为零来调整计算
                 int ipiv[3];
                 double A_3x3[9], B_3x3[3];
-                if (leaf_sha > MIN_VEG_LAI) {
+                if (leaf_sha > MIN_TOL_LAI) {
                     // 阳叶LAI=0，求解阴叶-木质部-根系统
                     for (i = 0; i < 3; i++) {
                         for (j = 0; j < 3; j++) {
@@ -183,12 +183,12 @@ calc_stress(double           *bsun,
             }
             
             // 更新水势
-            if (leaf_sun > MIN_VEG_LAI && leaf_sha > MIN_VEG_LAI) {
+            if (leaf_sun > MIN_TOL_LAI && leaf_sha > MIN_TOL_LAI) {
                 for (j = 0; j < 4; j++) {
                     vegwp[j] += dx[j];
                 }
             } 
-            else if (leaf_sha > MIN_VEG_LAI) {
+            else if (leaf_sha > MIN_TOL_LAI) {
                 for (j = 0; j < 4; j++) {
                     vegwp[j] += dx[j];
                 }

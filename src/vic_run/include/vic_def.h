@@ -54,8 +54,8 @@
 #define MIN_FCANOPY    0.0001  /**< Minimum allowable canopy fraction */
 #define MIN_SNOW_WETFRAC 0.01  /**< Minimum fraction of snow depth to be considered wet */
 #define MIN_SOILMOIST    0.01  /**< Minimum soil moisture content */
-#define MIN_VEG_LAI 0.05
-#define MIN_VEG_SAI 0.05
+#define MIN_VEG_LAI 0.05       /**< */
+#define MIN_TOL_LAI 0.001      /**< Minimum allowable leaf area index for transpiration calculations */
 
 /***** Define minimum and maximum values for model timesteps *****/
 #define MIN_SUBDAILY_STEPS_PER_DAY  4
