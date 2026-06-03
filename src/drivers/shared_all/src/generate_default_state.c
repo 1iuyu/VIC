@@ -29,9 +29,11 @@ generate_default_state(force_data_struct *force,
     double      init_temp;
     cell_data_struct *cell;
     snow_data_struct *snow;
+    veg_var_struct *veg_var;
     energy_bal_struct *energy;
     cell = all_vars->cell;
     snow = all_vars->snow;
+    veg_var = all_vars->veg_var;
     energy = all_vars->energy;
     Nveg = veg_con[0].vegetat_type_num;
     double *gravel_node = soil_con->gravel_node;
@@ -186,6 +188,17 @@ generate_default_state(force_data_struct *force,
         Cv = veg_con[veg].Cv;
         if (Cv > 0.0) {
             cell[veg].max_daylen = max_daylen;
+        }
+    }
+    /******************************************
+       initialize vegetation variables
+    ******************************************/
+    for (veg = 0; veg <= Nveg; veg++) {
+        Cv = veg_con[veg].Cv;
+        if (Cv > 0.0) {
+            for (i = 0; i < 4; i++) {
+                veg_var[veg].mat_VEG[i] = cell[veg].matric[0];
+            }
         }
     }
 }
