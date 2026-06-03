@@ -311,10 +311,11 @@ func_canopy_energy_bal(size_t             hidx,
                 (wtgaq * (qsat_T + qsatdT * delt_T) -
                  wtgq0 * Qair_grnd - wtaq0 * Qair);
         cell->canopyevap = rpp * efpot;
-        double ecidif = max(0.0, cell->canopyevap - cell->transp - canopy_swq / step_dt);
+        double res_energy = max(0.0, cell->canopyevap - cell->transp - canopy_swq / step_dt);
         cell->canopyevap = min(cell->canopyevap, cell->transp + canopy_swq / step_dt);
 
-        // Update SH and lw_leaf for changes in t_veg
+        // Update 
+        SensibleLeaf += coef_sensible * wtga * delt_T + CONST_LATVAP * res_energy;
         SensibleStem += air_density * CONST_CPDAIR * wtstem * (-wtl0 * delt_T);
 
         svp_flags(Tfoliage, pressure, 

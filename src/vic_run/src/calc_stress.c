@@ -12,7 +12,7 @@
 int
 calc_stress(double           *bsun,
             double           *bsha,
-            double           *vegwp,
+            double           *mat_VEG,
             double            thm,
             double            gb_mol,
             double            qsat_T,
@@ -34,12 +34,12 @@ calc_stress(double           *bsun,
     bool night = false;
     (*bsun) = 1.0;
     (*bsha) = 1.0;
-    double qflx_sun = 0.0;
-    double qflx_sha = 0.0;
-    double dx[4]; // 水势更新量
+    double qflx_sun = 0.0; // Sunlit leaf transpiration [kg/m2/s]
+    double qflx_sha = 0.0; // Shaded leaf transpiration [kg/m2/s]
+    double dx[4]; // 水势更新量 [m]
     double mat_A[16]; // 雅可比矩阵
-    double mat_RHS[4]; // 右侧项
-    double matric50 = veg_lib->matric50; // 50%失水点的水势
+    double mat_RHS[4]; // 右侧项 [m/s]
+    double matric50 = veg_lib->matric50; // 50%失水点的水势[m]
     double leaf_sun = veg_var->leaf_sun;
     double leaf_sha = veg_var->leaf_sha;
     for (i = 0; i < 4; i++) {
@@ -50,9 +50,9 @@ calc_stress(double           *bsun,
         mat_A[i] = 0.0;
     }
     // 夜间处理：如果阳叶水势为正，说明植物处于夜间状态，使用阴叶水势作为阳叶水势的近似值
-    if (vegwp[0] > 0.0) {
+    if (mat_VEG[0] > 0.0) {
         night = true;
-        vegwp[0] = vegwp[1];
+        mat_VEG[0] = mat_VEG[1];
     }
     else {
         night = false;
@@ -81,12 +81,12 @@ calc_stress(double           *bsun,
 
             iter++;
             // 计算通量残差
-            spacF(vegwp, mat_A, mat_RHS, 
+            spacF(mat_VEG, mat_A, mat_RHS, 
                   qflx_sun, qflx_sha, cell, 
                   soil_con, veg_var, veg_lib);
             double sum = 0.0;
             for (i = 0; i < 4; i++) {
-                sum += vegwp[i] * vegwp[i];
+                sum += mat_RHS[i] * mat_RHS[i];
             }
             double f_norm = sqrt(sum);
             
@@ -175,8 +175,8 @@ calc_stress(double           *bsun,
                 }
             }
             
-            if (max_dx > 50000.0) {
-                double scale = 50000.0 / max_dx;
+            if (max_dx > 50.0) {
+                double scale = 50.0 / max_dx;
                 for (j = 0; j < 4; j++) {
                     dx[j] *= scale;
                 }
@@ -185,21 +185,21 @@ calc_stress(double           *bsun,
             // 更新水势
             if (leaf_sun > MIN_TOL_LAI && leaf_sha > MIN_TOL_LAI) {
                 for (j = 0; j < 4; j++) {
-                    vegwp[j] += dx[j];
+                    mat_VEG[j] += dx[j];
                 }
             } 
             else if (leaf_sha > MIN_TOL_LAI) {
                 for (j = 0; j < 4; j++) {
-                    vegwp[j] += dx[j];
+                    mat_VEG[j] += dx[j];
                 }
-                vegwp[0] = vegwp[2];
+                mat_VEG[0] = mat_VEG[2];
             } 
             else {
                 /* laisun > 0, laisha == 0 */
-                vegwp[2] += dx[2];
-                vegwp[3] += dx[3];
-                vegwp[0] += dx[1];
-                vegwp[1] = vegwp[2];
+                mat_VEG[0] += dx[1];
+                mat_VEG[1] = mat_VEG[2];
+                mat_VEG[2] += dx[2];
+                mat_VEG[3] += dx[3];
             }
             
             /* 检查水势变化是否足够小 */
@@ -208,19 +208,19 @@ calc_stress(double           *bsun,
                 sum += dx[j] * dx[j];
             }
             double dx_norm = sqrt(sum);
-            if (dx_norm < 1.0e-9) {
+            if (dx_norm < 1.0e-12) {
                 break;
             }
             
             // 强制保证SPAC梯度朝向大气
-            if (vegwp[2] > vegwp[3]) {
-                vegwp[2] = vegwp[3];
+            if (mat_VEG[2] > mat_VEG[3]) {
+                mat_VEG[2] = mat_VEG[3];
             }
-            if (vegwp[0] > vegwp[2]) {
-                vegwp[0] = vegwp[2];
+            if (mat_VEG[0] > mat_VEG[2]) {
+                mat_VEG[0] = mat_VEG[2];
             }
-            if (vegwp[1] > vegwp[2]) {
-                vegwp[1] = vegwp[2];
+            if (mat_VEG[1] > mat_VEG[2]) {
+                mat_VEG[1] = mat_VEG[2];
             }
         } while (1);
         
@@ -230,21 +230,21 @@ calc_stress(double           *bsun,
     
     // 根据求解结果计算胁迫系数
     double qsun, qsha;
-    double soilflux = 0.0;
+    double transp = 0.0;
     if (flag) {
         // 代数求解
-        getvegwp(vegwp, gb_mol, &gs0sun, &gs0sha, 
-                 qsat_T, Qair_over, &soilflux, 
+        getvegwp(mat_VEG, gb_mol, &gs0sun, &gs0sha, 
+                 qsat_T, Qair_over, &transp, 
                  pressure, air_density, thm, 
                  cell, soil_con, veg_var, veg_lib);
 
-        *bsun = plc(vegwp[0], matric50);
-        *bsha = plc(vegwp[1], matric50);
+        *bsun = plc(mat_VEG[0], matric50);
+        *bsha = plc(mat_VEG[1], matric50);
     } 
     else {
         // 计算衰减后的实际通量
-        qsun = qflx_sun * plc(vegwp[0], matric50);
-        qsha = qflx_sha * plc(vegwp[1], matric50);
+        qsun = qflx_sun * plc(mat_VEG[0], matric50);
+        qsha = qflx_sha * plc(mat_VEG[1], matric50);
         
         // 反推受胁迫的气孔导度
         CALC_TRANSP = false;
@@ -259,14 +259,14 @@ calc_stress(double           *bsun,
             *bsun = gs0sun / gs_mol_sun;
         } 
         else {
-            *bsun = plc(vegwp[0], matric50);
+            *bsun = plc(mat_VEG[0], matric50);
         }
         
         if (qflx_sha > 0.0) {
             *bsha = gs0sha / gs_mol_sha;
         } 
         else {
-            *bsha = plc(vegwp[1], matric50);
+            *bsha = plc(mat_VEG[1], matric50);
         }
     }
     
@@ -282,15 +282,15 @@ calc_stress(double           *bsun,
     if (night) {
         gs0sun = (*bsun) * gs_mol_sun;
         gs0sha = (*bsha) * gs_mol_sha;
-        getvegwp(vegwp, gb_mol, &gs0sun, &gs0sha, 
-                 qsat_T, Qair_over, &soilflux,
+        getvegwp(mat_VEG, gb_mol, &gs0sun, &gs0sha, 
+                 qsat_T, Qair_over, &transp,
                  pressure, air_density, thm, 
                  cell, soil_con, veg_var, veg_lib);
 
-        if (soilflux < 0.0) {
-            soilflux = 0.0;
+        if (transp < 0.0) {
+            transp = 0.0;
         }
-        cell->transp = soilflux;
+        cell->transp = transp;
     }
 
     return 0;
@@ -321,11 +321,11 @@ void get_qflx(bool            CALC_TRANSP,
     double leafsun = veg_var->leaf_sun;
     double leafsha = veg_var->leaf_sha;
     // 计算转换因子
-    double cf = pressure / (CONST_RGAS * thm) * 1.0e6;
+    double CF = pressure / (CONST_RGAS * thm) * 1.0e6;
     // 计算叶片总热导度 [m/s]
     double wtl = (NetLAI + NetSAI) * gb_mol;
-    // potential latent energy flux [kg/m2/s]
-    double efpot = air_density * wtl * (qsat_T - Qair_over);
+    // potential latent energy flux [m/s]
+    double efpot = air_density * wtl * (qsat_T - Qair_over) / CONST_RHOFW;
     
     if (CALC_TRANSP) {
         if ((efpot > 0.0) && (NetLAI > 0.0)) {
@@ -334,7 +334,7 @@ void get_qflx(bool            CALC_TRANSP,
                 rppdry_sun = dryFrac / gb_mol * 
                              (leafsun / (1.0 / gb_mol + 1.0 / (*gs_mol_sun))) / 
                              NetLAI;
-                *qflx_sun = efpot * rppdry_sun / cf;
+                *qflx_sun = efpot * rppdry_sun / CF;
             } else {
                 *qflx_sun = 0.0;
             }
@@ -343,7 +343,7 @@ void get_qflx(bool            CALC_TRANSP,
                 rppdry_sha = dryFrac / gb_mol * 
                              (leafsha / (1.0 / gb_mol + 1.0 / (*gs_mol_sha))) / 
                              NetLAI;
-                *qflx_sha = efpot * rppdry_sha / cf;
+                *qflx_sha = efpot * rppdry_sha / CF;
             } else {
                 *qflx_sha = 0.0;
             }
@@ -354,43 +354,49 @@ void get_qflx(bool            CALC_TRANSP,
             *qflx_sha = 0.0;
         }
         
-    } else {    
+    } 
+    else {    
         // 反推阳叶气孔导度
         if (*qflx_sun > 0.0) {
-            double denominator = efpot * dryFrac * leafsun - (*qflx_sun) * cf * NetLAI;
+            double denominator = efpot * dryFrac * leafsun - (*qflx_sun) * CF * NetLAI;
             if (fabs(denominator) > 1.0e-15) {
-                *gs_mol_sun = gb_mol * (*qflx_sun) * cf * NetLAI / denominator;
+                *gs_mol_sun = gb_mol * (*qflx_sun) * CF * NetLAI / denominator;
                 // 确保导度为非负
-                if (*gs_mol_sun < 0.0) *gs_mol_sun = 0.0;
-            } else {
-                *gs_mol_sun = 0.0;
+                if (*gs_mol_sun < 0.0) {
+                    (*gs_mol_sun) = 0.0;
+                }
+            } 
+            else {
+                (*gs_mol_sun) = 0.0;
             }
-        } else {
-            *gs_mol_sun = 0.0;
+        } 
+        else {
+            (*gs_mol_sun) = 0.0;
         }
         
         // 反推阴叶气孔导度
         if (*qflx_sha > 0.0) {
-            double denominator = efpot * dryFrac * leafsha - (*qflx_sha) * cf * NetLAI;
+            double denominator = efpot * dryFrac * leafsha - (*qflx_sha) * CF * NetLAI;
             if (fabs(denominator) > 1.0e-15) {
-                *gs_mol_sha = gb_mol * (*qflx_sha) * cf * NetLAI / denominator;
+                *gs_mol_sha = gb_mol * (*qflx_sha) * CF * NetLAI / denominator;
 
                 if (*gs_mol_sha < 0.0) {
-                    *gs_mol_sha = 0.0;
+                    (*gs_mol_sha) = 0.0;
                 }
             } 
             else {
-                *gs_mol_sha = 0.0;
+                (*gs_mol_sha) = 0.0;
             }
-        } else {
-            *gs_mol_sha = 0.0;
+        } 
+        else {
+            (*gs_mol_sha) = 0.0;
         }
     }
 }
 /******************************************************************************
  * @brief    Calculate temperature scaling factor.
  *****************************************************************************/
-void spacF(double           *vegwp,
+void spacF(double           *mat_VEG,
            double           *mat_A,
            double           *mat_RHS,
            double            qflx_sun, 
@@ -402,9 +408,9 @@ void spacF(double           *vegwp,
 {
     // 局部变量
     double temp;               /* 临时变量，用于交换 f(sun) 和 f(sha) */
-    double k_leaf_sun;         /* 阳叶导度 [mm/s] */
-    double k_leaf_sha;         /* 阴叶导度 [mm/s] */
-    double k_xyl;              /* 木质部导度 [mm/s] */
+    double k_leaf_sun;         /* 阳叶导度 [m/s] */
+    double k_leaf_sha;         /* 阴叶导度 [m/s] */
+    double k_xyl;              /* 木质部导度 [m/s] */
     double k_root_soil;        /* 根-土壤导度 */
     double root_soil_pot;      /* 根-土壤水势差累加 */
     double Canopy_Upper = veg_lib->Canopy_Upper;
@@ -435,23 +441,23 @@ void spacF(double           *vegwp,
     root_soil_pot = 0.0;
     for (j = 0; j < Nsoil; j++) {
         k_root_soil += hksr_int[j];
-        root_soil_pot += hksr_int[j] * (vegwp[3] + grav2[j] - matric[j]);
+        root_soil_pot += hksr_int[j] * (mat_VEG[3] + grav2[j] - matric[j]);
     }
     // 计算各段的导度衰减函数
-    double fsto1 = plc(vegwp[0], matric50);     // 阳叶导度衰减
-    double fsto2 = plc(vegwp[1], matric50);     // 阴叶导度衰减
-    double fx    = plc(vegwp[2], matric50);     // 木质部导度衰减
-    double fr    = plc(vegwp[3], matric50);     // 根部导度衰减
+    double fsto1 = plc(mat_VEG[0], matric50);
+    double fsto2 = plc(mat_VEG[1], matric50);
+    double fx    = plc(mat_VEG[2], matric50);
+    double fr    = plc(mat_VEG[3], matric50);
     // 计算各段的导数
-    double dfsto1 = d1plc(vegwp[0], matric50, 2.0);     // 阳叶导度衰减的导数
-    double dfsto2 = d1plc(vegwp[1], matric50, 2.0);     // 阴叶导度衰减的导数
-    double dfx    = d1plc(vegwp[2], matric50, 2.0);     // 木质部导度衰减的导数
-    double dfr    = d1plc(vegwp[3], matric50, 2.0);     // 根部导度衰减的导数
+    double dfsto1 = d1plc(mat_VEG[0], matric50, 2.0);
+    double dfsto2 = d1plc(mat_VEG[1], matric50, 2.0);
+    double dfx    = d1plc(mat_VEG[2], matric50, 2.0);
+    double dfr    = d1plc(mat_VEG[3], matric50, 2.0);
 
     // 计算各段的实际导度
-    k_leaf_sun = leaf_sun * kmax_sun * fx;           // 阳叶到木质部导度
-    k_leaf_sha = leaf_sha * kmax_sha * fx;           // 阴叶到木质部导度
-    k_xyl      = NetSAI * kmax_xyl / Canopy_Upper * fr;      // 木质部导度
+    k_leaf_sun = leaf_sun * kmax_sun * fx;
+    k_leaf_sha = leaf_sha * kmax_sha * fx;
+    k_xyl      = NetSAI * kmax_xyl / Canopy_Upper * fr;
     // 构建雅可比矩阵A
     mat_A[0] = -leaf_sun * kmax_sun * fx - qflx_sun * dfsto1;
     mat_A[1] = 0.0;                      
@@ -461,52 +467,52 @@ void spacF(double           *vegwp,
     mat_A[5] = -leaf_sha * kmax_sha * fx - qflx_sha * dfsto2;
     mat_A[6] = leaf_sha * kmax_sha * fx;
     mat_A[7] = 0.0;
-    mat_A[8] = leaf_sun * kmax_sun * dfx * (vegwp[2] - vegwp[0]) +
+    mat_A[8] = leaf_sun * kmax_sun * dfx * (mat_VEG[2] - mat_VEG[0]) +
                leaf_sun * kmax_sun * fx;
-    mat_A[9] = leaf_sha * kmax_sha * dfx * (vegwp[2] - vegwp[1]) +                   
+    mat_A[9] = leaf_sha * kmax_sha * dfx * (mat_VEG[2] - mat_VEG[1]) +                   
                leaf_sha * kmax_sha * fx;
-    mat_A[10] = -leaf_sun * kmax_sun * dfx * (vegwp[2] - vegwp[0]) -               
+    mat_A[10] = -leaf_sun * kmax_sun * dfx * (mat_VEG[2] - mat_VEG[0]) -               
                 leaf_sun * kmax_sun * fx -
-                leaf_sha * kmax_sha * dfx * (vegwp[2] - vegwp[1]) -
+                leaf_sha * kmax_sha * dfx * (mat_VEG[2] - mat_VEG[1]) -
                 leaf_sha * kmax_sha * fx -
                 NetSAI * kmax_xyl / Canopy_Upper * fr;
     mat_A[11] = NetSAI * kmax_xyl / Canopy_Upper * fr;
     mat_A[12] = 0.0;                                                              
     mat_A[13] = 0.0;                                                                  
-    mat_A[14] = NetSAI * kmax_xyl / Canopy_Upper * dfr * (vegwp[3] - vegwp[2] - grav1) +
+    mat_A[14] = NetSAI * kmax_xyl / Canopy_Upper * dfr * (mat_VEG[3] - mat_VEG[2] - grav1) +
                 NetSAI * kmax_xyl / Canopy_Upper * fr;
     mat_A[15] = -NetSAI * kmax_xyl / Canopy_Upper * fr -                                
                  NetSAI * kmax_xyl / Canopy_Upper * dfr * 
-                (vegwp[3] - vegwp[2] - grav1) - k_root_soil;
+                (mat_VEG[3] - mat_VEG[2] - grav1) - k_root_soil;
     // 构建右侧项RHS
-    mat_RHS[0] = qflx_sun * fsto1 - k_leaf_sun * (vegwp[2] - vegwp[0]);
+    mat_RHS[0] = qflx_sun * fsto1 - k_leaf_sun * (mat_VEG[2] - mat_VEG[0]);
     
     // 阴叶节点
-    mat_RHS[1] = qflx_sha * fsto2 - k_leaf_sha * (vegwp[2] - vegwp[1]);
-    mat_RHS[2] = k_leaf_sun * (vegwp[2] - vegwp[0]) +
-                 k_leaf_sha * (vegwp[2] - vegwp[1]) -
-                 k_xyl * (vegwp[3] - vegwp[2] - grav1);
+    mat_RHS[1] = qflx_sha * fsto2 - k_leaf_sha * (mat_VEG[2] - mat_VEG[1]);
+    mat_RHS[2] = k_leaf_sun * (mat_VEG[2] - mat_VEG[0]) +
+                 k_leaf_sha * (mat_VEG[2] - mat_VEG[1]) -
+                 k_xyl * (mat_VEG[3] - mat_VEG[2] - grav1);
     
-    mat_RHS[3] = k_xyl * (vegwp[3] - vegwp[2] - grav1) +
+    mat_RHS[3] = k_xyl * (mat_VEG[3] - mat_VEG[2] - grav1) +
                  root_soil_pot;
     
     /* --- 特殊情况处理：阴叶LAI接近零 --- */
-    if (leaf_sha < MIN_VEG_LAI) {
+    if (leaf_sha < MIN_TOL_LAI) {
         temp = mat_RHS[0];
         mat_RHS[0] = mat_RHS[1];
         mat_RHS[1] = temp;
     }
 }
 /******************************************************************************
- * @brief    Calculate temperature scaling factor.
+ * @brief    Calculates transpiration and returns corresponding vegwp.
  *****************************************************************************/
-void getvegwp(double           *vegwp, 
+void getvegwp(double           *mat_VEG, 
               double            gb_mol, 
               double           *gs_mol_sun, 
               double           *gs_mol_sha,
               double            qsat_T, 
               double            Qair_over, 
-              double           *soilflux,
+              double           *transp,
               double            pressure,
               double            air_density,
               double            thm,
@@ -516,11 +522,13 @@ void getvegwp(double           *vegwp,
               veg_lib_struct   *veg_lib)
 {
     /* 局部变量 */
-    double qflx_sun, qflx_sha;    /* 蒸腾通量 [kg/m2/s] */
+    size_t i, j;
+    size_t Nsoil = cell->Nsoil;
+    double qflx_sun, qflx_sha;     /* 蒸腾通量 [m/s] */
     double fx;                     /* 木质部到叶的最大导度比例 [-] */
     double fr;                     /* 根到木质部的最大导度比例 [-] */
-    double sum_k_soil_root;        /* 土壤-根导度总和 */
-    double sum_k_soil_root_smp;    /* 导度加权土壤水势总和 */
+    double k_soil_root;            /* 土壤-根导度总和 */
+    double soil_root_pot;          /* 导度加权土壤水势总和 */
     double *dz_soil = soil_con->dz_soil;
     double *matric = cell->matric;
     double leaf_sun = veg_var->leaf_sun;
@@ -528,8 +536,6 @@ void getvegwp(double           *vegwp,
     double Canopy_Upper = veg_lib->Canopy_Upper;
     double matric50 = veg_lib->matric50;
     double kcano_max = veg_lib->kcano_max;
-    size_t i, j;
-    size_t Nsoil = cell->Nsoil;
     double *hksr_int = cell->hksr_int;
     double NetSAI = veg_var->NetSAI;
     double kmax_sun = kcano_max;
@@ -540,9 +546,9 @@ void getvegwp(double           *vegwp,
         grav2[i] = 0.0;
     }
     // 计算重力势
-    double grav1 = Canopy_Upper * MM_PER_M;
+    double grav1 = Canopy_Upper;
     for (i = 0; i < Nsoil; i++) {
-        grav2[i] = dz_soil[i] * MM_PER_M;
+        grav2[i] = dz_soil[i];
     }
     
     bool CALC_TRANSP = true;
@@ -554,62 +560,62 @@ void getvegwp(double           *vegwp,
              &qflx_sha, veg_var);
     
     // 计算土壤-根导度总和
-    sum_k_soil_root = 0.0;
-    sum_k_soil_root_smp = 0.0;
+    k_soil_root = 0.0;
+    soil_root_pot = 0.0;
     for (j = 0; j < Nsoil; j++) {
-        sum_k_soil_root += hksr_int[j];
-        sum_k_soil_root_smp += hksr_int[j] * (matric[j] - grav2[j]);
+        k_soil_root += hksr_int[j];
+        soil_root_pot += hksr_int[j] * (matric[j] - grav2[j]);
     }
     
-    if (fabs(sum_k_soil_root) < 1.0e-15) {
+    if (fabs(k_soil_root) == 0.0) {
         /* 无有效土壤导度，使用简单平均 */
-        vegwp[3] = 0.0;
+        mat_VEG[3] = 0.0;
         for (j = 0; j < Nsoil; j++) {
-            vegwp[3] += (matric[j] - grav2[j]);
+            mat_VEG[3] += (matric[j] - grav2[j]);
         }
-        vegwp[3] /= (double) Nsoil;
+        mat_VEG[3] /= (double) Nsoil;
     }
     else {
         /* 考虑蒸腾拉力的根水势 */
-        vegwp[3] = (sum_k_soil_root_smp - qflx_sun - qflx_sha) / sum_k_soil_root;
+        mat_VEG[3] = (soil_root_pot - qflx_sun - qflx_sha) / k_soil_root;
     }
     
     /* 计算根部导度衰减 */
-    fr = plc(vegwp[3], matric50);
+    fr = plc(mat_VEG[3], matric50);
     
     if ((NetSAI > 0.0) && (fr > 0.0)) {
         /* 存在茎干且导度不为零，考虑水流阻力 */
         double k_root_eff = fr * kmax_root / Canopy_Upper * NetSAI;
-        vegwp[2] = vegwp[3] - grav1 - (qflx_sun + qflx_sha) / k_root_eff;
+        mat_VEG[2] = mat_VEG[3] - grav1 - (qflx_sun + qflx_sha) / k_root_eff;
     } 
     else {
         // 无茎干或完全栓塞，仅考虑重力
-        vegwp[2] = vegwp[3] - grav1;
+        mat_VEG[2] = mat_VEG[3] - grav1;
     }
     
     /* 计算木质部导度衰减 */
-    fx = plc(vegwp[2], matric50);
+    fx = plc(mat_VEG[2], matric50);
     
     // 计算阴叶水势
     if ((leaf_sha > 0.0) && (fx > 0.0)) {
         double k_sha_eff = fx * kmax_sha * leaf_sha;
-        vegwp[1] = vegwp[2] - qflx_sha / k_sha_eff;
+        mat_VEG[1] = mat_VEG[2] - qflx_sha / k_sha_eff;
     } 
     else {
-        vegwp[1] = vegwp[2];
+        mat_VEG[1] = mat_VEG[2];
     }
     
     // 计算阳叶水势
     if ((leaf_sun > 0.0) && (fx > 0.0)) {
         double k_sun_eff = fx * kmax_sun * leaf_sun;
-        vegwp[0] = vegwp[2] - qflx_sun / k_sun_eff;
+        mat_VEG[0] = mat_VEG[2] - qflx_sun / k_sun_eff;
     } 
     else {
-        vegwp[0] = vegwp[2];
+        mat_VEG[0] = mat_VEG[2];
     }
     
-    *soilflux = 0.0;
+    (*transp) = 0.0;
     for (j = 0; j < Nsoil; j++) {
-        *soilflux += hksr_int[j] * (matric[j] - vegwp[3] - grav2[j]);
+        (*transp) += hksr_int[j] * (matric[j] - mat_VEG[3] - grav2[j]);
     }
 }

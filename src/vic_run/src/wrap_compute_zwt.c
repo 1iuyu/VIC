@@ -83,12 +83,18 @@ wrap_compute_zwt(double            step_dt,
     }
     else {
         if (recharge_flux > 0.0) { // 地下水位上升
-            for (i = zwt_lidx; i >= 0; i--) {
+            for (i = zwt_lidx; i > 0; i--) {
                 mpar_node = 1.0 - 1.0 / bexp_node[i];
                 aqf_yield1 = (Wsat_node[i] - Wpwp_node[i]) * (1.0 - pow(1.0 + 
                                         pow(alpha_node[i] * zwt, bexp_node[i]), mpar_node));
                 aqf_yield1 = max(0.02, aqf_yield1);
-                recharge_layer = min(recharge_flux, (aqf_yield1 * (zwt - Zsum_soil[i-1])));
+                double layer_bottom;
+                if (i > 0) {
+                    layer_bottom = Zsum_soil[i-1];  // 第i-1层的顶部
+                } else {
+                    layer_bottom = 0.0;  // 地表
+                }
+                recharge_layer = min(recharge_flux, (aqf_yield1 * (zwt - layer_bottom)));
                 recharge_layer = max(0.0, recharge_layer);
                 if (aqf_yield1 > 0.0) {
                     zwt -= recharge_layer / aqf_yield1;
@@ -97,7 +103,7 @@ wrap_compute_zwt(double            step_dt,
                 if (recharge_flux <= 0.0) {
                     break;
                 }
-            }
+            }        
         }
         else {  // 地下水位下降
             for (i = zwt_lidx; i < Nsoil; i++) {
@@ -192,7 +198,7 @@ wrap_compute_zwt(double            step_dt,
         size_t k_perch = 0;
         double sub_drain = 0.0;
         double drain_layer = 0.0;
-        for (j = Nfrost; j >= 0; j--) {
+        for (j = (int)Nfrost; j >= 0; j--) {
             if (moist[j] / Wsat_node[j] <= 0.9) {
                 k_perch = j;
             }
@@ -338,17 +344,17 @@ wrap_compute_zwt(double            step_dt,
     lidx = Nsoil - 1;
     if (liq[lidx] < MIN_SOILMOIST) {
         soil_loss = (MIN_SOILMOIST - liq[lidx]) * dz_soil[lidx];
-        for (i = Nsoil - 1; i >= 0; i--) {
-            mass_liq = max(0.0, (liq[i] - MIN_SOILMOIST) * dz_soil[i]);
+        for (j = (int)(Nsoil - 1); j >= 0; j--) {
+            mass_liq = max(0.0, (liq[j] - MIN_SOILMOIST) * dz_soil[j]);
             if (mass_liq >= soil_loss) {
                 liq[lidx] += soil_loss / dz_soil[lidx];
-                liq[i] -= soil_loss / dz_soil[i];
+                liq[j] -= soil_loss / dz_soil[j];
                 soil_loss = 0.0;
                 break;
             }
             else {
                 liq[lidx] += mass_liq / dz_soil[lidx];
-                liq[i] -= mass_liq / dz_soil[i];
+                liq[j] -= mass_liq / dz_soil[j];
                 soil_loss -= mass_liq;
             }
         }

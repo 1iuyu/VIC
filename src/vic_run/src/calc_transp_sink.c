@@ -18,13 +18,13 @@ calc_transp_sink(cell_data_struct *cell,
     double grav2 = 0.0;
     double *transp_sink = cell->transp_sink;
     double *hksr_int = cell->hksr_int;
-    double *vegwp = veg_var->vegwp;
+    double *mat_VEG = veg_var->mat_VEG;
     double *zc_soil = soil_con->zc_soil;
     double *matric = cell->matric;
     // hydraulic redistribution duo to plant transpiration
     for (size_t i = 0; i < cell->Nroot; i++) {
         grav2 = zc_soil[i];
-        transp_sink[i] = hksr_int[i] * (matric[i] - vegwp[3] - grav2);
+        transp_sink[i] = hksr_int[i] * (matric[i] - mat_VEG[3] - grav2);
     }
     
     return (0);

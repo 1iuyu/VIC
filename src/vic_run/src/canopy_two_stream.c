@@ -24,7 +24,6 @@ canopy_two_stream(size_t	         lidx,
                   veg_lib_struct    *veg_lib)
 {
 	extern parameters_struct param;
-    extern option_struct     options;
 	double		gap_fracdir;
 	double		gap_fracdif;
 	double		veg_density;

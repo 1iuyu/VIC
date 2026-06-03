@@ -13,7 +13,8 @@ void
 initialize_veg(veg_var_struct *veg_var,
                size_t          Nveg)
 {
-    for (size_t i = 0; i < Nveg; i++) {
+    size_t i, j;
+    for (i = 0; i < Nveg; i++) {
         // Prognostic states
         veg_var[i].fcanopy = 0.0;
         veg_var[i].LAI = 0.0;
@@ -29,10 +30,12 @@ initialize_veg(veg_var_struct *veg_var,
         veg_var[i].MaxSnowInt = 0.0;
         veg_var[i].MaxRainInt = 0.0;
         veg_var[i].Wdew = 0.1;
-        for (size_t j = 0; j < MAX_CANOPYS; j++) {
+        for (j = 0; j < MAX_CANOPYS; j++) {
             veg_var[i].LAI_z[j] = 0.0;
             veg_var[i].SAI_z[j] = 0.0;
-            veg_var[i].vegwp[i] = 0.0;
+        }
+        for (j = 0; j < 4; j++) {
+            veg_var[i].mat_VEG[j] = 0.0;
         }
         // Fluxes
         veg_var[i].aPAR_sun = 0.0;

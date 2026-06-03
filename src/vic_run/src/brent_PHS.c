@@ -20,7 +20,7 @@ void brent_PHS(double            x1sun,
                double            f1sha, 
                double            f2sha,
                double            tol,
-               double           *vegwp,
+               double           *mat_VEG,
                double            vcmax_sun,
                double            vcmax_sha,
                double            tpu_sun, 
@@ -99,7 +99,6 @@ void brent_PHS(double            x1sun,
     
     iter = 0;
     
-    // 主迭代循环
     while (1) {
         if (iter >= itmax) {
             log_warn("brent_PHS: exceeding maximum iterations (%d)", itmax);
@@ -107,7 +106,6 @@ void brent_PHS(double            x1sun,
         }
         iter++;
         
-        // ========== 为每个相位执行Brent更新 ==========
         for (phase = 0; phase < nphs; phase++) {
             // 重新排列a, b, c，确保fb是最小的函数值
             if ((fb[phase] > 0.0 && fc[phase] > 0.0) || 
@@ -142,7 +140,6 @@ void brent_PHS(double            x1sun,
             return;
         }
         
-        // ========== 为每个相位计算新的试探点 ==========
         for (phase = 0; phase < nphs; phase++) {
             // 尝试反二次插值或割线法
             if (fabs(e[phase]) >= tol1[phase] && fabs(fa[phase]) > fabs(fb[phase])) {
@@ -210,7 +207,7 @@ void brent_PHS(double            x1sun,
                     &fb[0], &fb[1],
                     bsun, bsha, 
                     gs_mol_sun, gs_mol_sha,
-                    vegwp, gs0sun, gs0sha, 
+                    mat_VEG, gs0sun, gs0sha, 
                     vcmax_sun, vcmax_sha, 
                     tpu_sun, tpu_sha,
                     kp_sun, kp_sha, 

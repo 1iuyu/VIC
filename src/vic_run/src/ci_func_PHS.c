@@ -18,7 +18,7 @@ void ci_func_PHS(bool              bflag,
                  double           *bsha,
                  double           *gs_mol_sun, 
                  double           *gs_mol_sha,
-                 double           *vegwp,
+                 double           *mat_VEG,
                  double            gsminsun,
                  double            gsminsha,
                  double            vcmax_sun, 
@@ -72,7 +72,7 @@ void ci_func_PHS(bool              bflag,
     
     // 如果需要重新计算水分胁迫因子
     if (bflag) {
-        calc_stress(bsun, bsha, vegwp, thm, gb_mol, 
+        calc_stress(bsun, bsha, mat_VEG, thm, gb_mol, 
                     qsat_T, Qair_over,
                     pressure, air_density, 
                     gsminsun, gsminsha,
@@ -93,7 +93,8 @@ void ci_func_PHS(bool              bflag,
         // 产物限制
         ap_sun = 3.0 * tpu_sun;
         ap_sha = 3.0 * tpu_sha;
-    } else {
+    } 
+    else {
         // C4植物
         // Rubisco限制
         ac_sun = (*bsun) * vcmax_sun;

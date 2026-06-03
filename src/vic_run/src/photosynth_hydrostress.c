@@ -33,7 +33,7 @@ photosynth_hydrostress(double            thm,
     double *root = cell->root;
     double *LAI_z = veg_var->LAI_z;
     double *hksr_int = cell->hksr_int; // soil-root interface conductance (mm/s)
-    double *vegwp = veg_var->vegwp; // 水势：0-阳叶，1-阴叶，2-木质部，3-根部
+    double *mat_VEG = veg_var->mat_VEG; // 水势：0-阳叶，1-阴叶，2-木质部，3-根部
     // initialize variables
     Ncanopy = cell->Ncanopy;
     double f_N = 0.0;
@@ -157,10 +157,10 @@ photosynth_hydrostress(double            thm,
                         fth(Tfoliage, param.PHOTO_LMRHD, param.PHOTO_LMRSE, lmrc);
         } 
         else {
-            lmr_sun = lmr25_sun * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
-            lmr_sun = lmr_sun / (1.0 + exp(1.3 * (Tfoliage - (CONST_TKFRZ + 55.0))));
-            lmr_sha = lmr25_sha * pow(2.0, (Tfoliage - (CONST_TKFRZ + 25.0)) / 10.0);
-            lmr_sha = lmr_sha / (1.0 + exp(1.3 * (Tfoliage - (CONST_TKFRZ + 55.0))));
+            lmr_sun = lmr25_sun * pow(2.0, (Tfoliage - 298.15) / 10.0); // Q10 = 2.0, 298.15K = 25C
+            lmr_sun = lmr_sun / (1.0 + exp(1.3 * (Tfoliage - 328.15))); // 高温抑制，328.15K = 55C
+            lmr_sha = lmr25_sha * pow(2.0, (Tfoliage - 298.15) / 10.0);
+            lmr_sha = lmr_sha / (1.0 + exp(1.3 * (Tfoliage - 328.15)));
         }
         // 低LAI时减少lmr
         lmr_sun = lmr_sun * min((0.2 * exp(3.218 * LAI_z[i])), 1.0);
@@ -179,7 +179,6 @@ photosynth_hydrostress(double            thm,
             double jmaxse = (659.70 - 0.75 * min(max((Tfoliage - CONST_TKFRZ), 11.0), 35.0));
             double tpuse = (668.39 - 1.07 * min(max((Tfoliage - CONST_TKFRZ), 11.0), 35.0));
             // 高温度抑制的缩放因子
-            double lmrc = fth25(param.PHOTO_LMRHD, param.PHOTO_LMRSE);
             double vcmaxc = fth25(param.PHOTO_DV, vcmaxse);
             double jmaxc = fth25(param.PHOTO_DJ, jmaxse);
             double tpuc = fth25(param.PHOTO_DT, tpuse);
@@ -240,7 +239,7 @@ photosynth_hydrostress(double            thm,
             }
             // 计算ci和气孔导度
             hybrid_PHS(&ci_sun, &ci_sha,
-                        vegwp, &bsun, &bsha,
+                        mat_VEG, &bsun, &bsha,
                         je_sun, je_sha,
                         CP, KC, KO,
                         thm, gb_mol,
@@ -262,7 +261,7 @@ photosynth_hydrostress(double            thm,
             if (veg_var->an_sha < 0.0) {
                 gs_mol_sha = max(bsha * veg_lib->medlynint, 1.0);
             }
-            // ========== 计算叶面CO₂分压cs和最终ci ==========
+            // 计算叶面CO₂分压cs和最终ci
             // 阳叶
             cs_sun = atmosCO2 - 1.4 / gb_mol * veg_var->an_sun * pressure;
             cs_sun = max(cs_sun, param.PHOTO_MAXCS);
@@ -304,12 +303,12 @@ photosynth_hydrostress(double            thm,
         }
         else {
             // 夜间或无光照条件下，光合作用为0，维护呼吸仍然存在
-            vegwp[0] = 1.0; // temporary signal for night time
+            mat_VEG[0] = 1.0; // temporary signal for night time
             double gsminsun = veg_lib->medlynint;
             double gsminsha = veg_lib->medlynint;
             // 调用calc_stress函数计算水分胁迫因子
             calc_stress(&bsun, &bsha, 
-                        vegwp, thm, gb_mol, 
+                        mat_VEG, thm, gb_mol, 
                         qsat_T, Qair_over,
                         pressure, 
                         air_density,

@@ -13,7 +13,7 @@
  *****************************************************************************/
 void hybrid_PHS(double           *x0sun, 
                 double           *x0sha,
-                double           *vegwp,
+                double           *mat_VEG,
                 double           *bsun, 
                 double           *bsha,
                 double            jesun, 
@@ -46,20 +46,14 @@ void hybrid_PHS(double           *x0sun,
                 veg_lib_struct   *veg_lib)
 {
     // 局部变量
-    size_t i, iter1, iter2;
-    bool bflag;                     // 是否重新计算水分胁迫
     double x[4];
-    double gs0sun, gs0sha;          // 无水分胁迫的气孔导度
-    double x1sun, x1sha;            // ci的第二个猜测值
     double f0sun, f0sha;            // f(x0)残差
     double f1sun, f1sha;            // f(x1)残差
     double dxsun, dxsha;            // ci增量
-    double b0sun, b0sha;            // 上一次的bsun/bsha
     double dbsun, dbsha;            // bsun/bsha变化量
     double tolsun, tolsha;          // ci收敛容差 (Pa)
     double minf;                    // 最小残差记录
     double minxsun, minxsha;        // 最小残差对应的ci解
-    double soilflux;                // 土壤蒸腾通量 (mm/s)
     double xsun, xsha;              // Brent方法返回的解
     // 参数常量
     double toldb = 1e-2;      // bsun/bsha收敛容差
@@ -68,21 +62,21 @@ void hybrid_PHS(double           *x0sun,
     size_t itmax = 3;            // 最大迭代次数
     
     // 初始化
-    x1sun = *x0sun;
-    x1sha = *x0sha;
-    bflag = false;
-    b0sun = -1.0;
-    b0sha = -1.0;
-    gs0sun = 0.0;
-    gs0sha = 0.0;
-    *bsun = 1.0;
-    *bsha = 1.0;
-    iter1 = 0;
-    iter2 = 0;
-    
-    // 获取vegwp副本
-    for (i = 0; i < 4; i++) {
-        x[i] = vegwp[i];
+    size_t iter1 = 0;
+    size_t iter2 = 0;
+    (*bsun) = 1.0;
+    (*bsha) = 1.0;
+    double x1sun = *x0sun;
+    double x1sha = *x0sha;
+    bool bflag = false;     // 是否重新计算水分胁迫
+    double b0sun = -1.0;
+    double b0sha = -1.0;
+    double gs0sun = 0.0;
+    double gs0sha = 0.0;
+    double transp = 0.0;    // 蒸腾通量[m/s]
+    // 获取mat_VEG副本
+    for (size_t i = 0; i < 4; i++) {
+        x[i] = mat_VEG[i];
     }
     
     // ========== 外层循环：更新水分胁迫因子 ==========
@@ -105,7 +99,7 @@ void hybrid_PHS(double           *x0sun,
         // 第一次ci_func调用
         ci_func_PHS(bflag, *x0sun, *x0sha, &f0sun, &f0sha,
                     bsun, bsha, gs_mol_sun, gs_mol_sha, 
-                    vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
+                    mat_VEG, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
                     tpu_sun, tpu_sha, kp_sun, kp_sha, 
                     CP, KC, KO, thm, gb_mol,
                     qsat_T, Qair_over, pressure, air_density,
@@ -123,7 +117,7 @@ void hybrid_PHS(double           *x0sun,
         // 第二次ci_func调用（计算f(x1)）
         ci_func_PHS(bflag, x1sun, x1sha, &f1sun, &f1sha,
                     bsun, bsha, gs_mol_sun, gs_mol_sha, 
-                    vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
+                    mat_VEG, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
                     tpu_sun, tpu_sha, kp_sun, kp_sha, 
                     CP, KC, KO, thm, gb_mol,
                     qsat_T, Qair_over, pressure, air_density,
@@ -168,7 +162,7 @@ void hybrid_PHS(double           *x0sun,
             // 调用ci_func计算新的f值
             ci_func_PHS(bflag, x1sun, x1sha, &f1sun, &f1sha,
                         bsun, bsha, gs_mol_sun, gs_mol_sha, 
-                        vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
+                        mat_VEG, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
                         tpu_sun, tpu_sha, kp_sun, kp_sha, 
                         CP, KC, KO, thm, gb_mol,
                         qsat_T, Qair_over, pressure, air_density,
@@ -205,7 +199,7 @@ void hybrid_PHS(double           *x0sun,
             if ((f1sun * f0sun < 0.0) && (f1sha * f0sha < 0.0)) {
                 brent_PHS(*x0sun, x1sun, f0sun, f1sun,
                           *x0sha, x1sha, f0sha, f1sha,
-                          tolsun, vegwp, 
+                          tolsun, mat_VEG, 
                           vcmax_sun, vcmax_sha,
                           tpu_sun, tpu_sha, kp_sun, kp_sha,
                           CP, KC, KO, thm, 
@@ -229,7 +223,7 @@ void hybrid_PHS(double           *x0sun,
                 x1sha = minxsha;
                 ci_func_PHS(bflag, x1sun, x1sha, &f1sun, &f1sha,
                             bsun, bsha, gs_mol_sun, gs_mol_sha, 
-                            vegwp, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
+                            mat_VEG, gs0sun, gs0sha, vcmax_sun, vcmax_sha,
                             tpu_sun, tpu_sha, kp_sun, kp_sha, 
                             CP, KC, KO, thm, gb_mol,
                             qsat_T, Qair_over, pressure, air_density,
@@ -266,19 +260,19 @@ void hybrid_PHS(double           *x0sun,
     *x0sha = x1sha;
     
     // 根据最终气孔导度更新植被水势
-    getvegwp(vegwp, gb_mol, &gs0sun, &gs0sha, 
-             qsat_T, Qair_over, &soilflux,
+    getvegwp(mat_VEG, gb_mol, &gs0sun, &gs0sha, 
+             qsat_T, Qair_over, &transp,
              pressure, air_density, thm,
              cell, soil_con, veg_var, veg_lib);
     
-    // 保存vegwp
-    for (i = 0; i < 4; i++) {
-        vegwp[i] = x[i];
+    // 保存mat_VEG
+    for (size_t i = 0; i < 4; i++) {
+        mat_VEG[i] = x[i];
     }
     
     // 确保蒸腾通量非负
-    if (soilflux < 0.0) {
-        soilflux = 0.0;
+    if (transp < 0.0) {
+        transp = 0.0;
     }
-    cell->transp = soilflux;
+    cell->transp = transp;
 }

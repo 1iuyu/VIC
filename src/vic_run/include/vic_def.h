@@ -500,9 +500,8 @@ typedef struct {
     char Ctype;                   /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
     double froot_leaf;            /**< ratio of fine root mass to leaf mass */
     double matric50;              /**< matric potential at which stomatal conductance is reduced by 50% (m) */
-    // double kseg_max;              /**< plant segment max conductance (m/s) */
-    double kcano_max;             /**< maximum canopy conductance (m/s) */
-    double kroot_max;             /**< root segment max conductance. mm h2o (transpired)/mm h2o (water potential gradient)/sec */
+    double kcano_max;             /**< plant segment max conductance. m h2o (transpired)/m h2o (water potential gradient)/sec [1/s] */
+    double kroot_max;             /**< root segment max conductance. m h2o (transpired)/m h2o (water potential gradient)/sec [1/s] */
     double theta_cj;
     double leaf_CN;               /**< Leaf C:N [gC/gN] */
     double SLA_top;               /**< specific leaf area at top of canopy [m2/gC] */
@@ -772,7 +771,7 @@ typedef struct {
     double f_shade;
     double LAI_z[MAX_CANOPYS];  /**< leaf area index above the center of each canopy layer (m2/m2) */
     double SAI_z[MAX_CANOPYS];  /**< stem area index above the center of each canopy layer (m2/m2) */
-    double vegwp[MAX_CANOPYS];  /**< vegetation water matric potential (mm) [sun, shade, xylem, root] */
+    double mat_VEG[4];          /**< vegetation water matric potential (mm) [sun, shade, xylem, root] */
     // Fluxes
     double RainThroughFall;     /**< rain that reaches the ground through the canopy (mm/s) */
     double SnowThroughFall;     /**< snow that reaches the ground through the canopy (mm/s) */
