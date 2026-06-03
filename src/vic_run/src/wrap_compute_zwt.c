@@ -83,18 +83,18 @@ wrap_compute_zwt(double            step_dt,
     }
     else {
         if (recharge_flux > 0.0) { // 地下水位上升
-            for (i = zwt_lidx; i > 0; i--) {
+            for (i = zwt_lidx + 1; i-- > 0; ) { // 防止i下溢到SIZE_MAX
                 mpar_node = 1.0 - 1.0 / bexp_node[i];
                 aqf_yield1 = (Wsat_node[i] - Wpwp_node[i]) * (1.0 - pow(1.0 + 
                                         pow(alpha_node[i] * zwt, bexp_node[i]), mpar_node));
                 aqf_yield1 = max(0.02, aqf_yield1);
-                double layer_bottom;
+                double layer_top;
                 if (i > 0) {
-                    layer_bottom = Zsum_soil[i-1];  // 第i-1层的顶部
+                    layer_top = Zsum_soil[i-1];  // 第i-1层的顶部
                 } else {
-                    layer_bottom = 0.0;  // 地表
+                    layer_top = 0.0;  // 地表
                 }
-                recharge_layer = min(recharge_flux, (aqf_yield1 * (zwt - layer_bottom)));
+                recharge_layer = min(recharge_flux, (aqf_yield1 * (zwt - layer_top)));
                 recharge_layer = max(0.0, recharge_layer);
                 if (aqf_yield1 > 0.0) {
                     zwt -= recharge_layer / aqf_yield1;
@@ -159,7 +159,7 @@ wrap_compute_zwt(double            step_dt,
     // water table above frost table
     if (zwt < frost_zwt && soil_T[Nfrost] <= CONST_TKFRZ) {
         for (i = zwt_lidx; i < Nfrost; i++) {
-            lidx = min(Nsoil, i+1);
+            lidx = min(Nsoil-1, i+1);
             tmp_imped = pow(10.0, 0.5 * (frac_ice[i] + frac_ice[lidx]) * -6.0);
             q_perch += ksat_node[i] * tmp_imped * dz_soil[i];
             aqf_perch += dz_soil[i];
@@ -198,9 +198,9 @@ wrap_compute_zwt(double            step_dt,
         size_t k_perch = 0;
         double sub_drain = 0.0;
         double drain_layer = 0.0;
-        for (j = (int)Nfrost; j >= 0; j--) {
-            if (moist[j] / Wsat_node[j] <= 0.9) {
-                k_perch = j;
+        for (i = Nfrost + 1; i-- > 0; ) { // 防止i下溢到SIZE_MAX
+            if (moist[i] / Wsat_node[i] <= 0.9) {
+                k_perch = i;
             }
         }
         if (soil_T[Nfrost] > CONST_TKFRZ) {
@@ -213,7 +213,7 @@ wrap_compute_zwt(double            step_dt,
             double b = zc_soil[k_perch+1] - m * frac2;
             zwt_perch = max(0.9 * m + b, 0.0);
             for (i = k_perch; i < Nfrost; i++) {
-                lidx = min(Nsoil, i+1);
+                lidx = min(Nsoil-1, i+1);
                 tmp_imped = pow(10.0, 0.5 * (frac_ice[i] + frac_ice[lidx]) * -6.0);
                 q_perch += ksat_node[i] * tmp_imped * dz_soil[i];
                 aqf_perch += dz_soil[i];
@@ -246,7 +246,7 @@ wrap_compute_zwt(double            step_dt,
         double total_ice = 0.0;
         double tmp_liq = 0.0;
         double dz_sum = 0.0;
-        for (i = zwt_lidx - 1; i < Nsoil; i++) {
+        for (i = zwt_lidx - 1; i < Nsoil; i++) { // ？？？
             dz_sum += dz_soil[i];
             total_ice += frac_ice[i] * dz_soil[i];
         }
@@ -344,17 +344,17 @@ wrap_compute_zwt(double            step_dt,
     lidx = Nsoil - 1;
     if (liq[lidx] < MIN_SOILMOIST) {
         soil_loss = (MIN_SOILMOIST - liq[lidx]) * dz_soil[lidx];
-        for (j = (int)(Nsoil - 1); j >= 0; j--) {
-            mass_liq = max(0.0, (liq[j] - MIN_SOILMOIST) * dz_soil[j]);
+        for (i = Nsoil; i-- > 0; ) { // 防止i下溢到SIZE_MAX
+            mass_liq = max(0.0, (liq[i] - MIN_SOILMOIST) * dz_soil[i]);
             if (mass_liq >= soil_loss) {
                 liq[lidx] += soil_loss / dz_soil[lidx];
-                liq[j] -= soil_loss / dz_soil[j];
+                liq[i] -= soil_loss / dz_soil[i];
                 soil_loss = 0.0;
                 break;
             }
             else {
                 liq[lidx] += mass_liq / dz_soil[lidx];
-                liq[j] -= mass_liq / dz_soil[j];
+                liq[i] -= mass_liq / dz_soil[i];
                 soil_loss -= mass_liq;
             }
         }
