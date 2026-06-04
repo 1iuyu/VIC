@@ -15,6 +15,7 @@ wrap_compute_zwt(double            step_dt,
                  cell_data_struct *cell,
                  soil_con_struct  *soil_con)
 {
+    extern parameters_struct param;
     size_t  i, j, lidx;
     size_t  Nfrost;
     double  decay_fator;
@@ -206,12 +207,17 @@ wrap_compute_zwt(double            step_dt,
         if (soil_T[Nfrost] > CONST_TKFRZ) {
             k_perch = Nfrost;
         }
-        if (Nfrost > k_perch) {
+        if (Nfrost > k_perch && k_perch < Nsoil - 1) {
             double frac1 = (liq[k_perch] + ice[k_perch]) / Wsat_node[k_perch+1];
             double frac2 = (liq[k_perch+1] + ice[k_perch+1]) / Wsat_node[k_perch+1];
-            double m = zc_soil[k_perch+1] - zc_soil[k_perch] / (frac2 - frac1);
-            double b = zc_soil[k_perch+1] - m * frac2;
-            zwt_perch = max(0.9 * m + b, 0.0);
+            if (fabs(frac2 - frac1) < param.TOL_A) {
+                zwt_perch = zc_soil[k_perch];
+            }
+            else {
+                double m = (zc_soil[k_perch+1] - zc_soil[k_perch]) / (frac2 - frac1);
+                double b = zc_soil[k_perch+1] - m * frac2;
+                zwt_perch = max(0.9 * m + b, 0.0);
+            }
             for (i = k_perch; i < Nfrost; i++) {
                 lidx = min(Nsoil-1, i+1);
                 tmp_imped = pow(10.0, 0.5 * (frac_ice[i] + frac_ice[lidx]) * -6.0);
@@ -246,11 +252,16 @@ wrap_compute_zwt(double            step_dt,
         double total_ice = 0.0;
         double tmp_liq = 0.0;
         double dz_sum = 0.0;
-        for (i = zwt_lidx - 1; i < Nsoil; i++) { // ？？？
-            dz_sum += dz_soil[i];
-            total_ice += frac_ice[i] * dz_soil[i];
+        if (zwt_lidx < Nsoil) {
+            for (i = zwt_lidx; i < Nsoil; i++) {
+                dz_sum += dz_soil[i];
+                total_ice += frac_ice[i] * dz_soil[i];
+            }
+            tmp_imped = pow(10.0, (total_ice / dz_sum * -6.0));
         }
-        tmp_imped = pow(10.0, (total_ice / dz_sum * -6.0));
+        else {
+            tmp_imped = pow(10.0, -6.0 * frac_ice[Nsoil-1]);
+        }
         max_drain = min(0.01 * sin((CONST_PI / 180.0) * soil_con->slope), 0.01);
         if (zwt_lidx == Nsoil) {
             decay_fator = bexp_node[lidx] / 3.0;
