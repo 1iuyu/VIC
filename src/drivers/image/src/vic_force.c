@@ -50,9 +50,9 @@ vic_force(void)
     /*******************************
       Miscellaneous initialization
     *******************************/
-    int has_prec = param_set.TYPE[PREC].SUPPLIED;
-    int has_rain = param_set.TYPE[RAINF].SUPPLIED;
-    int has_snow = param_set.TYPE[SNOWF].SUPPLIED;
+    bool has_prec = param_set.TYPE[PREC].SUPPLIED;
+    bool has_rain = param_set.TYPE[RAINF].SUPPLIED;
+    bool has_snow = param_set.TYPE[SNOWF].SUPPLIED;
 
     log_info("Read meteorological forcing file");
 

@@ -110,6 +110,7 @@ vic_run(force_data_struct   *force,
             else if (has_rain && has_snow) {
                 snowfall = force->rainf[hidx] * soil_con->Pfactor[band];
                 rainfall = force->snowf[hidx] * soil_con->Pfactor[band];
+                force->prec[hidx] += (rainfall + snowfall) * Cv;
             }
             // 校正降雨和降雪
             if (options.CORRPREC) {
@@ -117,12 +118,7 @@ vic_run(force_data_struct   *force,
                 rainfall *= gauge_correction[RAIN];
             }
             // 计算新雪密度
-            if (snowfall > 0.0) {
-                snow->new_snow_density = new_snow_density(Tair);
-            }
-            else {
-                snow->new_snow_density = 0.0;
-            }
+            snow->new_snow_density = new_snow_density(Tair);
            
             /* Calculate the snow and rain interception */
             if (veg_con[iveg].IS_GLAC == false) {

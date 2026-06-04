@@ -116,8 +116,7 @@ calc_stress(double           *bsun,
                     dx[j] = mat_RHS[j];
                 }
             }
-            else {
-                // 简化为3x3系统               
+            else {              
                 // 根据哪个叶面积为零来调整计算
                 int ipiv[3];
                 double A_3x3[9], B_3x3[3];
@@ -426,20 +425,20 @@ void spacF(double           *mat_VEG,
     double leaf_sun = veg_var->leaf_sun;
     double leaf_sha = veg_var->leaf_sha;
     size_t i, j;
-    size_t Nsoil = cell->Nsoil;
+    size_t Nroot = cell->Nroot;
     double grav2[MAX_SOILS];
     for (i = 0 ; i < MAX_SOILS; i++) {
         grav2[i] = 0.0;
     }
     // 计算重力势
     double grav1 = Canopy_Upper;
-    for (i = 0; i < Nsoil; i++) {
+    for (i = 0; i < Nroot; i++) {
         grav2[i] = zc_soil[i];
     }
     // 计算土壤相关项的累加
     k_root_soil = 0.0;
     root_soil_pot = 0.0;
-    for (j = 0; j < Nsoil; j++) {
+    for (j = 0; j < Nroot; j++) {
         k_root_soil += hksr_int[j];
         root_soil_pot += hksr_int[j] * (mat_VEG[3] + grav2[j] - matric[j]);
     }
@@ -523,7 +522,7 @@ void getvegwp(double           *mat_VEG,
 {
     /* 局部变量 */
     size_t i, j;
-    size_t Nsoil = cell->Nsoil;
+    size_t Nroot = cell->Nroot;
     double qflx_sun, qflx_sha;     /* 蒸腾通量 [m/s] */
     double fx;                     /* 木质部到叶的最大导度比例 [-] */
     double fr;                     /* 根到木质部的最大导度比例 [-] */
@@ -547,7 +546,7 @@ void getvegwp(double           *mat_VEG,
     }
     // 计算重力势
     double grav1 = Canopy_Upper;
-    for (i = 0; i < Nsoil; i++) {
+    for (i = 0; i < Nroot; i++) {
         grav2[i] = dz_soil[i];
     }
     
@@ -562,7 +561,7 @@ void getvegwp(double           *mat_VEG,
     // 计算土壤-根导度总和
     k_soil_root = 0.0;
     soil_root_pot = 0.0;
-    for (j = 0; j < Nsoil; j++) {
+    for (j = 0; j < Nroot; j++) {
         k_soil_root += hksr_int[j];
         soil_root_pot += hksr_int[j] * (matric[j] - grav2[j]);
     }
@@ -570,10 +569,10 @@ void getvegwp(double           *mat_VEG,
     if (fabs(k_soil_root) == 0.0) {
         /* 无有效土壤导度，使用简单平均 */
         mat_VEG[3] = 0.0;
-        for (j = 0; j < Nsoil; j++) {
+        for (j = 0; j < Nroot; j++) {
             mat_VEG[3] += (matric[j] - grav2[j]);
         }
-        mat_VEG[3] /= (double) Nsoil;
+        mat_VEG[3] /= (double) Nroot;
     }
     else {
         /* 考虑蒸腾拉力的根水势 */
@@ -615,7 +614,7 @@ void getvegwp(double           *mat_VEG,
     }
     
     (*transp) = 0.0;
-    for (j = 0; j < Nsoil; j++) {
+    for (j = 0; j < Nroot; j++) {
         (*transp) += hksr_int[j] * (matric[j] - mat_VEG[3] - grav2[j]);
     }
 }

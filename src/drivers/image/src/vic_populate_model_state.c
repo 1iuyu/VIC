@@ -23,6 +23,7 @@ vic_populate_model_state()
     extern domain_struct      local_domain;
     extern option_struct      options;
     extern soil_con_struct   *soil_con;
+    extern veg_lib_struct    *veg_lib;
     extern veg_con_struct   **veg_con;
 
     size_t i;
@@ -35,7 +36,7 @@ vic_populate_model_state()
         // else generate a default state
         for (i = 0; i < local_domain.ncells_active; i++) {
             generate_default_state(&(force[i]), &(all_vars[i]), 
-                                   &(soil_con[i]), veg_con[i]);
+                                   &(soil_con[i]), veg_con[i], veg_lib);
         }
     }
 

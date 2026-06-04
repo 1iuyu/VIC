@@ -322,14 +322,10 @@ photosynth_hydrostress(double            thm,
             veg_var->ag_sha = 0.0;
             veg_var->aj_sun = 0.0;
             veg_var->aj_sha = 0.0;
-            veg_var->an_sun = veg_var->ag_sun / bsun * lmr_sun;
-            veg_var->an_sha = veg_var->ag_sha / bsha * lmr_sha;
+            veg_var->an_sun = veg_var->ag_sun - bsun * lmr_sun;
+            veg_var->an_sha = veg_var->ag_sha - bsha * lmr_sha;
             veg_var->ap_sun = 0.0;
             veg_var->ap_sha = 0.0;
-            ci_sun = 0.0;
-            ci_sha = 0.0;
-            gs_mol_sun = 0.0;
-            gs_mol_sha = 0.0;
             Ra_sun[i] = min(param.PHOTO_RSMAX, 1.0 / (max(bsun * gsminsun, 1.0)) * CF);
             Ra_sha[i] = min(param.PHOTO_RSMAX, 1.0 / (max(bsha * gsminsha, 1.0)) * CF);
         }

@@ -15,7 +15,8 @@ void
 generate_default_state(force_data_struct *force,
                        all_vars_struct   *all_vars,
                        soil_con_struct   *soil_con,
-                       veg_con_struct    *veg_con)
+                       veg_con_struct    *veg_con,
+                       veg_lib_struct    *veg_lib)
 {
     extern option_struct     options;
     int         ErrorFlag;
@@ -27,6 +28,8 @@ generate_default_state(force_data_struct *force,
     size_t      i, k;
     double      Cv;
     double      init_temp;
+    size_t      veg_class;
+    double      Canopy_Upper;
     cell_data_struct *cell;
     snow_data_struct *snow;
     veg_var_struct *veg_var;
@@ -102,8 +105,7 @@ generate_default_state(force_data_struct *force,
        currently setting moist to porosity as default and eliminate init_moist 
     ******************************************************************************/
     for (veg = 0; veg <= Nveg; veg++) {
-        Cv = veg_con[veg].Cv;
-        if (Cv > 0) {
+        if (veg_con[veg].Cv > 0) {
             // 初始化土壤水力学参数
             if (options.PARAM_FROM_SOIL) {
                 for (lidx = 0; lidx < Nsoil; lidx++) {
@@ -134,8 +136,7 @@ generate_default_state(force_data_struct *force,
        Initialize node temperatures
     *********************************/
     for (veg = 0; veg <= Nveg; veg++) {
-        Cv = veg_con[veg].Cv;
-        if (Cv > 0) {
+        if (veg_con[veg].Cv > 0) {
             band = veg_con[veg].BandIndex;
             Nsnow = snow[veg].Nsnow;
             init_temp = air_temp + soil_con->Tfactor[band];
@@ -162,9 +163,8 @@ generate_default_state(force_data_struct *force,
     ******************************************/
     for (veg = 0; veg <= Nveg; veg++) {
         // Initialize soil for existing vegetation types
-        Cv = veg_con[veg].Cv;
         cell[veg].IS_GLAC = veg_con[veg].IS_GLAC;
-        if (Cv > 0) {
+        if (veg_con[veg].Cv > 0) {
             // set soil moisture properties for all soil thermal nodes
             ErrorFlag =
                     distribute_node_moisture_properties(
@@ -191,14 +191,29 @@ generate_default_state(force_data_struct *force,
         }
     }
     /******************************************
-       initialize vegetation variables
+       initialize vegetation potential and actual water stress
     ******************************************/
+    double root_psi = 0.0;
+    double total_root = 0.0;
     for (veg = 0; veg <= Nveg; veg++) {
-        Cv = veg_con[veg].Cv;
-        if (Cv > 0.0) {
-            for (i = 0; i < 4; i++) {
-                veg_var[veg].mat_VEG[i] = cell[veg].matric[0];
+        if (veg_con[veg].Cv > 0.0 && !veg_con[veg].IS_GLAC) { // 冰川不计算植被水势
+            veg_class = veg_con[veg].veg_class;
+            Canopy_Upper = veg_lib[veg_class].Canopy_Upper;
+            
+            for (i = 0; i < veg_con[veg].Nroot; i++) {
+                root_psi += veg_con[veg].root[i] * (cell[veg].matric[i] - soil_con->zc_soil[i]);
+                total_root += veg_con[veg].root[i];
             }
+            if (total_root > 0.0) {
+                root_psi /= total_root;  // 加权平均根区水势
+            } 
+            else {
+                root_psi = cell[veg].matric[0] - soil_con->zc_soil[0];
+            }
+            veg_var[veg].mat_VEG[3] = root_psi; // 根区水势(root)
+            veg_var[veg].mat_VEG[2] = root_psi - Canopy_Upper; // 木质部水势(xyl)
+            veg_var[veg].mat_VEG[1] = veg_var[veg].mat_VEG[2];  /* sunlit */
+            veg_var[veg].mat_VEG[0] = veg_var[veg].mat_VEG[2];  /* shaded */
         }
     }
 }

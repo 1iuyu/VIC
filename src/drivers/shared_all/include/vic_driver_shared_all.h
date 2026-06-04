@@ -576,7 +576,8 @@ void free_out_data(size_t ngridcells, double ***out_data);
 void free_streams(stream_struct **streams);
 void free_vegcon(veg_con_struct **veg_con);
 void generate_default_state(force_data_struct *force, all_vars_struct *all_vars, 
-                            soil_con_struct *soil_con, veg_con_struct *veg_con);
+                            soil_con_struct *soil_con, veg_con_struct *veg_con,
+                            veg_lib_struct *veg_lib);
 void get_default_nstreams_nvars(size_t *nstreams, size_t nvars[]);
 void get_parameters(FILE *paramfile);
 void init_output_list(double **out_data, int write, char *format, int type,
