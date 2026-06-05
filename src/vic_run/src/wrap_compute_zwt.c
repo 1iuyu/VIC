@@ -74,7 +74,7 @@ wrap_compute_zwt(double            step_dt,
     cell->recharge = recharge;
     lidx = Nsoil - 1; // 土层下标最后一层
     aqf_yield = (Wsat_node[lidx] - Wpwp_node[lidx]) * (1.0 - pow(1.0 + 
-                            pow(alpha_node[lidx] * zwt, expt_node[lidx]), mpar_node[lidx]));
+                            pow(alpha_node[lidx] * zwt, expt_node[lidx]), -mpar_node[lidx]));
     aqf_yield = max(0.02, aqf_yield);
     double recharge_flux = recharge * step_dt;
     // 地下水位位于土层下方
@@ -84,13 +84,14 @@ wrap_compute_zwt(double            step_dt,
     }
     else {
         if (recharge_flux > 0.0) { // 地下水位上升
-            for (i = zwt_lidx + 1; i-- > 0; ) { // 防止i下溢到SIZE_MAX
-                aqf_yield1 = (Wsat_node[i] - Wpwp_node[i]) * (1.0 - pow(1.0 + 
-                                        pow(alpha_node[i] * zwt, expt_node[i]), mpar_node[i]));
+            for (i = zwt_lidx + 1; i > 0; i--) { // 防止i下溢到SIZE_MAX
+                j = i - 1; // j是当前层的下标
+                aqf_yield1 = (Wsat_node[j] - Wpwp_node[j]) * (1.0 - pow(1.0 + 
+                                        pow(alpha_node[j] * zwt, expt_node[j]), -mpar_node[j]));
                 aqf_yield1 = max(0.02, aqf_yield1);
                 double layer_top;
-                if (i > 0) {
-                    layer_top = Zsum_soil[i-1];  // 第i-1层的顶部
+                if (j > 0) {
+                    layer_top = Zsum_soil[j-1];  // 第j-1层的顶部
                 } else {
                     layer_top = 0.0;  // 地表
                 }
@@ -108,7 +109,7 @@ wrap_compute_zwt(double            step_dt,
         else {  // 地下水位下降
             for (i = zwt_lidx; i < Nsoil; i++) {
                 aqf_yield1 = (Wsat_node[i] - Wpwp_node[i]) * (1.0 - pow(1.0 + 
-                                        pow(alpha_node[i] * zwt, expt_node[i]), mpar_node[i]));
+                                        pow(alpha_node[i] * zwt, expt_node[i]), -mpar_node[i]));
                 aqf_yield1 = max(0.02, aqf_yield1);
                 recharge_layer = max(recharge_flux, -(aqf_yield1 * (Zsum_soil[i] - zwt)));
                 recharge_layer = min(0.0, recharge_layer);
@@ -197,9 +198,10 @@ wrap_compute_zwt(double            step_dt,
         size_t k_perch = 0;
         double sub_drain = 0.0;
         double drain_layer = 0.0;
-        for (i = Nfrost + 1; i-- > 0; ) { // 防止i下溢到SIZE_MAX
-            if (moist[i] / Wsat_node[i] <= 0.9) {
-                k_perch = i;
+        for (i = Nfrost + 1; i > 0; i--) { // 防止i下溢到SIZE_MAX
+            j = i - 1; // j是当前层的下标
+            if (moist[j] / Wsat_node[j] <= 0.9) {
+                k_perch = j;
             }
         }
         if (soil_T[Nfrost] > CONST_TKFRZ) {
@@ -271,7 +273,7 @@ wrap_compute_zwt(double            step_dt,
         baseflow = tmp_imped * max_drain * exp(-decay_fator * zwt);
         // baseflow = soil_imped * coef_baseflow * exp(-decay_fator * zwt);
         aqf_yield = (Wsat_node[lidx] - Wpwp_node[lidx]) * (1.0 - pow(1.0 + 
-                                pow(alpha_node[lidx] * zwt, expt_node[lidx]), mpar_node[lidx]));
+                                pow(alpha_node[lidx] * zwt, expt_node[lidx]), -mpar_node[lidx]));
         aqf_yield = max(0.02, aqf_yield);
         double baseflow_flux = baseflow * step_dt;
         // 地下水位在土层下方
@@ -290,7 +292,7 @@ wrap_compute_zwt(double            step_dt,
             else {
                 for (i = zwt_lidx; i < Nsoil; i++) {
                     aqf_yield1 = (Wsat_node[i] - Wpwp_node[i]) * (1.0 - pow(1.0 + 
-                                        pow(alpha_node[i] * zwt, expt_node[i]), mpar_node[i]));
+                                        pow(alpha_node[i] * zwt, expt_node[i]), -mpar_node[i]));
                     aqf_yield1 = max(0.02, aqf_yield1);
                     drain_layer = max(sub_drain, -(aqf_yield1 * (Zsum_soil[i] - zwt)));
                     drain_layer = min(0.0, drain_layer);
@@ -351,17 +353,18 @@ wrap_compute_zwt(double            step_dt,
     lidx = Nsoil - 1;
     if (liq[lidx] < MIN_SOILMOIST) {
         soil_loss = (MIN_SOILMOIST - liq[lidx]) * dz_soil[lidx];
-        for (i = Nsoil; i-- > 0; ) { // 防止i下溢到SIZE_MAX
-            mass_liq = max(0.0, (liq[i] - MIN_SOILMOIST) * dz_soil[i]);
+        for (i = Nsoil; i > 0; i--) { // 防止i下溢到SIZE_MAX
+            j = i - 1; // j是当前层的下标
+            mass_liq = max(0.0, (liq[j] - MIN_SOILMOIST) * dz_soil[j]);
             if (mass_liq >= soil_loss) {
                 liq[lidx] += soil_loss / dz_soil[lidx];
-                liq[i] -= soil_loss / dz_soil[i];
+                liq[j] -= soil_loss / dz_soil[j];
                 soil_loss = 0.0;
                 break;
             }
             else {
                 liq[lidx] += mass_liq / dz_soil[lidx];
-                liq[i] -= mass_liq / dz_soil[i];
+                liq[j] -= mass_liq / dz_soil[j];
                 soil_loss -= mass_liq;
             }
         }

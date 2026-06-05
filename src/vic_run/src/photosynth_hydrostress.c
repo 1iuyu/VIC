@@ -307,15 +307,16 @@ photosynth_hydrostress(double            thm,
             double gsminsun = veg_lib->medlynint;
             double gsminsha = veg_lib->medlynint;
             // 调用calc_stress函数计算水分胁迫因子
-            calc_stress(&bsun, &bsha, 
-                        mat_VEG, thm, gb_mol, 
-                        qsat_T, Qair_over,
-                        pressure, 
-                        air_density,
-                        gsminsun, gsminsha, 
-                        cell, soil_con, 
-                        veg_var, veg_lib);
-
+            if (i == 0) {
+                calc_stress(&bsun, &bsha, 
+                            mat_VEG, thm, gb_mol, 
+                            qsat_T, Qair_over,
+                            pressure, 
+                            air_density,
+                            gsminsun, gsminsha, 
+                            cell, soil_con, 
+                            veg_var, veg_lib);
+            }
             veg_var->ac_sun = 0.0;
             veg_var->ac_sha = 0.0;
             veg_var->ag_sun = 0.0;

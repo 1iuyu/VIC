@@ -25,7 +25,7 @@ initialize_roughness(bool              IS_GLAC,
     double *displacement = cell->displacement;
     double beta = 1.0;
     double V, ratio_dis, ratio_Z0;
-    double Net_VAI = veg_var->NetLAI + veg_var->NetSAI;
+    double Net_VEG = veg_var->NetLAI + veg_var->NetSAI;
 
     if (options.AERO_RESIST == AR_ZENG) {
         if (coverage > 0.0) {
@@ -45,7 +45,7 @@ initialize_roughness(bool              IS_GLAC,
                 ratio_Z0 = param.VEG_RATIO_RL_B;
                 ratio_dis = param.VEG_RATIO_DH_B;
             }
-            V = (1 - exp(-beta * min(Net_VAI, 2.0))) / (1 - exp(-beta * 2.0));
+            V = (1 - exp(-beta * min(Net_VEG, 2.0))) / (1 - exp(-beta * 2.0));
             Z0m_sub[0] = exp(V * log(Canopy_Upper * ratio_Z0) + (1 - V) * Z0m_grnd[0]);
             Z0m_sub[1] = Z0m_sub[0];
             Z0m_sub[2] = Z0m_sub[0];
@@ -78,7 +78,7 @@ initialize_roughness(bool              IS_GLAC,
                 ratio_Z0 = param.VEG_RATIO_RL_B;
                 ratio_dis = param.VEG_RATIO_DH_B;
             }
-            V = (1 - exp(-beta * min(Net_VAI, 2.0))) / (1 - exp(-beta * 2.0));
+            V = (1 - exp(-beta * min(Net_VEG, 2.0))) / (1 - exp(-beta * 2.0));
             Z0m_sub[0] = exp(V * log(Canopy_Upper * ratio_Z0) + (1 - V) * Z0m_grnd[0]);
             Z0m_sub[1] = Z0m_sub[0];
             Z0m_sub[2] = Z0m_sub[0];

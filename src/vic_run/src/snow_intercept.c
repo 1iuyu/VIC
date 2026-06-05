@@ -45,11 +45,11 @@ snow_intercept(double            step_dt,
     double fcanopy = veg_var->fcanopy;
     double int_snow = veg_var->int_snow;    // intercepted rain
     double int_rain = veg_var->int_rain;    // intercepted snow
+    double NetVEG = NetLAI + NetSAI;
     double new_snow_density = snow->new_snow_density;
 
     /* Determine the maximum canopy capacity for snow interception [mm] */
-    MaxSnowInt = fcanopy * 6.6 * (0.27 + 46.0 / new_snow_density) *
-                                                    (NetLAI + NetSAI);
+    MaxSnowInt = fcanopy * 6.6 * (0.27 + 46.0 / new_snow_density) * NetVEG;
 
     /* Calculate snow interception. */
     if (NetLAI + NetSAI > 0.) {
@@ -83,8 +83,8 @@ snow_intercept(double            step_dt,
     }
     /* Calculate amount of rain intercepted on branches and stored in
     intercepted snow. */
-    MaxRainInt = fcanopy * Wdew * (NetLAI + NetSAI);
-    if ((NetLAI + NetSAI) > 0.) {
+    MaxRainInt = fcanopy * Wdew * NetVEG;
+    if (NetVEG > 0.) {
         DeltaRainInt = fcanopy * (*RainFall);
         DeltaRainInt = min(DeltaRainInt, (MaxRainInt - int_rain) / step_dt *
                                         (1.0 - exp(-*RainFall * step_dt / MaxRainInt)));
@@ -116,16 +116,16 @@ snow_intercept(double            step_dt,
             wetFrac = max(0.0, int_rain) / max(MaxRainInt, param.TOL_A);
         }
         veg_var->wetFrac = pow(min(wetFrac, 1.0), 0.667);
-        veg_var->dryFrac = (1.0 - wetFrac) * NetLAI / (NetLAI + NetSAI);
+        veg_var->dryFrac = (1.0 - wetFrac) * NetLAI / NetVEG;
     }
     else if (options.CANOPY_INTERCEP == CLM) {
         double f_snow = 0.0;
         double dryFrac = 0.0;
-        if (NetLAI + NetSAI > 0.0) {
+        if (NetVEG > 0.0) {
             if (int_rain + int_snow > 0.0) {
-                wetFrac = pow(((int_rain + int_snow) / (NetLAI + NetSAI)), 0.66666);
+                wetFrac = pow(((int_rain + int_snow) / NetVEG), 0.66666);
                 if (int_snow > 0.0) {
-                    f_snow = pow((int_snow / (NetLAI + NetSAI)), 0.15);
+                    f_snow = pow((int_snow / NetVEG), 0.15);
                     if (f_snow > 1.0) {
                         f_snow = 1.0;
                     }
@@ -138,7 +138,7 @@ snow_intercept(double            step_dt,
                 wetFrac = 0.0;
                 f_snow = 0.0;
             }
-            dryFrac = (1.0 - wetFrac) * NetLAI / (NetLAI + NetSAI);
+            dryFrac = (1.0 - wetFrac) * NetLAI / NetVEG;
         }
         else {
             dryFrac = 0.0;

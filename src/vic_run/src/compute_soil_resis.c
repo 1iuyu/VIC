@@ -17,15 +17,14 @@ compute_soil_resis(cell_data_struct *cell,
     /* Allocate temp arrays */
     double *liq = cell->liq;
     double *porosity = cell->porosity;  // 有效孔隙度
-    double *bexp_node = soil_con->bexp_node;
+    double *expt_node = soil_con->expt_node;
     double *Wsat_node = soil_con->Wsat_node;
-    double *psisat_node = soil_con->psisat_node;
 
     double Ra_evap = 0.0;
-    double aird = Wsat_node[0] * pow(psisat_node[0] / 1.e4, 1.0 / bexp_node[0]);
-    double d0 = 2.12e-5 * pow(cell->soil_T[0] / CONST_TKFRZ, 1.75);
+    double aird = SoilWaterRetentionCurve(MOIST_FLAG, 0, 0.0, -1.0e4, soil_con);
+    double d0 = CONST_VAPDIFF * pow(cell->soil_T[0] / CONST_TKFRZ, 1.75);
     double eps = Wsat_node[0] - aird;
-    double dg = eps * d0 * pow(eps / Wsat_node[0], 3.0 / max(3.0, bexp_node[0]));
+    double dg = eps * d0 * pow(eps / Wsat_node[0], 3.0 / max(3.0, expt_node[0]));
             
     double dsl = 15.0 * max(0.001, (0.8 * porosity[0] - liq[0])) /
                  max(0.001, (0.8 * Wsat_node[0] - aird));

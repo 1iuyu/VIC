@@ -126,12 +126,16 @@ generate_default_state(force_data_struct *force,
                 cell[veg].moist[lidx] =
                         soil_con->Wsat_node[lidx] * 0.6;
                 cell[veg].liq[lidx] = cell[veg].moist[lidx]; // 将liq初始化为moist
+
                 if (cell[veg].moist[lidx] >
                     soil_con->Wsat_node[lidx]) {
                     cell[veg].moist[lidx] =
                             soil_con->Wsat_node[lidx];
                 }
             }
+            // initialize soil water table depth to the bottom of soil layer
+            lidx = Nsoil - 1;
+            cell[veg].zwt = soil_con->zc_soil[lidx];
         }
     }
 

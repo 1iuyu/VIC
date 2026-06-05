@@ -41,7 +41,7 @@ calc_energy_bal(size_t             hidx,
                   soil_con, veg_lib);
 
     /*****************************
-    Compute surface resistance
+      Compute surface resistance
     *****************************/
     compute_soil_resis(cell, soil_con);
 

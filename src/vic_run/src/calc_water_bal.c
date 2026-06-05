@@ -45,7 +45,6 @@ calc_water_bal(double             step_dt,
     double *Wpwp_node = soil_con->Wpwp_node;
     double *Wsat_node = soil_con->Wsat_node;
     double *conduct_int = cell->conduct_int;
-    double *psisat_node = soil_con->psisat_node;
     // 计算地表水分通量限制
     double Qmax = 0.0;
     int ISAT[MAX_SOILS];
@@ -193,7 +192,7 @@ calc_water_bal(double             step_dt,
                                                     liq[i], matric[i], 
                                                     soil_con);
 
-                    if (matric[i] > psisat_node[i] || matric[i] >= 0.0) {
+                    if (matric[i] >= 0.0) {
                         // 节点饱和 - 检查边界是否定义不良
                         if (-mat_B[i] < conduct_int[i] * 1.0e-6 || conduct_int[i] <= 0.0) {
                             // 边界定义不良 - 将节点视为饱和
@@ -233,7 +232,7 @@ calc_water_bal(double             step_dt,
                                                 last_liq[i], matric[i], 
                                                 soil_con);
                 
-                if (matric[i] > psisat_node[i] || matric[i] >= 0.0) {
+                if (matric[i] >= 0.0) {
                     // 节点饱和
                     ISAT[idx] = i;
                     idx++;
@@ -282,7 +281,7 @@ calc_water_bal(double             step_dt,
                                                 last_liq[i], matric[i], 
                                                 soil_con);
                 
-                if (matric[i] > psisat_node[i] || matric[i] >= 0.0) {
+                if (matric[i] >= 0.0) {
                     // 节点饱和
                     ISAT[idx] = i;
                     idx++;
@@ -352,30 +351,16 @@ calc_water_bal(double             step_dt,
                     // 饱和节点被零导水率包围；解未定义
                     // 重置顶部饱和层的mat_B，如同它刚好在进气值以下
                     lidx = nidx + Nsoil - 1;
-                    
-                    if (options.SWRC == SWRC_CAMPBELL) {
-                        tmp_matric = 1.0001 * psisat_node[nidx];
-                        deric_matric = 
-                                SoilWaterRetentionCurve(DERIV_FLAG, nidx,
-                                                        last_liq[nidx], 
-                                                        tmp_matric, 
-                                                        soil_con);
-                    }
-                    else if (options.SWRC == SWRC_VAN_GENUCHTEN) {
-                        tmp_liq = Wsat_node[nidx] - 0.001;
-                        tmp_matric = 
-                                SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
-                                                        tmp_liq, 0.0, 
-                                                        soil_con);
-                        deric_matric = 
-                                SoilWaterRetentionCurve(DERIV_FLAG, nidx,
-                                                        tmp_liq,
-                                                        tmp_matric, 
-                                                        soil_con);
-                    }
-                    else {
-                        log_err("Unknown SWRC option");
-                    }
+                    tmp_liq = Wsat_node[nidx] - 0.001;
+                    tmp_matric = 
+                            SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
+                                                    tmp_liq, 0.0, 
+                                                    soil_con);
+                    deric_matric = 
+                            SoilWaterRetentionCurve(DERIV_FLAG, nidx,
+                                                    tmp_liq,
+                                                    tmp_matric, 
+                                                    soil_con);
                     
                     if (nidx == 0) {
                         mat_B[lidx] = mat_B[lidx] - fact[i] * deric_matric;
@@ -401,7 +386,7 @@ calc_water_bal(double             step_dt,
         return ERROR;
     }
 
-    /* 检查收敛 (温度变化) */
+    /* 检查收敛 */
 	double max_diff = 0.0;
 	for (i = 0; i < Nsoil; i++) {
 		double diff = mat_RHS[i];
