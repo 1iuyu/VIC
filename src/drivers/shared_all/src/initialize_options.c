@@ -29,7 +29,6 @@ initialize_options()
     options.SNOW_AGING = BATS;
     options.CANOPY_INTERCEP = NOAH;
     options.TFALLBACK = true;
-    options.SWRC = SWRC_VAN_GENUCHTEN;
     // Model dimensions
     options.Nlayer = 3;
     options.Nswband = 2;

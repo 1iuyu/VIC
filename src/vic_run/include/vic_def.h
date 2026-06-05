@@ -123,16 +123,6 @@ enum
 
 /******************************************************************************
  * @brief   Soil water retention curve parametrizations
- *          Defines the relation between the volumetric liquid content and 
- *          the matric potential.
- *****************************************************************************/
-enum
-{
-    SWRC_CAMPBELL,
-    SWRC_VAN_GENUCHTEN
-};
-/******************************************************************************
- * @brief   Soil water retention curve parametrizations
  *          Defines which part is called.
  *****************************************************************************/
 enum 
@@ -197,8 +187,8 @@ typedef struct {
                                     and abort simulation for current grid cell
                             Default = TRUE */
     // input options
-    unsigned short int AERO_RESIST;
-    unsigned short int SWRC;         /**< SWRC_CAMPBELL, SWRC_VAN_GENUCHTEN */
+    unsigned short int AERO_RESIST;    /**< AR_ZENG = use Zeng et al. (2005) method to calculate canopy aerodynamic resistance
+          AR_MEIER = use Meier et al. (2017) method to calculate canopy aerodynamic resistance */
     unsigned short int CANOPY_INTERCEP;
     unsigned short int SNOW_AGING;    /**< BATS and SNICAR */
     unsigned short int GRID_DECIMAL; /**< Number of decimal places in grid file extensions */
@@ -405,7 +395,7 @@ typedef struct {
     double alpha_node[MAX_SOILS];     /**< retention shape parameter in van Genuchten equation [1/m] */
     double b_infilt;                  /**< infiltration parameter */
     double b_dynamic;                 /**< Dynamic VIC heterogeniety parameter for infiltration */
-    double bexp_node[MAX_SOILS];      /**< layer-specific exponent n (=3+2/lambda) in Campbell or van Genuchten eqn */
+    double expt_node[MAX_SOILS];      /**< layer-specific exponent n in Campbell or van Genuchten eqn */
     double bubble_node[MAX_SOILS];    /**< bubbling pressure (cm) */
     double bulk_dens_min[MAX_LAYERS]; /**< bulk density of mineral soil (kg/m^3) */
     double bulk_dens_node[MAX_SOILS]; /**< soil bulk density (kg/m^3) */
@@ -417,7 +407,6 @@ typedef struct {
     double Zsum_soil[MAX_SOILS];      /**< thermal node depth (m) */
     double zc_soil[MAX_SOILS];        /**< depth of thermal nodes below soil surface (m) */
     double gravel_node[MAX_SOILS];    /**< gravel content of soil (fraction of mineral soil weight) */
-    double psisat_node[MAX_SOILS];    /**< soil matric potential at saturation (m) */
     double organic_node[MAX_SOILS];   /**< organic content of soil (fraction of total soil volume) */
     double soil_dens_min[MAX_SOILS];  /**< particle density of mineral soil (kg/m^3) */
     double soil_dens_node[MAX_SOILS]; /**< soil particle density (kg/m^3) */
@@ -425,6 +414,7 @@ typedef struct {
     double sand_node[MAX_SOILS];      /**< sand content of soil (fraction of mineral soil volume) */
     double silt_node[MAX_SOILS];      /**< silt content of soil (fraction of mineral soil volume) */
     double lpar_node[MAX_SOILS];      /**< unsaturated hydraulic conductivity exponent in van Genuchten eqn. */
+    double mpar_node[MAX_SOILS];      /**< unsaturated hydraulic conductivity exponent in van Genuchten eqn. */
     double *BandElev;                 /**< Elevation of each snow elevation band */
     double *AreaFract;                /**< Fraction of grid cell included in each snow elevation band */
     double *Pfactor;                  /**< Change in Precipitation due to elevation (fract) in each snow elevation band */

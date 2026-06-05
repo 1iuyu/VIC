@@ -373,10 +373,10 @@ vic_init(void)
                                 &soil_con[i].alpha_node[0],
                                 &temp_array[i * Nlayer]);
         }
-        // bexp: layer-specific exponent n (=3+2/lambda) in Campbell or van Genuchten eqn
+        // expt: layer-specific exponent n in van Genuchten eqn
         for (j = 0; j < Nlayer; j++) {
             d3start[0] = j;
-            get_scatter_nc_field_double(&(filenames.params), "bexp",
+            get_scatter_nc_field_double(&(filenames.params), "expt",
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
@@ -387,7 +387,7 @@ vic_init(void)
             set_node_parameters(soil_con[i].Nbedrock,
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
-                                &soil_con[i].bexp_node[0],
+                                &soil_con[i].expt_node[0],
                                 &temp_array[i * Nlayer]);
         }
         // Ksat: saturated hydraulic conductivity [m/s]
@@ -405,23 +405,6 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].Ksat_node[0],
-                                &temp_array[i * Nlayer]);
-        }
-        // psisat: soil matric potential at saturation [m]
-        for (j = 0; j < Nlayer; j++) {
-            d3start[0] = j;
-            get_scatter_nc_field_double(&(filenames.params), "psisat",
-                                        d3start, d3count, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                lidx = i * Nlayer + j;
-                temp_array[lidx] = (double) dvar[i];
-            }
-        }
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            set_node_parameters(soil_con[i].Nbedrock,
-                                soil_con[i].depth,
-                                soil_con[i].Zsum_soil,
-                                &soil_con[i].psisat_node[0],
                                 &temp_array[i * Nlayer]);
         }
         // Wpwp: soil moisture content at permanent wilting point [m3/m3]
@@ -608,11 +591,6 @@ vic_init(void)
     /******************************************
        Reading the vegetation parameters 
     ******************************************/
-
-    // reading the vegetation parameters is slightly more complicated because
-    // VIC allocates memory for veg_con only if the vegetation type exists in
-    // the grid cell. The veg_con_map_struct is used to provide some of this
-    // mapping
 
     // number of vegetation types - in vic an extra veg tile is created
     // for above-treeline vegetation in some cases

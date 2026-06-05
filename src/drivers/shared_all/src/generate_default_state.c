@@ -40,6 +40,8 @@ generate_default_state(force_data_struct *force,
     energy = all_vars->energy;
     Nveg = veg_con[0].vegetat_type_num;
     double *gravel_node = soil_con->gravel_node;
+    double *mpar_node = soil_con->mpar_node;
+    double *expt_node = soil_con->expt_node;
     double *bulk_dens_node = soil_con->bulk_dens_node;
     double air_temp = force->air_temp[NR];
     double pressure = force->pressure[NR];
@@ -111,11 +113,12 @@ generate_default_state(force_data_struct *force,
                 for (lidx = 0; lidx < Nsoil; lidx++) {
                     bulk_dens_node[lidx] = (bulk_dens_node[lidx] * 
                         (1.0 - gravel_node[lidx]) + gravel_node[lidx] * 2650);
+                    mpar_node[lidx] = 1.0 - 1.0 / expt_node[lidx];
                 }
             }
             else {
                 // 土壤参数从PedoTransfer函数中计算得到
-                PedoTransfer(soil_con); 
+                PedoTransfer(soil_con); // not used in current version.
             }
             
             /* Initialize soil moistures */

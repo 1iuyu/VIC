@@ -35,13 +35,14 @@ wrap_compute_zwt(double            step_dt,
     double *zc_soil = soil_con->zc_soil;
     double *dz_soil = soil_con->dz_soil;
     double *Zsum_soil = soil_con->Zsum_soil;
-    double *bexp_node = soil_con->bexp_node;
+    double *expt_node = soil_con->expt_node;
     double *soil_imped = cell->soil_imped;
     double *ksat_node = soil_con->Ksat_node;
     double *Wsat_node = soil_con->Wsat_node;
     double *Wpwp_node = soil_con->Wpwp_node;
     double *porosity = cell->porosity;
     double *alpha_node = soil_con->alpha_node;
+    double *mpar_node = soil_con->mpar_node;
     double *conduct_int = cell->conduct_int;
 
     size_t Nsoil = cell->Nsoil;
@@ -72,9 +73,8 @@ wrap_compute_zwt(double            step_dt,
     // 保存下泄量
     cell->recharge = recharge;
     lidx = Nsoil - 1; // 土层下标最后一层
-    double mpar_node = 1.0 - 1.0 / bexp_node[lidx];
     aqf_yield = (Wsat_node[lidx] - Wpwp_node[lidx]) * (1.0 - pow(1.0 + 
-                                        pow(alpha_node[lidx] * zwt, bexp_node[lidx]), mpar_node));
+                            pow(alpha_node[lidx] * zwt, expt_node[lidx]), mpar_node[lidx]));
     aqf_yield = max(0.02, aqf_yield);
     double recharge_flux = recharge * step_dt;
     // 地下水位位于土层下方
@@ -85,9 +85,8 @@ wrap_compute_zwt(double            step_dt,
     else {
         if (recharge_flux > 0.0) { // 地下水位上升
             for (i = zwt_lidx + 1; i-- > 0; ) { // 防止i下溢到SIZE_MAX
-                mpar_node = 1.0 - 1.0 / bexp_node[i];
                 aqf_yield1 = (Wsat_node[i] - Wpwp_node[i]) * (1.0 - pow(1.0 + 
-                                        pow(alpha_node[i] * zwt, bexp_node[i]), mpar_node));
+                                        pow(alpha_node[i] * zwt, expt_node[i]), mpar_node[i]));
                 aqf_yield1 = max(0.02, aqf_yield1);
                 double layer_top;
                 if (i > 0) {
@@ -108,9 +107,8 @@ wrap_compute_zwt(double            step_dt,
         }
         else {  // 地下水位下降
             for (i = zwt_lidx; i < Nsoil; i++) {
-                mpar_node = 1.0 - 1.0 / bexp_node[i];
                 aqf_yield1 = (Wsat_node[i] - Wpwp_node[i]) * (1.0 - pow(1.0 + 
-                                        pow(alpha_node[i] * zwt, bexp_node[i]), mpar_node));
+                                        pow(alpha_node[i] * zwt, expt_node[i]), mpar_node[i]));
                 aqf_yield1 = max(0.02, aqf_yield1);
                 recharge_layer = max(recharge_flux, -(aqf_yield1 * (Zsum_soil[i] - zwt)));
                 recharge_layer = min(0.0, recharge_layer);
@@ -264,17 +262,16 @@ wrap_compute_zwt(double            step_dt,
         }
         max_drain = min(0.01 * sin((CONST_PI / 180.0) * soil_con->slope), 0.01);
         if (zwt_lidx == Nsoil) {
-            decay_fator = bexp_node[lidx] / 3.0;
+            decay_fator = expt_node[lidx] / 3.0;
         }
         else {
-            decay_fator = bexp_node[zwt_lidx] / 3.0;
+            decay_fator = expt_node[zwt_lidx] / 3.0;
         }
         // coef_baseflow = conductivity[layer] * exp(3.0);  // ???
         baseflow = tmp_imped * max_drain * exp(-decay_fator * zwt);
         // baseflow = soil_imped * coef_baseflow * exp(-decay_fator * zwt);
-        mpar_node = 1.0 - 1.0 / bexp_node[lidx];
         aqf_yield = (Wsat_node[lidx] - Wpwp_node[lidx]) * (1.0 - pow(1.0 + 
-                                            pow(alpha_node[lidx] * zwt, bexp_node[lidx]), mpar_node));
+                                pow(alpha_node[lidx] * zwt, expt_node[lidx]), mpar_node[lidx]));
         aqf_yield = max(0.02, aqf_yield);
         double baseflow_flux = baseflow * step_dt;
         // 地下水位在土层下方
@@ -292,9 +289,8 @@ wrap_compute_zwt(double            step_dt,
             }
             else {
                 for (i = zwt_lidx; i < Nsoil; i++) {
-                    mpar_node = 1.0 - 1.0 / bexp_node[i];
                     aqf_yield1 = (Wsat_node[i] - Wpwp_node[i]) * (1.0 - pow(1.0 + 
-                                        pow(alpha_node[i] * zwt, bexp_node[i]), mpar_node));
+                                        pow(alpha_node[i] * zwt, expt_node[i]), mpar_node[i]));
                     aqf_yield1 = max(0.02, aqf_yield1);
                     drain_layer = max(sub_drain, -(aqf_yield1 * (Zsum_soil[i] - zwt)));
                     drain_layer = min(0.0, drain_layer);
