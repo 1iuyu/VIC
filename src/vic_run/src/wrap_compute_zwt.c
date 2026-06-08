@@ -325,10 +325,11 @@ wrap_compute_zwt(double            step_dt,
     cell->storage_aqf = storage_aqf;
     // 检查是否存在过度饱和的层
     for (i = Nsoil - 1; i >= 1; i--) {
-        porosity[i] = max(1.0e-4, Wsat_node[i] - ice[i]);
-        soil_excess = max(0.0, liq[i] - porosity[i]) * dz_soil[i];
-        liq[i] = min(liq[i], porosity[i]);
-        liq[i-1] += soil_excess / dz_soil[i-1];
+        if (liq[i] > porosity[i]) {
+            soil_excess = max(0.0, liq[i] - porosity[i]) * dz_soil[i];
+            liq[i] = min(liq[i], porosity[i]);
+            liq[i-1] += soil_excess / dz_soil[i-1];
+        }
     }
     // 对于第一层，额外检查是否小于MIN_SOILMOIST
     porosity[0] = max(1.0e-4, Wsat_node[0] - ice[0] - MIN_SOILMOIST);

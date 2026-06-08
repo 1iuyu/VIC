@@ -563,8 +563,10 @@ typedef struct {
  *****************************************************************************/
 typedef struct {
     // State variables
-    bool   IS_VEG;
-    bool   IS_GLAC;
+    bool   IS_VEG;                      /**< TRUE = landunit is vegetated */
+    bool   IS_GLAC;                     /**< TRUE = landunit is glacier */
+    bool   IS_WET;                      /**< TRUE = landunit is wetland */
+    bool   IS_URBAN;                    /**< TRUE = landunit is urban */
     size_t Nsoil;                       /**< Number of soil nodes in the model */
     size_t Nroot;                       /**< Number of root nodes in the model */
     size_t Nnode;                       /**< Number of thermal nodes in the model */
@@ -717,14 +719,18 @@ typedef struct {
     double NetShortSoil;      /**< net shortwave radiation to the soil (W/m^2) */
     double NetShortSnow;      /**< net shortwave radiation to the snow (W/m^2) */
     // 辐射项
+    double AbsSubDir[MAX_SWBANDS];
+    double AbsSubDfs[MAX_SWBANDS];
+    double AbsDirSun[MAX_SWBANDS];
+    double AbsDirSha[MAX_SWBANDS];
+    double AbsDfsSun[MAX_SWBANDS];
+    double AbsDfsSha[MAX_SWBANDS];
     double AlbedoSoilDir[MAX_SWBANDS];
     double AlbedoSoilDfs[MAX_SWBANDS];
     double AlbedoSnowDir[MAX_SWBANDS];
     double AlbedoSnowDfs[MAX_SWBANDS];
     double AlbedoGrndDir[MAX_SWBANDS];
     double AlbedoGrndDfs[MAX_SWBANDS];
-    double AbsSubDir[MAX_SWBANDS];
-    double AbsSubDfs[MAX_SWBANDS];
     double ShortDir2Dir[MAX_SWBANDS];
     double ShortDfs2Dir[MAX_SWBANDS];
     double ShortDir2Dfs[MAX_SWBANDS];
@@ -755,10 +761,10 @@ typedef struct {
     double MaxRainInt;          /**< maximum canopy capacity for rain interception [mm] */
     double wetFrac;
     double dryFrac;
-    double leaf_sun;
-    double leaf_sha;
-    double f_sun;
-    double f_shade;
+    double leaf_sun[MAX_CANOPYS];
+    double leaf_sha[MAX_CANOPYS];
+    double fsun_z[MAX_CANOPYS];
+    double fsha_z[MAX_CANOPYS];
     double LAI_z[MAX_CANOPYS];  /**< leaf area index above the center of each canopy layer (m2/m2) */
     double SAI_z[MAX_CANOPYS];  /**< stem area index above the center of each canopy layer (m2/m2) */
     double mat_VEG[4];          /**< vegetation water matric potential (mm) [sun, shade, xylem, root] */
@@ -772,8 +778,8 @@ typedef struct {
     double int_snow;            /**< snow intercepted on canopy (mm) */
     double canopy_swq;          /**< snow water equivalent of the canopy (mm) */
     // PHS terms
-    double aPAR_sun;            /**< par absorbed per unit lai for canopy layer (w/m**2) */
-    double aPAR_sha;            /**< par absorbed per unit lai for canopy layer (w/m**2) */
+    double aPAR_sun[MAX_CANOPYS];            /**< par absorbed per unit lai for canopy layer (w/m**2) */
+    double aPAR_sha[MAX_CANOPYS];            /**< par absorbed per unit lai for canopy layer (w/m**2) */
     double ac_sun;              /**< Rubisco-limited gross photosynthesis (umol CO2/m**2/s) */
     double ac_sha;              /**< Rubisco-limited gross photosynthesis (umol CO2/m**2/s) */
     double ag_sun;              /**< co-limited gross leaf photosynthesis (umol CO2/m**2/s) */

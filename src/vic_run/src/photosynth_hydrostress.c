@@ -27,8 +27,8 @@ photosynth_hydrostress(double            thm,
 {   
     extern parameters_struct param;
     size_t i, Ncanopy;
-    double aPAR_sun = veg_var->aPAR_sun;
-    double aPAR_sha = veg_var->aPAR_sha;
+    double *aPAR_sun = veg_var->aPAR_sun;
+    double *aPAR_sha = veg_var->aPAR_sha;
     double *dz_soil = soil_con->dz_soil;
     double *root = cell->root;
     double *LAI_z = veg_var->LAI_z;
@@ -166,14 +166,14 @@ photosynth_hydrostress(double            thm,
         lmr_sun = lmr_sun * min((0.2 * exp(3.218 * LAI_z[i])), 1.0);
         lmr_sha = lmr_sha * min((0.2 * exp(3.218 * LAI_z[i])), 1.0);
         // 光抑制
-        if (light_inhibit && aPAR_sun > 0.0) {
+        if (light_inhibit && aPAR_sun[i] > 0.0) {
             lmr_sun = lmr_sun * 0.67;
         }
-        if (light_inhibit && aPAR_sha > 0.0) {
+        if (light_inhibit && aPAR_sha[i] > 0.0) {
             lmr_sha = lmr_sha * 0.67;
         }
         // 白天计算光合作用
-        if (veg_var->aPAR_sun > 0.0) {
+        if (aPAR_sun[i] > 0.0) {
             // Vcmax, Jmax, TPU 的温度调整
             double vcmaxse = (668.39 - 1.07 * min(max((Tfoliage - CONST_TKFRZ), 11.0), 35.0));
             double jmaxse = (659.70 - 0.75 * min(max((Tfoliage - CONST_TKFRZ), 11.0), 35.0));
@@ -215,7 +215,7 @@ photosynth_hydrostress(double            thm,
             double theta_psii = 0.7;  // 经验曲率参数
             double r1, r2;
             double aquad, bquad, cquad;
-            double qabs = 0.5 * (1.0 - param.PHOTO_FNPS) * aPAR_sun * 4.6;
+            double qabs = 0.5 * (1.0 - param.PHOTO_FNPS) * aPAR_sun[i] * 4.6;
             aquad = theta_psii;
             bquad = -(qabs + jmax_sun);
             cquad = qabs * jmax_sun;
@@ -223,7 +223,7 @@ photosynth_hydrostress(double            thm,
             double je_sun = min(r1, r2);
             
             // 阴叶
-            qabs = 0.5 * (1.0 - param.PHOTO_FNPS) * aPAR_sha * 4.6;
+            qabs = 0.5 * (1.0 - param.PHOTO_FNPS) * aPAR_sha[i] * 4.6;
             bquad = -(qabs + jmax_sha);
             cquad = qabs * jmax_sha;
             solve_quadratic(aquad, bquad, cquad, &r1, &r2);

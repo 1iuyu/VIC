@@ -30,16 +30,16 @@ surface_fluxes(size_t             hidx,
 
     int    ErrorFlag;
     size_t i;
+    double transmit_direct;
+    double transmit_diffuse;
+    double tmp_absorb_grnd;
     // Structures holding values for current iteration
     cell_data_struct  iter_cell;
     energy_bal_struct iter_energy;
     veg_var_struct    iter_veg_var;
     snow_data_struct  iter_snow;
-    double aPAR_sun;
-    double aPAR_sha;
-    double transmit_direct;
-    double transmit_diffuse;
-    double tmp_absorb_grnd;
+    double *aPAR_sun = veg_var->aPAR_sha;
+    double *aPAR_sha = veg_var->aPAR_sha;
     double ShortOverDir[MAX_SWBANDS];
     double ShortOverDfs[MAX_SWBANDS];
     double shortwave_dir[MAX_SWBANDS];
@@ -125,26 +125,14 @@ surface_fluxes(size_t             hidx,
     energy->NetShortSub = NetShortSub;
     energy->NetShortSoil = NetShortSoil;
     energy->NetShortSnow = NetShortSnow;
+    // Absorbed PAR profile through canopy
+    for (i = 0; i < cell->Ncanopy; i++) {
+        aPAR_sun[i] = shortwave_dir[0] * energy->AbsDirSun[i] + 
+                                    shortwave_dfs[0] * energy->AbsDfsSun[i];
+        aPAR_sha[i] = shortwave_dir[0] * energy->AbsDirSha[i] + 
+                                    shortwave_dfs[0] * energy->AbsDfsSha[i];
+    }
    
-    /* Compute surface radiative fluxes */
-    double f_sun = veg_var->f_sun;
-    double f_shade = veg_var->f_shade;
-    double leaf_sun = veg_var->leaf_sun;
-    double leaf_sha = veg_var->leaf_sha;
-    double NetLAI_frac = NetLAI / max(NetLAI + NetSAI, param.TOL_A);
-    if (f_sun > 0.0) {
-        aPAR_sun = (ShortOverDir[0] + f_sun * ShortOverDfs[0]) *
-                        NetLAI_frac / max(leaf_sun, param.TOL_A);
-        aPAR_sha = (ShortOverDfs[0] * f_shade) *
-                        NetLAI_frac / max(leaf_sha, param.TOL_A);                      
-    }
-    else {
-        aPAR_sun = 0.0;
-        aPAR_sha = (ShortOverDir[0] + ShortOverDfs[0]) *
-                        NetLAI_frac / max(leaf_sha, param.TOL_A);
-    }
-    veg_var->aPAR_sun = aPAR_sun;
-    veg_var->aPAR_sha = aPAR_sha;
     /* reflected solar radiation */
     double refl_vis = energy->AlbedoSurfDir[0] * shortwave_dir[0] + 
                         energy->AlbedoSurfDfs[0] * shortwave_dfs[0];

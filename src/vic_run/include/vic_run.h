@@ -47,7 +47,7 @@ int calc_biomass_heat(double *, double *, double *, double *, double *, double *
                       double *, veg_var_struct *, veg_lib_struct *);
 void calc_dynamicVIC(double, double *, size_t, double *, double *, 
                     cell_data_struct *, soil_con_struct *);
-void canopy_two_stream(size_t, size_t, double, double *, energy_bal_struct *, 
+void canopy_two_stream(double, energy_bal_struct *, 
                        cell_data_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_transp_sink(cell_data_struct *, soil_con_struct *, veg_var_struct *);
 int compute_coszen(double, double, double, unsigned short int, unsigned int, double *, double *);

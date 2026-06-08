@@ -140,43 +140,12 @@ surface_albedo(double             step_dt,
 
         /* Compute canopy radiative transfer 
            using two-stream approximation */
-        for (i = 0; i < Nswband; i++) {
-            // direct
-            canopy_two_stream(i, SUNLIT,
-                              coszen, &proj_area,
-                              energy, cell,
-                              veg_var, veg_lib);
-            // diffuse
-            canopy_two_stream(i, SHADE,
-                              coszen, &proj_area, 
-                              energy, cell,
-                              veg_var, veg_lib);
-        }
-        tau_beam = proj_area / coszen *
-                        sqrt(1.0 - energy->ReflectVeg[0] -
-                                            energy->TransmitVeg[0]);
-        f_sun = (1.0 - exp(-tau_beam *
-                            (NetLAI + NetSAI))) /
-                                        max(tau_beam * 
-                                                (NetLAI + NetSAI), 
-                                                        param.TOL_A);
-        tau_beam = f_sun;
-        if (tau_beam < 0.01) {
-            leaf_frac = 0.0;
-        }
-        else {
-            leaf_frac = tau_beam;
-        }
-        f_sun = leaf_frac;
-    } // end of coszen > 0.
+        canopy_two_stream(coszen, energy, 
+                          cell,
+                          veg_var, 
+                          veg_lib);
 
-    /* shaded canopy fraction */
-    f_shade = 1.0 - f_sun;
-    // update veg_var
-    veg_var->f_sun = f_sun;
-    veg_var->f_shade = f_shade;
-    veg_var->leaf_sun = NetLAI * f_sun;
-    veg_var->leaf_sha = NetLAI * f_shade;
+    } // end of coszen > 0.
 
     return (0);
 }
