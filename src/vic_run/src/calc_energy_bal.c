@@ -30,20 +30,20 @@ calc_energy_bal(size_t             hidx,
      MAIN ROUTINE
     ***************/
     double pressure = force->pressure[hidx];
-    double longwave = force->longwave[hidx];
     double Tfoliage = energy->Tfoliage;
     double fcanopy = veg_var->fcanopy;
+    double coverage = snow->coverage;
     /************************************
       Update energy balance variables
     ************************************/
     update_fluxes(energy, cell,
                   snow, 
-                  soil_con, veg_lib);
+                  soil_con);
 
     /*****************************
       Compute surface resistance
     *****************************/
-    compute_soil_resis(cell, soil_con);
+    compute_soil_resis(coverage, cell, soil_con);
 
     /***************************************
       Compute the vapor flux between nodes
@@ -136,14 +136,6 @@ calc_energy_bal(size_t             hidx,
         energy->deriv_terms = energy->deriv_grnd;
         cell->esoil = cell->esoil_grnd;
         energy->deriv_evap = energy->deriv_egrnd;
-    }
-
-    // emitted longwave radiation and physical check
-    double lw_emit = energy->longwave + longwave;
-
-    if (lw_emit <= 0.0) {
-        log_err("Emitted longwave <= 0 (value: %.4f). Components: lw_out = %.4f, lw_in = %.4f",
-        lw_emit, energy->longwave, longwave);
     }
 
     /************************************

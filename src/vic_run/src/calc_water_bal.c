@@ -17,7 +17,6 @@ calc_water_bal(double             step_dt,
                cell_data_struct  *cell,
                soil_con_struct   *soil_con)
 {
-    extern option_struct     options;
     size_t i, j, k;
     size_t idx = 0;
     size_t nidx, lidx;

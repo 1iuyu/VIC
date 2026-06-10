@@ -60,10 +60,7 @@ GlacierTemperature(double   		  step_dt,
 							(0.5 * (zc_node[i] - Zsum_node[i] + 
 									capr * (zc_node[i+1] - Zsum_node[i])));
 		}
-		else if (i <= Nnode - 2) {
-			fact[i] = step_dt / (Cs_node[i] * dz_node[i]);
-		}
-		else if (i == Nnode - 1) {
+		else if (i <= Nnode - 1) {
 			fact[i] = step_dt / (Cs_node[i] * dz_node[i]);
 		}
     }

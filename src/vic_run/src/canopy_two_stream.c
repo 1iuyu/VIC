@@ -59,10 +59,8 @@ canopy_two_stream(double             coszen,
 	double H6, H7, H8, H9, H10;
     double LAIcanopy;
     size_t i, j, Ncanopy;
-    double albd, ftid, ftdd, fabd;
     double A1, A2;
     double fabd_sun, fabd_sha;
-    double albi, ftii, fabi;
     double fabi_sun, fabi_sha;
     double V, U, DV, DU;
     double dH2, dH3, dH5, dH6;
@@ -96,9 +94,8 @@ canopy_two_stream(double             coszen,
     double *LAI_z = veg_var->LAI_z;
     double *SAI_z = veg_var->SAI_z;
     double *fsun_z = veg_var->fsun_z;
-    double *fsha_z = veg_var->fsha_z;
-    double *leaf_sun = veg_var->leaf_sun;
-    double *leaf_sha = veg_var->leaf_sha;
+    double *LAIsun_z = veg_var->LAIsun_z;
+    double *LAIsha_z = veg_var->LAIsha_z;
     double COI = veg_lib->COI;
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
@@ -256,8 +253,8 @@ canopy_two_stream(double             coszen,
         if (i == 0) {
             if (Ncanopy == 1) {
                 fsun_z[0] = (1.0 - S2) / min(tau_leafdir * NetVEG, 40.0);
-                leaf_sun[0] = LAI_z[0] * fsun_z[0];
-                leaf_sha[0] = LAI_z[0] * (1.0 - fsun_z[0]);
+                LAIsun_z[0] = LAI_z[0] * fsun_z[0];
+                LAIsha_z[0] = LAI_z[0] * (1.0 - fsun_z[0]);
                 AbsDirSun[0] = fabd_sun / (fsun_z[0] * NetVEG);
                 AbsDfsSun[0] = fabi_sun / (fsun_z[0] * NetVEG);
                 AbsDirSha[0] = fabd_sha / ((1.0 - fsun_z[0]) * NetVEG);
@@ -286,8 +283,8 @@ canopy_two_stream(double             coszen,
                     S1 = exp(-min(H * LAIcanopy, 40.0));
                     S2 = exp(-min(tau_leafdir * LAIcanopy, 40.0));
                     fsun_z[j] = S2;
-                    leaf_sun[j] = LAI_z[j] * fsun_z[j];
-                    leaf_sha[j] = LAI_z[j] * (1.0 - fsun_z[j]);
+                    LAIsun_z[j] = LAI_z[j] * fsun_z[j];
+                    LAIsha_z[j] = LAI_z[j] * (1.0 - fsun_z[j]);
                     V = D1;
                     DV = H * P1 * tmp_2 / S1 + H * P2 * tmp_3 * S1;
                     U = tmp_6 * tmp_2 / S1 - P2 * tmp_7;

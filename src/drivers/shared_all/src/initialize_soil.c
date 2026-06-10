@@ -53,7 +53,6 @@ initialize_soil(cell_data_struct *cell,
             cell[veg].lateral_flow[lidx] = 0.0;
             cell[veg].deriv_vapor[lidx] = 0.0;
             cell[veg].moist[lidx] = 0.0;
-            cell[veg].Ra_root[lidx] = 0.0;
             cell[veg].soil_T[lidx] = 0.0;
             cell[veg].porosity[lidx] = 0.0;
             cell[veg].matric[lidx] = 0.0;
@@ -63,7 +62,6 @@ initialize_soil(cell_data_struct *cell,
             cell[veg].conduct_int[lidx] = 0.0;
             cell[veg].transp_sink[lidx] = 0.0;
             cell[veg].root[lidx] = 0.0;
-            cell[veg].Netroot[lidx] = 0.0;
         }
         for (lidx = 0; lidx < MAX_NODES; lidx++) {
             cell[veg].dz_node[lidx] = 0.0;

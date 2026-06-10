@@ -17,40 +17,42 @@ initialize_soil_con(soil_con_struct *soil_con)
     
     soil_con->gridcel = MISSING_USI;
 
-    soil_con->AlbedoPar = 0.;
-    soil_con->elevation = 0.;
-    soil_con->lat = 0.;
-    soil_con->lng = 0.;
-    soil_con->time_zone_lng = 0.;
-    soil_con->b_infilt = 0.;
-    soil_con->b_dynamic = 0.;
-    soil_con->capil_drive = 0.;
-    soil_con->cell_area = 0.;
-    soil_con->slope = 0.;
+    soil_con->AlbedoPar = 0.0;
+    soil_con->avg_temp = 0.0;
+    soil_con->elevation = 0.0;
+    soil_con->lat = 0.0;
+    soil_con->lng = 0.0;
+    soil_con->time_zone_lng = 0.0;
+    soil_con->b_infilt = 0.0;
+    soil_con->b_dynamic = 0.0;
+    soil_con->capil_drive = 0.0;
+    soil_con->cell_area = 0.0;
+    soil_con->slope = 0.0;
+    soil_con->init_zwt = 0.0;
 
     for (i = 0; i < MAX_LAYERS; i++) {
-        soil_con->bulk_dens_min[i] = 0.;
-        soil_con->bulk_dens_org[i] = 0.;
-        soil_con->depth[i] = 0.;
+        soil_con->bulk_dens_min[i] = 0.0;
+        soil_con->bulk_dens_org[i] = 0.0;
+        soil_con->depth[i] = 0.0;
     }
 
     for (i = 0; i < MAX_SOILS; i++) {
-        soil_con->expt_node[i] = 0.;
-        soil_con->mpar_node[i] = 0.;
-        soil_con->bulk_dens_node[i] = 0.;
-        soil_con->bubble_node[i] = 0.;
+        soil_con->expt_node[i] = 0.0;
+        soil_con->mpar_node[i] = 0.0;
+        soil_con->bulk_dens_node[i] = 0.0;
+        soil_con->bubble_node[i] = 0.0;
         soil_con->clay_node[i] = 0.0;
         soil_con->sand_node[i] = 0.0;
         soil_con->silt_node[i] = 0.0;
         soil_con->gravel_node[i] = 0.0;
-        soil_con->dz_soil[i] = 0.;
-        soil_con->Zsum_soil[i] = 0.;
-        soil_con->zc_soil[i] = 0.;
-        soil_con->organic_node[i] = 0.;
-        soil_con->soil_dens_node[i] = 0.;
-        soil_con->Ksat_node[i] = 0.;
-        soil_con->Wpwp_node[i] = 0.;
-        soil_con->Wsat_node[i] = 0.;
+        soil_con->dz_soil[i] = 0.0;
+        soil_con->Zsum_soil[i] = 0.0;
+        soil_con->zc_soil[i] = 0.0;
+        soil_con->organic_node[i] = 0.0;
+        soil_con->soil_dens_node[i] = 0.0;
+        soil_con->Ksat_node[i] = 0.0;
+        soil_con->Wpwp_node[i] = 0.0;
+        soil_con->Wsat_node[i] = 0.0;
         soil_con->soil_dens_min[i] = 2650.0;
         soil_con->soil_dens_org[i] = 1300.0;
     }

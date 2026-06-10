@@ -16,8 +16,8 @@ bool assert_close_double(double x, double y, double rtol, double abs_tol);
 bool assert_close_float(float x, float y, float rtol, float abs_tol);
 void brent_PHS(double, double, double, double, double, double, double, double, 
                double, double *, double, double, double, double, double, double,
-               double, double, double, double, double, double, double, double,
-               double, double, double, double, double, double, double, double,
+               double, double, double, double, double, double, double, double, double,
+               double, double, double, double, double, double, double, double, double,
                double *, double *, double *, double *, double *, double *,
                cell_data_struct *, soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_stress(double *, double *, double *, double, double, double, double,
@@ -34,7 +34,6 @@ int calc_water_bal_glac(double, double, double, double, double, energy_bal_struc
                         cell_data_struct *, snow_data_struct *, soil_con_struct *);
 void calc_rainonly(double, double, double, double, double, double, double *, double *);
 double calc_veg_displacement(double, double, double);
-void calc_root_moist_stress(cell_data_struct *, soil_con_struct *, veg_lib_struct *);
 void calc_snow_coverage(double, bool, double,
                         snow_data_struct *, soil_con_struct *);
 void calc_net_veg(double, double, double, veg_var_struct *);
@@ -51,13 +50,13 @@ void canopy_two_stream(double, energy_bal_struct *,
                        cell_data_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_transp_sink(cell_data_struct *, soil_con_struct *, veg_var_struct *);
 int compute_coszen(double, double, double, unsigned short int, unsigned int, double *, double *);
-void compute_soil_resis(cell_data_struct *, soil_con_struct *);
+void compute_soil_resis(double, cell_data_struct *, soil_con_struct *);
 void correct_precip(double *, double, double, double, double);
 void ci_func_PHS(bool, double, double, double *, double *, double *, double *,
                  double *, double *, double *, double, double, double, double,
+                 double, double, double, double, double, double, double, double,
                  double, double, double, double, double, double, double,
                  double, double, double, double, double, double, double,
-                 double, double, double, double, double, double,
                  cell_data_struct *, soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 int distribute_node_moisture_properties(cell_data_struct *, soil_con_struct *);
 void distribute_snow_state(snow_data_struct *);
@@ -85,8 +84,8 @@ void getvegwp(double *, double, double *, double *, double, double,
               soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 void hybrid_PHS(double *, double *, double *, double *, double *,
                 double, double, double, double, double, double,
-                double, double, double, double, double, double,
-                double, double, double, double, double, double,
+                double, double, double, double, double, double, double,
+                double, double, double, double, double, double, double,
                 double, double, double, double, double *, double *,
                 cell_data_struct *, soil_con_struct *, 
                 veg_var_struct *, veg_lib_struct *);
@@ -143,7 +142,7 @@ void solve_quadratic(double, double, double, double *, double *);
 void update_snow(double, double, double, snow_data_struct *);
 void update_node(cell_data_struct *, snow_data_struct *, soil_con_struct *);
 void update_fluxes(energy_bal_struct *, cell_data_struct *, snow_data_struct *,
-                  soil_con_struct *, veg_lib_struct *);
+                  soil_con_struct *);
 void update_snow_fluxes(double *, double *, double *, double *,
                            double, double, double, double);
 int vic_run(force_data_struct *, all_vars_struct *,

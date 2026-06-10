@@ -19,6 +19,8 @@ void ci_func_PHS(bool              bflag,
                  double           *gs_mol_sun, 
                  double           *gs_mol_sha,
                  double           *mat_VEG,
+                 double            aPAR_sun,
+                 double            aPAR_sha,
                  double            gsminsun,
                  double            gsminsha,
                  double            vcmax_sun, 
@@ -59,8 +61,6 @@ void ci_func_PHS(bool              bflag,
     double ap_sun, ap_sha;      // 产物限制光合
     double ag_sun, ag_sha;      // 协同限制总光合
     double max_cs = 50000.0;    // 最大叶面CO₂分压 (Pa)
-    double aPAR_sun = veg_var->aPAR_sun;
-    double aPAR_sha = veg_var->aPAR_sha;
     double qe = 0.0; // Quantum efficiency (mol CO2 / mol photons) C3;
     if (veg_lib->Ctype == PHOTO_C4) {
         qe = 0.05;  // C4

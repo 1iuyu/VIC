@@ -251,6 +251,7 @@ photosynth_hydrostress(double            thm,
                         vcmax_sun, vcmax_sha,
                         tpu_sun, tpu_sha,
                         kp_sun, kp_sha,
+                        aPAR_sun[i], aPAR_sha[i],
                         &gs_mol_sun, &gs_mol_sha,
                         cell, soil_con,
                         veg_var, veg_lib);

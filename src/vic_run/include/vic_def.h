@@ -392,10 +392,11 @@ typedef struct {
     double AlbedoSat[MAX_SWBANDS];    /** soil albedo at saturation */
     double AlbedoDry[MAX_SWBANDS];      
     double AlbedoPar;                 /**< soil albedo in PAR range (400-700nm) */
+    double avg_temp;                  /**< Mean Annual Ground Temperature (K) */
     double alpha_node[MAX_SOILS];     /**< retention shape parameter in van Genuchten equation [1/m] */
     double b_infilt;                  /**< infiltration parameter */
     double b_dynamic;                 /**< Dynamic VIC heterogeniety parameter for infiltration */
-    double expt_node[MAX_SOILS];      /**< layer-specific exponent n in Campbell or van Genuchten eqn */
+    double expt_node[MAX_SOILS];      /**< layer-specific exponent n van Genuchten eqn */
     double bubble_node[MAX_SOILS];    /**< bubbling pressure (cm) */
     double bulk_dens_min[MAX_LAYERS]; /**< bulk density of mineral soil (kg/m^3) */
     double bulk_dens_node[MAX_SOILS]; /**< soil bulk density (kg/m^3) */
@@ -428,6 +429,7 @@ typedef struct {
     unsigned int gridcel;             /**< grid cell number */
     double off_gmt;
     double slope;
+    double init_zwt;
     double z_bedrock;                 /**< Depth to bedrock [m] */
 } soil_con_struct;
 
@@ -576,7 +578,6 @@ typedef struct {
                                           [1] = sensible heat flux, [2] = latent heat flux */
     double Ra_sub[3];                   /**< canopy ground surface resistance */
     double Ra_grnd[3];
-    double Ra_root[MAX_SOILS];
     double Ra_evap;                    /**< ground surface resistance [s/m] to evaporation */
     double Ra_leaf;                    /**< canopy leaf resistance [s/m] to transpiration */
     double Ra_stem;
@@ -635,9 +636,8 @@ typedef struct {
     double soil_excess;
     double root[MAX_SOILS];
     double hksr_int[MAX_SOILS];        /**< soil-root interface conductance (mm/s) */
-    double Netroot[MAX_SOILS];
-    double liquid_flux[MAX_SOILS];
-    double vapor_flux[MAX_SOILS];
+    double liquid_flux[MAX_NODES];
+    double vapor_flux[MAX_NODES];
     double soil_imped[MAX_SOILS];      /**< frost content of the frozen sublayer */
     double transp_sink[MAX_SOILS];     /**< transpiration sink term [m/s] */
     double conductivity[MAX_SOILS];    /**< soil hydraulic conductivity [m/s] */
@@ -761,10 +761,11 @@ typedef struct {
     double MaxRainInt;          /**< maximum canopy capacity for rain interception [mm] */
     double wetFrac;
     double dryFrac;
-    double leaf_sun[MAX_CANOPYS];
-    double leaf_sha[MAX_CANOPYS];
+    double LAI_sun;
+    double LAI_sha;
+    double LAIsun_z[MAX_CANOPYS];
+    double LAIsha_z[MAX_CANOPYS];
     double fsun_z[MAX_CANOPYS];
-    double fsha_z[MAX_CANOPYS];
     double LAI_z[MAX_CANOPYS];  /**< leaf area index above the center of each canopy layer (m2/m2) */
     double SAI_z[MAX_CANOPYS];  /**< stem area index above the center of each canopy layer (m2/m2) */
     double mat_VEG[4];          /**< vegetation water matric potential (mm) [sun, shade, xylem, root] */

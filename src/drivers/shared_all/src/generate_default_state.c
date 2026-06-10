@@ -27,7 +27,6 @@ generate_default_state(force_data_struct *force,
     size_t      lidx;
     size_t      i, k;
     double      Cv;
-    double      init_temp;
     size_t      veg_class;
     double      Canopy_Upper;
     cell_data_struct *cell;
@@ -42,6 +41,8 @@ generate_default_state(force_data_struct *force,
     double *gravel_node = soil_con->gravel_node;
     double *mpar_node = soil_con->mpar_node;
     double *expt_node = soil_con->expt_node;
+    double *dz_soil = soil_con->dz_soil;
+    double *zc_soil = soil_con->zc_soil;
     double *bulk_dens_node = soil_con->bulk_dens_node;
     double air_temp = force->air_temp[NR];
     double pressure = force->pressure[NR];
@@ -73,7 +74,7 @@ generate_default_state(force_data_struct *force,
             // 土壤节点+基岩节点
             for (i = 0; i < Nbedrock; i++) {
                 lidx = Nsnow + i;
-                cell[veg].dz_node[lidx] = soil_con->dz_soil[i];
+                cell[veg].dz_node[lidx] = dz_soil[i];
             }
             cell[veg].Nsoil = Nsoil;
             cell[veg].Nnode = Nsoil + Nsnow + 1;
@@ -102,10 +103,55 @@ generate_default_state(force_data_struct *force,
         }
     }
 
-    /******************************************************************************
-       Initialize soil moistures
-       currently setting moist to porosity as default and eliminate init_moist 
-    ******************************************************************************/
+    /*********************************
+       Initialize water table depth
+    *********************************/
+    for (veg = 0; veg <= Nveg; veg++) {
+        if (veg_con[veg].Cv > 0) {
+            cell[veg].zwt = soil_con->init_zwt;
+        }
+    }
+
+    /*********************************
+       Initialize node temperatures
+    *********************************/
+    for (veg = 0; veg <= Nveg; veg++) {
+        if (veg_con[veg].Cv > 0) {
+            band = veg_con[veg].BandIndex;
+            Nsnow = snow[veg].Nsnow;
+            double T_soil = 0.0;
+            double surf_temp = air_temp + soil_con->Tfactor[band];
+            // Initialize snow node temperatures
+            for (i = 0; i < Nsnow; i++) {
+                energy[veg].T[i] = snow[veg].pack_T[i];
+            }
+            /* Initialize soil node temperatures */
+            for (k = Nsnow; k < cell[veg].Nnode; k++) {
+                lidx = k - Nsnow;
+                if (zc_soil[lidx] <= 5.0) {
+                    T_soil = surf_temp + (soil_con->avg_temp - surf_temp) * (zc_soil[lidx] / 5.0);
+                }
+                else if (zc_soil[lidx] <= 10.0) {
+                    T_soil = soil_con->avg_temp;
+                }
+                else {
+                    T_soil = soil_con->avg_temp + 0.05 * (zc_soil[lidx] - 10.0);
+                }
+                energy[veg].T[k] = T_soil;
+                cell[veg].soil_T[lidx] = T_soil;
+            }
+            /* Initial estimate of temperatures */
+            energy[veg].Tfoliage = surf_temp;
+            energy[veg].Tstem = surf_temp;
+            energy[veg].Tcanopy = surf_temp;
+            energy[veg].Tgrnd = surf_temp;
+            energy[veg].Tsurf = surf_temp;
+        }
+    }
+
+    /******************************
+       Initialize soil moistures 
+    ******************************/
     for (veg = 0; veg <= Nveg; veg++) {
         if (veg_con[veg].Cv > 0) {
             // 初始化土壤水力学参数
@@ -123,8 +169,18 @@ generate_default_state(force_data_struct *force,
             
             /* Initialize soil moistures */
             for (lidx = 0; lidx < Nsoil; lidx++) {
-                cell[veg].moist[lidx] =
-                        soil_con->Wsat_node[lidx] * 0.6;
+                // 温度大于0，地下水位以上设为田间持水量，地下水位以下设为饱和含水量
+                if (zc_soil[lidx <= cell[veg].zwt]) {
+                    if (cell[veg].soil_T[lidx] >= 0.0) {
+                        cell[veg].moist[lidx] = soil_con->Wsat_node[lidx] * 0.7;
+                    }
+                    else {
+                        cell[veg].moist[lidx] = soil_con->Wsat_node[lidx] * 0.9;
+                    }
+                }
+                else {
+                    cell[veg].moist[lidx] = soil_con->Wsat_node[lidx];
+                }
                 cell[veg].liq[lidx] = cell[veg].moist[lidx]; // 将liq初始化为moist
 
                 if (cell[veg].moist[lidx] >
@@ -133,38 +189,9 @@ generate_default_state(force_data_struct *force,
                             soil_con->Wsat_node[lidx];
                 }
             }
-            // initialize soil water table depth to the bottom of soil layer
-            lidx = Nsoil - 1;
-            cell[veg].zwt = soil_con->zc_soil[lidx];
         }
     }
 
-    /*********************************
-       Initialize node temperatures
-    *********************************/
-    for (veg = 0; veg <= Nveg; veg++) {
-        if (veg_con[veg].Cv > 0) {
-            band = veg_con[veg].BandIndex;
-            Nsnow = snow[veg].Nsnow;
-            init_temp = air_temp + soil_con->Tfactor[band];
-            // Initialize snow node temperatures
-            for (i = 0; i < Nsnow; i++) {
-                energy[veg].T[i] = snow[veg].pack_T[i];
-            }
-            /* Initialize soil node temperatures */
-            for (k = Nsnow; k < cell[veg].Nnode; k++) {
-                lidx = k - Nsnow;
-                energy[veg].T[k] = air_temp;
-                cell[veg].soil_T[lidx] = air_temp;
-            }
-            /* Initial estimate of temperatures */
-            energy[veg].Tfoliage = init_temp;
-            energy[veg].Tstem = init_temp;
-            energy[veg].Tcanopy = init_temp;
-            energy[veg].Tgrnd = init_temp;
-            energy[veg].Tsurf = init_temp;
-        }
-    }
     /******************************************
        Compute soil thermal node properties
     ******************************************/

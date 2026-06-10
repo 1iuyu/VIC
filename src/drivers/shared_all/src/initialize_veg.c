@@ -26,6 +26,8 @@ initialize_veg(veg_var_struct *veg_var,
         veg_var[i].canopy_swq = 0.0;
         veg_var[i].wetFrac = 0.0;
         veg_var[i].dryFrac = 0.0;
+        veg_var[i].LAI_sun = 0.0;
+        veg_var[i].LAI_sha = 0.0;
         // Diagnostic states
         veg_var[i].MaxSnowInt = 0.0;
         veg_var[i].MaxRainInt = 0.0;
@@ -33,20 +35,20 @@ initialize_veg(veg_var_struct *veg_var,
         for (j = 0; j < MAX_CANOPYS; j++) {
             veg_var[i].LAI_z[j] = 0.0;
             veg_var[i].SAI_z[j] = 0.0;
+            veg_var[i].LAIsun_z[j] = 0.0;
+            veg_var[i].LAIsha_z[j] = 0.0;
+            veg_var[i].aPAR_sun[j] = 0.0;
+            veg_var[i].aPAR_sha[j] = 0.0;
         }
         for (j = 0; j < 4; j++) {
             veg_var[i].mat_VEG[j] = 0.0;
         }
         // Fluxes
-        veg_var[i].aPAR_sun = 0.0;
-        veg_var[i].aPAR_sha = 0.0;
         veg_var[i].RainThroughFall = 0.0;
         veg_var[i].SnowThroughFall = 0.0;
         veg_var[i].RainDrip = 0.0;
         veg_var[i].SnowDrip = 0.0;
         veg_var[i].SnowUnload = 0.0;
-        veg_var[i].leaf_sun = 0.0;
-        veg_var[i].leaf_sha = 0.0;
         // PHS terms
         veg_var[i].ac_sun = 0.0;
         veg_var[i].ac_sha = 0.0;

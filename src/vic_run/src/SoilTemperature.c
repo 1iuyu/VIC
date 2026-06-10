@@ -19,6 +19,7 @@ SoilTemperature(double   		   step_dt,
 				soil_con_struct   *soil_con)
 
 {	
+    /* Initialize variables */
 	size_t i;
 	size_t Nsnow = snow->Nsnow;
     size_t Nsoil = cell->Nsoil;

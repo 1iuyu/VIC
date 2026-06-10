@@ -100,6 +100,13 @@ vic_init(void)
         soil_con[i].lng = local_domain.locations[i].longitude;
     }
 
+    // avg_temp: average soil temperature (K)
+    get_scatter_nc_field_double(&(filenames.params), "avg_temp",
+                                d2start, d2count, dvar);
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        soil_con[i].avg_temp = (double) dvar[i];
+    }
+
     // b_infilt
     get_scatter_nc_field_double(&(filenames.params), "infilt",
                                 d2start, d2count, dvar);
@@ -150,6 +157,13 @@ vic_init(void)
                                 d2start, d2count, dvar);
     for (i = 0; i < local_domain.ncells_active; i++) {
         soil_con[i].slope = (double) dvar[i];
+    }
+
+    // init_zwt: initial water table depth [m]
+    get_scatter_nc_field_double(&(filenames.params), "init_zwt",
+                                d2start, d2count, dvar);
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        soil_con[i].init_zwt = (double) dvar[i];
     }
 
     // z_bedrock: Depth to bedrock [m]

@@ -30,8 +30,8 @@ surface_fluxes(size_t             hidx,
 
     int    ErrorFlag;
     size_t i;
-    double transmit_direct;
-    double transmit_diffuse;
+    double transmit_dir;
+    double transmit_dfs;
     double tmp_absorb_grnd;
     // Structures holding values for current iteration
     cell_data_struct  iter_cell;
@@ -103,20 +103,20 @@ surface_fluxes(size_t             hidx,
         ShortOverDfs[i] = shortwave_dfs[i] * energy->AbsSubDfs[i];
         NetShortSub += ShortOverDir[i] + ShortOverDfs[i];
         // transmitted solar fluxes incident on grnd.
-        transmit_direct = shortwave_dir[i] * energy->ShortDir2Dir[i];
-        transmit_diffuse = shortwave_dir[i] * energy->ShortDfs2Dir[i] +
+        transmit_dir = shortwave_dir[i] * energy->ShortDir2Dir[i];
+        transmit_dfs = shortwave_dir[i] * energy->ShortDfs2Dir[i] +
                                 shortwave_dfs[i] * energy->ShortDfs2Dfs[i];
         // solar radiation absorbed by ground surface.
-        tmp_absorb_grnd = transmit_direct * (1.0 - energy->AlbedoGrndDir[i]) + 
-                            transmit_diffuse * (1.0 - energy->AlbedoGrndDfs[i]);
+        tmp_absorb_grnd = transmit_dir * (1.0 - energy->AlbedoGrndDir[i]) + 
+                            transmit_dfs * (1.0 - energy->AlbedoGrndDfs[i]);
         NetShortGrnd += tmp_absorb_grnd;
 
         // calculate absorbed solar by soil/snow separately
-        NetShortSoil += transmit_direct * (1.0 - energy->AlbedoSoilDir[i]) + 
-                                        transmit_diffuse * 
+        NetShortSoil += transmit_dir * (1.0 - energy->AlbedoSoilDir[i]) + 
+                                        transmit_dfs * 
                                             (1.0 - energy->AlbedoSoilDfs[i]);
-        NetShortSnow += transmit_direct * (1.0 - energy->AlbedoSnowDir[i]) + 
-                                        transmit_diffuse * 
+        NetShortSnow += transmit_dir * (1.0 - energy->AlbedoSnowDir[i]) + 
+                                        transmit_dfs * 
                                             (1.0 - energy->AlbedoSnowDfs[i]);
     }
     NetShortSurf = NetShortGrnd + NetShortSub;
@@ -125,6 +125,14 @@ surface_fluxes(size_t             hidx,
     energy->NetShortSub = NetShortSub;
     energy->NetShortSoil = NetShortSoil;
     energy->NetShortSnow = NetShortSnow;
+    double LAI_sun = 0.0;
+    double LAI_sha = 0.0;
+    for (i = 0; i < cell->Ncanopy; i++) {
+        LAI_sun += veg_var->LAIsun_z[i];
+        LAI_sha += veg_var->LAIsha_z[i];
+    }
+    veg_var->LAI_sun = LAI_sun;
+    veg_var->LAI_sha = LAI_sha;
     // Absorbed PAR profile through canopy
     for (i = 0; i < cell->Ncanopy; i++) {
         aPAR_sun[i] = shortwave_dir[0] * energy->AbsDirSun[i] + 

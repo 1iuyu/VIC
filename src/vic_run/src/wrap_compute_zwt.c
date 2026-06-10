@@ -43,7 +43,7 @@ wrap_compute_zwt(double            step_dt,
     double *porosity = cell->porosity;
     double *alpha_node = soil_con->alpha_node;
     double *mpar_node = soil_con->mpar_node;
-    double *conduct_int = cell->conduct_int;
+    double *conductivity = cell->conductivity;
 
     size_t Nsoil = cell->Nsoil;
     double zwt = cell->zwt; // 地下水位
@@ -65,8 +65,8 @@ wrap_compute_zwt(double            step_dt,
     if (zwt_lidx < Nsoil) {
         // 非饱和带最底层的水头
         waterhead = matric[zwt_lidx] + zc_soil[zwt_lidx];
-        aqf_conduct = soil_imped[zwt_lidx] * conduct_int[zwt_lidx];
-        recharge = aqf_conduct * (waterhead - zwt) / (zwt - zc_soil[zwt_lidx]);
+        aqf_conduct = soil_imped[zwt_lidx] * conductivity[zwt_lidx];
+        recharge = aqf_conduct * (1.0 + matric[zwt_lidx] / max(zwt - zc_soil[zwt_lidx], param.TOL_A));
         double max_flux = 0.01 / step_dt;  // 最大允许通量
         recharge = max(-max_flux, min(max_flux, recharge)); // m/s
     }

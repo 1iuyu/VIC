@@ -22,6 +22,10 @@ initialize_energy(energy_bal_struct *energy,
 
         // Prognostic states
         for (i = 0; i < MAX_SWBANDS; i++) {
+            energy[veg].AbsDirSun[i] = 0.0;
+            energy[veg].AbsDirSha[i] = 0.0;
+            energy[veg].AbsDfsSun[i] = 0.0;
+            energy[veg].AbsDfsSha[i] = 0.0;
             energy[veg].AlbedoSnowDir[i] = 0.0;
             energy[veg].AlbedoSnowDfs[i] = 0.0;
             energy[veg].AlbedoSoilDir[i] = 0.0;

@@ -14,8 +14,7 @@ void
 update_fluxes(energy_bal_struct *energy,
               cell_data_struct  *cell,
               snow_data_struct  *snow,
-              soil_con_struct   *soil_con,
-              veg_lib_struct    *veg_lib)
+              soil_con_struct   *soil_con)
 {
     extern option_struct     options;
 
@@ -39,8 +38,6 @@ update_fluxes(energy_bal_struct *energy,
         if (options.ACTIVE_LAYER) {
             ActiveLayer(cell, soil_con);
         }
-        // 计算计算根部水分胁迫强度
-        calc_root_moist_stress(cell, soil_con, veg_lib);
     }
     
 }
