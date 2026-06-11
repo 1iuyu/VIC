@@ -28,30 +28,42 @@ calc_surf_humidity(double             Tgrnd,
     double *soil_T = cell->soil_T;
     double *matric = cell->matric;
     double *pack_T = snow->pack_T;
-    // 计算降低地面饱和比湿度的因子（-）
-    alpha_soil = exp(matric[0] / (CONST_RWV / CONST_G) / soil_T[0]);
-    rh_grnd = (1.0 - coverage) * alpha_soil + coverage;
-    cell->rh_grnd = rh_grnd;
+    if (cell->IS_VEG) {
+        // 计算降低地面饱和比湿度的因子（-）
+        alpha_soil = exp(matric[0] / (CONST_RWV / CONST_G) / soil_T[0]);
+        rh_grnd = (1.0 - coverage) * alpha_soil + coverage;
+    }
+    else if (cell->IS_URBAN) {
+
+    }
+    else if (cell->IS_GLAC || cell->IS_WET) {
+        rh_grnd = 1.0;
+    }
     // compute humidities individually for snow, soil for vegetated
-    svp_flags(Tgrnd, pressure, 
-              NULL, &qsat_Tgrnd, 
-              NULL, &qsdT, QSAT | QSDT);
-    // soil humidity
-    cell->Qair_soil = qsat_Tgrnd * alpha_soil;
-    /* 2) snow 顶层饱和比湿 */
-    if (snow->Nsnow > 0) {
-        ice_factor = exp(CONST_LATICE * (pack_T[0] - CONST_TKFRZ) / 
-                                    (CONST_RWV * pow(pack_T[0], 2.0)));
-        cell->Qair_snow = qsat_Tgrnd * ice_factor;
-    } else {
-        cell->Qair_snow = cell->Qair_soil;
+    if (cell->IS_VEG) {
+        svp_flags(Tgrnd, pressure, 
+                NULL, &qsat_Tgrnd, 
+                NULL, &qsdT, QSAT | QSDT);
+        // soil humidity
+        cell->Qair_soil = qsat_Tgrnd * alpha_soil;
+        /* 2) snow 顶层饱和比湿 */
+        if (snow->Nsnow > 0) {
+            ice_factor = exp(CONST_LATICE * (pack_T[0] - CONST_TKFRZ) / 
+                                        (CONST_RWV * pow(pack_T[0], 2.0)));
+            cell->Qair_snow = qsat_Tgrnd * ice_factor;
+        } else {
+            cell->Qair_snow = cell->Qair_soil;
+        }
+        
+        cell->Qair_grnd = coverage * cell->Qair_snow
+                + (1.0 - coverage) * cell->Qair_soil;
+        energy->qsdT = coverage * qsdT * ice_factor +
+                        (1.0 - coverage) * alpha_soil * qsdT;        
+    }
+    else {
+        
     }
     
-    cell->Qair_grnd = coverage * cell->Qair_snow
-               + (1.0 - coverage) * cell->Qair_soil;
-    energy->qsdT = coverage * qsdT * ice_factor +
-                    (1.0 - coverage) * alpha_soil * qsdT;
-
     return (0);
 
 }

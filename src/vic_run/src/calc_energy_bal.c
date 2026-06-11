@@ -58,17 +58,18 @@ calc_energy_bal(size_t             hidx,
     /**********************************
       Compute psychrometric variables
     **********************************/
-    if (Tfoliage > CONST_TKFRZ) {
-        energy->LatentVapOver = CONST_LATVAP;
-        energy->FrozenOver = false;
+    if (cell->IS_VEG) {
+        if (Tfoliage > CONST_TKFRZ) {
+            energy->LatentVapOver = CONST_LATVAP;
+            energy->FrozenOver = false;
+        }
+        else {
+            energy->LatentVapOver = CONST_LATSUB;
+            energy->FrozenOver = true;
+        }
     }
-    else {
-        energy->LatentVapOver = CONST_LATSUB;
-        energy->FrozenOver = true;
-    }
-
     // 假设只有当liq[0] = 0.0 时发生升华
-    if (cell->ice[0] > 0.0 && energy->Tgrnd < CONST_TKFRZ) {
+    if (cell->ice[0] > 0.0 && energy->Tgrnd < CONST_TKFRZ || cell->IS_GLAC) {
         energy->LatentVapGrnd = CONST_LATSUB;
         energy->FrozenGrnd = true;
     }

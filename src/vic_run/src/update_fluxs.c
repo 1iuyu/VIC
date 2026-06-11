@@ -30,14 +30,10 @@ update_fluxes(energy_bal_struct *energy,
         energy->Tgrnd = cell->soil_T[0];
     }
 
-    if (cell->IS_VEG) {
-
-        /********************************
-         计算活动层深度并更新根区分数
-        ********************************/
-        if (options.ACTIVE_LAYER) {
-            ActiveLayer(cell, soil_con);
-        }
-    }
-    
+    /********************************
+     计算活动层深度并更新根区分数
+    ********************************/
+    if (options.ACTIVE_LAYER) {
+        ActiveLayer(cell, soil_con);
+    }    
 }

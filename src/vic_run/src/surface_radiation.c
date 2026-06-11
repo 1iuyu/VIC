@@ -100,12 +100,21 @@ surface_radiation(double            *shortwave_dir,
 
     /* reflected solar radiation */
     for (i = 0; i < options.Nswband; i++) {
-        double ReflShortSurf = AlbedoSurfDir[i] * shortwave_dir[i] + 
-                            AlbedoSurfDfs[i] * shortwave_dfs[i];
-        energy->ReflShortSurf = ReflShortSurf;
-        energy->ReflShortGrnd = energy->ReflGrndDir[i] * shortwave_dir[i] + 
-                        energy->ReflGrndDfs[i] * shortwave_dfs[i];
-        energy->ReflShortSub = energy->ReflSubDir[i] * shortwave_dir[i] +
-                        energy->ReflSubDfs[i] * shortwave_dfs[i];
+        if (cell->IS_VEG) {
+            double ReflShortSurf = AlbedoSurfDir[i] * shortwave_dir[i] + 
+                                AlbedoSurfDfs[i] * shortwave_dfs[i];
+            energy->ReflShortSurf = ReflShortSurf;
+            energy->ReflShortGrnd = energy->ReflGrndDir[i] * shortwave_dir[i] + 
+                            energy->ReflGrndDfs[i] * shortwave_dfs[i];
+            energy->ReflShortSub = energy->ReflSubDir[i] * shortwave_dir[i] +
+                            energy->ReflSubDfs[i] * shortwave_dfs[i];
+        }
+        else if (cell->IS_GLAC) {
+            double ReflShortSurf = shortwave_dir[i] * AlbedoGrndDir[i] +
+                                shortwave_dfs[i] * AlbedoGrndDfs[i];
+            energy->NetShortGrnd = NetShortGrnd;
+            energy->ReflShortSurf = ReflShortSurf;      
+        }
+
     }
 }

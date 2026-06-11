@@ -584,7 +584,6 @@ typedef struct {
     double Z0m_sub[3];
     double displacement[2];            /**< displacement height (m) */
     double ref_height[3];              /**< height of meteorological forcing data (m) */
-    double rh_grnd;                    /**< relative humidity on the ground (fraction) */
     double asat;                       /**< saturated area fraction */
     double rootmoist;                  /**< total of layer.moist over all layers in the root zone (mm) */
     double zwt;                        /**< average water table position [cm] - using lowest unsaturated layer */
