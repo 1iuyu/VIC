@@ -25,10 +25,10 @@ calc_energy_bal(size_t             hidx,
                 veg_var_struct    *veg_var,
                 veg_lib_struct    *veg_lib)
 {
-    int    ErrorFlag;
     /***************
      MAIN ROUTINE
     ***************/
+    int    ErrorFlag;
     double pressure = force->pressure[hidx];
     double Tfoliage = energy->Tfoliage;
     double fcanopy = veg_var->fcanopy;
@@ -48,7 +48,7 @@ calc_energy_bal(size_t             hidx,
     /***************************************
       Compute the vapor flux between nodes
     ***************************************/
-    soil_vapor_flux(pressure, cell, soil_con);
+    calc_vapor_flux(pressure, cell, soil_con);
 
     /***************************************
       Compute the hydraulic conductivity
@@ -56,7 +56,7 @@ calc_energy_bal(size_t             hidx,
     soil_hydraulic_conductivity(cell, soil_con);
 
     /**********************************
-    Compute psychrometric variables
+      Compute psychrometric variables
     **********************************/
     if (Tfoliage > CONST_TKFRZ) {
         energy->LatentVapOver = CONST_LATVAP;

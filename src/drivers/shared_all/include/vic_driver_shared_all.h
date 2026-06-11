@@ -536,7 +536,8 @@ void alloc_aggdata(stream_struct *stream);
 void alloc_out_data(size_t ngridcells, double ***out_data);
 double average(double *ar, size_t n);
 double calc_energy_balance_error(double, double, double, double, double);
-void calc_root_fractions(veg_con_struct *veg_con, soil_con_struct *soil_con);
+void calc_root_fractions(size_t, cell_data_struct *cell, soil_con_struct *soil_con,
+                         veg_lib_struct *veg_lib);
 double calc_water_balance_error(double, double, double, double);
 double calc_max_daylength(double);
 bool cell_method_from_agg_type(unsigned short int aggtype, char cell_method[]);
@@ -631,7 +632,7 @@ void print_snow_data(snow_data_struct *snow);
 void print_soil_con(soil_con_struct *scon, size_t nlayers, size_t nnodes,
                     size_t nbands);
 void print_stream(stream_struct *stream, metadata_struct *metadata);
-void print_veg_con(veg_con_struct *vcon, size_t nroots);
+void print_veg_con(veg_con_struct *vcon);
 void print_veg_lib(veg_lib_struct *vlib);
 void print_veg_var(veg_var_struct *vvar, size_t ncanopy);
 void print_version(char *);

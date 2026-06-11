@@ -67,6 +67,28 @@ read_veglib(FILE   *veglib,
             fscanf(veglib, "%lf", &temp[i].smpso);
             fscanf(veglib, "%lf", &temp[i].trunk_dia);
 
+            fscanf(veglib, "%s", tmpstr); /* landunit type */
+            if (!strcmp(tmpstr, "0") || !strcmp(tmpstr, "SOIL")) {
+                temp[i].Landtype = LAND_SOIL;
+            }
+            else if (!strcmp(tmpstr, "1") || !strcmp(tmpstr, "GLAC")) {
+                temp[i].Landtype = LAND_GLAC;
+            }
+            else if (!strcmp(tmpstr, "2") || !strcmp(tmpstr, "WET")) {
+                temp[i].Landtype = LAND_WET;
+            }
+            else if (!strcmp(tmpstr, "3") || !strcmp(tmpstr, "URBAN")) {
+                temp[i].Landtype = LAND_URBAN;
+            }
+
+            /* 兼容性警告：字符串形式已弃用，建议使用数字 */
+            if (!strcmp(tmpstr, "VEG") || !strcmp(tmpstr, "GLAC") ||
+                !strcmp(tmpstr, "WET") || !strcmp(tmpstr, "URBAN")) {
+                log_warn("Use of strings (e.g., \"VEG\", \"GLAC\") as values of "
+                        "landtype is deprecated.  Please replace these with "
+                        "numeric codes: 0 (SOIL), 1 (GLAC), 2 (WET), or 3 (URBAN)");
+            }
+
             /* Carbon-cycling parameters */
             fscanf(veglib, "%s", tmpstr); /* photosynthetic pathway */
             if (!strcmp(tmpstr, "0") || !strcmp(tmpstr, "C3")) {
@@ -173,6 +195,7 @@ read_veglib(FILE   *veglib,
     temp[i].smpsc = 0.0;
     temp[i].smpso = 0.0;
     temp[i].trunk_dia = 0.0;
+    temp[i].Landtype = LAND_SOIL;
     temp[i].Ctype = PHOTO_C3;
     temp[i].froot_leaf = 0.0;
     temp[i].theta_cj = 0.0;

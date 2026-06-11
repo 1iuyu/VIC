@@ -646,12 +646,6 @@ vic_init(void)
         for (i = 0; i < local_domain.ncells_active; i++) {
             if (j < local_domain.locations[i].nveg) {
                 veg_con[i][j].veg_class = (int) ivar[i];
-                if (veg_con[i][j].veg_class == options.GLACIER_ID) {
-                    veg_con[i][j].IS_GLAC = true;
-                }
-                else {
-                    veg_con[i][j].IS_GLAC = false;
-                }
             }
         } 
     }
@@ -689,11 +683,6 @@ vic_init(void)
                     "(%zu).\n%s", j, local_domain.locations[i].nveg,
                     locstr);
         }
-    }
-
-    // calculate root fractions
-    for (i = 0; i < local_domain.ncells_active; i++) {
-        calc_root_fractions(veg_con[i], &(soil_con[i]));
     }
 
     // Run some checks and corrections for vegetation

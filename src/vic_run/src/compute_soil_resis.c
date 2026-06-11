@@ -18,7 +18,6 @@ compute_soil_resis(double            coverage,
     /* Allocate temp arrays */
     double *liq = cell->liq;
     double *porosity = cell->porosity;  // 有效孔隙度
-    double *expt_node = soil_con->expt_node;
     double *Wsat_node = soil_con->Wsat_node;
 
     double Ra_evap = 0.0;

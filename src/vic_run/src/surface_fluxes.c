@@ -30,18 +30,11 @@ surface_fluxes(size_t             hidx,
 
     int    ErrorFlag;
     size_t i;
-    double transmit_dir;
-    double transmit_dfs;
-    double tmp_absorb_grnd;
     // Structures holding values for current iteration
     cell_data_struct  iter_cell;
     energy_bal_struct iter_energy;
     veg_var_struct    iter_veg_var;
     snow_data_struct  iter_snow;
-    double *aPAR_sun = veg_var->aPAR_sha;
-    double *aPAR_sha = veg_var->aPAR_sha;
-    double ShortOverDir[MAX_SWBANDS];
-    double ShortOverDfs[MAX_SWBANDS];
     double shortwave_dir[MAX_SWBANDS];
     double shortwave_dfs[MAX_SWBANDS];
 
@@ -78,7 +71,8 @@ surface_fluxes(size_t             hidx,
     AdvectedEnergy(air_temp, 
                    snowfall,
                    rainfall,
-                   energy, veg_var);
+                   energy, 
+                   cell, veg_var);
                     
     /***************************
       Surface shortwave albedo
@@ -92,82 +86,32 @@ surface_fluxes(size_t             hidx,
     /***************************
       Surface radiative fluxes
     ***************************/
-    double NetShortSub = 0.0;
-    double NetShortSurf = 0.0;
-    double NetShortGrnd = 0.0;
-    double NetShortSoil = 0.0;
-    double NetShortSnow = 0.0;
-    for (i = 0; i < options.Nswband; i++) {
-        // absorbed by canopy
-        ShortOverDir[i] = shortwave_dir[i] * energy->AbsSubDir[i];
-        ShortOverDfs[i] = shortwave_dfs[i] * energy->AbsSubDfs[i];
-        NetShortSub += ShortOverDir[i] + ShortOverDfs[i];
-        // transmitted solar fluxes incident on grnd.
-        transmit_dir = shortwave_dir[i] * energy->ShortDir2Dir[i];
-        transmit_dfs = shortwave_dir[i] * energy->ShortDfs2Dir[i] +
-                                shortwave_dfs[i] * energy->ShortDfs2Dfs[i];
-        // solar radiation absorbed by ground surface.
-        tmp_absorb_grnd = transmit_dir * (1.0 - energy->AlbedoGrndDir[i]) + 
-                            transmit_dfs * (1.0 - energy->AlbedoGrndDfs[i]);
-        NetShortGrnd += tmp_absorb_grnd;
-
-        // calculate absorbed solar by soil/snow separately
-        NetShortSoil += transmit_dir * (1.0 - energy->AlbedoSoilDir[i]) + 
-                                        transmit_dfs * 
-                                            (1.0 - energy->AlbedoSoilDfs[i]);
-        NetShortSnow += transmit_dir * (1.0 - energy->AlbedoSnowDir[i]) + 
-                                        transmit_dfs * 
-                                            (1.0 - energy->AlbedoSnowDfs[i]);
-    }
-    NetShortSurf = NetShortGrnd + NetShortSub;
-    energy->NetShortGrnd = NetShortGrnd;
-    energy->shortwave = NetShortSurf;
-    energy->NetShortSub = NetShortSub;
-    energy->NetShortSoil = NetShortSoil;
-    energy->NetShortSnow = NetShortSnow;
-    double LAI_sun = 0.0;
-    double LAI_sha = 0.0;
-    for (i = 0; i < cell->Ncanopy; i++) {
-        LAI_sun += veg_var->LAIsun_z[i];
-        LAI_sha += veg_var->LAIsha_z[i];
-    }
-    veg_var->LAI_sun = LAI_sun;
-    veg_var->LAI_sha = LAI_sha;
-    // Absorbed PAR profile through canopy
-    for (i = 0; i < cell->Ncanopy; i++) {
-        aPAR_sun[i] = shortwave_dir[0] * energy->AbsDirSun[i] + 
-                                    shortwave_dfs[0] * energy->AbsDfsSun[i];
-        aPAR_sha[i] = shortwave_dir[0] * energy->AbsDirSha[i] + 
-                                    shortwave_dfs[0] * energy->AbsDfsSha[i];
-    }
-   
-    /* reflected solar radiation */
-    double refl_vis = energy->AlbedoSurfDir[0] * shortwave_dir[0] + 
-                        energy->AlbedoSurfDfs[0] * shortwave_dfs[0];
-    double refl_nir = energy->AlbedoSurfDir[1] * shortwave_dir[1] + 
-                        energy->AlbedoSurfDfs[1] * shortwave_dfs[1];
-    energy->ReflShortSurf = refl_vis + refl_nir;
-    energy->ReflShortGrnd = energy->ReflGrndDir[0] * shortwave_dir[0] + 
-                    energy->ReflGrndDfs[0] * shortwave_dfs[0] +
-                        energy->ReflGrndDir[1] * shortwave_dir[1] + 
-                            energy->ReflGrndDfs[1] * shortwave_dfs[1];
-    energy->ReflShortSub = energy->ReflSubDir[0] * shortwave_dir[0] +
-                    energy->ReflSubDfs[0] * shortwave_dfs[0] +
-                        energy->ReflSubDir[1] * shortwave_dir[1] + 
-                            energy->ReflSubDfs[1] * shortwave_dfs[1];
+    surface_radiation(shortwave_dir,
+                      shortwave_dfs,
+                      energy, cell, veg_var);
 
     /******************************
       Compute longwave emissivity
     ******************************/
-    double EmissLongSub = 1.0 - exp(-(NetLAI + NetSAI) / 1.0);
-    double EmissLongGrnd = param.EMISS_SNOW * coverage +
-                           param.EMISS_ICE * (1.0 - coverage);
-    double EmissLongSurf = fcanopy * (EmissLongGrnd * (1.0 - EmissLongSub) + EmissLongSub + 
-                        EmissLongSub * (1.0 - EmissLongSub) * 
-                            (1.0 - EmissLongGrnd)) + (1.0 - fcanopy) * EmissLongGrnd;
+    double EmissLongSub = 0.0;
+    double EmissLongGrnd = 0.0;
+    double EmissLongSurf = 0.0;
+    if (cell->IS_VEG) {
+        EmissLongSub = 1.0 - exp(-(NetLAI + NetSAI) / 1.0);
+        EmissLongGrnd = param.EMISS_SNOW * coverage +
+                            param.EMISS_ICE * (1.0 - coverage);
+        EmissLongSurf = fcanopy * (EmissLongGrnd * (1.0 - EmissLongSub) + EmissLongSub + 
+                            EmissLongSub * (1.0 - EmissLongSub) * 
+                                (1.0 - EmissLongGrnd)) + (1.0 - fcanopy) * EmissLongGrnd;
+    }
+    else if (cell->IS_GLAC) {
+        EmissLongGrnd = param.EMISS_ICE * (1.0 - coverage) + 
+                                        param.EMISS_SNOW * coverage;      
+    }
     energy->EmissLongSub = EmissLongSub;
     energy->EmissLongGrnd = EmissLongGrnd;
     energy->EmissLongSurf = EmissLongSurf;
+
     // 更新体积热容量
     for (i = 0; i < cell->Nnode; i++) {
         energy->last_T[i] = energy->T[i];

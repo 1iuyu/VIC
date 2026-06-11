@@ -26,7 +26,6 @@ generate_default_state(force_data_struct *force,
     size_t      Nsnow;
     size_t      lidx;
     size_t      i, k;
-    double      Cv;
     size_t      veg_class;
     double      Canopy_Upper;
     cell_data_struct *cell;
@@ -46,12 +45,47 @@ generate_default_state(force_data_struct *force,
     double *bulk_dens_node = soil_con->bulk_dens_node;
     double air_temp = force->air_temp[NR];
     double pressure = force->pressure[NR];
-    /*********************************
-      Initialize snowpack temperatures
-    *********************************/
+
+    /******************************************************
+      Initialize landunit types based on vegetation class
+    ******************************************************/
     for (veg = 0; veg <= Nveg; veg++) {
-        Cv = veg_con[veg].Cv;
-        if (Cv > 0) {
+        if (veg_con[veg].Cv > 0) {
+            veg_class = veg_con[veg].veg_class;
+            if (veg_lib[veg_class].Landtype == 0) {
+                cell[veg].IS_VEG = true;
+            }
+            else if (veg_lib[veg_class].Landtype == 1) {
+                cell[veg].IS_GLAC = true;
+            }
+            else if (veg_lib[veg_class].Landtype == 2) {
+                cell[veg].IS_WET = true;
+            }
+            else if (veg_lib[veg_class].Landtype == 3) {
+                cell[veg].IS_URBAN = true;
+            }
+            else {
+                log_err("Unknown Landtype option");
+            }
+        }
+    }
+
+    /************************************
+      Initialize layer roots fraction
+    ************************************/
+    for (veg = 0; veg <= Nveg; veg++) {
+        if (veg_con[veg].Cv > 0) {
+            veg_class = veg_con[veg].veg_class;
+            calc_root_fractions(veg_class, &cell[veg],
+                                soil_con, veg_lib);
+        }
+    }
+
+    /************************************
+      Initialize snowpack temperatures
+    ************************************/
+    for (veg = 0; veg <= Nveg; veg++) {
+        if (veg_con[veg].Cv > 0) {
             snow[veg].swq = 0.0;   // [mm]
             snow[veg].last_swq = 0.0;   // [mm]
             // set snow layer properties
@@ -64,9 +98,8 @@ generate_default_state(force_data_struct *force,
     size_t Nbedrock = soil_con->Nbedrock;
     size_t Nsoil = Nbedrock - 1;
     for (veg = 0; veg <= Nveg; veg++) {
-        Cv = veg_con[veg].Cv;
         Nsnow = snow[veg].Nsnow;
-        if (Cv > 0) {
+        if (veg_con[veg].Cv > 0) {
             // 温度节点[0 到 Nsnow-1]
             for (i = 0; i < Nsnow; i++) {
                 cell[veg].dz_node[i] = snow[veg].dz_snow[i];
@@ -197,7 +230,6 @@ generate_default_state(force_data_struct *force,
     ******************************************/
     for (veg = 0; veg <= Nveg; veg++) {
         // Initialize soil for existing vegetation types
-        cell[veg].IS_GLAC = veg_con[veg].IS_GLAC;
         if (veg_con[veg].Cv > 0) {
             // set soil moisture properties for all soil thermal nodes
             ErrorFlag =
@@ -219,8 +251,7 @@ generate_default_state(force_data_struct *force,
     ******************************************/
     double max_daylen = calc_max_daylength(soil_con->lat);
     for (veg = 0; veg <= Nveg; veg++) {
-        Cv = veg_con[veg].Cv;
-        if (Cv > 0.0) {
+        if (veg_con[veg].Cv > 0.0) {
             cell[veg].max_daylen = max_daylen;
         }
     }
@@ -230,13 +261,13 @@ generate_default_state(force_data_struct *force,
     double root_psi = 0.0;
     double total_root = 0.0;
     for (veg = 0; veg <= Nveg; veg++) {
-        if (veg_con[veg].Cv > 0.0 && !veg_con[veg].IS_GLAC) { // 冰川不计算植被水势
+        if (veg_con[veg].Cv > 0.0 && !cell[veg].IS_GLAC) { // 冰川不计算植被水势
             veg_class = veg_con[veg].veg_class;
             Canopy_Upper = veg_lib[veg_class].Canopy_Upper;
             
-            for (i = 0; i < veg_con[veg].Nroot; i++) {
-                root_psi += veg_con[veg].root[i] * (cell[veg].matric[i] - soil_con->zc_soil[i]);
-                total_root += veg_con[veg].root[i];
+            for (i = 0; i < cell[veg].Nroot; i++) {
+                root_psi += cell[veg].root[i] * (cell[veg].matric[i] - soil_con->zc_soil[i]);
+                total_root += cell[veg].root[i];
             }
             if (total_root > 0.0) {
                 root_psi /= total_root;  // 加权平均根区水势

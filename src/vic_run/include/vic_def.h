@@ -122,6 +122,17 @@ enum
 };
 
 /******************************************************************************
+ * @brief   Landunit types
+ *****************************************************************************/
+enum
+{
+    LAND_SOIL,     /**< soil landunit */
+    LAND_GLAC,     /**< glacier landunit */
+    LAND_WET,      /**< wetland landunit */
+    LAND_URBAN     /**< urban landunit */
+};
+
+/******************************************************************************
  * @brief   Soil water retention curve parametrizations
  *          Defines which part is called.
  *****************************************************************************/
@@ -168,8 +179,6 @@ typedef struct {
     unsigned short int SNOW_DENSITY;   /**< DENS_BRAS: Use algorithm of Bras, 1990; DENS_SNTHRM: Use algorithm of SNTHRM89 adapted for 1-layer pack */
     size_t SNOW_BAND;    /**< Number of elevation bands over which to solve the
                             snow model */
-    // glacier options
-    int  GLACIER_ID;        /* An index indicating which veg class in the vegetation library contains glacier information. */
     bool TFALLBACK;      /**< TRUE = when any temperature iterations fail to converge,
                                    use temperature from previous time step; the number
                                    of instances when this occurs will be logged and
@@ -355,6 +364,7 @@ typedef struct {
     double SNOW_BETAIS;
     double SNOW_OMEGAS[MAX_SWBANDS];
     double GLAC_ALBEDO[MAX_SWBANDS];
+    double LAKE_ALBEDO[MAX_SWBANDS];
     // Solar radiation fraction
     double RAD_DIR_F;
     double RAD_VIS_F;
@@ -435,12 +445,9 @@ typedef struct {
     double SAI[MONTHS_PER_YEAR];        /**< stem area index */
     double Cv;              /**< fraction of vegetation coverage */
     int veg_class;          /**< vegetation class id number */
-    double root[MAX_SOILS];
     size_t vegetat_type_num; /**< number of vegetation types in the grid
                                 cell */
     int BandIndex;
-    bool IS_GLAC;
-    size_t Nroot;
 } veg_con_struct;
 
 /******************************************************************************
@@ -479,6 +486,7 @@ typedef struct {
     double Z0sub_cw;
     double smpsc;
     double smpso;
+    char Landtype;
     // Carbon terms
     char Ctype;                   /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
     double froot_leaf;            /**< ratio of fine root mass to leaf mass */
@@ -568,9 +576,9 @@ typedef struct {
                                           in flux calculations. [0] = wind speed at reference height, 
                                           [1] = sensible heat flux, [2] = latent heat flux */
     double Ra_sub[3];                   /**< canopy ground surface resistance */
-    double Ra_grnd[3];
-    double Ra_evap;                    /**< ground surface resistance [s/m] to evaporation */
-    double Ra_leaf;                    /**< canopy leaf resistance [s/m] to transpiration */
+    double Ra_grnd[3];                  /**< bare ground surface resistance */
+    double Ra_evap;                     /**< ground surface resistance [s/m] to evaporation */
+    double Ra_leaf;                     /**< canopy leaf resistance [s/m] to transpiration */
     double Ra_stem;
     double Z0m_grnd[3];
     double Z0m_sub[3];

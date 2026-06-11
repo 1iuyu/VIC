@@ -35,7 +35,6 @@ initialize_options()
     options.Nfrost = 1;
     options.MAX_HRU = 50;
     options.SNOW_BAND = 1;
-    options.GLACIER_ID = 0;
     // input options
     options.AERO_RESIST = AR_MEIER;
     options.FCAN_SRC = FROM_DEFAULT;

@@ -11,10 +11,8 @@
  *           forcing heights [0]momentum, [1] sensible heat, [2] latent heat.
  *****************************************************************************/
 void
-initialize_roughness(bool              IS_GLAC,
-                     double            Canopy_Upper,
+initialize_roughness(double            Canopy_Upper,
                      double            coverage,
-                     double           *root,
                      cell_data_struct *cell,
                      veg_var_struct   *veg_var)
 {
@@ -36,7 +34,7 @@ initialize_roughness(bool              IS_GLAC,
         }
         Z0m_grnd[1] = Z0m_grnd[0];  // bare soil or glacier
         Z0m_grnd[2] = Z0m_grnd[0];  // veg cover
-        if (IS_GLAC == false) {
+        if (cell->IS_GLAC == false) {
             if (Canopy_Upper > 0.0 && Canopy_Upper <= 1.0) {
                 ratio_Z0 = param.VEG_RATIO_RL_A;
                 ratio_dis = param.VEG_RATIO_DH_A;
@@ -69,7 +67,7 @@ initialize_roughness(bool              IS_GLAC,
         }
         Z0m_grnd[1] = Z0m_grnd[0];  // bare soil or glacier
         Z0m_grnd[2] = Z0m_grnd[0];  // veg cover
-        if (IS_GLAC == false) {
+        if (cell->IS_GLAC == false) {
             if (Canopy_Upper > 0.0 && Canopy_Upper <= 1.0) {
                 ratio_Z0 = param.VEG_RATIO_RL_A;
                 ratio_dis = param.VEG_RATIO_DH_A;
@@ -95,10 +93,6 @@ initialize_roughness(bool              IS_GLAC,
     }
     else {
         log_err("Unknown AERO_RESIST option");
-    }
-    // set root fraction for each soil layer
-    for (size_t i = 0; i < cell->Nroot; i++) {
-        cell->root[i] = root[i];
     }
 }
 

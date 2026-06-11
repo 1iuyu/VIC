@@ -10,8 +10,8 @@
 #include "vic_def.h"
 
 void ActiveLayer(cell_data_struct *, soil_con_struct *);
-void AdvectedEnergy(double, double, double, energy_bal_struct *, veg_var_struct *);
-void AdvectedEnergyGlac(double, double, double, energy_bal_struct *);
+void AdvectedEnergy(double, double, double, energy_bal_struct *, 
+                    cell_data_struct *, veg_var_struct *);
 bool assert_close_double(double x, double y, double rtol, double abs_tol);
 bool assert_close_float(float x, float y, float rtol, float abs_tol);
 void brent_PHS(double, double, double, double, double, double, double, double, 
@@ -46,6 +46,7 @@ int calc_biomass_heat(double *, double *, double *, double *, double *, double *
                       double *, veg_var_struct *, veg_lib_struct *);
 void calc_dynamicVIC(double, double *, size_t, double *, double *, 
                     cell_data_struct *, soil_con_struct *);
+int calc_vapor_flux(double, cell_data_struct *, soil_con_struct *);
 void canopy_two_stream(double, energy_bal_struct *, 
                        cell_data_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_transp_sink(cell_data_struct *, soil_con_struct *, veg_var_struct *);
@@ -76,7 +77,8 @@ double fth(double, double, double, double);
 double fth25(double, double);
 int GlacierTemperature(double, cell_data_struct *, energy_bal_struct *, 
                         snow_data_struct *, soil_con_struct *);
-void GroundAlbedo(double, double, energy_bal_struct *, soil_con_struct *);
+void GroundAlbedo(double, double, double, energy_bal_struct *, 
+                  cell_data_struct *, soil_con_struct *);
 void get_qflx(bool, double, double, double, double, double, double, 
               double *, double *, double *, double *, veg_var_struct *);
 void getvegwp(double *, double, double *, double *, double, double, 
@@ -89,8 +91,7 @@ void hybrid_PHS(double *, double *, double *, double *, double *,
                 double, double, double, double, double *, double *,
                 cell_data_struct *, soil_con_struct *, 
                 veg_var_struct *, veg_lib_struct *);
-void initialize_roughness(bool, double, double, double *,
-                          cell_data_struct *, veg_var_struct *);
+void initialize_roughness(double, double, cell_data_struct *, veg_var_struct *);
 double initialize_MOST(double, double, double, double, double, double *);
 double linear_interp(double, double, double, double, double);
 double new_snow_density(double);
@@ -119,7 +120,6 @@ int SoilTemperature(double, double, cell_data_struct *, energy_bal_struct *,
 int soil_transp(cell_data_struct *, soil_con_struct *);
 int soil_thermal_fluxes(double, double, double, cell_data_struct *, energy_bal_struct *, 
                              snow_data_struct *);
-int soil_vapor_flux(double, cell_data_struct *, soil_con_struct *);
 void soil_hydraulic_conductivity(cell_data_struct *, soil_con_struct *);
 int surface_albedo(double, double, double, energy_bal_struct *, 
                    cell_data_struct *, snow_data_struct *, soil_con_struct *,

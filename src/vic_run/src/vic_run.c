@@ -121,7 +121,7 @@ vic_run(force_data_struct   *force,
             snow->new_snow_density = new_snow_density(Tair);
            
             /* Calculate the snow and rain interception */
-            if (veg_con[iveg].IS_GLAC == false) {
+            if (cell->IS_GLAC == false) {
 
                 // initialize canopy terms
                 Tfoliage = energy->Tfoliage;
@@ -132,9 +132,6 @@ vic_run(force_data_struct   *force,
                 /** Assign Canopy **/
                 Canopy_Upper = veg_lib[veg_class].Canopy_Upper;
                 Canopy_Lower = veg_lib[veg_class].Canopy_Lower;
-
-                // 分配子网格根区分数
-                cell->Nroot = veg_con[iveg].Nroot;
 
                 /* Calculate net LAI and SAI */
                 calc_net_veg(Canopy_Upper, 
@@ -157,40 +154,27 @@ vic_run(force_data_struct   *force,
             else {
                 cell->IS_VEG = false;
             }
-            cell->IS_GLAC = veg_con[iveg].IS_GLAC;
             
             /* Initialize snow coverage */
-            calc_snow_coverage(Cv, veg_con[iveg].IS_GLAC,
+            calc_snow_coverage(Cv, cell->IS_GLAC,
                                snowfall * step_dt,  // (mm H2O)
                                snow, soil_con);
 
             // 初始化粗糙度
-            initialize_roughness(veg_con[iveg].IS_GLAC, 
-                                 Canopy_Upper,
+            initialize_roughness(Canopy_Upper,
                                  snow->coverage,
-                                 veg_con[iveg].root,
                                  cell, veg_var);
 
             /******************************
               Solve ground surface fluxes
             ******************************/
-            if (veg_con[iveg].IS_GLAC == false) {   // 非冰川HRU
-                ErrorFlag = surface_fluxes(hidx, step_dt,
-                                           Tair, snowfall,
-                                           rainfall,
-                                           force, energy,
-                                           cell, snow,
-                                           soil_con, veg_var,
-                                           &veg_lib[veg_class]);
-
-            }
-            else {  // 冰川HRU
-                ErrorFlag = surface_fluxes_glac(hidx, step_dt,
-                                                Tair, snowfall,
-                                                rainfall, force, 
-                                                energy, cell,
-                                                snow, soil_con);
-            }
+            ErrorFlag = surface_fluxes(hidx, step_dt,
+                                       Tair, snowfall,
+                                       rainfall,
+                                       force, energy,
+                                       cell, snow,
+                                       soil_con, veg_var,
+                                       &veg_lib[veg_class]);
 
             if (ErrorFlag == ERROR) {
                 return (ERROR);

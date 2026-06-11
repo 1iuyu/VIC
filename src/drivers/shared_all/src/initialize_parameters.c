@@ -188,6 +188,8 @@ initialize_parameters()
     // glacier parameters
     param.GLAC_ALBEDO[0] = 0.80;
     param.GLAC_ALBEDO[1] = 0.55;
+    param.LAKE_ALBEDO[0] = 0.60;
+    param.LAKE_ALBEDO[1] = 0.40;
 
     // MOST Iterations
     param.MAX_ITER_MOST = 5;

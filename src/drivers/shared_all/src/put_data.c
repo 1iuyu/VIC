@@ -84,7 +84,7 @@ put_data(all_vars_struct   *all_vars,
     /** compute running totals of various landcovers **/
     for (veg = 0; veg <= veg_con[0].vegetat_type_num; veg++) {
         band = veg_con[veg].BandIndex;
-        if (veg < veg_con[0].vegetat_type_num && veg_con[veg].IS_GLAC == false) {
+        if (veg < veg_con[0].vegetat_type_num && cell[veg].IS_GLAC == false) {
             cv_veg += veg_con[veg].Cv;
         }
         else {
@@ -93,7 +93,7 @@ put_data(all_vars_struct   *all_vars,
         if (snow[veg].swq > 0.0) {
             cv_snow += veg_con[veg].Cv;
         }
-        if (veg_con[veg].IS_GLAC) {
+        if (cell[veg].IS_GLAC) {
             cv_glac += veg_con[veg].Cv;
         }
     }
@@ -103,14 +103,14 @@ put_data(all_vars_struct   *all_vars,
     ****************************************/
     for (veg = 0; veg <= veg_con[0].vegetat_type_num; veg++) {
         Cv = veg_con[veg].Cv;
-        if (veg < veg_con[0].vegetat_type_num && veg_con[veg].IS_GLAC == false) {
+        if (veg < veg_con[0].vegetat_type_num && cell[veg].IS_GLAC == false) {
             HasVeg = true;
         }
         else {
             HasVeg = false;
         }
 
-        HasGlac = veg_con[veg].IS_GLAC;
+        HasGlac = cell[veg].IS_GLAC;
 
         if (Cv > 0) {
             band = veg_con[veg].BandIndex;

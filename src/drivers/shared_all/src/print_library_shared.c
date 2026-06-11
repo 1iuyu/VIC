@@ -517,20 +517,11 @@ print_soil_con(soil_con_struct *scon,
  * @brief    Print veg_con structure.
  *****************************************************************************/
 void
-print_veg_con(veg_con_struct *vcon,
-              size_t          nroots)
+print_veg_con(veg_con_struct *vcon)
 {
-    size_t i;
-
     fprintf(LOG_DEST, "veg_con:\n");
     fprintf(LOG_DEST, "\tCv              : %.4f\n", vcon->Cv);
     fprintf(LOG_DEST, "\tBandIndex       : %d\n", vcon->BandIndex);
-    fprintf(LOG_DEST, "\tNroot           : %zu\n", vcon->Nroot);
-
-    fprintf(LOG_DEST, "\troot            :");
-    for (i = 0; i < nroots; i++) {
-        fprintf(LOG_DEST, "\t%.2f", vcon->root[i]);
-    }
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "\tveg_class       : %d\n", vcon->veg_class);
     fprintf(LOG_DEST, "\tvegetat_type_num: %zu\n", vcon->vegetat_type_num);

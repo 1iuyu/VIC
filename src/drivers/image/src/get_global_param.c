@@ -323,9 +323,6 @@ get_global_param(FILE *gp)
                     options.SNOW_BAND = SNOW_BAND_TRUE_BUT_UNSET;
                 }
             }
-            else if (strcasecmp("GLACIER_ID", optstr) == 0) {
-                sscanf(cmdstr,"%*s %d", &options.GLACIER_ID);
-            }
             /*************************************
                Define output files
             *************************************/

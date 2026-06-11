@@ -57,7 +57,7 @@ calc_water_bal(double             step_dt,
     }
 
     // Compute the vapor flux between nodes
-    soil_vapor_flux(pressure, cell, soil_con);
+    calc_vapor_flux(pressure, cell, soil_con);
 
     // Compute the hydraulic conductivity between nodes
     soil_hydraulic_conductivity(cell, soil_con);
