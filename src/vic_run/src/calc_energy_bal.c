@@ -48,7 +48,8 @@ calc_energy_bal(size_t             hidx,
     /***************************************
       Compute the vapor flux between nodes
     ***************************************/
-    calc_vapor_flux(pressure, cell, soil_con);
+    calc_vapor_flux(pressure, cell, 
+                    energy, snow, soil_con);
 
     /***************************************
       Compute the hydraulic conductivity
@@ -69,7 +70,7 @@ calc_energy_bal(size_t             hidx,
         }
     }
     // 假设只有当liq[0] = 0.0 时发生升华
-    if (cell->ice[0] > 0.0 && energy->Tgrnd < CONST_TKFRZ || cell->IS_GLAC) {
+    if ((cell->ice[0] > 0.0 && energy->Tgrnd < CONST_TKFRZ) || cell->IS_GLAC) {
         energy->LatentVapGrnd = CONST_LATSUB;
         energy->FrozenGrnd = true;
     }
@@ -119,9 +120,9 @@ calc_energy_bal(size_t             hidx,
         energy->advection = fcanopy * energy->AdvectSub +
                             (1.0 - fcanopy) * energy->AdvectGrnd + 
                             energy->AdvectOver;
-        energy->deriv_terms = fcanopy * energy->deriv_sub + 
+        energy->deriv_terms = fcanopy * energy->deriv_sub +
                             (1.0 - fcanopy) * energy->deriv_grnd;
-        cell->esoil = fcanopy * cell->esoil_sub + 
+        cell->esoil = fcanopy * cell->esoil_sub +
                             (1.0 - fcanopy) * cell->esoil_grnd;
         energy->deriv_evap = fcanopy * energy->deriv_esub +
                             (1.0 - fcanopy) * energy->deriv_egrnd;

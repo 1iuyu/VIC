@@ -19,6 +19,7 @@ frozen_soil(size_t     nidx,
             double    *matric,
             soil_con_struct  *soil_con)
 {
+    extern parameters_struct param;
     double  tmp_liq, tmp_ice;
     double  error = 1.0;
     double  delt_liq = 1.0;
@@ -45,7 +46,7 @@ frozen_soil(size_t     nidx,
         while (iter < 30 && count == 0) {
             // 防止未冻水含量降至残余含水量以下
             if (tmp_liq < Wpwp_node[nidx]) {
-                tmp_liq += 10.0e-7;
+                tmp_liq += param.TOL_A;
             }
             // 计算当前未冻水含量对应的基质势
             tmp_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,

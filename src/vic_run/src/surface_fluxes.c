@@ -25,9 +25,7 @@ surface_fluxes(size_t             hidx,
                veg_var_struct    *veg_var,
                veg_lib_struct    *veg_lib)
 {
-    extern option_struct     options;
     extern parameters_struct param;
-
     int    ErrorFlag;
     size_t i;
     // Structures holding values for current iteration

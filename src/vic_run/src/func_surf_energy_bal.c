@@ -51,9 +51,9 @@ func_surf_energy_bal(size_t             hidx,
     double L_disp = 0.0;  // Monin-Obukhov长度
     size_t moz_signchg_count = 0;
     /* 计算地表比湿 */
-    ErrorFlag = calc_surf_humidity(Tgrnd, pressure, 
-                                   Qair, energy, snow, 
-                                   cell, soil_con);
+    ErrorFlag = calc_surf_humidity(pressure, 
+                                   Qair, energy, 
+                                   snow, cell);
     if (ErrorFlag == ERROR) {
         return (ERROR);
     }
@@ -143,7 +143,7 @@ func_surf_energy_bal(size_t             hidx,
     double coef_latent = 0.0;
     double coef_longwave = energy->EmissLongGrnd * CONST_STEBOL;
     double coef_sensible = CONST_CPDAIR * air_density / Ra_grnd[1];
-    
+    // Get saturated vapor pressure at forcing height
     svp_flags(Tgrnd, pressure,
               &esat_Tgrnd, NULL,
               NULL, NULL, ESAT);
@@ -159,12 +159,10 @@ func_surf_energy_bal(size_t             hidx,
     if (dqh > 0.0) {
         if (Tgrnd > dew_point) {
             coef_latent = 0.0;
-        }
-        else {
+        } else {
             coef_latent = air_density / Ra_grnd[2];
         }
-    }
-    else {
+    } else {
         coef_latent = air_density / (Ra_grnd[2] + cell->Ra_evap);
     }
     // 计算分子扩散最小通量（静稳空气限制）

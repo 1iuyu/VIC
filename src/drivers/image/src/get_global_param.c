@@ -518,10 +518,16 @@ get_global_param(FILE *gp)
                     filenames.forcing[0].nc_filename);
     get_forcing_file_info(&param_set, 0);
     if (param_set.N_TYPES[1] != 0) {
-        sprintf(filenames.forcing[1].nc_filename, "%s%04d.nc",
+        if (strlen(filenames.f_path_pfx[1]) + 9 >= sizeof(filenames.forcing[1].nc_filename)) {
+            log_warn("Path prefix too long, forcing filename will be truncated");
+            filenames.f_path_pfx[1][sizeof(filenames.forcing[1].nc_filename) - 10] = '\0';
+        }
+        snprintf(filenames.forcing[1].nc_filename, 
+                sizeof(filenames.forcing[1].nc_filename),
+                "%s%04d.nc",
                 filenames.f_path_pfx[1], global_param.startyear);
         status = nc_open(filenames.forcing[1].nc_filename, NC_NOWRITE,
-                         &(filenames.forcing[1].nc_id));
+                        &(filenames.forcing[1].nc_id));
         check_nc_status(status, "Error opening %s",
                         filenames.forcing[1].nc_filename);
         get_forcing_file_info(&param_set, 1);

@@ -26,8 +26,6 @@ int calc_stress(double *, double *, double *, double, double, double, double,
 int calc_energy_bal(size_t, double, double, force_data_struct *, 
                     energy_bal_struct *, cell_data_struct *, snow_data_struct *, 
                     soil_con_struct *, veg_var_struct *, veg_lib_struct *);
-int calc_energy_bal_glac(size_t, double, double, force_data_struct *, energy_bal_struct *, 
-                         cell_data_struct *, snow_data_struct *, soil_con_struct *);
 int calc_water_bal(double, double, energy_bal_struct *, 
                    cell_data_struct *, soil_con_struct *);
 int calc_water_bal_glac(double, double, double, double, double, energy_bal_struct *, 
@@ -40,13 +38,12 @@ void calc_net_veg(double, double, double, veg_var_struct *);
 void calc_soil_infil(double, double, double, double, double, double, double, double *, double *);
 void calc_infil_runoff(double, double, double, double, double *, double, double, double *);
 void calc_sat_runoff(double, double, double, double, double *);
-int calc_surf_humidity(double, double, double, energy_bal_struct *,
-                       snow_data_struct *, cell_data_struct *, soil_con_struct *);
+int calc_surf_humidity(double, double, energy_bal_struct *, snow_data_struct *, cell_data_struct *);
 int calc_biomass_heat(double *, double *, double *, double *, double *, double *,
                       double *, veg_var_struct *, veg_lib_struct *);
 void calc_dynamicVIC(double, double *, size_t, double *, double *, 
                     cell_data_struct *, soil_con_struct *);
-int calc_vapor_flux(double, cell_data_struct *, soil_con_struct *);
+int calc_vapor_flux(double, cell_data_struct *, energy_bal_struct *, snow_data_struct *, soil_con_struct *);
 void canopy_two_stream(double, energy_bal_struct *, 
                        cell_data_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_transp_sink(cell_data_struct *, soil_con_struct *, veg_var_struct *);
@@ -124,12 +121,10 @@ void soil_hydraulic_conductivity(cell_data_struct *, soil_con_struct *);
 int surface_albedo(double, double, double, energy_bal_struct *, 
                    cell_data_struct *, snow_data_struct *, soil_con_struct *,
                    veg_var_struct *, veg_lib_struct *);
+int surface_radiation(double *, double *, energy_bal_struct *, cell_data_struct *, veg_var_struct *);
 int surface_fluxes(size_t, double, double, double, double, force_data_struct *, 
                    energy_bal_struct *, cell_data_struct *, snow_data_struct *, 
-                   soil_con_struct *, veg_var_struct *, veg_lib_struct *);
-int surface_fluxes_glac(size_t, double, double, double, double, force_data_struct *, 
-                        energy_bal_struct *, cell_data_struct *, 
-                        snow_data_struct *, soil_con_struct *);                        
+                   soil_con_struct *, veg_var_struct *, veg_lib_struct *);                     
 void svp_flags(double, double, double *, double *, double *, double *, int);
 double SoilWaterRetentionCurve(int, size_t, double, double, soil_con_struct *);
 double sign(double a, double b);

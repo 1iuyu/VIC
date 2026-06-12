@@ -62,7 +62,6 @@ GroundAlbedo(double             moist,
                 AlbedoGrndDir[i] = param.LAKE_ALBEDO[i];
                 AlbedoGrndDfs[i] = AlbedoGrndDir[i];
             }
-
         }
     }
 }
