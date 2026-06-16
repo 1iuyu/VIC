@@ -135,7 +135,6 @@ void spacF(double *, double *, double *, double, double, cell_data_struct *,
 double solve_quadratic_min(double, double, double);
 void solve_quadratic(double, double, double, double *, double *);
 void update_snow(double, double, double, snow_data_struct *);
-void update_node(cell_data_struct *, snow_data_struct *, soil_con_struct *);
 void update_fluxes(energy_bal_struct *, cell_data_struct *, snow_data_struct *,
                   soil_con_struct *);
 void update_snow_fluxes(double *, double *, double *, double *,

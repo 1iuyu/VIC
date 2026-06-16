@@ -114,14 +114,28 @@ prepare_full_energy(double             pressure,
     kappa_node[lidx] = CONST_KGRAVEL;
 
     // ===================== 计算界面热导率（调和平均） =====================
-    for (i = 0; i <= Nnode - 2; i++) {
-        double dzp = zc_node[i+1] - zc_node[i];
+    for (i = 0; i < Nsnow; i++) {
+        double dzp = zc_snow[i+1] - zc_snow[i];
         // 调和平均公式
         double k_int = kappa_node[i] * kappa_node[i+1] * dzp /
-                        (kappa_node[i] * (zc_node[i+1] - Zsum_node[i+1]) +
-                         kappa_node[i+1] * (Zsum_node[i+1] - zc_node[i]));
+                        (kappa_node[i] * (zc_snow[i+1] - Zsum_snow[i]) +
+                         kappa_node[i+1] * (Zsum_snow[i] - zc_snow[i]));
         // 除以节点间距，得到等效热导[W/m2/K]
         kappa_int[i] = k_int / dzp;
+    }
+    for (i = Nsnow; i <= Nnode - 2; i++) {
+        if (i == Nsnow && Nsnow > 0 && cell->frac_h2o > param.TOL_A) {
+            
+        }
+        else {
+            double dzp = zc_snow[i+1] - zc_snow[i];
+            // 调和平均公式
+            double k_int = kappa_node[i] * kappa_node[i+1] * dzp /
+                            (kappa_node[i] * (zc_snow[i+1] - Zsum_snow[i]) +
+                            kappa_node[i+1] * (Zsum_snow[i] - zc_snow[i]));
+            // 除以节点间距，得到等效热导[W/m2/K]
+            kappa_int[i] = k_int / dzp;            
+        }
     }
     kappa_int[Nnode-1] = 0.0;
 }

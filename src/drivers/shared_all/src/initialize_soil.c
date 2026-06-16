@@ -62,11 +62,6 @@ initialize_soil(cell_data_struct *cell,
             cell[veg].transp_sink[lidx] = 0.0;
             cell[veg].root[lidx] = 0.0;
         }
-        for (lidx = 0; lidx < MAX_NODES; lidx++) {
-            cell[veg].dz_node[lidx] = 0.0;
-            cell[veg].Zsum_node[lidx] = 0.0;
-            cell[veg].zc_node[lidx] = 0.0;
-        }
         cell[veg].rootmoist = 0.0;
         // Fluxes
         cell[veg].baseflow = 0.0;

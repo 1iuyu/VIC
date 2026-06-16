@@ -207,8 +207,6 @@ snow_hydrology(double             step_dt,
         snow->Zsum_snow[i] = -cum_depth;  // 累计厚度到该层底部
         snow->zc_snow[i] = -(cum_depth - snow->dz_snow[i]/2.0);  // 中心位置（负值）
     }
-    // 更新节点数据
-    update_node(cell, snow, soil_con);
 
     /* sum up snow mass for layered snow */
     if (Nsnow > 0) {

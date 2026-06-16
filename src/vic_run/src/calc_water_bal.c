@@ -15,6 +15,7 @@ calc_water_bal(double             step_dt,
                double             pressure,
                energy_bal_struct *energy,
                cell_data_struct  *cell,
+               snow_data_struct  *snow,
                soil_con_struct   *soil_con)
 {
     size_t i, j, k;
@@ -28,13 +29,13 @@ calc_water_bal(double             step_dt,
     double mat_C[MAX_SOILS];
     double mat_RHS[MAX_SOILS];
     // 指针赋值
-    double *dz_node = cell->dz_node;
+    double *dz_soil = soil_con->dz_soil;
     double *ice = cell->ice;
     double *liq = cell->liq;
     double *last_liq = cell->last_liq;
     double *last_ice = cell->last_ice;
 	double *matric = cell->matric;
-    double *zc_node = cell->zc_node;
+    double *zc_soil = soil_con->zc_soil;
     double *liquid_flux = cell->liquid_flux;
     double *transp_sink = cell->transp_sink;
 	double *vapor_flux = cell->vapor_flux;
@@ -57,14 +58,14 @@ calc_water_bal(double             step_dt,
     }
 
     // Compute the vapor flux between nodes
-    calc_vapor_flux(pressure, cell, soil_con);
+    calc_vapor_flux(pressure, cell, energy, snow, soil_con);
 
     // Compute the hydraulic conductivity between nodes
     soil_hydraulic_conductivity(cell, soil_con);
 
     for (i = Nsoil - 2; i > 0; i--) {
         if (ice[i] > 0.0) {
-            Qmax = (Wsat_node[i] - liq[i] - ice[i]) * dz_node[i] / step_dt;
+            Qmax = (Wsat_node[i] - liq[i] - ice[i]) * dz_soil[i] / step_dt;
             if (Qmax < 0.0) {
                 Qmax = 0.0;
             }
@@ -97,7 +98,7 @@ calc_water_bal(double             step_dt,
     }
     // 地表冰层限制
     if (ice[0] > 0.0) {
-        Qmax = (Wsat_node[0] - liq[0] - ice[0]) * dz_node[0] / step_dt;
+        Qmax = (Wsat_node[0] - liq[0] - ice[0]) * dz_soil[0] / step_dt;
         if (Qmax < 0.0) {
             Qmax = 0.0;
         }
@@ -111,7 +112,7 @@ calc_water_bal(double             step_dt,
     if (IFLAG > 0) {
         for (i = 1; i < Nsoil - 2; i++) {
             if (ice[i] > 0.0) {
-                Qmax = (Wsat_node[i] - liq[i] - ice[i]) * dz_node[i] / step_dt;
+                Qmax = (Wsat_node[i] - liq[i] - ice[i]) * dz_soil[i] / step_dt;
                 if (Qmax < 0.0) {
                     Qmax = 0.0;
                 }
@@ -142,7 +143,7 @@ calc_water_bal(double             step_dt,
     }
               
     for (i = 0; i < Nsoil; i++) {
-		fact[i] = dz_node[i] / step_dt;
+		fact[i] = dz_soil[i] / step_dt;
     }
     double lateral_max = 0.0;
     double seepage = 0.0;
@@ -157,7 +158,7 @@ calc_water_bal(double             step_dt,
             if (matric[0] >= 0.0) {
                 // 允许侧向流出剖面
                 lateral_flow[i] = ksat_node[i] * sin(soil_con->slope * 
-                                (CONST_PI / 180.0)) * (zc_node[i+1] - zc_node[i]) / 2.0;
+                                (CONST_PI / 180.0)) * (zc_soil[i+1] - zc_soil[i]) / 2.0;
                 
                 // 限制侧向流，使得该层不会仅因侧向流而脱饱和
                 lateral_max = mat_RHS[i] - liquid_flux[i] - vapor_flux[i] / 
@@ -393,7 +394,7 @@ calc_water_bal(double             step_dt,
             if (diff > 0.2) {
                 if (fabs(CONST_RHOICE * CONST_LATICE * diff * fact[i]) > 2000.0) {
                     mat_RHS[i] = diff / fabs(diff) * 2000.0 * step_dt / 
-                    (CONST_RHOICE * CONST_LATICE * dz_node[i]);
+                    (CONST_RHOICE * CONST_LATICE * dz_soil[i]);
                 }
             }
             ice[i] -= mat_RHS[i];

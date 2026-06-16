@@ -100,39 +100,8 @@ generate_default_state(force_data_struct *force,
     for (veg = 0; veg <= Nveg; veg++) {
         Nsnow = snow[veg].Nsnow;
         if (veg_con[veg].Cv > 0) {
-            // 温度节点[0 到 Nsnow-1]
-            for (i = 0; i < Nsnow; i++) {
-                cell[veg].dz_node[i] = snow[veg].dz_snow[i];
-            }
-            // 土壤节点+基岩节点
-            for (i = 0; i < Nbedrock; i++) {
-                lidx = Nsnow + i;
-                cell[veg].dz_node[lidx] = dz_soil[i];
-            }
             cell[veg].Nsoil = Nsoil;
             cell[veg].Nnode = Nsoil + Nsnow + 1;
-            /* Compute node depths */
-            if (Nsnow > 0) {
-                for (k = 0; k < Nsnow; k++) {
-                    cell[veg].Zsum_node[k] = snow[veg].Zsum_snow[k];
-                }
-            }
-            cell[veg].Zsum_node[Nsnow] = 0.0;
-            double sum_dz = 0.;
-            for (k = Nsnow; k < cell[veg].Nnode; k++) {
-                sum_dz += cell[veg].dz_node[k];
-                cell[veg].Zsum_node[k+1] = sum_dz;
-            }
-            // 节点中心坐标
-            if (Nsnow > 0) {
-                for (k = 0; k < Nsnow; k++) {
-                    cell[veg].zc_node[k] = snow[veg].zc_snow[k];
-                }
-            }
-            for (k = Nsnow; k < cell[veg].Nnode; k++) {
-                cell[veg].zc_node[k] = cell[veg].Zsum_node[k+1] - 
-                                        cell[veg].dz_node[k] / 2.0;
-            }
         }
     }
 
