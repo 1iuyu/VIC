@@ -588,7 +588,10 @@ typedef struct {
     double rootmoist;                  /**< total of layer.moist over all layers in the root zone (mm) */
     double zwt;                        /**< average water table position [cm] - using lowest unsaturated layer */
     double max_daylen;                 /**< maximum daylength for this grid cell (s) */
-    //double Qair_over;                  /**< specific humidity of the air at the canopy layer (kg/kg) */
+    double h2osfc;                     /**< surface water or glacier (mm) */
+    double h2osfc_T;                   /**< surface water temperature or glacier [K] */
+    double frac_h2o;                   /**< fraction of ground covered by surface water or glacier */
+    //double Qair_over;                /**< specific humidity of the air at the canopy layer (kg/kg) */
     double Qair_grnd;                  /**< specific humidity of the air at the ground surface (kg/kg) */
     double Qair_soil;                  /**< specific humidity of the air at the soil surface (kg/kg) */
     double Qair_snow;                  /**< specific humidity of the air at the snow surface (kg/kg) */
@@ -599,9 +602,6 @@ typedef struct {
     double moist[MAX_SOILS];           /**< moisture content of the unfrozen sublayer [m3/m3] */
     double porosity[MAX_SOILS];
     double soil_T[MAX_SOILS];
-    double zc_node[MAX_NODES];     /**< depth of thermal nodes (m) */
-    double dz_node[MAX_NODES];     /**< the thickness of each layer (m) */
-    double Zsum_node[MAX_NODES];   /**< depth of bottom of each thermal node (m) */
     // Fluxes
     double baseflow;                   /**< baseflow from current cell (mm/TS) */
     double runoff;                     /**< runoff from current cell (mm/TS) */
@@ -613,7 +613,8 @@ typedef struct {
     double snowfrost;
     double snow_sublim;
     double lateral_flow[MAX_SOILS];
-    double deriv_vapor[MAX_SOILS];
+    double deriv_vapor[MAX_NODES];
+    double conv_vapor[MAX_NODES];
     // Canopy terms
     double transp;
     double canopyevap;

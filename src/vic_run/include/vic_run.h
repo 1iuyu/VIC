@@ -32,9 +32,9 @@ int calc_water_bal_glac(double, double, double, double, double, energy_bal_struc
                         cell_data_struct *, snow_data_struct *, soil_con_struct *);
 void calc_rainonly(double, double, double, double, double, double, double *, double *);
 double calc_veg_displacement(double, double, double);
-void calc_snow_coverage(double, bool, double,
-                        snow_data_struct *, soil_con_struct *);
+void calc_snow_coverage(double, bool, double, snow_data_struct *, soil_con_struct *);
 void calc_net_veg(double, double, double, veg_var_struct *);
+int calc_surf_water(double, snow_data_struct *, cell_data_struct *, soil_con_struct *);
 void calc_soil_infil(double, double, double, double, double, double, double, double *, double *);
 void calc_infil_runoff(double, double, double, double, double *, double, double, double *);
 void calc_sat_runoff(double, double, double, double, double *);

@@ -71,6 +71,12 @@ surface_fluxes(size_t             hidx,
                    rainfall,
                    energy, 
                    cell, veg_var);
+    
+    /*******************************
+      Update surface water fraction
+    *******************************/
+    calc_surf_water(step_dt, snow, 
+                    cell, soil_con);
                     
     /***************************
       Surface shortwave albedo

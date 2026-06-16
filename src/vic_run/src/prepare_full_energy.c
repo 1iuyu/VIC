@@ -40,11 +40,14 @@ prepare_full_energy(double             pressure,
     double *Cs_node = energy->Cs_node;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
-    double *zc_node = cell->zc_node;
-    double *dz_node = cell->dz_node;
+    double *zc_snow = snow->zc_snow;
+    double *dz_snow = snow->dz_snow;
     double *soil_T = cell->soil_T;
     double *matric = cell->matric;
-    double *Zsum_node = cell->Zsum_node;
+    double *zc_soil = soil_con->zc_soil;
+    double *dz_soil = soil_con->dz_soil;
+    double *Zsum_soil = soil_con->Zsum_soil;
+    double *Zsum_snow = snow->Zsum_snow;
     double *organic_node = soil_con->organic_node;
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
@@ -57,52 +60,54 @@ prepare_full_energy(double             pressure,
     // 计算雪的热导率和热容量
     if (Nsnow > 0) {
         for (i = 0; i < Nsnow; i++) {
-            theta_ice[i] = min(1.0, pack_ice[i] / (dz_node[i] * CONST_RHOICE));
+            theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
             porosity[i] = 1.0 - theta_ice[i];
-            theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_node[i] * CONST_RHOFW));
+            theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW));
 
             Cs_node[i] = max(param.TOL_A, (pack_ice[i] * CONST_CPICE +
-                     pack_liq[i] * CONST_CPFWICE) / dz_node[i]);
+                     pack_liq[i] * CONST_CPFWICE) / dz_snow[i]);
             
             kappa_node[i] = CONST_KDAIR + (7.75e-5 * tmp_density + 1.105e-6 * 
                             tmp_density * tmp_density) * (CONST_KICE - CONST_KDAIR);
         }
     }
 
-    // 计算土壤和冰川热导率和热容量
+    // 计算表层热导率和热容量
     if (cell->IS_GLAC) {  
         // 计算冰川热属性
-        for (i = 0; i < Nsoil; i++) {
-            lidx = Nsnow + i;
-            Cs_node[lidx] = ice[i] * CONST_RHOICE * 
-                    CONST_CPICE + liq[i] * CONST_RHOFW * CONST_CPFWICE;
-            kappa_node[lidx] = 9.828 * exp(-0.0057 * soil_T[i]);
-        }
+        Cs_node[Nsnow] = cell->h2osfc * CONST_RHOICE * 
+                CONST_CPICE + liq[0] * CONST_RHOFW * CONST_CPFWICE;
+        kappa_node[Nsnow] = 9.828 * exp(-0.0057 * cell->h2osfc_T);
     }
-    else {
-        // 计算土壤热属性
-        for (i = 0; i < Nsoil; i++) {
-            lidx = Nsnow + i;
-            tmp_ice = max(moist[i] - liq[i], 0.0);
-            // 土壤节点体积热容
-            Cs_node[lidx] = volumetric_heat_capacity(Wsat_node[i],
-                                                     liq[i], tmp_ice, 
-                                                     soil_T[i], 
-                                                     moist[i], matric[i],
-                                                     pressure,
-                                                     organic_node[i],
-                                                     bulk_dens_node[i]);
-            // 土壤节点导热率
-            kappa_node[lidx] = soil_conductivity(liq[i], ice[i],
-                                                 clay_node[i], sand_node[i], 
-                                                 silt_node[i], gravel_node[i],
-                                                 organic_node[i], 
-                                                 bulk_dens_node[i], 
-                                                 soil_dens_min[i],
-                                                 soil_dens_org[i]);
-        }
+    else if (cell->IS_WET) {
+        Cs_node[Nsnow] = CONST_CPFWICE;
+        kappa_node[Nsnow] = CONST_KFWICE;
     }
-
+    if (cell->h2osfc < param.TOL_A || cell->frac_h2o < param.TOL_A) {
+        Cs_node[Nsnow] = param.TOL_A;
+        kappa_node[Nsnow] = param.TOL_A;
+    }
+    // 计算土壤热属性
+    for (i = 0; i < Nsoil; i++) {
+        lidx = Nsnow + i + 1;
+        tmp_ice = max(moist[i] - liq[i], 0.0);
+        // 土壤节点体积热容
+        Cs_node[lidx] = volumetric_heat_capacity(Wsat_node[i],
+                                                    liq[i], tmp_ice, 
+                                                    soil_T[i], 
+                                                    moist[i], matric[i],
+                                                    pressure,
+                                                    organic_node[i],
+                                                    bulk_dens_node[i]);
+        // 土壤节点导热率
+        kappa_node[lidx] = soil_conductivity(liq[i], ice[i],
+                                                clay_node[i], sand_node[i], 
+                                                silt_node[i], gravel_node[i],
+                                                organic_node[i], 
+                                                bulk_dens_node[i], 
+                                                soil_dens_min[i],
+                                                soil_dens_org[i]);
+    }
     // 计算基岩热导率和热容量
     lidx = Nnode - 1;
     Cs_node[lidx] = CONST_CPSOIL;

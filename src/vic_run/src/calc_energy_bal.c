@@ -155,7 +155,9 @@ calc_energy_bal(size_t             hidx,
     /************************************
       Compute plant transpiration sink
     ************************************/
-    calc_transp_sink(cell, soil_con, veg_var);
-
+    if (cell->IS_VEG || cell->IS_URBAN) {
+        calc_transp_sink(cell, soil_con, veg_var);
+    }
+    
     return (0);
 }

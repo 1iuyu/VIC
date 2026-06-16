@@ -121,7 +121,7 @@ vic_run(force_data_struct   *force,
             snow->new_snow_density = new_snow_density(Tair);
            
             /* Calculate the snow and rain interception */
-            if (cell->IS_GLAC == false) {
+            if (cell->IS_VEG) {
 
                 // initialize canopy terms
                 Tfoliage = energy->Tfoliage;
