@@ -123,19 +123,23 @@ prepare_full_energy(double             pressure,
         // 除以节点间距，得到等效热导[W/m2/K]
         kappa_int[i] = k_int / dzp;
     }
-    for (i = Nsnow; i <= Nnode - 2; i++) {
-        if (i == Nsnow && Nsnow > 0 && cell->frac_h2o > param.TOL_A) {
-            
-        }
-        else {
-            double dzp = zc_snow[i+1] - zc_snow[i];
-            // 调和平均公式
-            double k_int = kappa_node[i] * kappa_node[i+1] * dzp /
-                            (kappa_node[i] * (zc_snow[i+1] - Zsum_snow[i]) +
-                            kappa_node[i+1] * (Zsum_snow[i] - zc_snow[i]));
-            // 除以节点间距，得到等效热导[W/m2/K]
-            kappa_int[i] = k_int / dzp;            
-        }
+    if (Nsnow > 0 && cell->frac_h2o > param.TOL_A) {
+
+        double dzp = 0.5 * cell->h2osfc + zc_soil[0];
+        double k_int = kappa_node[i] * kappa_node[i+1] * dzp /
+                        (kappa_node[i] * zc_soil[0] +
+                        kappa_node[i+1] * 0.5 * cell->h2osfc);
+        kappa_int[i] = k_int / dzp;
+    }
+    for (i = 0; i < Nsoil; i++) {
+        lidx = Nsnow + i + 1;
+        double dzp = zc_soil[i+1] - zc_soil[i];
+        // 调和平均公式
+        double k_int = kappa_node[lidx] * kappa_node[lidx+1] * dzp /
+                        (kappa_node[lidx] * (zc_soil[i+1] - Zsum_soil[i]) +
+                        kappa_node[lidx+1] * (Zsum_soil[i] - zc_soil[i]));
+        // 除以节点间距，得到等效热导[W/m2/K]
+        kappa_int[lidx] = k_int / dzp;  
     }
     kappa_int[Nnode-1] = 0.0;
 }
