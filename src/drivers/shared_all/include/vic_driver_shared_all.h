@@ -575,7 +575,6 @@ void free_all_vars(all_vars_struct *all_vars);
 void free_dmy(dmy_struct **dmy);
 void free_out_data(size_t ngridcells, double ***out_data);
 void free_streams(stream_struct **streams);
-void free_vegcon(veg_con_struct **veg_con);
 void generate_default_state(force_data_struct *force, all_vars_struct *all_vars, 
                             soil_con_struct *soil_con, veg_con_struct *veg_con,
                             veg_lib_struct *veg_lib);
