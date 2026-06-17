@@ -11,18 +11,17 @@
  *           intermediate variables that are needed in the humidity calculations
  *****************************************************************************/
 int
-calc_surf_humidity(double             pressure,
-                   double             Qair,
-                   energy_bal_struct *energy,
-                   snow_data_struct  *snow,
-                   cell_data_struct  *cell)
+calc_surf_humidity(double            pressure,
+                   double            Qair,
+                   double            Tgrnd,
+                   snow_data_struct *snow,
+                   cell_data_struct *cell)
 {
     double rh_grnd = 1.0;
     double qsat_Tgrnd = 0.0;
     double qsdT = 0.0;
     double alpha_soil = 0.0;
     double ice_factor = 0.0;
-    double Tgrnd = energy->Tgrnd;
     double coverage = snow->coverage;
     double *soil_T = cell->soil_T;
     double *matric = cell->matric;
@@ -46,7 +45,7 @@ calc_surf_humidity(double             pressure,
 
         if (qsat_Tgrnd > Qair && Qair > alpha_soil * qsat_Tgrnd) {
             cell->Qair_grnd = Qair;
-            energy->qsdT = 0.0;
+            cell->Qair_deriv = 0.0;
         }
         // soil humidity
         cell->Qair_soil = qsat_Tgrnd * alpha_soil;
@@ -61,7 +60,7 @@ calc_surf_humidity(double             pressure,
         
         cell->Qair_grnd = coverage * cell->Qair_snow
                 + (1.0 - coverage) * cell->Qair_soil;
-        energy->qsdT = coverage * qsdT * ice_factor +
+        cell->Qair_deriv = coverage * qsdT * ice_factor +
                         (1.0 - coverage) * alpha_soil * qsdT;        
     }
     else {
@@ -69,15 +68,14 @@ calc_surf_humidity(double             pressure,
                   NULL, &qsat_Tgrnd,
                   NULL, &qsdT, QSAT | QSDT);
         cell->Qair_grnd = rh_grnd * qsat_Tgrnd;
-        energy->qsdT = rh_grnd * qsdT;
+        cell->Qair_deriv = rh_grnd * qsdT;
         if (qsat_Tgrnd > Qair && Qair > rh_grnd * qsat_Tgrnd) {
             cell->Qair_grnd = Qair;
-            energy->qsdT = 0.0;
+            cell->Qair_deriv = 0.0;
         }
         cell->Qair_soil = cell->Qair_grnd;
         cell->Qair_snow = cell->Qair_grnd;
     }
     
     return (0);
-
 }

@@ -34,6 +34,7 @@ initialize_soil(cell_data_struct *cell,
         cell[veg].Qair_grnd = 0.0;
         cell[veg].Qair_soil = 0.0;
         cell[veg].Qair_snow = 0.0;
+        cell[veg].Qair_deriv = 0.0;
         for (i = 0; i < 3; i++) {
             cell[veg].Z0m_grnd[i] = 0.0;
             cell[veg].Z0m_sub[i] = 0.0;

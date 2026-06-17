@@ -49,9 +49,8 @@ func_surf_energy_bal(size_t             hidx,
     double L_disp = 0.0;  // Monin-Obukhov长度
     size_t moz_signchg_count = 0;
     /* 计算地表比湿 */
-    ErrorFlag = calc_surf_humidity(pressure, 
-                                   Qair, energy, 
-                                   snow, cell);
+    ErrorFlag = calc_surf_humidity(pressure, Qair, 
+                                   Tgrnd, snow, cell);
     if (ErrorFlag == ERROR) {
         return (ERROR);
     }
@@ -183,7 +182,7 @@ func_surf_energy_bal(size_t             hidx,
     energy->NetLongGrnd = energy->EmissLongGrnd * longwave - coef_longwave * pow(Tgrnd, 4.0);
     energy->SensibleGrnd = SensibleGrnd;
     energy->deriv_grnd = -(coef_sensible + 4.0 * coef_longwave * pow(Tgrnd, 3) +
-                         coef_latent * energy->LatentVapGrnd * energy->qsdT);
+                         coef_latent * energy->LatentVapGrnd * cell->Qair_deriv);
     energy->deriv_egrnd = -coef_latent * cell->Qair_grnd * CONST_G /
                                                 (CONST_RWV * Tgrnd) / CONST_RHOFW;
                         

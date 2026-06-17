@@ -36,7 +36,7 @@ int calc_surf_water(double, snow_data_struct *, cell_data_struct *, soil_con_str
 void calc_soil_infil(double, double, double, double, double, double, double, double *, double *);
 void calc_infil_runoff(double, double, double, double, double *, double, double, double *);
 void calc_sat_runoff(double, double, double, double, double *);
-int calc_surf_humidity(double, double, energy_bal_struct *, snow_data_struct *, cell_data_struct *);
+int calc_surf_humidity(double, double, double, snow_data_struct *, cell_data_struct *);
 int calc_biomass_heat(double *, double *, double *, double *, double *, double *,
                       double *, veg_var_struct *, veg_lib_struct *);
 void calc_dynamicVIC(double, double *, size_t, double *, double *, 

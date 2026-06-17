@@ -594,6 +594,7 @@ typedef struct {
     double Qair_grnd;                  /**< specific humidity of the air at the ground surface (kg/kg) */
     double Qair_soil;                  /**< specific humidity of the air at the soil surface (kg/kg) */
     double Qair_snow;                  /**< specific humidity of the air at the snow surface (kg/kg) */
+    double Qair_deriv;                 /**< temperature derivative of "Qair_grnd" */
     double ice[MAX_SOILS];             /**< ice content of the soil sublayer [m3/m3] */
     double liq[MAX_SOILS];             /**< liq content of the soil sublayer [m3/m3] */
     double last_ice[MAX_SOILS];
@@ -669,7 +670,6 @@ typedef struct {
     double deriv_egrnd;
     double deriv_esub;
     double deriv_evap;
-    double qsdT;                /**< temperature derivative of "Qair_grnd" */
     double delt_T;
     double delt_Q;              
     double error;                /**< energy balance error (W/m^2) */
