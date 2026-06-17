@@ -27,9 +27,7 @@ int calc_energy_bal(size_t, double, double, force_data_struct *,
                     energy_bal_struct *, cell_data_struct *, snow_data_struct *, 
                     soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_water_bal(double, double, energy_bal_struct *, 
-                   cell_data_struct *, soil_con_struct *);
-int calc_water_bal_glac(double, double, double, double, double, energy_bal_struct *, 
-                        cell_data_struct *, snow_data_struct *, soil_con_struct *);
+                   cell_data_struct *, snow_data_struct *, soil_con_struct *);
 void calc_rainonly(double, double, double, double, double, double, double *, double *);
 double calc_veg_displacement(double, double, double);
 void calc_snow_coverage(double, bool, double, snow_data_struct *, soil_con_struct *);
@@ -43,7 +41,7 @@ int calc_biomass_heat(double *, double *, double *, double *, double *, double *
                       double *, veg_var_struct *, veg_lib_struct *);
 void calc_dynamicVIC(double, double *, size_t, double *, double *, 
                     cell_data_struct *, soil_con_struct *);
-int calc_vapor_flux(double, cell_data_struct *, energy_bal_struct *, snow_data_struct *, soil_con_struct *);
+int calc_vapor_flux(double, cell_data_struct *, snow_data_struct *, soil_con_struct *);
 void canopy_two_stream(double, energy_bal_struct *, 
                        cell_data_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_transp_sink(cell_data_struct *, soil_con_struct *, veg_var_struct *);
@@ -68,12 +66,10 @@ int func_canopy_energy_bal(size_t, double, double, force_data_struct *,
                            snow_data_struct *, soil_con_struct *,
                            veg_var_struct *, veg_lib_struct *);
 int func_surf_energy_bal(size_t, double, force_data_struct *, energy_bal_struct *, 
-                         cell_data_struct *, snow_data_struct *, soil_con_struct *);
+                         cell_data_struct *, snow_data_struct *);
 double ft(double, double);
 double fth(double, double, double, double);
 double fth25(double, double);
-int GlacierTemperature(double, cell_data_struct *, energy_bal_struct *, 
-                        snow_data_struct *, soil_con_struct *);
 void GroundAlbedo(double, double, double, energy_bal_struct *, 
                   cell_data_struct *, soil_con_struct *);
 void get_qflx(bool, double, double, double, double, double, double, 

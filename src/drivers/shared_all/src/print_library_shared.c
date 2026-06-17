@@ -438,11 +438,6 @@ print_soil_con(soil_con_struct *scon,
     fprintf(LOG_DEST, "\tb_dynamic             : %f\n", scon->b_dynamic);
     fprintf(LOG_DEST, "\tb_infilt              : %f\n", scon->b_infilt);
     fprintf(LOG_DEST, "\n");
-    fprintf(LOG_DEST, "\tbubble_node           :");
-    for (i = 0; i < nnodes; i++) {
-        fprintf(LOG_DEST, "\t%f", scon->bubble_node[i]);
-    }
-    fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "\tbulk_dens_min         :");
     for (i = 0; i < nlayers; i++) {
         fprintf(LOG_DEST, "\t%f", scon->bulk_dens_min[i]);

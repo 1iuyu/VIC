@@ -16,7 +16,7 @@ compute_soil_resis(double            coverage,
 {
     extern parameters_struct param;
     /* Allocate temp arrays */
-    double Ra_evap = 0.0;
+    double Ra_evap = 0.0; // [m/s]
     if (cell->IS_VEG) {
         double *liq = cell->liq;
         double *porosity = cell->porosity;  // 有效孔隙度
@@ -32,10 +32,10 @@ compute_soil_resis(double            coverage,
         double dg = d0 * tao;
                 
         double dsl = 0.015 * max(param.TOL_A, (0.8 * porosity[0] - liq[0])) /
-                    max(param.TOL_A, (0.8 * Wsat_node[0] - aird));
-                
+                    max(param.TOL_A, (0.8 * Wsat_node[0] - aird)); // [m/s]
+
         dsl = min(max(dsl, 0.0), 0.2);
-        Ra_evap = dsl / (dg * eps * 1.e3) + 20.0;
+        Ra_evap = dsl / dg + 20.0; // 最小阻抗
         // 添加积雪覆盖修正
         if (1.0 - coverage + coverage * Ra_evap > 0.0) {
             Ra_evap = Ra_evap / (1.0 - coverage + coverage * Ra_evap);

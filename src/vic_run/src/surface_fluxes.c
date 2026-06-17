@@ -172,7 +172,9 @@ surface_fluxes(size_t             hidx,
             ********************************************/
             ErrorFlag = calc_water_bal(step_dt, pressure,
                                        &iter_energy, 
-                                       &iter_cell, soil_con);
+                                       &iter_cell, 
+                                       &iter_snow,
+                                       soil_con);
 
             if (ErrorFlag == ERROR) {
                 // Return error flag to skip rest of grid cell

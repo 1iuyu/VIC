@@ -49,7 +49,7 @@ calc_energy_bal(size_t             hidx,
       Compute the vapor flux between nodes
     ***************************************/
     calc_vapor_flux(pressure, cell, 
-                    energy, snow, soil_con);
+                    snow, soil_con);
 
     /***************************************
       Compute the hydraulic conductivity
@@ -85,8 +85,7 @@ calc_energy_bal(size_t             hidx,
     ErrorFlag = func_surf_energy_bal(hidx, air_temp, 
                                      force,
                                      energy,
-                                     cell, snow, 
-                                     soil_con);
+                                     cell, snow);
 
     if (ErrorFlag == ERROR) {
         return (ERROR);

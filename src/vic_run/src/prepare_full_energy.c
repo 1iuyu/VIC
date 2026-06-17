@@ -45,7 +45,6 @@ prepare_full_energy(double             pressure,
     double *soil_T = cell->soil_T;
     double *matric = cell->matric;
     double *zc_soil = soil_con->zc_soil;
-    double *dz_soil = soil_con->dz_soil;
     double *Zsum_soil = soil_con->Zsum_soil;
     double *Zsum_snow = snow->Zsum_snow;
     double *organic_node = soil_con->organic_node;
@@ -73,23 +72,26 @@ prepare_full_energy(double             pressure,
     }
 
     // 计算表层热导率和热容量
-    if (cell->IS_GLAC) {  
-        // 计算冰川热属性
-        Cs_node[Nsnow] = cell->h2osfc * CONST_RHOICE * 
-                CONST_CPICE + liq[0] * CONST_RHOFW * CONST_CPFWICE;
-        kappa_node[Nsnow] = 9.828 * exp(-0.0057 * cell->h2osfc_T);
+    size_t tmp_Nsnow = Nsnow;
+    if (cell->h2osfc > param.TOL_A) {
+        if (cell->IS_GLAC) {  
+            // 计算冰川热属性
+            Cs_node[Nsnow] = cell->h2osfc * CONST_RHOICE * 
+                    CONST_CPICE + liq[0] * CONST_RHOFW * CONST_CPFWICE;
+            kappa_node[Nsnow] = 9.828 * exp(-0.0057 * cell->h2osfc_T);
+        }
+        else if (cell->IS_WET) {
+            Cs_node[Nsnow] = CONST_CPFWICE;
+            kappa_node[Nsnow] = CONST_KFWICE;
+        }
+        if (Cs_node[Nsnow] < param.TOL_A || kappa_node[Nsnow] < param.TOL_A) {
+            Cs_node[Nsnow] = param.TOL_A;
+            kappa_node[Nsnow] = param.TOL_A;
+        }
+        tmp_Nsnow++;
     }
-    else if (cell->IS_WET) {
-        Cs_node[Nsnow] = CONST_CPFWICE;
-        kappa_node[Nsnow] = CONST_KFWICE;
-    }
-    if (cell->h2osfc < param.TOL_A || cell->frac_h2o < param.TOL_A) {
-        Cs_node[Nsnow] = param.TOL_A;
-        kappa_node[Nsnow] = param.TOL_A;
-    }
-    // 计算土壤热属性
     for (i = 0; i < Nsoil; i++) {
-        lidx = Nsnow + i + 1;
+        lidx = tmp_Nsnow + i;
         tmp_ice = max(moist[i] - liq[i], 0.0);
         // 土壤节点体积热容
         Cs_node[lidx] = volumetric_heat_capacity(Wsat_node[i],
@@ -123,16 +125,16 @@ prepare_full_energy(double             pressure,
         // 除以节点间距，得到等效热导[W/m2/K]
         kappa_int[i] = k_int / dzp;
     }
-    if (Nsnow > 0 && cell->frac_h2o > param.TOL_A) {
+    if (cell->frac_h2o > param.TOL_A) {
 
         double dzp = 0.5 * cell->h2osfc + zc_soil[0];
-        double k_int = kappa_node[i] * kappa_node[i+1] * dzp /
-                        (kappa_node[i] * zc_soil[0] +
-                        kappa_node[i+1] * 0.5 * cell->h2osfc);
-        kappa_int[i] = k_int / dzp;
+        double k_int = kappa_node[Nsnow] * kappa_node[Nsnow+1] * dzp /
+                        (kappa_node[Nsnow] * zc_soil[0] +
+                        kappa_node[Nsnow+1] * 0.5 * cell->h2osfc);
+        kappa_int[Nsnow] = k_int / dzp;
     }
     for (i = 0; i < Nsoil; i++) {
-        lidx = Nsnow + i + 1;
+        lidx = tmp_Nsnow + i;
         double dzp = zc_soil[i+1] - zc_soil[i];
         // 调和平均公式
         double k_int = kappa_node[lidx] * kappa_node[lidx+1] * dzp /

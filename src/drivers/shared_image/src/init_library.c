@@ -40,7 +40,6 @@ initialize_soil_con(soil_con_struct *soil_con)
         soil_con->expt_node[i] = 0.0;
         soil_con->mpar_node[i] = 0.0;
         soil_con->bulk_dens_node[i] = 0.0;
-        soil_con->bubble_node[i] = 0.0;
         soil_con->clay_node[i] = 0.0;
         soil_con->sand_node[i] = 0.0;
         soil_con->silt_node[i] = 0.0;

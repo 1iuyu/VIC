@@ -26,7 +26,7 @@ SoilTemperature(double   		   step_dt,
 	size_t Nnode = cell->Nnode;
     double coverage = snow->coverage;
     double frac_h2o = cell->frac_h2o;
-    double *fact = energy->fact; 
+    double fact[MAX_NODES];
 	double mat_A[MAX_NODES];
 	double mat_B[MAX_NODES];
 	double mat_C[MAX_NODES];
@@ -50,6 +50,7 @@ SoilTemperature(double   		   step_dt,
     double deriv_terms = energy->deriv_terms;
 	/* initialization */
     for (i = 0; i < MAX_NODES; i++) {
+        fact[i] = 0.0;
         FLOW[i] = 0.0;
         EPSLON[i] = 0.0;
         mat_A[i] = 0.0;
@@ -226,7 +227,7 @@ SoilTemperature(double   		   step_dt,
                 mat_C[i] = 0.0;
             } else {
                 mat_A[i] = kappa_int[i-1] + CONST_LATSUB * deric_vapor[i-1] * conv_vapor[i-1];
-                mat_B[i] = -kappa_int[i-1] - latent_bottom * deric_vapor[i] * conv_vapor[i-1]
+                mat_B[i] = -kappa_int[i-1] - CONST_LATSUB * deric_vapor[i] * conv_vapor[i-1]
                         - fact[i] * Cs_node[i];
                 mat_C[i] = 0.0;
             }
@@ -245,25 +246,23 @@ SoilTemperature(double   		   step_dt,
         double ice_term = 0.0;
         double trans_right = 0.0;   // 右侧界面传输系数
         double trans_left = 0.0;    // 左侧界面传输系数
-            // 当前层的水分通量和冰量对热输送的影响
-            if (i >= Nsnow && i < Nnode - 2) {
-                adv_right = CONST_RHOFW * CONST_CPFWICE * liquid_flux[i] + 
-                            CONST_CPWV * vapor_flux[i];
-                trans_right = kappa_int[i] + EPSLON[i] * adv_right;
-            }
-            // 上一层的水分通量和冰量对热输送的影响
-            if (i > Nsnow && i < Nnode - 1) {
-                adv_left = CONST_RHOFW * CONST_CPFWICE * liquid_flux[i-1] +
-                        CONST_CPWV * vapor_flux[i-1];
-                latent_term = vapor_flux[i] - vapor_flux[i-1];
-                trans_left = kappa_int[i-1] + FLOW[i-1] * adv_left;
-            }
-            if (i >= Nsnow && i <= Nnode - 2) {
-                ice_term = CONST_RHOICE * CONST_LATICE *
-                        (ice[i] - last_ice[i]);
-            }
+        // 当前层的水分通量和冰量对热输送的影响
+        if (i >= Nsnow && i < Nnode - 2) {
+            adv_right = CONST_RHOFW * CONST_CPFWICE * liquid_flux[i] + 
+                        CONST_CPWV * vapor_flux[i];
+            trans_right = kappa_int[i] + EPSLON[i] * adv_right;
+        }
+        // 上一层的水分通量和冰量对热输送的影响
+        if (i > Nsnow && i < Nnode - 1) {
+            adv_left = CONST_RHOFW * CONST_CPFWICE * liquid_flux[i-1] +
+                    CONST_CPWV * vapor_flux[i-1];
+            latent_term = vapor_flux[i] - vapor_flux[i-1];
+            trans_left = kappa_int[i-1] + FLOW[i-1] * adv_left;
+        }
+        if (i >= Nsnow && i <= Nnode - 2) {
+            ice_term = CONST_RHOICE * CONST_LATICE * (ice[i] - last_ice[i]);
+        }
         if (i == Nsnow) {
-
             if (Nsnow == 0 && cell->IS_VEG) {
                 mat_A[i] = 0.0;
                 mat_B[i] = deriv_terms - trans_right - fact[i] * Cs_node[i];
@@ -283,12 +282,12 @@ SoilTemperature(double   		   step_dt,
 
             }
             else if (cell->IS_WET) {
-                mat_A[i] = frac_h2o * trans_from_water;
-                mat_B[i] = -frac_h2o * trans_from_water - trans_right - fact[i] * Cs_node[i];
+                mat_A[i] = frac_h2o * trans_left;
+                mat_B[i] = -frac_h2o * trans_left - trans_right - fact[i] * Cs_node[i];
                 mat_C[i] = trans_right;
-                mat_RHS[i] = frac_h2o * trans_from_water * (T_water_bottom - T[i]) 
+                mat_RHS[i] = frac_h2o * trans_left * (cell->h2osfc_T - T[i]) 
                             - trans_right * (T[i] - T[i+1]) 
-                            - CONST_LATVAP * vapor_flux_water_bottom
+                            - CONST_LATVAP * vapor_flux[i]
                             - fact[i] * (last_Cs[i] * (T[i] - last_T[i]) - ice_term);                
             }
         }

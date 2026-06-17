@@ -82,7 +82,7 @@ calc_root_fractions(size_t            veg_class,
         }
         if (!assert_close_double(dum, 1, 0, 1e-4)) {
             log_err("Soil layer root fractions do not sum to 1.0: %f, "
-                    "veg class: %d", dum, veg_class);
+                    "veg class: %zu", dum, veg_class);
         }
         else {
             if (dum != 1.0) {

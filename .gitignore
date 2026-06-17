@@ -52,3 +52,8 @@ site/
 # macOS files
 ._*
 .AppleDouble
+
+# 忽略 VSCode Counter 生成的报告文件夹
+VSCodeCounter/
+*.VSCodeCounter.md
+*.VSCodeCounter.json

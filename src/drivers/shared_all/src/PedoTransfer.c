@@ -19,7 +19,6 @@ PedoTransfer(soil_con_struct *soil_con)
     double *Wpwp_node = soil_con->Wpwp_node;
     double *Wsat_node = soil_con->Wsat_node;
     double *expt_node = soil_con->expt_node;
-    double *bubble_node = soil_con->bubble_node;
     double *Ksat_node = soil_con->Ksat_node;
 
     for (size_t i = 0; i < soil_con->Nbedrock; i++) {
@@ -93,6 +92,6 @@ PedoTransfer(soil_con_struct *soil_con)
         // psisat_node[i] = max(0.03, min(psisat, 1.00));
         Ksat_node[i] = max(5e-7, min(dksat, 1e-5));
         // Dsat_node[i] = max(1e-6, min(dwsat, 3e-5));
-        bubble_node[i] = 0.32 * expt_node[i] + 4.3;
+        // bubble_node[i] = 0.32 * expt_node[i] + 4.3;
     }
 }

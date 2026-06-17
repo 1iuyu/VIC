@@ -1,9 +1,8 @@
 /******************************************************************************
  * @section DESCRIPTION
  *
- * This subroutine computes the surface energy balance for bare soil and
- * vegetation uncovered by snow.  It computes outgoing longwave, sensible heat
- * flux, ground heat flux, and storage of heat in the thin upper layer, based
+ * This subroutine computes the surface energy balance for bare soil. It 
+ * computes sensible heat and latent heat fluxes and their derivatives based 
  * on the given surface temperature.
  *****************************************************************************/
 
@@ -18,8 +17,7 @@ func_surf_energy_bal(size_t             hidx,
                      force_data_struct *force,
                      energy_bal_struct *energy,
                      cell_data_struct  *cell,
-                     snow_data_struct  *snow,
-                     soil_con_struct   *soil_con)
+                     snow_data_struct  *snow)
 {
     extern parameters_struct param;
     extern option_struct options;

@@ -14,7 +14,6 @@
 int
 calc_vapor_flux(double             pressure,
                 cell_data_struct  *cell,
-                energy_bal_struct *energy,
                 snow_data_struct  *snow,
                 soil_con_struct   *soil_con)
 {
@@ -62,51 +61,54 @@ calc_vapor_flux(double             pressure,
         diff_vapor[i] = 0.0;
     }
     size_t Nsnow = snow->Nsnow;
-    for (i = 0; i < Nsnow; i++) {
-        vapor_diff[i] = 0.00009 * (CONST_PSTD / pressure) *
-                         pow(1.0 + pack_T[i] / CONST_TKFRZ, 14.0);
-        // 计算冰面饱和比湿
-        svp_flags(pack_T[i], pressure, 
-                  NULL, &qsaT, 
-                  NULL, &qsdT, QSAT | QSDT);
-        air_density = pressure / (CONST_RDAIR * pack_T[i]);
-        ice_corr = exp(CONST_MWWV * CONST_LATICE * (pack_T[i] - CONST_TKFRZ)
-                                       / (CONST_RGAS * pack_T[i] * pack_T[i]));
-        diff_vapor[i] = qsaT * air_density * ice_corr;
-        deric_vapor[i] = qsdT * air_density * ice_corr;
+    size_t tmp_Nsnow = Nsnow;
+    if (Nsnow > 0) {
+        for (i = 0; i < Nsnow; i++) {
+            vapor_diff[i] = 0.00009 * (CONST_PSTD / pressure) *
+                            pow(1.0 + pack_T[i] / CONST_TKFRZ, 14.0);
+            // 计算冰面饱和比湿
+            svp_flags(pack_T[i], pressure, 
+                    NULL, &qsaT, 
+                    NULL, &qsdT, QSAT | QSDT);
+            air_density = pressure / (CONST_RDAIR * pack_T[i]);
+            ice_corr = exp(CONST_MWWV * CONST_LATICE * (pack_T[i] - CONST_TKFRZ)
+                                        / (CONST_RGAS * pack_T[i] * pack_T[i]));
+            diff_vapor[i] = qsaT * air_density * ice_corr;
+            deric_vapor[i] = qsdT * air_density * ice_corr;
+        }
+        // 下边界条件
+        double Ts_bottom = 0.0;
+        double vapor_slope = 0.0;
+        double vapor_density = 0.0; 
+        if (cell->IS_VEG) {
+            Ts_bottom = soil_T[0];
+        }
+        else {
+            Ts_bottom = cell->h2osfc_T;
+        }
+        svp_flags(Ts_bottom, pressure, 
+                NULL, &qsaT, 
+                NULL, &qsdT, QSAT | QSDT);
+        air_density = pressure / (CONST_RDAIR * Ts_bottom);
+        if (cell->IS_VEG) {
+            double humidity = exp(CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * matric[i]);
+            vapor_density = qsaT * air_density * humidity;
+            vapor_slope = qsdT * air_density * humidity;
+        }
+        else if (cell->IS_GLAC) {
+            ice_corr = exp(CONST_MWWV * CONST_LATICE * (Ts_bottom - CONST_TKFRZ)
+                                        / (CONST_RGAS * Ts_bottom * Ts_bottom));
+            vapor_density = qsaT * air_density * ice_corr;
+            vapor_slope = qsdT * air_density * ice_corr;  
+        }
+        else if (cell->IS_WET) {
+            vapor_density = qsaT * air_density;
+            vapor_slope = qsdT * air_density;
+        }
+        vapor_diff[Nsnow] = vapor_diff[Nsnow-1];
+        diff_vapor[Nsnow] = vapor_density;
+        deric_vapor[Nsnow] = vapor_slope;
     }
-    // 下边界条件
-    double Ts_bottom = 0.0;
-    double vapor_slope = 0.0;
-    double vapor_density = 0.0; 
-    if (cell->IS_VEG) {
-        Ts_bottom = soil_T[0];
-    }
-    else {
-        Ts_bottom = cell->h2osfc_T;
-    }
-    svp_flags(Ts_bottom, pressure, 
-              NULL, &qsaT, 
-              NULL, &qsdT, QSAT | QSDT);
-    air_density = pressure / (CONST_RDAIR * Ts_bottom);
-    if (cell->IS_VEG) {
-        double humidity = exp(CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * matric[i]);
-        vapor_density = qsaT * air_density * humidity;
-        vapor_slope = qsdT * air_density * humidity;
-    }
-    else if (cell->IS_GLAC) {
-        ice_corr = exp(CONST_MWWV * CONST_LATICE * (Ts_bottom - CONST_TKFRZ)
-                                       / (CONST_RGAS * Ts_bottom * Ts_bottom));
-        vapor_density = qsaT * air_density * ice_corr;
-        vapor_slope = qsdT * air_density * ice_corr;  
-    }
-    else if (cell->IS_WET) {
-        vapor_density = qsaT * air_density;
-        vapor_slope = qsdT * air_density;
-    }
-    vapor_diff[Nsnow] = vapor_diff[Nsnow-1];
-    diff_vapor[Nsnow] = vapor_density;
-    deric_vapor[Nsnow] = vapor_slope;
 
     size_t Nsoil = cell->Nsoil;
     for (i = 0; i < Nsoil; i++) {

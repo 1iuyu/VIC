@@ -14,7 +14,7 @@
       
       "linux": {
         "program": "/mnt/c/Users/liuyu/Downloads/VIC-master/src/drivers/image/vic_image.exe",
-        "args": ["-g", "/mnt/d/VIC_GL/test/global_param.txt"],
+        "args": ["-g", "/mnt/d/VIC_GL/test/global_param_heihe.txt"],
         "cwd": "/mnt/d/VIC_GL/test",
         "MIMode": "gdb",
         "miDebuggerPath": "/usr/bin/gdb"

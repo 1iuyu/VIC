@@ -40,7 +40,7 @@
 #define ERROR        -999      /**< Error Flag returned by subroutines */
 
 /***** Define maximum array sizes for model source code *****/
-#define MAX_LAYERS      6      /**< maximum number of soil moisture layers */
+#define MAX_LAYERS      7      /**< maximum number of soil moisture layers */
 #define MAX_NODES       50     /**< maximum number of nodes = MAX_SNOWS + MAX_SOILS + 1 */
 #define MAX_FRONTS      3      /**< maximum number of freezing and thawing front depths to store */
 #define MAX_SNOWS       3      /**< maximum number of snowpack layers */
@@ -398,7 +398,6 @@ typedef struct {
     double b_infilt;                  /**< infiltration parameter */
     double b_dynamic;                 /**< Dynamic VIC heterogeniety parameter for infiltration */
     double expt_node[MAX_SOILS];      /**< layer-specific exponent n van Genuchten eqn */
-    double bubble_node[MAX_SOILS];    /**< bubbling pressure (cm) */
     double bulk_dens_min[MAX_LAYERS]; /**< bulk density of mineral soil (kg/m^3) */
     double bulk_dens_node[MAX_SOILS]; /**< soil bulk density (kg/m^3) */
     double bulk_dens_org[MAX_LAYERS]; /**< bulk density of organic soil (kg/m^3) */
@@ -659,7 +658,6 @@ typedef struct {
     double T[MAX_NODES];               /**< thermal node temperatures (k) */
     double last_T[MAX_NODES];
     double kappa_int[MAX_NODES];       /**< thermal conductivity used for interface between nodes (W/m/K) */
-    double fact[MAX_NODES];            /**< thermal diffusivity of each soil thermal node (m^2/s) */
     double Tcanopy;              /**< temperature of the canopy */
     double Tsurf;                /**< temperature of the understory */
     double Tgrnd;
