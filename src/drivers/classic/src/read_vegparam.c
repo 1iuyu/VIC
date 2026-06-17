@@ -275,23 +275,6 @@ read_vegparam(FILE  *vegparam,
                 strcpy(vegarr[Nfields], token);
                 Nfields++;
             }
-            NfieldsMax = MONTHS_PER_YEAR; /* For albedo */
-            if (Nfields != NfieldsMax) {
-                log_err("cell %d - expecting %d albedo values but found %d in "
-                        "line %s", gridcel, NfieldsMax, Nfields, line);
-            }
-
-            if (options.ALB_SRC == FROM_VEGPARAM) {
-                for (j = 0; j < MONTHS_PER_YEAR; j++) {
-                    tmp = atof(vegarr[j]);
-                    if (tmp != NODATA_VH) {
-                        temp[i].albedo[j] = tmp;
-                    }
-                }
-            }
-            for (k = 0; k < Nfields; k++) {
-                free(vegarr[k]);
-            }
         }
     }
 
@@ -323,12 +306,8 @@ read_vegparam(FILE  *vegparam,
         temp[i].Cv = 0;
     }
     for (j = 0; j < MONTHS_PER_YEAR; j++) {
-        temp[i].albedo[j] = veg_lib[temp[i].veg_class].albedo[j];
-        temp[i].displacement[j] =
-            veg_lib[temp[i].veg_class].displacement[j];
         temp[i].fcanopy[j] = veg_lib[temp[i].veg_class].fcanopy[j];
         temp[i].LAI[j] = veg_lib[temp[i].veg_class].LAI[j];
-        temp[i].roughness[j] = veg_lib[temp[i].veg_class].roughness[j];
     }
 
     return temp;

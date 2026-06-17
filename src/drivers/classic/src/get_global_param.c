@@ -304,9 +304,6 @@ get_global_param(FILE *gp)
                             "control file.");
                 }
             }
-            else if (strcasecmp("GLACIER_ID", optstr) == 0) {
-                sscanf(cmdstr,"%*s %d", &options.GLACIER_ID);
-            }
             else if (strcasecmp("SNOW_BAND", optstr) == 0) {
                 sscanf(cmdstr, "%*s %zu %s", &options.SNOW_BAND,
                        filenames.snowband);

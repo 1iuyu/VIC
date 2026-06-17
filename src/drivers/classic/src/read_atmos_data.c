@@ -38,13 +38,13 @@ read_atmos_data(FILE               *infile,
 
     /* if ascii then the following refers to the number of lines to skip,
        if binary the following needs multiplying by the number of input fields */
-    skip_recs = (unsigned int) ((global_param.dt * forceskip)) /
+    skip_recs = (unsigned int) ((global_param.step_dt * forceskip)) /
                 param_set.FORCE_DT[file_num];
-    if ((((global_param.dt < SEC_PER_DAY &&
+    if ((((global_param.step_dt < SEC_PER_DAY &&
            (unsigned int) (param_set.FORCE_DT[file_num] * forceskip) %
-           (unsigned int) global_param.dt) > 0)) ||
-        (global_param.dt == SEC_PER_DAY &&
-         ((unsigned int) global_param.dt %
+           (unsigned int) global_param.step_dt) > 0)) ||
+        (global_param.step_dt == SEC_PER_DAY &&
+         ((unsigned int) global_param.step_dt %
           (unsigned int) param_set.FORCE_DT[file_num] >
           0))) {
         log_err("Currently unable to handle a model starting date that does "
@@ -56,11 +56,11 @@ read_atmos_data(FILE               *infile,
         same time step as the data.  That way aggregation and disaggragation
         techniques are left to the user. **/
     if (param_set.FORCE_DT[file_num] < SEC_PER_DAY &&
-        global_param.dt != param_set.FORCE_DT[file_num]) {
+        global_param.step_dt != param_set.FORCE_DT[file_num]) {
         log_err("When forcing the model with sub-daily data, the model must be "
                 "run at the same time step as the forcing data.  Currently the "
                 "model time step is %f seconds, while forcing file %i has a "
-                "time step of %f seconds.", global_param.dt, file_num,
+                "time step of %f seconds.", global_param.step_dt, file_num,
                 param_set.FORCE_DT[file_num]);
     }
 
@@ -123,7 +123,7 @@ read_atmos_data(FILE               *infile,
         rec = 0;
 
         while (!feof(infile) && (rec * param_set.FORCE_DT[file_num] <
-                                 global_param.nrecs * global_param.dt)) {
+                                 global_param.nrecs * global_param.step_dt)) {
             for (i = 0; i < Nfields; i++) {
                 if (field_index[i] != ALBEDO && field_index[i] != LAI &&
                     field_index[i] != FCANOPY) {
@@ -204,7 +204,7 @@ read_atmos_data(FILE               *infile,
         rec = 0;
 
         while (!feof(infile) && (rec * param_set.FORCE_DT[file_num] <
-                                 global_param.nrecs * global_param.dt)) {
+                                 global_param.nrecs * global_param.step_dt)) {
             for (i = 0; i < Nfields; i++) {
                 if (field_index[i] != ALBEDO && field_index[i] != LAI &&
                     field_index[i] != FCANOPY) {
@@ -224,13 +224,13 @@ read_atmos_data(FILE               *infile,
     }
 
     if (rec * param_set.FORCE_DT[file_num] <
-        global_param.nrecs * global_param.dt) {
+        global_param.nrecs * global_param.step_dt) {
         log_err("Not enough records in forcing file %i (%u * %f = %f) to run "
                 "the number of records defined in the global file "
                 "(%zu * %f = %f).  Check forcing file time step, and global "
                 "file", file_num + 1, rec, param_set.FORCE_DT[file_num],
                 rec * param_set.FORCE_DT[file_num], global_param.nrecs,
-                global_param.dt,
-                global_param.nrecs * global_param.dt);
+                global_param.step_dt,
+                global_param.nrecs * global_param.step_dt);
     }
 }

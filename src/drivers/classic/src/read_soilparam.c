@@ -108,7 +108,7 @@ read_soilparam(FILE            *soilparam,
             log_err("Can't find values for MEAN CAPILARY DRIVE in "
                     "soil file");
         }
-        sscanf(token, "%lf", &(temp->cap_drive));
+        sscanf(token, "%lf", &(temp->capil_drive));
 
         /* read bexp for each layer */
         for (layer = 0; layer < options.Nlayer; layer++) {
@@ -120,7 +120,7 @@ read_soilparam(FILE            *soilparam,
                 log_err("Can't find values for B_EXP for layer %zu in "
                         "soil file", layer);
             }
-            sscanf(token, "%lf", &(temp->bexp)[layer]);
+            sscanf(token, "%lf", &(temp->expt_node)[layer]);
         }
 
         /* read expt for each layer */
@@ -133,11 +133,7 @@ read_soilparam(FILE            *soilparam,
                 log_err("Can't find values for EXPT for layer %zu in "
                         "soil file", layer);
             }
-            sscanf(token, "%lf", &(temp->expt)[layer]);
-            if (temp->expt[layer] < 3.0) {
-                log_err("Exponent in layer %zu is %f < 3.0; This must be "
-                        "> 3.0", layer, temp->expt[layer]);
-            }
+            sscanf(token, "%lf", &(temp->expt_node)[layer]);
         }
 
         /* read layer saturated hydraulic conductivity */
@@ -150,7 +146,7 @@ read_soilparam(FILE            *soilparam,
                 log_err("Can't find values for SATURATED HYDRAULIC "
                         "CONDUCTIVITY for layer %zu in soil file", layer);
             }
-            sscanf(token, "%lf", &(temp->Ksat)[layer]);
+            sscanf(token, "%lf", &(temp->Ksat_node)[layer]);
         }
 
         /* read layer saturated hydraulic diffusivity */
@@ -205,42 +201,6 @@ read_soilparam(FILE            *soilparam,
                     "file");
         }
         sscanf(token, "%lf", &(temp->dp));
-
-        /* read layer bubbling pressure */
-        for (layer = 0; layer < options.Nlayer; layer++) {
-            token = strtok(NULL, delimiters);
-            while (token != NULL && (length = strlen(token)) == 0) {
-                token = strtok(NULL, delimiters);
-            }
-            if (token == NULL) {
-                log_err("Can't find values for BUBBLING PRESSURE for "
-                        "layer %zu in soil file", layer);
-            }
-            sscanf(token, "%lf", &(temp->bubble)[layer]);
-            if ((options.FROZEN_SOIL) && temp->bubble[layer] < 0) {
-                log_err("Bubbling pressure in layer %zu is %f < 0; "
-                        "This must be positive for FULL_ENERGY = true or "
-                        "FROZEN_SOIL = true", layer, temp->bubble[layer]);
-            }
-        }
-
-        /* read layer quartz content */
-        for (layer = 0; layer < options.Nlayer; layer++) {
-            token = strtok(NULL, delimiters);
-            while (token != NULL && (length = strlen(token)) == 0) {
-                token = strtok(NULL, delimiters);
-            }
-            if (token == NULL) {
-                log_err("Can't find values for QUARTZ CONTENT for "
-                        "layer %zu in soil file", layer);
-            }
-            sscanf(token, "%lf", &(temp->quartz)[layer]);
-            if ((temp->quartz[layer] > 1. || temp->quartz[layer] < 0)) {
-                log_err("Need valid quartz content as a fraction to run "
-                        "Full Energy model, %f is not acceptable.",
-                        temp->quartz[layer]);
-            }
-        }
 
         /* read layer bulk density */
         for (layer = 0; layer < options.Nlayer; layer++) {
@@ -443,34 +403,6 @@ read_soilparam(FILE            *soilparam,
             }
             sscanf(token, "%lf", &(temp->psi_sat[layer]));
         }
-        /* read soil roughness */
-        token = strtok(NULL, delimiters);
-        while (token != NULL && (length = strlen(token)) == 0) {
-            token = strtok(NULL, delimiters);
-        }
-        if (token == NULL) {
-            log_err("Can't find values for SOIL ROUGHNESS in soil file");
-        }
-        sscanf(token, "%lf", &(temp->rough));
-
-        /* Overwrite default bare soil aerodynamic resistance parameters
-           with the values taken from the soil parameter file */
-        for (j = 0; j < MONTHS_PER_YEAR; j++) {
-            veg_lib[veg_lib[0].NVegLibTypes].roughness[j] = temp->rough;
-            veg_lib[veg_lib[0].NVegLibTypes].displacement[j] = temp->rough *
-                                                               0.667 /
-                                                               0.123;
-        }
-
-        /* read snow roughness */
-        token = strtok(NULL, delimiters);
-        while (token != NULL && (length = strlen(token)) == 0) {
-            token = strtok(NULL, delimiters);
-        }
-        if (token == NULL) {
-            log_err("Can't find values for SNOW ROUGHNESS in soil file");
-        }
-        sscanf(token, "%lf", &(temp->snow_rough));
 
         /* read layer residual moisture content */
         for (layer = 0; layer < options.Nlayer; layer++) {
@@ -622,10 +554,6 @@ read_soilparam(FILE            *soilparam,
             // calculate exponential function parameter
             // to force Zsum=dp at bottom node
         } // end if !EXP_TRANS
-        /******************************************
-           Compute soil thermal node properties
-        ******************************************/
-        set_node_parameters(temp);
 
         /*************************************************
            Compute soil albedo in PAR range (400-700nm)
@@ -633,9 +561,6 @@ read_soilparam(FILE            *soilparam,
         *************************************************/
         if (options.CARBON) {
             temp->AlbedoPar = 0.92 * param.ALBEDO_BARE_SOIL - 0.015;
-            if (temp->AlbedoPar < param.PHOTO_ALBSOIPARMIN) {
-                temp->AlbedoPar = param.PHOTO_ALBSOIPARMIN;
-            }
         }
         // set soil albedo
         temp->AlbedoSat[0] = 0.09;  // saturated soil albedo at visible band
@@ -650,9 +575,6 @@ read_soilparam(FILE            *soilparam,
         temp->time_zone_lng = off_gmt * 360. / HOURS_PER_DAY;
         /* Assume flat grid cell for radiation calculations */
         temp->slope = 0;
-        temp->aspect = 0;
-        temp->whoriz = 0;
-        temp->ehoriz = 0;
     } // end if(!(*MODEL_DONE) && (*RUN_MODEL))
 }
 

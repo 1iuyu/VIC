@@ -85,9 +85,8 @@ SoilWaterRetentionCurve(int              flag,
         }
         else {
             // Van Genuchten-Mualem 公式
-            // K = Ks * Se^L * [1 - (1 - Se^(1/m))^m]^2
-            double Se_pow = pow(Se, 1.0 / mpar_node[idx]);  // Se^(1/m)
-            double term = 1.0 - pow(1.0 - Se_pow, mpar_node[idx]);  // [1 - (1-Se^(1/m))^m]
+            double Se_pow = pow(Se, 1.0 / mpar_node[idx]);
+            double term = 1.0 - pow(1.0 - Se_pow, mpar_node[idx]);
             return Ksat_node[idx] * pow(Se, lpar_node[idx]) * term * term;
         }
     }
