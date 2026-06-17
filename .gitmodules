@@ -1,3 +1,0 @@
-[submodule "samples/data"]
-	path = samples/data
-	url = https://github.com/UW-Hydro/VIC_sample_data.git
