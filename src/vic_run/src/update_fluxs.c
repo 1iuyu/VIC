@@ -22,12 +22,26 @@ update_fluxes(energy_bal_struct *energy,
        初始化地表温度为各部分的面积加权
     ********************************/
     double coverage = snow->coverage;
+    double frac_h2o = cell->frac_h2o;
+    double *soil_T = cell->soil_T;
+    double *pack_T = snow->pack_T;
+    double h2osfc_T = cell->h2osfc_T;
     if (snow->Nsnow > 0) {
-        energy->Tgrnd = (1.0 - coverage) * 
-                cell->soil_T[0] + coverage * snow->pack_T[0];
+        if (frac_h2o > 0.0) {
+            energy->Tgrnd = (1.0 - coverage) * soil_T[0] + 
+                                    frac_h2o * h2osfc_T + coverage * pack_T[0];
+        }
+        else {
+            energy->Tgrnd = (1.0 - coverage) * soil_T[0] + coverage * pack_T[0];
+        }
     }
     else {
-        energy->Tgrnd = cell->soil_T[0];
+        if (frac_h2o > 0.0) {
+            energy->Tgrnd = (1.0 - frac_h2o) * soil_T[0] + frac_h2o * h2osfc_T;
+        }
+        else {
+            energy->Tgrnd = soil_T[0];
+        }
     }
 
     /********************************
