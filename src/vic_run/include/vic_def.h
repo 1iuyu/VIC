@@ -392,7 +392,6 @@ typedef struct {
     double Wsat_node[MAX_SOILS];      /** soil moisture content at saturation (m3/m3) */  
     double AlbedoSat[MAX_SWBANDS];    /** soil albedo at saturation */
     double AlbedoDry[MAX_SWBANDS];      
-    double AlbedoPar;                 /**< soil albedo in PAR range (400-700nm) */
     double avg_temp;                  /**< Mean Annual Ground Temperature (K) */
     double alpha_node[MAX_SOILS];     /**< retention shape parameter in van Genuchten equation [1/m] */
     double b_infilt;                  /**< infiltration parameter */

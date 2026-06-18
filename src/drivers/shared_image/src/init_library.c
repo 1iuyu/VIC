@@ -16,8 +16,6 @@ initialize_soil_con(soil_con_struct *soil_con)
     size_t               i;
     
     soil_con->gridcel = MISSING_USI;
-
-    soil_con->AlbedoPar = 0.0;
     soil_con->avg_temp = 0.0;
     soil_con->elevation = 0.0;
     soil_con->lat = 0.0;

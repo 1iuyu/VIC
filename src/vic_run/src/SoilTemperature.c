@@ -39,6 +39,9 @@ SoilTemperature(double   		   step_dt,
 	double *pack_T = snow->pack_T;
 	double *dz_soil = soil_con->dz_soil;
     double *zc_soil = soil_con->zc_soil;
+    double *dz_snow = snow->dz_snow;
+    double *zc_snow = snow->zc_snow;
+    double *Zsum_snow = snow->Zsum_snow;
     double *Zsum_soil = soil_con->Zsum_soil;
 	double *kappa_int = energy->kappa_int;
     double *Cs_node = energy->Cs_node;
@@ -173,14 +176,24 @@ SoilTemperature(double   		   step_dt,
                         snow, soil_con);
     
     double capr = 0.34;  // heat capacity ratio                   
-    for (i = 0; i < Nnode; i++) {
+    for (i = 0; i < Nsnow; i++) {
 		if (i == 0) {
-			fact[i] = (0.5 * (zc_soil[i] - Zsum_soil[i] + 
-						capr * (zc_soil[i+1] - Zsum_soil[i]))) / step_dt;
+			fact[i] = (0.5 * (zc_snow[i] - Zsum_snow[i] + 
+						capr * (zc_snow[i+1] - Zsum_snow[i]))) / step_dt;
 		}
-		else if (i <= Nnode - 1) {
-			fact[i] = dz_soil[i] / step_dt;
+		else if (i <= Nsnow - 1) {
+			fact[i] = dz_snow[i] / step_dt;
 		}
+    }
+    for (i = 0; i < Nsoil; i++) {
+        lidx = Nsnow + i;
+        if (Nsnow == 0) {
+			fact[lidx] = (0.5 * (zc_soil[i] - Zsum_soil[i] + 
+						capr * (zc_soil[i+1] - Zsum_soil[i]))) / step_dt;            
+        }
+        else {
+            fact[lidx] = dz_soil[i] / step_dt;
+        }
     }
 
     double grnd_flux = energy->NetShortGrnd + energy->longwave - 
@@ -251,7 +264,8 @@ SoilTemperature(double   		   step_dt,
     // ============================================================
     // 第二部分：土层能量平衡矩阵
     // ============================================================
-    for (i = Nsnow; i < Nsoil; i++) {
+    for (i = 0; i < Nsoil; i++) {
+        lidx = tmp_Nsnow + i;
         double adv_left = 0.0;
         double adv_right = 0.0;
         double latent_term = 0.0;

@@ -6,24 +6,24 @@
       "name": "Debug VIC",
       "type": "cppdbg",
       "request": "launch",
-      "program": "/mnt/c/Users/liuyu/Downloads/VIC-master/src/drivers/image/vic_image.exe",
+      "program": "${workspaceFolder}/src/drivers/image/vic_image.exe",
       "stopAtEntry": false,
       "externalConsole": false,
 
       "args": ["-g"],
       
       "linux": {
-        "program": "/mnt/c/Users/liuyu/Downloads/VIC-master/src/drivers/image/vic_image.exe",
-        "args": ["-g", "/mnt/d/VIC_GL/test/global_param_heihe.txt"],
-        "cwd": "/mnt/d/VIC_GL/test",
+        "program": "${workspaceFolder}/src/drivers/image/vic_image.exe",
+        "args": ["-g", "./global_param.txt"],
+        "cwd": "${workspaceFolder}/samples/data/",
         "MIMode": "gdb",
         "miDebuggerPath": "/usr/bin/gdb"
       },
 
       "osx": {
-        "program": "/Volumes/myExFAT/VIC-master/vic/drivers/image/vic_image.exe",
-        "args": ["-g", "/Volumes/myExFAT/jinzhu_VIC/test/global_param.txt"],
-        "cwd": "${workspaceFolder}",
+        "program": "${workspaceFolder}/vic/drivers/image/vic_image.exe",
+        "args": ["-g", "./global_param.txt"],
+        "cwd": "${workspaceFolder}/samples/data/",
         "MIMode": "lldb"
       }
     }

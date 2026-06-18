@@ -433,8 +433,6 @@ print_soil_con(soil_con_struct *scon,
     fprintf(LOG_DEST, "soil_con:\n");
     fprintf(LOG_DEST, "\tcapil_drive           : %f\n", scon->capil_drive);
     fprintf(LOG_DEST, "\n");
-    fprintf(LOG_DEST, "\tAlbedoPar             : %f\n", scon->AlbedoPar);
-    fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "\tb_dynamic             : %f\n", scon->b_dynamic);
     fprintf(LOG_DEST, "\tb_infilt              : %f\n", scon->b_infilt);
     fprintf(LOG_DEST, "\n");

@@ -1,0 +1,100 @@
+#######################################################################
+# VIC Model Parameters
+#######################################################################
+
+#######################################################################
+# Simulation Parameters
+#######################################################################
+NLAYER                 7      # number of soil layers
+MODEL_STEPS_PER_DAY    8      # number of model time steps per day
+STARTYEAR              1951   # year model simulation starts
+STARTMONTH             1      # month model simulation starts
+STARTDAY               1      # day model simulation starts
+STARTSEC	           0
+ENDYEAR                1951   # year model simulation ends
+ENDMONTH               12     # month model simulation ends
+ENDDAY                 31     # day model simulation ends
+CALENDAR    	       PROLEPTIC_GREGORIAN
+
+#######################################################################
+# Domain Files
+#######################################################################
+DOMAIN         VIC5_image_domain.nc
+DOMAIN_TYPE    LAT     lat
+DOMAIN_TYPE    LON     lon
+DOMAIN_TYPE    MASK    mask
+DOMAIN_TYPE    AREA    area
+DOMAIN_TYPE    FRAC    frac
+DOMAIN_TYPE    YDIM    lat
+DOMAIN_TYPE    XDIM    lon
+
+#######################################################################
+# Forcing Files
+#######################################################################
+FORCING1             VIC5_image_force
+FORCE_ENDIAN	LITTLE	# LITTLE (PC/Linux) or BIG (SUN)
+N_TYPES		9   
+FORCE_TYPE           RAINF			rainf
+FORCE_TYPE           SNOWF			snowf
+FORCE_TYPE           AIR_TEMP		air_temp
+FORCE_TYPE           WIND			wind
+FORCE_TYPE           LWDOWN		    lrad
+FORCE_TYPE           SWDOWN		    srad
+FORCE_TYPE           PRESSURE		pres
+FORCE_TYPE           QAIR			qair
+FORCE_TYPE           REL_HUMID		rel_humid
+FORCE_TYPE		     CHANNEL_IN  	channel_in
+FORCE_STEPS_PER_DAY  8
+FORCEYEAR            1951 
+FORCEMONTH           1   
+FORCEDAY             1
+FORCESEC	         0    
+GRID_DECIMAL         4     # Number of digits after decimal point in forcing file names
+
+#######################################################################
+# Land Surface Parameters
+#######################################################################
+PARAMETERS          VIC5_image_param.nc     # Soil parameter path/file
+ORGANIC_FRACT       FALSE  # TRUE = simulate organic soils; soil param file contains 3*Nlayer extra columns, listing for each layer the organic fraction, and the bulk density and soil particle density of the organic matter in the soil layer; FALSE = soil param file does not contain any information about organic soil, and organic fraction should be assumed to be 0
+VEGLIB              veglib_IGBP.txt    # Veg library path/file
+LAI_SRC             FROM_VEGLIB  # FROM_VEGPARAM = read LAI from veg param file; FROM_VEGLIB = read LAI from veg library file
+SAI_SRC		    FROM_VEGLIB
+FCAN_SRC         FROM_VEGLIB
+SNOW_BAND    TRUE
+ROUT_PARAM     FALSE  #VIC5_image_rout.nc
+RESOLUTION  0.1
+#######################################################################
+# Output Files and Parameters
+#######################################################################
+RESULT_DIR  ./results # Results directory path
+OUTFILE     fluxes_VIC5_image  
+AGGFREQ     NSTEPS   1 
+COMPRESS    FALSE  # TRUE = compress input and output files when done
+OUT_FORMAT  NETCDF4  # NETCDF4 or ASCII
+OUTVAR      OUT_RAINF
+OUTVAR      OUT_SNOWF
+OUTVAR      OUT_RUNOFF
+OUTVAR      OUT_NET_EVAP
+OUTVAR      OUT_BASEFLOW
+OUTVAR      OUT_SURF_TEMP
+OUTVAR      OUT_LWNET
+OUTVAR      OUT_VEGT
+OUTVAR      OUT_BARESOILT
+OUTVAR	      OUT_SWNET
+OUTVAR	      OUT_LATENT
+OUTVAR	      OUT_SENSIBLE
+OUTVAR	      OUT_GRND_FLUX
+OUTVAR      OUT_SNOW_PACK_TEMP
+OUTVAR	      OUT_SWE
+OUTVAR	      OUT_DISCHARGE
+OUTVAR	      OUT_INFLOW
+OUTVAR	      OUT_ZWT
+OUTVAR	      OUT_SNOW_DEPTH
+OUTVAR      OUT_FROST_SNOW
+OUTVAR	      OUT_SWE_BAND
+OUTVAR	      OUT_RECHARGE
+OUTVAR	      OUT_SNOW_COVER_BAND
+
+
+
+

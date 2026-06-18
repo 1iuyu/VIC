@@ -154,12 +154,19 @@ calc_vapor_flux(double             pressure,
     
     // 计算层间调和平均传导系数
     for (i = 0; i < Nsnow; i++) {
-        dzp = zc_snow[i+1] - zc_snow[i];
-        conv_vapor[i] = vapor_diff[i] * vapor_diff[i+1] * dzp /
-                        (vapor_diff[i] * (zc_snow[i+1] - Zsum_snow[i]) +
-                        vapor_diff[i+1] * (Zsum_snow[i] - zc_snow[i]));
+        if (i == 0 && Nsnow == 1) {
+            if (cell->h2osfc > param.TOL_A) {
+                dzp = 0.5 * cell->h2osfc + zc_snow[0];
+            }
 
-        vapor_flux[i] = conv_vapor[i] * (diff_vapor[i] - diff_vapor[i+1]) / dzp;
+        }
+        else if (i <= Nsnow - 2) {
+            dzp = zc_snow[i+1] - zc_snow[i];
+            conv_vapor[i] = vapor_diff[i] * vapor_diff[i+1] * dzp /
+                            (vapor_diff[i] * (zc_snow[i+1] - Zsum_snow[i]) +
+                            vapor_diff[i+1] * (Zsum_snow[i] - zc_snow[i]));
+            vapor_flux[i] = conv_vapor[i] * (diff_vapor[i] - diff_vapor[i+1]) / dzp;
+        }
     }
     for (i = 0; i < Nsoil - 1; i++) {
         lidx = Nsnow + i + 1;
