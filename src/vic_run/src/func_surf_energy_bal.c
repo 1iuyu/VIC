@@ -49,8 +49,9 @@ func_surf_energy_bal(size_t             hidx,
     double L_disp = 0.0;  // Monin-Obukhov长度
     size_t moz_signchg_count = 0;
     /* 计算地表比湿 */
-    ErrorFlag = calc_surf_humidity(pressure, Qair, 
-                                   Tgrnd, snow, cell);
+    ErrorFlag = calc_surf_humidity(pressure, 
+                                   Qair, Tgrnd, 
+                                   snow, cell);
     if (ErrorFlag == ERROR) {
         return (ERROR);
     }

@@ -20,13 +20,13 @@ prepare_full_energy(double             pressure,
                     soil_con_struct   *soil_con)
 {
     extern parameters_struct param;
-
     size_t          i, lidx;
     // 初始化
     size_t Nsnow = snow->Nsnow;
     size_t Nnode = cell->Nnode;
     size_t Nsoil = cell->Nsoil;
     double tmp_ice = 0.;
+    double dzp, k_int;
     double tmp_density = 0.;
     // 指针赋值
     double *liq = cell->liq;
@@ -117,9 +117,9 @@ prepare_full_energy(double             pressure,
 
     // ===================== 计算界面热导率（调和平均） =====================
     for (i = 0; i < Nsnow; i++) {
-        double dzp = zc_snow[i+1] - zc_snow[i];
+        dzp = zc_snow[i+1] - zc_snow[i];
         // 调和平均公式
-        double k_int = kappa_node[i] * kappa_node[i+1] * dzp /
+        k_int = kappa_node[i] * kappa_node[i+1] * dzp /
                         (kappa_node[i] * (zc_snow[i+1] - Zsum_snow[i]) +
                          kappa_node[i+1] * (Zsum_snow[i] - zc_snow[i]));
         // 除以节点间距，得到等效热导[W/m2/K]
@@ -127,21 +127,21 @@ prepare_full_energy(double             pressure,
     }
     if (cell->frac_h2o > param.TOL_A) {
 
-        double dzp = 0.5 * cell->h2osfc + zc_soil[0];
-        double k_int = kappa_node[Nsnow] * kappa_node[Nsnow+1] * dzp /
+        dzp = 0.5 * cell->h2osfc + zc_soil[0];
+        k_int = kappa_node[Nsnow] * kappa_node[Nsnow+1] * dzp /
                         (kappa_node[Nsnow] * zc_soil[0] +
                         kappa_node[Nsnow+1] * 0.5 * cell->h2osfc);
         kappa_int[Nsnow] = k_int / dzp;
     }
     for (i = 0; i < Nsoil; i++) {
         lidx = tmp_Nsnow + i;
-        double dzp = zc_soil[i+1] - zc_soil[i];
+        dzp = zc_soil[i+1] - zc_soil[i];
         // 调和平均公式
-        double k_int = kappa_node[lidx] * kappa_node[lidx+1] * dzp /
+        k_int = kappa_node[lidx] * kappa_node[lidx+1] * dzp /
                         (kappa_node[lidx] * (zc_soil[i+1] - Zsum_soil[i]) +
                         kappa_node[lidx+1] * (Zsum_soil[i] - zc_soil[i]));
         // 除以节点间距，得到等效热导[W/m2/K]
-        kappa_int[lidx] = k_int / dzp;  
+        kappa_int[lidx] = k_int / dzp;
     }
     kappa_int[Nnode-1] = 0.0;
 }
