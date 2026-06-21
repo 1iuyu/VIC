@@ -39,6 +39,7 @@ func_canopy_energy_bal(size_t             hidx,
     double daylen = force->daylen[hidx];
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
+    double fcanopy = veg_var->fcanopy;
     double wetFrac = veg_var->wetFrac;
     double dryFrac = veg_var->dryFrac;
     double canopy_swq = veg_var->canopy_swq;
@@ -377,23 +378,21 @@ func_canopy_energy_bal(size_t             hidx,
             dt_stem = (f_abs_stem * (NetShortSub + coef_lw_atmos + coef_lw_canopy * pow(Tfoliage_init, 4.0) +
                 coef_lw_grnd * pow(Tgrnd, 4.0)) - SensibleStem) / (cp_stem / step_dt -
                 f_abs_stem * coef_lw_canopy * 4.0 * pow(Tfoliage_init, 3.0));
-        }
-        else {
+        } else {
             dt_stem = 0.0;
         }
         Tstem += dt_stem;
-    }
-    else {
+    } else {
         dt_stem = 0.0;
     }
 
     double delt = wtal * Tgrnd - wtl0 * Tfoliage - wta0 * thm - wtstem0 * Tstem;
 
-    energy->SensibleSub = CONST_CPDAIR * air_density * wtg * delt;
-    energy->LatentSub = air_density * wtgq * delt_q * CONST_LATVAP;
-    cell->esoil_sub = air_density * wtgq * delt_q;
-    energy->deriv_esub = air_density * wtgq * cell->Qair_grnd * CONST_G /
-                                            (CONST_RWV * Tgrnd) / CONST_RHOFW;
+    energy->sensible *= (1.0 - fcanopy) + fcanopy * CONST_CPDAIR * air_density * wtg * delt;
+    energy->latent *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * delt_q * CONST_LATVAP;
+    cell->esoil *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * delt_q;
+    energy->deriv_evap *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * cell->Qair_grnd * 
+                            CONST_G / (CONST_RWV * Tgrnd) / CONST_RHOFW;
 
     // 更新累积的露水 (kg/m2)
     if (Tfoliage > CONST_TKFRZ) {
@@ -422,7 +421,8 @@ func_canopy_energy_bal(size_t             hidx,
     energy->NetLongOver = NetLongOver;
     coef_sensible = air_density * CONST_CPDAIR * wtg * wtal;
     coef_latent = air_density * wtgq * wtalq * qsatdT * energy->LatentVapOver;
-    energy->deriv_sub = -(coef_sensible + coef_latent + 4.0 * energy->EmissLongSub * CONST_STEBOL * pow(Tgrnd, 3.0));
+    energy->deriv_terms *= (1.0 - fcanopy) + fcanopy * -(coef_sensible + coef_latent + 4.0 * 
+                            energy->EmissLongSub * CONST_STEBOL * pow(Tgrnd, 3.0));
     energy->Tsurf = EmissLongSub * Tfoliage + (1.0 - EmissLongSub) * sqrt(sqrt(pow(Tgrnd, 4.0)));
 
     double LongSubIn = (1.0 - EmissLongSub) * EmissLongGrnd * longwave +

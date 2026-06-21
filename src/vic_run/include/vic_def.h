@@ -663,11 +663,7 @@ typedef struct {
     double Tgrnd;
     double Tfoliage;
     double Tstem;                /**< temperature of the stem */
-    double deriv_grnd;           /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
-    double deriv_sub;            /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
-    double deriv_terms;          /**< sum of all terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
-    double deriv_egrnd;
-    double deriv_esub;
+    double deriv_terms;          /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
     double deriv_evap;
     double delt_T;
     double delt_Q;              
@@ -681,14 +677,16 @@ typedef struct {
     double grnd_flux;            /**< ground heat flux (Wm-2) */
     // 感热通量
     double sensible;
-    double SensibleGrnd;
-    double SensibleSub;
+    double SensibleSoil;
+    double SensibleSnow;
+    double SensibleWater;
     double SensibleStem;
     double SensibleLeaf;
     // 潜热通量
     double latent;
-    double LatentGrnd;
-    double LatentSub;
+    double LatentSoil;
+    double LatentSnow;
+    double LatentWater;
     double LatentLeaf;
     double LatentVapOver;
     double LatentVapGrnd;

@@ -112,31 +112,16 @@ calc_energy_bal(size_t             hidx,
     if (cell->IS_VEG) {
         energy->longwave = fcanopy * energy->NetLongSub +
                             (1.0 - fcanopy) * energy->NetLongGrnd;
-        energy->sensible = fcanopy * energy->SensibleSub + 
-                            (1.0 - fcanopy) * energy->SensibleGrnd;
-        energy->latent = fcanopy * energy->LatentSub +
-                        (1.0 - fcanopy) * energy->LatentGrnd;
         energy->advection = fcanopy * energy->AdvectSub +
                             (1.0 - fcanopy) * energy->AdvectGrnd + 
                             energy->AdvectOver;
-        energy->deriv_terms = fcanopy * energy->deriv_sub +
-                            (1.0 - fcanopy) * energy->deriv_grnd;
-        cell->esoil = fcanopy * cell->esoil_sub +
-                            (1.0 - fcanopy) * cell->esoil_grnd;
-        energy->deriv_evap = fcanopy * energy->deriv_esub +
-                            (1.0 - fcanopy) * energy->deriv_egrnd;
     }
     else {
         energy->longwave = energy->NetLongGrnd;
-        energy->sensible = energy->SensibleGrnd;
-        energy->latent = energy->LatentGrnd;
         energy->advection = energy->AdvectGrnd;
         energy->Tsurf = energy->Tgrnd;
         energy->SensibleLeaf = 0.0;
         energy->LatentLeaf = 0.0;
-        energy->deriv_terms = energy->deriv_grnd;
-        cell->esoil = cell->esoil_grnd;
-        energy->deriv_evap = energy->deriv_egrnd;
     }
 
     /************************************

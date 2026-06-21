@@ -178,14 +178,21 @@ func_surf_energy_bal(size_t             hidx,
         coef_latent = CONST_VAPDIFF * air_density;
     }
     // 计算地表的潜热和长波辐射
-    cell->esoil_grnd = VaporGrnd;
-    energy->LatentGrnd = VaporGrnd * energy->LatentVapGrnd;
+    cell->esoil = VaporGrnd;
+    energy->latent = VaporGrnd * energy->LatentVapGrnd;
     energy->NetLongGrnd = energy->EmissLongGrnd * longwave - coef_longwave * pow(Tgrnd, 4.0);
-    energy->SensibleGrnd = SensibleGrnd;
-    energy->deriv_grnd = -(coef_sensible + 4.0 * coef_longwave * pow(Tgrnd, 3) +
+    energy->sensible = SensibleGrnd;
+    energy->deriv_terms = -(coef_sensible + 4.0 * coef_longwave * pow(Tgrnd, 3) +
                          coef_latent * energy->LatentVapGrnd * cell->Qair_deriv);
-    energy->deriv_egrnd = -coef_latent * cell->Qair_grnd * CONST_G /
+    energy->deriv_evap = -coef_latent * cell->Qair_grnd * CONST_G /
                                                 (CONST_RWV * Tgrnd) / CONST_RHOFW;
+    // 
+    energy->SensibleSnow = -coef_sensible * (thm - energy->T[0]);
+    energy->SensibleSoil = -coef_sensible * (thm - cell->soil_T[0]);
+    energy->SensibleWater = -coef_sensible * (thm - cell->h2osfc_T);
+    energy->LatentSnow = -coef_latent * (Qair - cell->Qair_snow);
+    energy->LatentSoil = -coef_latent * (Qair - cell->Qair_soil);
+    energy->LatentWater = -coef_latent * (Qair = cell->Qair_grnd);
                         
     return (0);
 }

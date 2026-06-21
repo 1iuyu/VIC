@@ -117,23 +117,42 @@ prepare_full_energy(double             pressure,
 
     // ===================== 计算界面热导率（调和平均） =====================
     for (i = 0; i < Nsnow; i++) {
-        dzp = zc_snow[i+1] - zc_snow[i];
-        // 调和平均公式
-        k_int = kappa_node[i] * kappa_node[i+1] * dzp /
-                        (kappa_node[i] * (zc_snow[i+1] - Zsum_snow[i]) +
-                         kappa_node[i+1] * (Zsum_snow[i] - zc_snow[i]));
-        // 除以节点间距，得到等效热导[W/m2/K]
-        kappa_int[i] = k_int / dzp;
+        if (i == Nsnow - 1) {
+            if (cell->h2osfc > param.TOL_A) {
+                dzp = zc_snow[i] + 0.5 * cell->h2osfc;
+                k_int = kappa_node[i] * kappa_node[i+1] * dzp /
+                                (kappa_node[i] * 0.5 * cell->h2osfc +
+                                kappa_node[i+1] * zc_snow[i]);
+                // 除以节点间距，得到等效热导[W/m2/K]
+                kappa_int[i] = k_int / dzp;
+            }
+            else {
+                dzp = zc_soil[0] + zc_snow[i];
+                k_int = kappa_node[i] * kappa_node[i+1] * dzp /
+                                (kappa_node[i] * zc_soil[0] +
+                                kappa_node[i+1] * zc_snow[i]);
+                // 除以节点间距，得到等效热导[W/m2/K]
+                kappa_int[i] = k_int / dzp;
+            }
+        }
+        else {
+            dzp = zc_snow[i+1] - zc_snow[i];
+            // 调和平均公式
+            k_int = kappa_node[i] * kappa_node[i+1] * dzp /
+                            (kappa_node[i] * (zc_snow[i+1] - Zsum_snow[i]) +
+                            kappa_node[i+1] * (Zsum_snow[i] - zc_snow[i]));
+            // 除以节点间距，得到等效热导[W/m2/K]
+            kappa_int[i] = k_int / dzp;
+        }
     }
     if (cell->frac_h2o > param.TOL_A) {
-
         dzp = 0.5 * cell->h2osfc + zc_soil[0];
         k_int = kappa_node[Nsnow] * kappa_node[Nsnow+1] * dzp /
                         (kappa_node[Nsnow] * zc_soil[0] +
                         kappa_node[Nsnow+1] * 0.5 * cell->h2osfc);
         kappa_int[Nsnow] = k_int / dzp;
     }
-    for (i = 0; i < Nsoil; i++) {
+    for (i = 0; i < Nsoil - 1; i++) {
         lidx = tmp_Nsnow + i;
         dzp = zc_soil[i+1] - zc_soil[i];
         // 调和平均公式
