@@ -77,12 +77,10 @@ calc_vapor_flux(double             pressure,
     }
     // 表层水汽扩散
     if (cell->h2osfc > param.TOL_A) {
-        double vapor_slope = 0.0;
-        double vapor_density = 0.0;
         double h2osfc_T = cell->h2osfc_T;
         svp_flags(h2osfc_T, pressure, 
-                NULL, &qsaT, 
-                NULL, &qsdT, QSAT | QSDT);
+                  NULL, &qsaT, 
+                  NULL, &qsdT, QSAT | QSDT);
         air_density = pressure / (CONST_RDAIR * h2osfc_T);
         if (cell->IS_GLAC) {
             ice_corr = exp(CONST_MWWV * CONST_LATICE * (h2osfc_T - CONST_TKFRZ)

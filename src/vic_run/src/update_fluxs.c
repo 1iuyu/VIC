@@ -28,18 +28,15 @@ update_fluxes(energy_bal_struct *energy,
     double h2osfc_T = cell->h2osfc_T;
     if (snow->Nsnow > 0) {
         if (frac_h2o > 0.0) {
-            energy->Tgrnd = (1.0 - coverage) * soil_T[0] + 
-                                    frac_h2o * h2osfc_T + coverage * pack_T[0];
-        }
-        else {
+            energy->Tgrnd = (1.0 - coverage) * h2osfc_T + coverage * pack_T[0];
+        } else {
             energy->Tgrnd = (1.0 - coverage) * soil_T[0] + coverage * pack_T[0];
         }
     }
     else {
         if (frac_h2o > 0.0) {
             energy->Tgrnd = (1.0 - frac_h2o) * soil_T[0] + frac_h2o * h2osfc_T;
-        }
-        else {
+        } else {
             energy->Tgrnd = soil_T[0];
         }
     }

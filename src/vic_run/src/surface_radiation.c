@@ -71,7 +71,6 @@ surface_radiation(double            *shortwave_dir,
             NetShortGrnd += shortwave_dir[i] * (1.0 - AlbedoGrndDir[i]) +
                             shortwave_dfs[i] * (1.0 - AlbedoGrndDfs[i]);
         }
-
     }
     NetShortSurf = NetShortGrnd + NetShortSub;
     energy->NetShortGrnd = NetShortGrnd;

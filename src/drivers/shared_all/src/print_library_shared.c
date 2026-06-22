@@ -123,10 +123,7 @@ print_energy_bal(energy_bal_struct *eb,
     fprintf(LOG_DEST, "\tEmissLongSub        : %f\n", eb->EmissLongSub);
     fprintf(LOG_DEST, "\tEmissLongGrnd       : %f\n", eb->EmissLongGrnd);
     fprintf(LOG_DEST, "\tEmissLongSurf       : %f\n", eb->EmissLongSurf);
-    fprintf(LOG_DEST, "\tNetLongSurf         : %f\n", eb->NetLongSurf);
-    fprintf(LOG_DEST, "\tNetLongGrnd         : %f\n", eb->NetLongGrnd);
     fprintf(LOG_DEST, "\tNetLongOver         : %f\n", eb->NetLongOver);
-    fprintf(LOG_DEST, "\tNetLongSub          : %f\n", eb->NetLongSub);
     fprintf(LOG_DEST, "\tNetShortGrnd        : %f\n", eb->NetShortGrnd);
     fprintf(LOG_DEST, "\tNetShortSurf        : %f\n", eb->NetShortSurf);
     fprintf(LOG_DEST, "\tNetShortSub         : %f\n", eb->NetShortSub);

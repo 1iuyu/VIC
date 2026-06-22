@@ -31,7 +31,6 @@ calc_energy_bal(size_t             hidx,
     int    ErrorFlag;
     double pressure = force->pressure[hidx];
     double Tfoliage = energy->Tfoliage;
-    double fcanopy = veg_var->fcanopy;
     double coverage = snow->coverage;
     /************************************
       Update energy balance variables
@@ -104,24 +103,6 @@ calc_energy_bal(size_t             hidx,
         if (ErrorFlag == ERROR) {
             return (ERROR);
         }
-    }
-
-    /********************************
-      Compute grid mean quantities
-    ********************************/
-    if (cell->IS_VEG) {
-        energy->longwave = fcanopy * energy->NetLongSub +
-                            (1.0 - fcanopy) * energy->NetLongGrnd;
-        energy->advection = fcanopy * energy->AdvectSub +
-                            (1.0 - fcanopy) * energy->AdvectGrnd + 
-                            energy->AdvectOver;
-    }
-    else {
-        energy->longwave = energy->NetLongGrnd;
-        energy->advection = energy->AdvectGrnd;
-        energy->Tsurf = energy->Tgrnd;
-        energy->SensibleLeaf = 0.0;
-        energy->LatentLeaf = 0.0;
     }
 
     /************************************

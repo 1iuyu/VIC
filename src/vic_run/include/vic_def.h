@@ -679,14 +679,12 @@ typedef struct {
     double sensible;
     double SensibleSoil;
     double SensibleSnow;
-    double SensibleWater;
     double SensibleStem;
     double SensibleLeaf;
     // 潜热通量
     double latent;
     double LatentSoil;
     double LatentSnow;
-    double LatentWater;
     double LatentLeaf;
     double LatentVapOver;
     double LatentVapGrnd;
@@ -699,11 +697,9 @@ typedef struct {
     double EmissLongSurf;
     // 长波辐射项
     double longwave;             /**< net longwave flux (Wm-2) */
-    double NetLongSurf;
-    double NetLongGrnd;          /**< net longwave radiation to the atmosphere (W/m^2) */
+    double NetLongSoil;
+    double NetLongSnow;
     double NetLongOver;          /**< net longwave radiation from the overstory (W/m^2) */
-    double NetLongSub;         /**< net longwave radiation from the understory (W/m^2) */
-    double NetLongOut;       /**< net longwave radiation from the ground and understory to the atmosphere (W/m^2) */
     // 短波辐射项
     double shortwave;
     double NetShortOver;
@@ -818,6 +814,8 @@ typedef struct {
     double pack_outflow[MAX_SNOWS]; /**< outflow of liq water from each snow pack (m/s) */
     double theta_ice[MAX_SNOWS];    
     double theta_liq[MAX_SNOWS];
+    double last_packice[MAX_SNOWS];
+    double last_packliq[MAX_SNOWS];
     double porosity[MAX_SNOWS];     /**< porosity of each snow pack (fraction) */
     double snow_frac[MAX_SNOWS];    /**< fraction of each snow pack that is snow (fraction) */
     double last_snowfrac[MAX_SNOWS];

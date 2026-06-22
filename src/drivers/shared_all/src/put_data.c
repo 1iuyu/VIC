@@ -437,24 +437,16 @@ collect_eb_terms(energy_bal_struct energy,
     }
     /** record longwave radiation flux **/
     out_data[OUT_LWNET][0] += energy.longwave * Cv;
-    out_data[OUT_LWGRND][0] += energy.NetLongGrnd * Cv;
     if (HasVeg) {
-        out_data[OUT_LWSUB][0] += energy.NetLongSub * Cv;
         out_data[OUT_LWOVER][0] += energy.NetLongOver * Cv;
     }
     /** record latent heat flux **/
     out_data[OUT_LATENT][0] += energy.latent * Cv;
-    out_data[OUT_LATENT_GRND][0] += energy.LatentGrnd * Cv;
     if (HasVeg) {
-        out_data[OUT_LATENT_SUB][0] += energy.LatentSub * Cv;
         out_data[OUT_LATENT_CANOP][0] += energy.LatentLeaf * Cv;
     }
     /** record sensible heat flux **/
     out_data[OUT_SENSIBLE][0] += energy.sensible * Cv;
-    out_data[OUT_SENSIBLE_GRND][0] += energy.SensibleGrnd * Cv;
-    if (HasVeg) {
-        out_data[OUT_SENSIBLE_SUB][0] += energy.SensibleSub * Cv;
-    }
     /** record ground heat flux **/
     out_data[OUT_GRND_FLUX][0] += energy.grnd_flux * Cv;
     //out_data[OUT_GRND_GRND][0] += energy.GroundGrnd * Cv;

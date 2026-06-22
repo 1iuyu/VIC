@@ -43,6 +43,8 @@ func_canopy_energy_bal(size_t             hidx,
     double wetFrac = veg_var->wetFrac;
     double dryFrac = veg_var->dryFrac;
     double canopy_swq = veg_var->canopy_swq;
+    double *T = energy->T;
+    double *soil_T = cell->soil_T;
     double *Ra_over = cell->Ra_over;
     double *Ra_sub = cell->Ra_sub;
     double *Z0m_grnd = cell->Z0m_grnd;
@@ -168,7 +170,7 @@ func_canopy_energy_bal(size_t             hidx,
     wind = max(wind, 0.01);
     double dth = thm - Tcanopy;
     double dqh = Qair - Qair_over;
-    double delt_q = Qair_grnd - Qair_over;
+    double deltq = Qair_grnd - Qair_over;
     double dthv = dth * (1.0 + 0.61 * Qair) + 0.61 * dqh * theta_pot;  // 虚位温差
     double zL_over = ref_height[0] - displacement[1];
 
@@ -260,10 +262,8 @@ func_canopy_energy_bal(size_t             hidx,
         if (efpot > 0.0) {
             if (cell->transp_fact > 0.0) {
                 rpp = rppdry + wetFrac;
-            }
-            else {
-                // No transpiration if transp_fact below 1.e-10
-                rpp = wetFrac;
+            } else {
+                rpp = wetFrac; // No transpiration if transp_fact below 1.e-10
             }
             // Check total evapotranspiration from leaves
             rpp = min(rpp, (cell->transp + canopy_swq / step_dt) / efpot);
@@ -277,7 +277,7 @@ func_canopy_energy_bal(size_t             hidx,
         double fsno_dl = snow->snow_depth / 0.05;    // effective snow cover for (dry)plant litter
         double elai_dl = 0.5 * (1.0 - min(fsno_dl, 1.0)); // exposed (dry)litter area index
         double rdl = (1.0 - exp(-elai_dl)) / (0.004 * wind_over); // dry litter layer resistance
-        if (delt_q < 0.0) {
+        if (deltq < 0.0) {
             wtgq = f_snow_veg / (Ra_sub[2] + rdl);
         }
         else {
@@ -328,7 +328,7 @@ func_canopy_energy_bal(size_t             hidx,
 
         dth = thm - Tcanopy;
         dqh = Qair - Qair_over;
-        delt_q = wtalq * Qair_grnd - wtlq0 * qsat_T - wtaq0 * Qair;
+        deltq = wtalq * Qair_grnd - wtlq0 * qsat_T - wtaq0 * Qair;
 
         double tstar = temp_profile * dth;
         double qstar = Qair_profile * dqh;
@@ -385,12 +385,21 @@ func_canopy_energy_bal(size_t             hidx,
     } else {
         dt_stem = 0.0;
     }
-
+    // compute individual sensible heat fluxes
     double delt = wtal * Tgrnd - wtl0 * Tfoliage - wta0 * thm - wtstem0 * Tstem;
-
+    double delt_snow = wtal * T[0] - wtl0 * Tfoliage - wta0 * thm - wtstem0 * Tstem;
+    double delt_soil = wtal * soil_T[0] - wtl0 * Tfoliage - wta0 * thm - wtstem0 * Tstem;
     energy->sensible *= (1.0 - fcanopy) + fcanopy * CONST_CPDAIR * air_density * wtg * delt;
-    energy->latent *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * delt_q * CONST_LATVAP;
-    cell->esoil *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * delt_q;
+    energy->SensibleSnow *= (1.0 - fcanopy) + fcanopy * CONST_CPDAIR * air_density * wtg * delt_snow;
+    energy->SensibleSoil *= (1.0 - fcanopy) + fcanopy * CONST_CPDAIR * air_density * wtg * delt_soil;
+
+    // compute individual latent heat fluxes
+    double delq_snow = wtalq * cell->Qair_snow - wtlq0 * qsat_T - wtaq0 * Qair;
+    double delq_soil = wtalq * cell->Qair_soil - wtlq0 * qsat_T - wtaq0 * Qair;
+    energy->latent *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * deltq * CONST_LATVAP;
+    energy->LatentSnow *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * delq_snow * CONST_LATVAP;
+    energy->LatentSoil *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * delq_soil * CONST_LATVAP;
+    cell->esoil *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * deltq;
     energy->deriv_evap *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * cell->Qair_grnd * 
                             CONST_G / (CONST_RWV * Tgrnd) / CONST_RHOFW;
 
@@ -430,14 +439,12 @@ func_canopy_energy_bal(size_t             hidx,
               (1.0 - f_abs_stem) + EmissLongSub * EmissLongGrnd * 
               CONST_BOLTZ * pow(Tstem, 4.0) * f_abs_stem;
 
-    energy->NetLongSub = LongSubIn - energy->EmissLongGrnd * CONST_STEBOL * pow(Tgrnd, 4.0);
-
-    energy->NetLongOut = ((1.0 - EmissLongGrnd) * (1.0 - EmissLongSub) * (1.0 - EmissLongSub) * longwave +
-              EmissLongSub * (1.0 + (1.0 - EmissLongGrnd) * (1.0 - EmissLongSub)) * CONST_BOLTZ *
-              pow(Tfoliage, 3.0) * (Tfoliage + 4.0 * delt_T) * (1.0 - f_abs_stem) +
-              EmissLongSub * (1.0 + (1.0 - EmissLongGrnd) * (1.0 - EmissLongSub)) * CONST_BOLTZ *
-              pow(Tstem_init, 3.0) * (Tstem_init + 4.0 * dt_stem) * f_abs_stem +
-              EmissLongGrnd * (1.0 - EmissLongSub) * CONST_BOLTZ * pow(Tgrnd, 4.0));
+    energy->longwave *= (1.0 - fcanopy) + fcanopy * (LongSubIn - 
+                        EmissLongGrnd * CONST_STEBOL * pow(Tgrnd, 4.0));
+    energy->NetLongSnow *= (1.0 - fcanopy) + fcanopy * (LongSubIn - 
+                        EmissLongGrnd * CONST_STEBOL * pow(T[0], 4.0));
+    energy->NetLongSoil *= (1.0 - fcanopy) + fcanopy * (LongSubIn - 
+                        EmissLongGrnd * CONST_STEBOL * pow(soil_T[0], 4.0));
 
     return (0);
 }

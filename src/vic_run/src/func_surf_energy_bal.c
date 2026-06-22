@@ -26,6 +26,8 @@ func_surf_energy_bal(size_t             hidx,
     ***************/
     int ErrorFlag;
     double Tgrnd = energy->Tgrnd;
+    double *T = energy->T;
+    double *soil_T = cell->soil_T;
     double *Ra_grnd = cell->Ra_grnd;
     double *Z0m_grnd = cell->Z0m_grnd;
     double *ref_height = cell->ref_height;
@@ -37,6 +39,8 @@ func_surf_energy_bal(size_t             hidx,
     double air_density = force->density[hidx];
     double theta_pot = force->theta_pot[hidx];
     double theta_v = force->theta_v[hidx];
+    double LatentVapGrnd = energy->LatentVapGrnd;
+    double EmissLongGrnd = energy->EmissLongGrnd;
     double corr_wind = 0.0;
     double ustar = 0.06;
     double wstar = 0.0;
@@ -179,20 +183,25 @@ func_surf_energy_bal(size_t             hidx,
     }
     // 计算地表的潜热和长波辐射
     cell->esoil = VaporGrnd;
-    energy->latent = VaporGrnd * energy->LatentVapGrnd;
-    energy->NetLongGrnd = energy->EmissLongGrnd * longwave - coef_longwave * pow(Tgrnd, 4.0);
+    energy->Tsurf = Tgrnd;
+    energy->SensibleLeaf = 0.0;
+    energy->SensibleStem = 0.0;
+    energy->NetLongOver = 0.0;
+    energy->LatentLeaf = 0.0;
     energy->sensible = SensibleGrnd;
+    energy->latent = VaporGrnd * LatentVapGrnd;
+    energy->longwave = EmissLongGrnd * longwave - coef_longwave * pow(Tgrnd, 4.0);
+    energy->NetLongSnow = EmissLongGrnd * longwave - coef_longwave * pow(T[0], 4.0);
+    energy->NetLongSoil = EmissLongGrnd * longwave - coef_longwave * pow(soil_T[0], 4.0);
     energy->deriv_terms = -(coef_sensible + 4.0 * coef_longwave * pow(Tgrnd, 3) +
-                         coef_latent * energy->LatentVapGrnd * cell->Qair_deriv);
+                                    coef_latent * LatentVapGrnd * cell->Qair_deriv);
     energy->deriv_evap = -coef_latent * cell->Qair_grnd * CONST_G /
                                                 (CONST_RWV * Tgrnd) / CONST_RHOFW;
     // 
-    energy->SensibleSnow = -coef_sensible * (thm - energy->T[0]);
-    energy->SensibleSoil = -coef_sensible * (thm - cell->soil_T[0]);
-    energy->SensibleWater = -coef_sensible * (thm - cell->h2osfc_T);
-    energy->LatentSnow = -coef_latent * (Qair - cell->Qair_snow);
-    energy->LatentSoil = -coef_latent * (Qair - cell->Qair_soil);
-    energy->LatentWater = -coef_latent * (Qair = cell->Qair_grnd);
+    energy->SensibleSnow = -coef_sensible * (thm - T[0]);
+    energy->SensibleSoil = -coef_sensible * (thm - soil_T[0]);
+    energy->LatentSnow = -coef_latent * (Qair - cell->Qair_snow) * LatentVapGrnd;
+    energy->LatentSoil = -coef_latent * (Qair - cell->Qair_soil) * LatentVapGrnd;
                         
     return (0);
 }

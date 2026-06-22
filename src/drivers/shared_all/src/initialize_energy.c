@@ -73,14 +73,11 @@ initialize_energy(energy_bal_struct *energy,
         energy[veg].grnd_flux = 0.0;
         // 潜热通量
         energy[veg].latent = 0.0;
-        energy[veg].LatentSub = 0.0;
         energy[veg].LatentLeaf = 0.0;
         energy[veg].LatentVapGrnd = 0.0;
         energy[veg].LatentVapOver = 0.0;
         // 感热通量
         energy[veg].sensible = 0.0;
-        energy[veg].SensibleSub = 0.0;
-        energy[veg].SensibleGrnd = 0.0;
         energy[veg].SensibleLeaf = 0.0;
         energy[veg].SensibleStem = 0.0;
         // 辐射项
@@ -92,11 +89,7 @@ initialize_energy(energy_bal_struct *energy,
         energy[veg].ReflShortSub = 0.0;
         // 长波辐射项
         energy[veg].longwave = 0.0;
-        energy[veg].NetLongSurf = 0.0;
-        energy[veg].NetLongGrnd = 0.0;
         energy[veg].NetLongOver = 0.0;
-        energy[veg].NetLongSub = 0.0;
-        energy[veg].NetLongOut = 0.0;
         // 短波辐射项
         energy[veg].shortwave = 0.0;
         energy[veg].NetShortSurf = 0.0;
