@@ -74,7 +74,8 @@ surface_radiation(double            *shortwave_dir,
     }
     NetShortSurf = NetShortGrnd + NetShortSub;
     energy->NetShortGrnd = NetShortGrnd;
-    energy->shortwave = NetShortSurf;
+    energy->NetShortSurf = NetShortSurf;
+    energy->shortwave = NetShortGrnd;
     energy->NetShortSub = NetShortSub;
     energy->NetShortSoil = NetShortSoil;
     energy->NetShortSnow = NetShortSnow;

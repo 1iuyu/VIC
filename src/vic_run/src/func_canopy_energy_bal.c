@@ -181,7 +181,7 @@ func_canopy_energy_bal(size_t             hidx,
                                 &corr_wind);
     // 初始化迭代变量
     double Tfoliage_init = Tfoliage;
-    double Tstem_init = Tstem;
+    // double Tstem_init = Tstem;
 
     // 迭代求解冠层温度和相关的能量通量
     do {
@@ -368,14 +368,15 @@ func_canopy_energy_bal(size_t             hidx,
     /********************************
       Vegetated surface energy flux
     ********************************/
-    energy->error = (1.0 - f_abs_stem) * (NetShortSub + coef_lw_atmos + coef_lw_canopy * pow(Tfoliage, 3.0) *
-                (Tfoliage + 4.0 * delt_T) + coef_lw_grnd * pow(Tgrnd, 4.0)) -
-                SensibleLeaf - CONST_LATVAP * cell->canopyevap - 
-                        ((Tfoliage - Tfoliage_init) * cp_leaf / step_dt);
+    energy->error = (1.0 - f_abs_stem) * (NetShortSub + coef_lw_atmos + 
+            coef_lw_canopy * pow(Tfoliage, 3.0) * (Tfoliage + 4.0 * 
+            delt_T) + coef_lw_grnd * pow(Tgrnd, 4.0)) - SensibleLeaf - CONST_LATVAP * 
+            cell->canopyevap - ((Tfoliage - Tfoliage_init) * cp_leaf / step_dt);
     double dt_stem = 0.0;
     if (options.BIOMASST) {
         if (stem_biomass > 0.0) {
-            dt_stem = (f_abs_stem * (NetShortSub + coef_lw_atmos + coef_lw_canopy * pow(Tfoliage_init, 4.0) +
+            dt_stem = (f_abs_stem * (NetShortSub + coef_lw_atmos + coef_lw_canopy * 
+                pow(Tfoliage_init, 4.0) +
                 coef_lw_grnd * pow(Tgrnd, 4.0)) - SensibleStem) / (cp_stem / step_dt -
                 f_abs_stem * coef_lw_canopy * 4.0 * pow(Tfoliage_init, 3.0));
         } else {
@@ -389,19 +390,20 @@ func_canopy_energy_bal(size_t             hidx,
     double delt = wtal * Tgrnd - wtl0 * Tfoliage - wta0 * thm - wtstem0 * Tstem;
     double delt_snow = wtal * T[0] - wtl0 * Tfoliage - wta0 * thm - wtstem0 * Tstem;
     double delt_soil = wtal * soil_T[0] - wtl0 * Tfoliage - wta0 * thm - wtstem0 * Tstem;
-    energy->sensible *= (1.0 - fcanopy) + fcanopy * CONST_CPDAIR * air_density * wtg * delt;
-    energy->SensibleSnow *= (1.0 - fcanopy) + fcanopy * CONST_CPDAIR * air_density * wtg * delt_snow;
-    energy->SensibleSoil *= (1.0 - fcanopy) + fcanopy * CONST_CPDAIR * air_density * wtg * delt_soil;
-
+    energy->sensible += fcanopy * (CONST_CPDAIR * air_density * wtg * delt - energy->sensible);
+    energy->SensibleSnow += fcanopy * (CONST_CPDAIR * air_density * 
+                            wtg * delt_snow - energy->SensibleSnow);
+    energy->SensibleSoil += fcanopy * (CONST_CPDAIR * air_density * 
+                            wtg * delt_soil - energy->SensibleSoil);
     // compute individual latent heat fluxes
     double delq_snow = wtalq * cell->Qair_snow - wtlq0 * qsat_T - wtaq0 * Qair;
     double delq_soil = wtalq * cell->Qair_soil - wtlq0 * qsat_T - wtaq0 * Qair;
-    energy->latent *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * deltq * CONST_LATVAP;
-    energy->LatentSnow *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * delq_snow * CONST_LATVAP;
-    energy->LatentSoil *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * delq_soil * CONST_LATVAP;
-    cell->esoil *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * deltq;
-    energy->deriv_evap *= (1.0 - fcanopy) + fcanopy * air_density * wtgq * cell->Qair_grnd * 
-                            CONST_G / (CONST_RWV * Tgrnd) / CONST_RHOFW;
+    energy->latent += fcanopy * (air_density * wtgq * deltq * CONST_LATVAP - energy->latent);
+    energy->LatentSnow += fcanopy * (air_density * wtgq * delq_snow * CONST_LATVAP - energy->LatentSnow);
+    energy->LatentSoil += fcanopy * (air_density * wtgq * delq_soil * CONST_LATVAP - energy->LatentSoil);
+    cell->esoil += fcanopy * (air_density * wtgq * deltq - cell->esoil);
+    energy->deriv_evap += fcanopy * (air_density * wtgq * cell->Qair_grnd * 
+                    CONST_G / (CONST_RWV * Tgrnd) / CONST_RHOFW - energy->deriv_evap);
 
     // 更新累积的露水 (kg/m2)
     if (Tfoliage > CONST_TKFRZ) {
@@ -430,21 +432,21 @@ func_canopy_energy_bal(size_t             hidx,
     energy->NetLongOver = NetLongOver;
     coef_sensible = air_density * CONST_CPDAIR * wtg * wtal;
     coef_latent = air_density * wtgq * wtalq * qsatdT * energy->LatentVapOver;
-    energy->deriv_terms *= (1.0 - fcanopy) + fcanopy * -(coef_sensible + coef_latent + 4.0 * 
-                            energy->EmissLongSub * CONST_STEBOL * pow(Tgrnd, 3.0));
+    double deriv_sub = -(coef_sensible + coef_latent + 4.0 * 
+                        EmissLongSub * CONST_STEBOL * pow(Tgrnd, 3.0));
+    energy->deriv_terms += fcanopy * (deriv_sub - energy->deriv_terms);
     energy->Tsurf = EmissLongSub * Tfoliage + (1.0 - EmissLongSub) * sqrt(sqrt(pow(Tgrnd, 4.0)));
 
-    double LongSubIn = (1.0 - EmissLongSub) * EmissLongGrnd * longwave +
-              EmissLongSub * EmissLongGrnd * CONST_BOLTZ * pow(Tfoliage, 4.0) *
-              (1.0 - f_abs_stem) + EmissLongSub * EmissLongGrnd * 
-              CONST_BOLTZ * pow(Tstem, 4.0) * f_abs_stem;
+    double LongSubIn = (1.0 - EmissLongSub) * EmissLongGrnd * longwave + EmissLongSub * 
+                EmissLongGrnd * CONST_BOLTZ * pow(Tfoliage, 4.0) * (1.0 - f_abs_stem) + 
+                EmissLongSub * EmissLongGrnd * CONST_BOLTZ * pow(Tstem, 4.0) * f_abs_stem;
 
-    energy->longwave *= (1.0 - fcanopy) + fcanopy * (LongSubIn - 
-                        EmissLongGrnd * CONST_STEBOL * pow(Tgrnd, 4.0));
-    energy->NetLongSnow *= (1.0 - fcanopy) + fcanopy * (LongSubIn - 
-                        EmissLongGrnd * CONST_STEBOL * pow(T[0], 4.0));
-    energy->NetLongSoil *= (1.0 - fcanopy) + fcanopy * (LongSubIn - 
-                        EmissLongGrnd * CONST_STEBOL * pow(soil_T[0], 4.0));
+    energy->longwave += fcanopy * (LongSubIn - EmissLongGrnd * CONST_STEBOL * 
+                        pow(Tgrnd, 4.0) - energy->longwave);
+    energy->NetLongSnow += fcanopy * (LongSubIn - EmissLongGrnd * CONST_STEBOL * 
+                        pow(T[0], 4.0) - energy->NetLongSnow);
+    energy->NetLongSoil += fcanopy * (LongSubIn - EmissLongGrnd * CONST_STEBOL * 
+                        pow(soil_T[0], 4.0) - energy->NetLongSoil);
 
     return (0);
 }

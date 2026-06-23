@@ -18,6 +18,7 @@ calc_water_bal(double             step_dt,
                snow_data_struct  *snow,
                soil_con_struct   *soil_con)
 {
+    extern parameters_struct param;
     size_t i, j, k;
     size_t idx = 0;
     size_t nidx, lidx;
@@ -141,7 +142,11 @@ calc_water_bal(double             step_dt,
             }
         }
     }
-              
+    size_t tmp_Nsnow = snow->Nsnow;
+    if (cell->h2osfc > param.TOL_A) {
+        tmp_Nsnow++;
+    }
+    //      
     for (i = 0; i < Nsoil; i++) {
 		fact[i] = dz_soil[i] / step_dt;
     }
@@ -154,6 +159,7 @@ calc_water_bal(double             step_dt,
     double deriv_evap = energy->deriv_evap;
     // 确定表层的系数
     for (i = 0; i < Nsoil; i++) {
+        lidx = tmp_Nsnow + i;
         if (i == 0) {
             if (matric[0] >= 0.0) {
                 // 允许侧向流出剖面
@@ -161,7 +167,7 @@ calc_water_bal(double             step_dt,
                                 (CONST_PI / 180.0)) * (zc_soil[i+1] - zc_soil[i]) / 2.0;
                 
                 // 限制侧向流，使得该层不会仅因侧向流而脱饱和
-                lateral_max = mat_RHS[i] - liquid_flux[i] - vapor_flux[i] / 
+                lateral_max = mat_RHS[i] - liquid_flux[i] - vapor_flux[lidx] / 
                                 CONST_RHOFW - transp_sink[i] / CONST_RHOFW;
                 if (lateral_max < 0.0) {
                     lateral_max = 0.0;
@@ -173,7 +179,7 @@ calc_water_bal(double             step_dt,
             else {
                 lateral_flow[i] = 0.0;
             }
-            mat_RHS[i] = esoil / CONST_RHOFW - liquid_flux[i] - vapor_flux[i] / CONST_RHOFW  - transp_sink[i] / 
+            mat_RHS[i] = esoil / CONST_RHOFW - liquid_flux[i] - vapor_flux[lidx] / CONST_RHOFW  - transp_sink[i] / 
                             CONST_RHOFW - lateral_flow[i] - fact[i] * (liq[i] - last_liq[i] + 
                             CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
             // 存在冰 - 计算冰含量的系数
@@ -201,16 +207,16 @@ calc_water_bal(double             step_dt,
                         }
                     }
                     mat_A[i] = 0.0;
-                    mat_B[i] = deriv_evap - (conduct_int[i] + deriv_vapor[i] / 
+                    mat_B[i] = deriv_evap - (conduct_int[i] + deriv_vapor[lidx] / 
                                             CONST_RHOFW) - fact[i] * deric_matric;
-                    mat_C[i] = conduct_int[i] + deriv_vapor[i] / CONST_RHOFW;
+                    mat_C[i] = conduct_int[i] + deriv_vapor[lidx] / CONST_RHOFW;
                     seepage = 0.0;
                 } 
                 else {
                     // 允许表层渗漏
                     mat_A[i] = conduct_int[i];
                     mat_B[i] = 1.0;
-                    mat_C[i] = conduct_int[i] + deriv_vapor[i] / CONST_RHOFW;
+                    mat_C[i] = conduct_int[i] + deriv_vapor[lidx] / CONST_RHOFW;
                     // 流入节点的净流量等于表层渗漏量
                     seepage = mat_RHS[i];
                     mat_RHS[i] = 0.0;
@@ -243,7 +249,7 @@ calc_water_bal(double             step_dt,
                     
                     // 限制侧向流，使该层不会脱饱和
                     lateral_max = liquid_flux[i-1] - liquid_flux[i] +
-                            (vapor_flux[i-1] - vapor_flux[i]) / CONST_RHOFW - transp_sink[i] / CONST_RHOFW -
+                            (vapor_flux[lidx-1] - vapor_flux[lidx]) / CONST_RHOFW - transp_sink[i] / CONST_RHOFW -
                             fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
                     
                     if (lateral_max < 0.0) {
@@ -256,13 +262,13 @@ calc_water_bal(double             step_dt,
                 else {
                     lateral_flow[i] = 0.0;
                 }
-                mat_A[i] = conduct_int[i-1] + deriv_vapor[i-1] / CONST_RHOFW;
-                mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (deriv_vapor[i-1] + 
-                             deriv_vapor[i]) / CONST_RHOFW) - fact[i] * deric_matric;
-                mat_C[i] = conduct_int[i] + deriv_vapor[i] / CONST_RHOFW;
+                mat_A[i] = conduct_int[i-1] + deriv_vapor[lidx-1] / CONST_RHOFW;
+                mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (deriv_vapor[lidx-1] + 
+                             deriv_vapor[lidx]) / CONST_RHOFW) - fact[i] * deric_matric;
+                mat_C[i] = conduct_int[i] + deriv_vapor[lidx] / CONST_RHOFW;
             }
             
-            mat_RHS[i] = liquid_flux[i-1] - liquid_flux[i] + (vapor_flux[i-1] - vapor_flux[i]) / 
+            mat_RHS[i] = liquid_flux[i-1] - liquid_flux[i] + (vapor_flux[lidx-1] - vapor_flux[lidx]) / 
                          CONST_RHOFW - transp_sink[i] / CONST_RHOFW - lateral_flow[i] -
                          fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
         }
@@ -292,7 +298,7 @@ calc_water_bal(double             step_dt,
                     
                     // 限制侧向流，使该层不会脱饱和
                     lateral_max = liquid_flux[i-1] - liquid_flux[i] +
-                            (vapor_flux[i-1] - vapor_flux[i]) / CONST_RHOFW - transp_sink[i] / CONST_RHOFW -
+                            (vapor_flux[lidx-1] - vapor_flux[lidx]) / CONST_RHOFW - transp_sink[i] / CONST_RHOFW -
                             fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
                     
                     if (lateral_max < 0.0) {
@@ -305,13 +311,13 @@ calc_water_bal(double             step_dt,
                 else {
                     lateral_flow[i] = 0.0;
                 }
-                mat_A[i] = conduct_int[i-1] + deriv_vapor[i-1] / CONST_RHOFW;
-                mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (deriv_vapor[i-1] + 
-                            deriv_vapor[i]) / CONST_RHOFW) - fact[i] * deric_matric;
+                mat_A[i] = conduct_int[i-1] + deriv_vapor[lidx-1] / CONST_RHOFW;
+                mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (deriv_vapor[lidx-1] + 
+                            deriv_vapor[lidx]) / CONST_RHOFW) - fact[i] * deric_matric;
                 mat_C[i] = 0.0;
             }
             
-            mat_RHS[i] = liquid_flux[i-1] + vapor_flux[i-1] / CONST_RHOFW - transp_sink[i] / CONST_RHOFW - lateral_flow[i] -
+            mat_RHS[i] = liquid_flux[i-1] + vapor_flux[lidx-1] / CONST_RHOFW - transp_sink[i] / CONST_RHOFW - lateral_flow[i] -
                         fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
         }
     }

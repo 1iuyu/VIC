@@ -143,7 +143,7 @@ func_surf_energy_bal(size_t             hidx,
     double esat_Tgrnd = 0.0;
     double dew_point = 0.0;
     double coef_latent = 0.0;
-    double coef_longwave = energy->EmissLongGrnd * CONST_STEBOL;
+    double coef_longwave = EmissLongGrnd * CONST_STEBOL;
     double coef_sensible = CONST_CPDAIR * air_density / Ra_grnd[1];
     // Get saturated vapor pressure at forcing height
     svp_flags(Tgrnd, pressure,
@@ -197,7 +197,7 @@ func_surf_energy_bal(size_t             hidx,
                                     coef_latent * LatentVapGrnd * cell->Qair_deriv);
     energy->deriv_evap = -coef_latent * cell->Qair_grnd * CONST_G /
                                                 (CONST_RWV * Tgrnd) / CONST_RHOFW;
-    // 
+    // compute sensible and latent heat fluxes individually
     energy->SensibleSnow = -coef_sensible * (thm - T[0]);
     energy->SensibleSoil = -coef_sensible * (thm - soil_T[0]);
     energy->LatentSnow = -coef_latent * (Qair - cell->Qair_snow) * LatentVapGrnd;

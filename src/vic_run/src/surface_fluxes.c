@@ -127,6 +127,10 @@ surface_fluxes(size_t             hidx,
         cell->last_liq[i] = cell->liq[i];
         cell->last_matric[i] = cell->matric[i];
     }
+    for (i = 0; i < snow->Nsnow; i++) {
+        snow->last_packice[i] = snow->theta_ice[i];
+        snow->last_packliq[i] = snow->theta_liq[i];
+    }
                   
     /**************************************************
        Begin iterative solution of surface fluxes

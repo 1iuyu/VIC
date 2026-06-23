@@ -150,13 +150,14 @@ prepare_full_energy(double             pressure,
             kappa_int[i] = k_int / dzp;
         }
         else if (i < Nnode - 1) {
-            dzp = zc_soil[i+1] - zc_soil[i];
+            lidx = i - tmp_Nsnow;
+            dzp = zc_soil[lidx+1] - zc_soil[lidx];
             // 调和平均公式
-            k_int = kappa_node[lidx] * kappa_node[lidx+1] * dzp /
-                            (kappa_node[lidx] * (zc_soil[i+1] - Zsum_soil[i]) +
-                            kappa_node[lidx+1] * (Zsum_soil[i] - zc_soil[i]));
+            k_int = kappa_node[i] * kappa_node[i+1] * dzp /
+                            (kappa_node[i] * (zc_soil[lidx+1] - Zsum_soil[lidx]) +
+                            kappa_node[i+1] * (Zsum_soil[lidx] - zc_soil[lidx]));
             // 除以节点间距，得到等效热导[W/m2/K]
-            kappa_int[lidx] = k_int / dzp;
+            kappa_int[i] = k_int / dzp;
         }
         else {
             kappa_int[Nnode-1] = 0.0;

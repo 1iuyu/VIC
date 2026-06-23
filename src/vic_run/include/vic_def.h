@@ -589,6 +589,8 @@ typedef struct {
     double h2osfc;                     /**< surface water or glacier (mm) */
     double h2osfc_T;                   /**< surface water temperature or glacier [K] */
     double frac_h2o;                   /**< fraction of ground covered by surface water or glacier */
+    double h2osfc_ice;
+    double h2osfc_liq;
     //double Qair_over;                /**< specific humidity of the air at the canopy layer (kg/kg) */
     double Qair_grnd;                  /**< specific humidity of the air at the ground surface (kg/kg) */
     double Qair_soil;                  /**< specific humidity of the air at the soil surface (kg/kg) */

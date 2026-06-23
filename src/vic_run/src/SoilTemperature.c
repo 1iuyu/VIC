@@ -25,7 +25,6 @@ SoilTemperature(double   		   step_dt,
     size_t Nsoil = cell->Nsoil;
 	size_t Nnode = cell->Nnode;
     double coverage = snow->coverage;
-    double frac_h2o = cell->frac_h2o;
     double fact[MAX_NODES];
 	double mat_A[MAX_NODES];
 	double mat_B[MAX_NODES];
@@ -39,9 +38,6 @@ SoilTemperature(double   		   step_dt,
 	double *dz_soil = soil_con->dz_soil;
     double *zc_soil = soil_con->zc_soil;
     double *dz_snow = snow->dz_snow;
-    double *zc_snow = snow->zc_snow;
-    double *Zsum_snow = snow->Zsum_snow;
-    double *Zsum_soil = soil_con->Zsum_soil;
 	double *kappa_int = energy->kappa_int;
     double *Cs_node = energy->Cs_node;
     double *last_Cs = energy->last_Cs;
@@ -179,36 +175,29 @@ SoilTemperature(double   		   step_dt,
     double capr = 0.34;  // heat capacity ratio
     for (i = 0; i < Nnode; i++) {
         if (i < Nsnow) {
-            if (i == 0) {
-                fact[i] = (0.5 * (zc_snow[i] - Zsum_snow[i] + 
-                            capr * (zc_snow[i+1] - Zsum_snow[i]))) / step_dt;
-            }
-            else {
-                fact[i] = dz_snow[i] / step_dt;
-            }
+            fact[i] = dz_snow[i] / step_dt;
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
             fact[i] = 0.5 * cell->h2osfc / step_dt;
             tmp_Nsnow++;
         }
-        else if (i < Nnode - 1) {
+        else {
             if (i == 0) {
-                fact[i] = (0.5 * (zc_soil[i] - Zsum_soil[i] + 
-                            capr * (zc_soil[i+1] - Zsum_soil[i]))) / step_dt;
+                fact[i] = 0.5 * (zc_soil[i] + capr * zc_soil[i+1]) / step_dt;
             }
             else {
                 lidx = i - tmp_Nsnow;
                 fact[i] = dz_soil[lidx] / step_dt;
             }
         }
-    }                  
+    }
     // 计算雪层和土层地表热通量
-    double grnd_flux = energy->NetShortGrnd + energy->longwave - 
+    double grnd_flux = energy->shortwave + energy->longwave - 
                             energy->sensible - energy->latent + energy->advection;
     double grnd_snow = energy->NetShortSnow + energy->NetLongSnow -
                     energy->SensibleSnow - energy->LatentSnow + energy->advection;
     double grnd_soil = energy->NetShortSoil + energy->NetLongSoil - 
-                    energy->SensibleSoil + energy->LatentSoil + energy->advection;
+                    energy->SensibleSoil - energy->LatentSoil + energy->advection;
     energy->grnd_flux = grnd_flux;
     // ============================================================
     //      第一部分：雪层能量平衡矩阵
@@ -220,58 +209,89 @@ SoilTemperature(double   		   step_dt,
                     mat_A[i] = 0.0;
                     mat_B[i] = deriv_terms - CONST_RHOFW * CONST_LATICE / step_dt;
                     mat_C[i] = 0.0;
+                    mat_RHS[i] = grnd_snow - CONST_RHOFW * CONST_LATICE * 
+                                 (theta_liq[i] - last_packliq[i]) / step_dt;
                 }
                 else {
                     mat_A[i] = 0.0;
                     mat_B[i] = deriv_terms - kappa_int[i] - CONST_LATSUB * deric_vapor[i] * 
                             conv_vapor[i] - fact[i] * Cs_node[i];
                     mat_C[i] = kappa_int[i] + CONST_LATSUB * deric_vapor[i+1] * conv_vapor[i];
-                }
-                mat_RHS[i] = grnd_snow - kappa_int[i] * (T[i] - T[i+1]) - fact[i] * 
+                    mat_RHS[i] = grnd_snow - kappa_int[i] * (T[i] - T[i+1]) - fact[i] * 
                             last_Cs[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * 
                             (theta_liq[i] - last_packliq[i]) / step_dt - CONST_LATSUB * vapor_flux[i];
+                }
+            }
+            else if (i < Nsnow - 1) {
+                if (pack_liq[i] > 0.0) {
+                    mat_A[i] = 0.0;
+                    mat_B[i] = -CONST_RHOFW * CONST_LATICE / step_dt;
+                    mat_C[i] = 0.0;
+                    mat_RHS[i] = -CONST_RHOFW * CONST_LATICE * 
+                            (theta_liq[i] - last_packliq[i]) / step_dt;
+                }
+                else {
+                    mat_A[i] = kappa_int[i-1] + CONST_LATSUB * deric_vapor[i-1] * conv_vapor[i-1];
+                    mat_B[i] = -(kappa_int[i-1] + kappa_int[i]) - CONST_LATSUB * deric_vapor[i] *
+                                    (conv_vapor[i-1] + conv_vapor[i]) - fact[i] * Cs_node[i];
+                    mat_C[i] = kappa_int[i] + CONST_LATSUB * deric_vapor[i+1] * conv_vapor[i];
+                    mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - kappa_int[i] * (T[i] - T[i+1]) - fact[i] * 
+                                 last_Cs[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * (theta_liq[i] - 
+                                 last_packliq[i]) / step_dt - CONST_LATSUB * (vapor_flux[i] - vapor_flux[i-1]);
+                }
             }
             else {
                 if (pack_liq[i] > 0.0) {
                     mat_A[i] = 0.0;
                     mat_B[i] = -CONST_RHOFW * CONST_LATICE / step_dt;
                     mat_C[i] = 0.0;
-                }
+                    mat_RHS[i] = -CONST_RHOFW * CONST_LATICE * (theta_liq[i] - last_packliq[i]) / step_dt;
+                } 
                 else {
                     mat_A[i] = kappa_int[i-1] + CONST_LATSUB * deric_vapor[i-1] * conv_vapor[i-1];
-                    if (i < Nsnow - 1) {
-                        mat_B[i] = -(kappa_int[i-1] + kappa_int[i]) - CONST_LATSUB * deric_vapor[i] *
-                                    (conv_vapor[i-1] + conv_vapor[i]) - fact[i] * Cs_node[i];
-                        mat_C[i] = kappa_int[i] + CONST_LATSUB * deric_vapor[i+1] * conv_vapor[i];
-                    }
-                    else {
-                        /* 最底层雪，与中间层（水/冰川）连接 */
-                        mat_B[i] = -kappa_int[i-1] - kappa_int[i] - CONST_LATSUB * deric_vapor[i] *
-                                conv_vapor[i-1] - fact[i] * Cs_node[i];
-                        mat_C[i] = kappa_int[i];
-                    }
-                }
-                if (i < Nsnow - 1) {
-                    mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - kappa_int[i] * (T[i] - T[i+1]) -
-                            fact[i] * last_Cs[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * 
-                            (theta_liq[i] - last_packliq[i]) / step_dt - CONST_LATSUB * (vapor_flux[i] - vapor_flux[i-1]);
-                }
-                else {
-                    mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - kappa_int[i] * (T[i] - T[i+1]) -
-                            fact[i] * last_Cs[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * 
-                            (theta_liq[i] - last_packliq[i]) / step_dt - CONST_LATSUB * (vapor_flux[i] - vapor_flux[i-1]);
+                    mat_B[i] = -(kappa_int[i-1] + kappa_int[i]) - CONST_LATSUB * deric_vapor[i] *
+                            conv_vapor[i-1] - fact[i] * Cs_node[i];
+                    mat_C[i] = kappa_int[i];
+                    mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - kappa_int[i] * (T[i] - T[i+1]) - fact[i] * 
+                                 last_Cs[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * (theta_liq[i] - 
+                                 last_packliq[i]) / step_dt - CONST_LATSUB * (vapor_flux[i] - vapor_flux[i-1]);
                 }
             }
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
-            if (pack_liq[lidx] = 0.0) {
-                mat_A[Nsnow] = kappa_int[lidx];
-                mat_B[Nsnow] = -kappa_int[lidx];
-                mat_C[Nsnow] = kappa_int[lidx];
-                mat_RHS[Nsnow] = kappa_int[lidx] * (T[lidx] - T[Nsnow]);
+            if (Nsnow == 0) {
+                if (cell->h2osfc_liq == 0.0) {
+                    mat_A[i] = 0.0;
+                    mat_B[i] = deriv_terms - kappa_int[i] - fact[i] * Cs_node[i];
+                    mat_C[i] = kappa_int[i];
+                    mat_RHS[i] = grnd_soil - kappa_int[i] * (T[i] - T[i+1]) - 
+                                fact[i] * last_Cs[i] * (T[i] - last_T[i]);
+                } else {
+                    mat_A[i] = 0.0;
+                    mat_B[i] = deriv_terms - CONST_RHOFW * CONST_LATICE / step_dt - fact[i] * Cs_node[i];
+                    mat_C[i] = 0.0;
+                    mat_RHS[i] = grnd_soil - CONST_RHOFW * CONST_LATICE * 
+                                (theta_liq[i-1] - last_packliq[i-1]) / step_dt -
+                                fact[i] * last_Cs[i] * (T[i] - last_T[i]);
+                }
+            } 
+            else {
+                if (cell->h2osfc_liq == 0.0) {
+                    mat_A[i] = kappa_int[i-1];
+                    mat_B[i] = -(kappa_int[i-1] + kappa_int[i]) - fact[i] * Cs_node[i];
+                    mat_C[i] = kappa_int[i];
+                    mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - kappa_int[i] * 
+                            (T[i] - T[i+1]) - fact[i] * last_Cs[i] * (T[i] - last_T[i]);
+                } else {
+                    mat_A[i] = 0.0;
+                    mat_B[i] = -CONST_RHOFW * CONST_LATICE / step_dt - fact[i] * Cs_node[i];
+                    mat_C[i] = 0.0;
+                    mat_RHS[i] = -CONST_RHOFW * CONST_LATICE * (theta_liq[i-1] - last_packliq[i-1]) / 
+                                 step_dt - fact[i] * last_Cs[i] * (T[i] - last_T[i]);
+                }
             }
         }
-        else if (i < Nnode - 1) {
+        else {
             lidx = i - tmp_Nsnow;
             double adv_left = 0.0;
             double adv_right = 0.0;
@@ -286,9 +306,9 @@ SoilTemperature(double   		   step_dt,
                 trans_right = kappa_int[i] + EPSLON[lidx] * adv_right;
             }
             // 上一层的水分通量和冰量对热输送的影响
-            if (i == 0) {
+            if (lidx == 0) {
                 if (cell->h2osfc > param.TOL_A) {
-                    trans_left = kappa_int[tmp_Nsnow-1];
+                    trans_left = kappa_int[i-1];
                 }
                 else if (Nsnow > 0) {
                     trans_left = coverage * (kappa_int[Nsnow-1] + CONST_LATVAP * 
@@ -297,13 +317,13 @@ SoilTemperature(double   		   step_dt,
                     trans_left = 0.0;
                 }
             }
-            else if (i < Nsoil - 1) {
-                adv_left = CONST_RHOFW * CONST_CPFWICE * liquid_flux[lidx-1]
-                        + CONST_CPWV * vapor_flux[i-1];
+            else if (i < Nnode - 1) {
+                adv_left = CONST_RHOFW * CONST_CPFWICE * liquid_flux[lidx-1] +
+                                                    CONST_CPWV * vapor_flux[i-1];
                 trans_left = kappa_int[i-1] + FLOW[lidx-1] * adv_left;
                 latent_term = vapor_flux[i] - vapor_flux[i-1];
             }
-            if (i <= Nsoil - 2) {
+            if (i <= Nnode - 2) {
                 ice_term = CONST_RHOICE * CONST_LATICE * (ice[lidx] - last_ice[lidx]);
             }
             if (i == 0) {
@@ -319,19 +339,20 @@ SoilTemperature(double   		   step_dt,
                     mat_A[i] = trans_left;
                     mat_B[i] = deriv_terms - trans_right - fact[i] * Cs_node[i];
                     mat_C[i] = trans_right;
-                    mat_RHS[i] = grnd_soil - trans_right * (T[i] - T[i+1]) - CONST_LATVAP *
-                                    vapor_flux[i] - fact[i] * (last_Cs[i] * 
-                                                    (T[i] - last_T[i]) - ice_term);
+                    mat_RHS[i] = grnd_soil - trans_right * (T[i] - T[i+1]) - 
+                                 CONST_LATVAP * vapor_flux[i] - fact[i] * 
+                                 (last_Cs[i] * (T[i] - last_T[i]) - ice_term);
                 }
             }
-            else if (i <= Nsoil - 2) {
+            else if (i <= Nnode - 2) {
                 mat_A[i] = trans_left;
                 mat_B[i] = -trans_left - trans_right - fact[i] * Cs_node[i];
                 mat_C[i] = trans_right;
-                mat_RHS[i] = trans_left * (T[i-1] - T[i]) - trans_right * (T[i] - T[i+1]) -
-                            CONST_LATVAP * latent_term - fact[i] * (last_Cs[i] * (T[i] - last_T[i]) - ice_term);
+                mat_RHS[i] = trans_left * (T[i-1] - T[i]) - trans_right * 
+                            (T[i] - T[i+1]) - CONST_LATVAP * latent_term - 
+                            fact[i] * (last_Cs[i] * (T[i] - last_T[i]) - ice_term);
             }
-            else if (i == Nsoil - 1) {
+            else {
                 mat_A[i] = trans_left;
                 mat_B[i] = -trans_left - fact[i] * Cs_node[i];
                 mat_C[i] = 0.0;
@@ -400,20 +421,21 @@ SoilTemperature(double   		   step_dt,
 	for (i = 0; i < Nnode; i++) {
 		double diff = mat_RHS[i];
         T[i] -= diff;
-        if (T[i] < CONST_TKFRZ && i >= Nsnow && i < Nsoil) {
-            frozen_soil(i, T[i], liq, ice, matric, soil_con);
+        lidx = i - tmp_Nsnow;
+        if (T[i] < CONST_TKFRZ && i >= tmp_Nsnow && i < Nnode - 1) {
+            frozen_soil(lidx, T[i], liq, ice, matric, soil_con);
         }
-        else if (T[i] >= CONST_TKFRZ && i >= Nsnow && i < Nsoil) {
-            if (ice[i] > 0.0) {
-                liq[i] += ice[i] * CONST_RHOICE / CONST_RHOFW;
+        else if (T[i] >= CONST_TKFRZ && i >= tmp_Nsnow && i < Nnode - 1) {
+            if (ice[lidx] > 0.0) {
+                liq[lidx] += ice[lidx] * CONST_RHOICE / CONST_RHOFW;
             }
-            if (liq[i] > Wsat_node[i]) {
-                liq[i] = Wsat_node[i];
+            if (liq[lidx] > Wsat_node[lidx]) {
+                liq[lidx] = Wsat_node[lidx];
             }
-            ice[i] = 0.0;
-            if (liq[i] > Wpwp_node[i]) {
-                matric[i] = SoilWaterRetentionCurve(MATRIC_FLAG, i, 
-                                                    liq[i], 0.0, soil_con);
+            ice[lidx] = 0.0;
+            if (liq[lidx] > Wpwp_node[lidx]) {
+                matric[lidx] = SoilWaterRetentionCurve(MATRIC_FLAG, lidx, 
+                                                       liq[lidx], 0.0, soil_con);
             }
         }
 		if (fabs(diff) > max_diff) {
@@ -424,12 +446,17 @@ SoilTemperature(double   		   step_dt,
     energy->delt_T = max_diff;
 
 	// 将组合温度T写回各自的温度数组中
-	for (i = 0; i < Nsnow; i++) {
-		pack_T[i] = T[i];
-	}
-	// 写回土层温度
-	for (i = Nsnow; i < Nnode; i++) {
-	    soil_T[i-Nsnow] = T[i];
+	for (i = 0; i < Nnode; i++) {
+        if (i < Nsnow) {
+            pack_T[i] = T[i];
+        }
+        else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
+            cell->h2osfc_T = T[Nsnow];
+        }
+        else {
+            lidx = i - tmp_Nsnow;
+            soil_T[lidx] = T[i];
+        }	
 	}
 	
 	return(0);
