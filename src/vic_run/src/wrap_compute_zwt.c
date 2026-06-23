@@ -21,7 +21,7 @@ wrap_compute_zwt(double            step_dt,
     double  decay_fator;
     double  discharge;
     double  baseflow = 0.0;
-    double  recharge;
+    double  recharge = 0.0;
     double  recharge_layer;
     double  aqf_yield;  // aquifer yield [m]
     double  aqf_yield1; // 含水层给水度 [m]
@@ -44,7 +44,7 @@ wrap_compute_zwt(double            step_dt,
     double *alpha_node = soil_con->alpha_node;
     double *mpar_node = soil_con->mpar_node;
     double *conductivity = cell->conductivity;
-
+    /* Initialize variables */
     size_t Nsoil = cell->Nsoil;
     double zwt = cell->zwt; // 地下水位
     double storage_aqf = cell->storage_aqf;
@@ -87,7 +87,7 @@ wrap_compute_zwt(double            step_dt,
             for (i = zwt_lidx + 1; i > 0; i--) { // 防止i下溢到SIZE_MAX
                 j = i - 1; // j是当前层的下标
                 aqf_yield1 = (Wsat_node[j] - Wpwp_node[j]) * (1.0 - pow(1.0 + 
-                                        pow(alpha_node[j] * zwt, expt_node[j]), -mpar_node[j]));
+                                    pow(alpha_node[j] * zwt, expt_node[j]), -mpar_node[j]));
                 aqf_yield1 = max(0.02, aqf_yield1);
                 double layer_top;
                 if (j > 0) {

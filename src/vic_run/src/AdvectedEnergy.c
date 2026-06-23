@@ -21,6 +21,7 @@ AdvectedEnergy(double             air_temp,
     double AdvectOver = 0.0;
     double AdvectGrnd = 0.0;
     double AdvectSub = 0.0;
+    double fcanopy = veg_var->fcanopy;
     double Tgrnd = energy->Tgrnd;
     
     if (cell->IS_VEG) {
@@ -69,15 +70,21 @@ AdvectedEnergy(double             air_temp,
     }
     else if (cell->IS_GLAC || cell->IS_WET) {
         /* Heat advection for liquid rainfall */
-        AdvectGrnd = rainfall / MM_PER_M *
-                                CONST_CPFWICE * (air_temp - Tgrnd);
+        AdvectGrnd = rainfall / MM_PER_M * CONST_CPFWICE * (air_temp - Tgrnd);
         /* Heat advection for snowfall */
-        AdvectGrnd += snowfall / MM_PER_M *
-                                CONST_CPICE * (air_temp - Tgrnd);       
+        AdvectGrnd += snowfall / MM_PER_M * CONST_CPICE * (air_temp - Tgrnd);       
     }
 
     /* Put some artificial limits here for stability */
     energy->AdvectOver = max(-20.0, min(20.0, AdvectOver));
     energy->AdvectGrnd = max(-20.0, min(20.0, AdvectGrnd));
     energy->AdvectSub = max(-20.0, min(20.0, AdvectSub));
+    if (cell->IS_VEG) {
+        energy->advection = fcanopy * energy->AdvectSub + (1.0 - fcanopy) * 
+                            energy->AdvectGrnd + energy->AdvectOver;
+    }
+    else {
+        energy->advection = energy->AdvectGrnd;
+    }
+
 }
