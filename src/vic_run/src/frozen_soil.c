@@ -36,12 +36,11 @@ frozen_soil(size_t     nidx,
         tmp_ice = 0.0;
     }
     else {
-        // ---- 冻结情况：迭代求解平衡态未冻水含量 ----
         // 计算目标总水势（Clausius-Clapeyron 方程）
         total_potent = CONST_LATICE * ((T - CONST_TKFRZ) / T) / CONST_G;
         // 初始猜测：假设纯水在该温度下的未冻水含量
         tmp_liq = SoilWaterRetentionCurve(MOIST_FLAG, nidx, 0.0,
-                                         total_potent, soil_con);
+                                          total_potent, soil_con);
 
         while (iter < 30 && count == 0) {
             // 防止未冻水含量降至残余含水量以下
@@ -85,20 +84,15 @@ frozen_soil(size_t     nidx,
     }
     // ---- 冻融状态判定与相变量分配 ----
     if (liq[nidx] + ice[nidx] * CONST_RHOICE / CONST_RHOFW < tmp_liq) {
-        // 情况 A：实际总水量 < 最大可能液态水量
         // 所有水都能保持液态，无冰生成
         ice[nidx] = 0.0;
         liq[nidx] += ice[nidx] * CONST_RHOICE / CONST_RHOFW;  // 实际液态水就是全部水量
-        // 状态：未冻结
     }
     else {
-        // 情况 B：实际总水量 >= 最大液态水量
         // 存在冰
         double prev_liq = liq[nidx];  // 保存之前的液态水含量
         tmp_ice = ice[nidx] + (prev_liq - tmp_liq) * CONST_RHOFW / CONST_RHOICE;
-        // tmp_liq 保持为平衡态未冻水含量不变
         if (tmp_ice < 0.0) {
-            // 数值误差导致冰为负，设为零
             tmp_liq = liq[nidx] + ice[nidx] * CONST_RHOICE / CONST_RHOFW;
             tmp_ice = 0.0;
         }
@@ -106,7 +100,6 @@ frozen_soil(size_t     nidx,
         ice[nidx] = tmp_ice;
     }
 
-    // ---- 重新计算基质势（确保与最终液态水含量一致） ----
     if (tmp_liq > Wpwp_node[nidx]) {
         tmp_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
                                              tmp_liq, 0.0, soil_con);

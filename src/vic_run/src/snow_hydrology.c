@@ -102,7 +102,7 @@ snow_hydrology(double             step_dt,
     }
     if (Nsnow == 0 && snow->swq > 0.0) {
         double tmp_swq = snow->swq;
-        snow->swq -= snow_sublim * step_dt + snowfrost * step_dt;      
+        snow->swq = snow->swq - snow_sublim * step_dt + snowfrost * step_dt;   
         double ratio = snow->swq / tmp_swq;
         snow->snow_depth = max(0.0, ratio * snow->snow_depth);
         snow->snow_depth = min(max(snow->snow_depth, snow->swq / 500.0), snow->swq / 50.0);

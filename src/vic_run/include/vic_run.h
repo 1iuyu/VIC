@@ -28,6 +28,8 @@ int calc_energy_bal(size_t, double, double, force_data_struct *,
                     soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_water_bal(double, double, energy_bal_struct *, 
                    cell_data_struct *, snow_data_struct *, soil_con_struct *);
+int CalcPhaseChange(size_t, energy_bal_struct *, cell_data_struct *, snow_data_struct *,
+                    soil_con_struct *);
 void calc_rainonly(double, double, double, double, double, double, double *, double *);
 double calc_veg_displacement(double, double, double);
 void calc_snow_coverage(double, bool, double, snow_data_struct *, soil_con_struct *);

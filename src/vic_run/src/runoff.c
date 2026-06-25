@@ -223,7 +223,7 @@ calc_dynamicVIC(double            dt_inflow, // 平均地表入流[m/s]
                             last_depth = tmp_depth;
                             tmp_sat = 0.0;
                             calc_sat_runoff(infil_capacity, max_infil_capacity, tmp_depth, b_infilt, &tmp_sat);
-                            tmp_depth -= tmp_sat - (i_0 * iter_dt) + inflow;
+                            tmp_depth = tmp_depth - tmp_sat - (i_0 * iter_dt) + inflow;
                             if (tmp_depth < 0.0) {
                                 tmp_depth = 0.0;
                             }
