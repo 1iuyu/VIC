@@ -11,111 +11,63 @@
  * @brief    This subroutine computes the maximum amount of unfrozen water that
  *           can exist at the current temperature.
  *****************************************************************************/
-int
-frozen_soil(size_t     nidx,
-            double     T,
-            double    *liq,
-            double    *ice,
-            double    *matric,
-            soil_con_struct  *soil_con)
+double
+frozen_soil(size_t           nidx,
+            double           tmp_tkfrz,
+            double          *T,
+            double          *liq,
+            double          *ice,
+            soil_con_struct *soil_con)
 {
     extern parameters_struct param;
-    double  tmp_liq, tmp_ice;
-    double  error = 1.0;
-    double  delt_liq = 1.0;
-    double  tmp_matric = 0.0;
-    double  tmp_deriv = 0.0;
-    double  total_potent = 0.0;
+    double equil_liq;
     double *Wsat_node = soil_con->Wsat_node;
     double *Wpwp_node = soil_con->Wpwp_node;
 
-    size_t iter = 0;
-    size_t count = 0;
-    if (T > CONST_TKFRZ - 1.0e-3) {
-        tmp_liq = liq[nidx];
-        tmp_ice = 0.0;
-    }
-    else {
-        // 计算目标总水势（Clausius-Clapeyron 方程）
-        total_potent = CONST_LATICE * ((T - CONST_TKFRZ) / T) / CONST_G;
-        // 初始猜测：假设纯水在该温度下的未冻水含量
-        tmp_liq = SoilWaterRetentionCurve(MOIST_FLAG, nidx, 0.0,
-                                          total_potent, soil_con);
+    // 热力学诊断
+    double total_liq = liq[nidx] + ice[nidx] * CONST_RHOICE / CONST_RHOFW;
 
-        while (iter < 30 && count == 0) {
-            // 防止未冻水含量降至残余含水量以下
-            if (tmp_liq < Wpwp_node[nidx]) {
-                tmp_liq += param.TOL_A;
-            }
-            // 计算当前未冻水含量对应的基质势
-            tmp_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
-                                                 tmp_liq, 0.0, soil_con);
-            // 计算基质势对未冻水含量的导数 d(ψ_m)/dθ_l
-            tmp_deriv = SoilWaterRetentionCurve(DERIV_FLAG, nidx, tmp_liq,
-                                                tmp_matric, soil_con);
-            // 如果导数为零（如饱和状态），使用目标水势重新计算
-            if (tmp_deriv == 0.0) {
-                tmp_deriv = SoilWaterRetentionCurve(DERIV_FLAG, nidx, tmp_liq,
-                                                    total_potent, soil_con);
-            }
-            // 计算误差
-            error = total_potent - tmp_matric;
-            // Newton-Raphson 迭代
-            delt_liq = error / (1.0 / tmp_deriv);
-            tmp_liq += delt_liq;
+    // 通过 Clausius-Clapeyron 方程计算
+    double total_potent = CONST_LATICE * ((T[nidx] - tmp_tkfrz) / T[nidx]) / CONST_G;
+    equil_liq = SoilWaterRetentionCurve(MOIST_FLAG, nidx, 0.0,
+                                        total_potent, soil_con);
 
-            // ---- 物理约束 ----
-            // 不能超过饱和含水量
-            if (tmp_liq > Wsat_node[nidx]) {
-                tmp_liq = Wsat_node[nidx];
-            }
-            // 不能越过残余含水量的一半（防止过度干燥）
-            double tol_wpwp = (tmp_liq - delt_liq + Wpwp_node[nidx]) / 2.0;
-            if (tmp_liq < tol_wpwp) {
-                tmp_liq = tol_wpwp;
-            }
-            // 检查收敛
-            if (fabs(delt_liq) < 1.0e-5) {
-                count++;
-                break;
-            }
-            iter++;
+    // Newton-Raphson 迭代
+    int iter = 0, converged = 0;
+    while (iter < 30 && !converged) {
+        if (equil_liq < Wpwp_node[nidx]) {
+            equil_liq = Wpwp_node[nidx] + param.TOL_A;
         }
-    }
-    // ---- 冻融状态判定与相变量分配 ----
-    if (liq[nidx] + ice[nidx] * CONST_RHOICE / CONST_RHOFW < tmp_liq) {
-        // 所有水都能保持液态，无冰生成
-        ice[nidx] = 0.0;
-        liq[nidx] += ice[nidx] * CONST_RHOICE / CONST_RHOFW;  // 实际液态水就是全部水量
-    }
-    else {
-        // 存在冰
-        double prev_liq = liq[nidx];  // 保存之前的液态水含量
-        tmp_ice = ice[nidx] + (prev_liq - tmp_liq) * CONST_RHOFW / CONST_RHOICE;
-        if (tmp_ice < 0.0) {
-            tmp_liq = liq[nidx] + ice[nidx] * CONST_RHOICE / CONST_RHOFW;
-            tmp_ice = 0.0;
+        double tmp_mat = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
+                                                    equil_liq, 0.0, soil_con);
+        double tmp_der = SoilWaterRetentionCurve(DERIV_FLAG, nidx, equil_liq,
+                                                    tmp_mat, soil_con);
+        if (tmp_der == 0.0) {
+            tmp_der = SoilWaterRetentionCurve(DERIV_FLAG, nidx, equil_liq,
+                                                total_potent, soil_con);
         }
-        liq[nidx] = tmp_liq;
-        ice[nidx] = tmp_ice;
-    }
+        double error = total_potent - tmp_mat;
+        double delta = error / (1.0 / tmp_der);
+        equil_liq += delta;
 
-    if (tmp_liq > Wpwp_node[nidx]) {
-        tmp_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
-                                             tmp_liq, 0.0, soil_con);
-        if (tmp_matric >= 0.0) {
-            // 数值误差导致非负基质势，强制修正为理论值
-            tmp_matric = total_potent;
-            if (tmp_matric >= 0.0) {
-                tmp_matric = 0.0;
-            }
+        if (equil_liq > Wsat_node[nidx]) {
+            equil_liq = Wsat_node[nidx];
         }
+        double halfway = (equil_liq - delta + Wpwp_node[nidx]) / 2.0;
+        if (equil_liq < halfway) {
+            equil_liq = halfway;
+        }
+
+        if (fabs(delta) < 1.0e-5) {
+            converged = 1;
+        }
+
+        iter++;
     }
-    else {
-        // 液态水在残余含水量处，基质势由温度决定
-        tmp_matric = total_potent;
+    // 平衡态液态水不能超过总水量
+    if (equil_liq > total_liq) {
+        equil_liq = total_liq;
     }
-    matric[nidx] = tmp_matric;
     
-    return (0);
+    return (equil_liq);
 }

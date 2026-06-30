@@ -329,13 +329,17 @@ distribute_node_moisture_properties(cell_data_struct *cell,
         else {
             if (soil_T[nidx] < CONST_TKFRZ) {
                 /* compute moisture and ice contents */
-                frozen_soil(nidx, soil_T[nidx],
-                            liq, ice,
-                            matric,
-                            soil_con);
+                double equil_liq = frozen_soil(nidx, CONST_TKFRZ,
+                                               soil_T,
+                                               liq, ice,
+                                               soil_con);
+                liq[nidx] = equil_liq;
+                ice[nidx] = moist[nidx] - liq[nidx];
                 if (ice[nidx] < 0) {
                     ice[nidx] = 0;
                 }
+                matric[nidx] = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
+                                                       equil_liq, 0.0, soil_con);
             }
             porosity[nidx] = Wsat_node[nidx] - ice[nidx];
         }

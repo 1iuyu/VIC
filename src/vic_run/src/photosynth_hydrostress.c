@@ -292,13 +292,13 @@ photosynth_hydrostress(double            thm,
             // 阳叶
             hs = (gb_mol * ceair + gs_mol_sun * Qair_over) / ((gb_mol + gs_mol_sun) * Qair_over);
             
-            veg_var->PhotoError[0] = veg_lib->medlynslope * max(veg_var->an_sun, 0.0) * hs / cs_sun *
+            veg_var->PhotoErr_sun = veg_lib->medlynslope * max(veg_var->an_sun, 0.0) * hs / cs_sun *
                             pressure + max(bsun * veg_lib->medlynint, 1.0);
             
             // 阴叶
             hs = (gb_mol * ceair + gs_mol_sha * Qair_over) / ((gb_mol + gs_mol_sha) * Qair_over);
             
-            veg_var->PhotoError[1] = veg_lib->medlynslope * max(veg_var->an_sha, 0.0) * hs / cs_sha *
+            veg_var->PhotoErr_sha = veg_lib->medlynslope * max(veg_var->an_sha, 0.0) * hs / cs_sha *
                             pressure + max(bsha * veg_lib->medlynint, 1.0);
                 
         }

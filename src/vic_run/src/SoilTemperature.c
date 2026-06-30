@@ -227,8 +227,7 @@ SoilTemperature(double   		   step_dt,
                     mat_A[i] = 0.0;
                     mat_B[i] = -CONST_RHOFW * CONST_LATICE / step_dt;
                     mat_C[i] = 0.0;
-                    mat_RHS[i] = -CONST_RHOFW * CONST_LATICE * 
-                            (theta_liq[i] - last_packliq[i]) / step_dt;
+                    mat_RHS[i] = -CONST_RHOFW * CONST_LATICE * (theta_liq[i] - last_packliq[i]) / step_dt;
                 }
                 else {
                     mat_A[i] = kappa_int[i-1] + CONST_LATSUB * deric_vapor[i-1] * conv_vapor[i-1];
@@ -357,7 +356,8 @@ SoilTemperature(double   		   step_dt,
                 mat_A[i] = kappa_int[i-1];
                 mat_B[i] = -kappa_int[i-1] - fact[i] * Cs_node[i];
                 mat_C[i] = 0.0;
-                mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - fact[i] * (last_Cs[i] * (T[i] - last_T[i]));
+                mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - fact[i] * 
+                                                (last_Cs[i] * (T[i] - last_T[i]));
             }
         }
     }
@@ -402,7 +402,7 @@ SoilTemperature(double   		   step_dt,
                 mat_B[lidx] -= fact[lidx] * 0.5 * CONST_RHOFW * CONST_LATICE * (liq_deriv1 + liq_deriv2) +
                         CONST_RHOFW * CONST_LATICE * conduct_int[i] * liq_deriv2 / liq_deriv1;
             }
-            else if (i < Nsoil - 1) {
+            else if (i < Nsoil) {
                 mat_B[lidx] -= fact[lidx] * 0.5 * CONST_RHOFW * CONST_LATICE * (liq_deriv1 + liq_deriv2) +
                     CONST_RHOFW * CONST_LATICE * (conduct_int[i-1] + conduct_int[i]) * liq_deriv2 / tmp_deriv;
             }
@@ -422,19 +422,10 @@ SoilTemperature(double   		   step_dt,
 	for (i = 0; i < Nnode; i++) {
 		double diff = mat_RHS[i];
         T[i] -= diff;
-        if (T[i] < CONST_TKFRZ) {
-            double tmp_ice = ice[i];
-            frozen_soil(i, T[i], liq, ice, matric, soil_con);
-            if (ice[i] > 0.0 && tmp_ice == 0.0) {
-                // 处理相变过程
-                CalcPhaseChange(i, energy,
-                                cell, snow, soil_con);
-            }
-        } else {
-            if (ice[i] > 0.0) {
-                CalcPhaseChange(i, energy, 
-                                cell, snow, soil_con);
-            }            
+        // 判断是否需要处理相变
+        if (i < Nnode - 1) {
+            CalcPhaseChange(i, energy,
+                            cell, snow, soil_con);
         }
         // 寻找变化量的最大值
 		if (fabs(diff) > max_diff) {

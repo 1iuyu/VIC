@@ -798,7 +798,8 @@ typedef struct {
     double ksha_vcmax;          /**< leaf to canopy scaling coefficient, shaded leaf vcmax */
     double NetPhotosha;         /**< net shaded leaf photosynthesis (umol CO2/m**2/s) */
     double NetPhotosun;         /**< net sunlit leaf photosynthesis (umol CO2/m**2/s) */
-    double PhotoError[2];          /**< photo synthetic error */
+    double PhotoErr_sun;        /**< photo synthetic error */
+    double PhotoErr_sha;        /**< photo synthetic error */
 } veg_var_struct;
 
 /******************************************************************************

@@ -66,5 +66,7 @@ initialize_veg(veg_var_struct *veg_var,
         veg_var[i].NetPhotosha = 0.0;
         veg_var[i].ksun_vcmax = 0.0;
         veg_var[i].ksha_vcmax = 0.0;
+        veg_var[i].PhotoErr_sun = 0.0;
+        veg_var[i].PhotoErr_sha = 0.0;
     }
 }

@@ -62,7 +62,7 @@ double devries_weight(double, double, double);
 double d1plc(double, double, double);
 int FrictionVelocity(double, double, double *, double *, double *, double *,
                       double *, double);
-int frozen_soil(size_t, double, double *, double *, double *, soil_con_struct *);
+double frozen_soil(size_t, double, double *, double *, double *, soil_con_struct *);
 int func_canopy_energy_bal(size_t, double, double, force_data_struct *,
                            energy_bal_struct *, cell_data_struct *, 
                            snow_data_struct *, soil_con_struct *,

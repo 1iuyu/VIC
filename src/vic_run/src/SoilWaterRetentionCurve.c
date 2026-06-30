@@ -65,7 +65,7 @@ SoilWaterRetentionCurve(int              flag,
         }
     }
     else if (flag == DERIV_FLAG) {
-        /* dψ/dθ */
+        /* dθ/dψ */
         if (matric < 0.0) {
             tmp = pow(fabs(alpha_node[idx] * 
                         matric), expt_node[idx]);
