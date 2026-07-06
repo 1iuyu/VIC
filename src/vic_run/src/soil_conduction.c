@@ -334,7 +334,7 @@ distribute_node_moisture_properties(cell_data_struct *cell,
                                                liq, ice,
                                                soil_con);
                 liq[nidx] = equil_liq;
-                ice[nidx] = moist[nidx] - liq[nidx];
+                ice[nidx] = (moist[nidx] - liq[nidx]) * CONST_RHOFW / CONST_RHOICE;
                 if (ice[nidx] < 0) {
                     ice[nidx] = 0;
                 }

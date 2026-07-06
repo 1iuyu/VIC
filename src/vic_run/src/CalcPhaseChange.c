@@ -14,7 +14,6 @@ int
 CalcPhaseChange(size_t             nidx,
                 energy_bal_struct *energy,
                 cell_data_struct  *cell,
-                snow_data_struct  *snow,
                 soil_con_struct   *soil_con)
 {
     /* Initialize variables */
@@ -59,13 +58,13 @@ CalcPhaseChange(size_t             nidx,
     if (T[nidx] <= tmp_tkfrz) {
         equil_liq = frozen_soil(nidx, tmp_tkfrz, T, liq, ice, soil_con);
         // 热力学上所有水都能保持液态，但需要检查是否有足够冷量来冻结
-        if (total_liq <= equil_liq) {
+        if (total_liq < equil_liq) {
             liq[nidx] = total_liq;
             ice[nidx] = 0.0;
         }
         else {
             // 存在冰
-            double new_ice = ice[nidx] + (liq[nidx] - equil_liq) * CONST_RHOFW / CONST_RHOICE;
+            double new_ice = (total_liq - equil_liq) * CONST_RHOFW / CONST_RHOICE;
             double new_liq = equil_liq;
             if (tmp_ice == 0.0 && new_ice > 0.0) {
                 EnergyRes = last_Cs[nidx] * (tmp_tkfrz - T[nidx]);
@@ -73,20 +72,7 @@ CalcPhaseChange(size_t             nidx,
                 // 用修正后的温度重新计算平衡态
                 equil_liq = frozen_soil(nidx, tmp_tkfrz, T, liq, ice, soil_con);
                 liq[nidx] = equil_liq;
-            }
-            else if (tmp_ice > 0.0 && new_ice > tmp_ice) {
-                EnergyRes = last_Cs[nidx] * (tmp_tkfrz - T[nidx]);
-                fusion_flux = CONST_RHOICE * CONST_LATICE * (new_ice - tmp_ice);
-                if (EnergyRes < fusion_flux) {
-                    double frozen_ice = EnergyRes / (CONST_RHOICE * CONST_LATICE);
-                    ice[nidx] = tmp_ice + frozen_ice;
-                    liq[nidx] = tmp_liq - frozen_ice * CONST_RHOICE / CONST_RHOFW;
-                    T[nidx] = tmp_tkfrz;
-                }
-                else {
-                    liq[nidx] = new_liq;
-                    ice[nidx] = new_ice;
-                }
+                ice[nidx] = (total_liq - equil_liq) * CONST_RHOFW / CONST_RHOICE;
             }
             else {
                 liq[nidx] = new_liq;

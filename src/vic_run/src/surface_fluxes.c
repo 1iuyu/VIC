@@ -42,8 +42,7 @@ surface_fluxes(size_t             hidx,
     size_t dt_min = 1800; // seconds (half hour)
     size_t iter = 0;
     double time_accum = 0.0;
-    double temp_error = 0.01;    // 0.01K
-    double moist_error = 0.0001; // 0.1mm
+
     /***************************
        Compute surface fluxes
     ***************************/
@@ -131,14 +130,15 @@ surface_fluxes(size_t             hidx,
         snow->last_packice[i] = snow->theta_ice[i];
         snow->last_packliq[i] = snow->theta_liq[i];
     }
+    // 初始化能量和水分收敛标志
+    energy->energy_flag = false;
+    energy->moist_flag = false;
                   
     /**************************************************
        Begin iterative solution of surface fluxes
     **************************************************/
     do {
-        // 迭代控制标志
-        bool energy_flag = false;
-        bool moist_flag = false;
+
         size_t iter_dt = step_dt;
         // 将当前迭代的结构体值赋给临时结构体，以便在迭代过程中更新
         iter_cell = (*cell);
@@ -147,7 +147,7 @@ surface_fluxes(size_t             hidx,
         iter_snow = (*snow);
 
         // 尝试找到一个可接受的步长
-        while (energy_flag == false || moist_flag == false) {
+        while (!iter_energy.energy_flag || !iter_energy.moist_flag) {
 
             /**********************************************
                 Solve Energy Balance Components
@@ -161,14 +161,6 @@ surface_fluxes(size_t             hidx,
 
             if (ErrorFlag == ERROR) {
                 return (ERROR);
-            }
-
-            // 检查温度是否收敛
-            if (iter_energy.delt_T <= temp_error) {
-                energy_flag = true;
-            } 
-            else {
-                energy_flag = false;
             }
             
             /*******************************************
@@ -184,21 +176,15 @@ surface_fluxes(size_t             hidx,
                 // Return error flag to skip rest of grid cell
                 return (ERROR);
             }
-            // 检查土壤水是否收敛
-            if (iter_energy.delt_Q <= moist_error) {
-                moist_flag = true;
-            }
-            else {
-                moist_flag = false;
-            }
+
             iter++;
             // 迭代控制
             if (iter >= param.MAX_ITER_OVER) {
                 if (iter_dt > dt_min) {
                     // 时间步长减半，重新开始
                     iter_dt = iter_dt / 2.0;
-                    energy_flag = false;
-                    moist_flag = false;
+                    iter_energy.energy_flag = false;
+                    iter_energy.moist_flag = false;
                     iter = 0;
                     // 回滚状态至初始值
                     iter_cell = (*cell);
@@ -209,8 +195,8 @@ surface_fluxes(size_t             hidx,
                 } 
                 else {
                     // 已达到最小时间步长，强制收敛并继续
-                    energy_flag = true;
-                    moist_flag = true;
+                    iter_energy.energy_flag = true;
+                    iter_energy.moist_flag = true;
                     break;
                 }
             }

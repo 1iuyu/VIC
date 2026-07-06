@@ -211,24 +211,24 @@ vic_init(void)
         k = 12;
         double ratio = 1.30;
         double accum_depth = 2.0;
-        double current_thickness = 0.5;
+        double current_thick = 0.5;
         while (k < MAX_SOILS && accum_depth < z_bedrock) {
             /* 检查加上当前层是否会超过总深度 */
-            if (accum_depth + current_thickness < z_bedrock) {
+            if (accum_depth + current_thick < z_bedrock) {
                 /* 正常分配 */
-                soil_con[i].dz_soil[k] = current_thickness;
-                accum_depth += current_thickness;
-                current_thickness *= ratio;  /* 下一层厚度增长 */
+                soil_con[i].dz_soil[k] = current_thick;
+                accum_depth += current_thick;
+                current_thick *= ratio;
             } else {
                 /* 最后一层：设为基岩层 */
-                soil_con[i].dz_soil[k] = current_thickness;
+                soil_con[i].dz_soil[k] = current_thick;
                 accum_depth = z_bedrock;
                 break;
             }
             k++;
             /* 防止厚度增长过大 */
-            if (current_thickness > 5.0) {  /* 最大层厚限制 */
-                current_thickness = 5.0;
+            if (current_thick > 5.0) {
+                current_thick = 5.0;
             }
         }
         size_t Nbedrock = k + 1;
@@ -568,8 +568,8 @@ vic_init(void)
             // Calculate Precipitation Fraction
             for (j = 0; j < options.SNOW_BAND; j++) {
                 if (soil_con[i].AreaFract[j] > 0) {
-                    soil_con[i].Pfactor[j] = (1.0 + param.SNOW_PGRAD * (soil_con[i].BandElev[j] - soil_con[i].elevation)) * 
-                                                soil_con[i].AreaFract[j];
+                    soil_con[i].Pfactor[j] = (1.0 + param.SNOW_PGRAD * (soil_con[i].BandElev[j] 
+                        - soil_con[i].elevation)) * soil_con[i].AreaFract[j];
                     if (soil_con[i].Pfactor[j] < 0.) {
                         sprint_location(locstr, &(local_domain.locations[i]));
                         log_err("Snow band precipitation fraction (%f) "

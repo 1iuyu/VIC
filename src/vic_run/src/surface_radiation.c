@@ -30,7 +30,7 @@ surface_radiation(double            *shortwave_dir,
     double tmp_absorb_grnd = 0.0;
     double ShortOverDir[MAX_SWBANDS];
     double ShortOverDfs[MAX_SWBANDS];
-    double *aPAR_sun = veg_var->aPAR_sha;
+    double *aPAR_sun = veg_var->aPAR_sun;
     double *aPAR_sha = veg_var->aPAR_sha;
     double *AbsSubDir = energy->AbsSubDir;
     double *AbsSubDfs = energy->AbsSubDfs;

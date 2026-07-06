@@ -60,13 +60,12 @@ wrap_compute_zwt(double            step_dt,
             break;
         }
     }
-    double waterhead = 0.0;
     double aqf_conduct = 0.0;
     if (zwt_lidx < Nsoil) {
         // 非饱和带最底层的水头
-        waterhead = matric[zwt_lidx] + zc_soil[zwt_lidx];
         aqf_conduct = soil_imped[zwt_lidx] * conductivity[zwt_lidx];
-        recharge = aqf_conduct * (1.0 + matric[zwt_lidx] / max(zwt - zc_soil[zwt_lidx], param.TOL_A));
+        recharge = aqf_conduct * (1.0 + matric[zwt_lidx] / 
+                         max(zwt - zc_soil[zwt_lidx], param.TOL_A));
         double max_flux = 0.01 / step_dt;  // 最大允许通量
         recharge = max(-max_flux, min(max_flux, recharge)); // m/s
     }
@@ -319,7 +318,7 @@ wrap_compute_zwt(double            step_dt,
             }
         }
         zwt = max(0.0, zwt);
-        zwt = min(80.0, zwt);
+        zwt = min(Zsum_soil[Nsoil-1], zwt);
     }
     cell->zwt = zwt;
     cell->storage_aqf = storage_aqf;

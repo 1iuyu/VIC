@@ -37,10 +37,6 @@ surface_albedo(double             step_dt,
     double NetVEG = NetLAI + NetSAI;
     // initialize albedo and two-stream fluxes
     for (i = 0; i < Nswband; i++) {
-        energy->AbsDirSun[i] = 0.0;
-        energy->AbsDirSha[i] = 0.0;
-        energy->AbsDfsSun[i] = 0.0;
-        energy->AbsDfsSha[i] = 0.0;
         energy->AlbedoSnowDir[i] = 0.0;
         energy->AlbedoSnowDfs[i] = 0.0;
         energy->AlbedoSoilDir[i] = 0.0;
@@ -67,6 +63,10 @@ surface_albedo(double             step_dt,
         veg_var->aPAR_sha[i] = 0.0;
         veg_var->LAIsun_z[i] = 0.0;
         veg_var->LAIsha_z[i] = 0.0;
+        energy->AbsDirSun[i] = 0.0;
+        energy->AbsDirSha[i] = 0.0;
+        energy->AbsDfsSun[i] = 0.0;
+        energy->AbsDfsSha[i] = 0.0;
     }
     // compute snow age factor
     f_snowage = snow_aging(step_dt,

@@ -171,7 +171,7 @@ generate_default_state(force_data_struct *force,
             /* Initialize soil moistures */
             for (lidx = 0; lidx < Nsoil; lidx++) {
                 // 温度大于0，地下水位以上设为田间持水量，地下水位以下设为饱和含水量
-                if (zc_soil[lidx <= cell[veg].zwt]) {
+                if (soil_con->Zsum_soil[lidx] <= cell[veg].zwt) {
                     if (cell[veg].soil_T[lidx] >= CONST_TKFRZ) {
                         cell[veg].moist[lidx] = soil_con->Wsat_node[lidx] * 0.7;
                     }

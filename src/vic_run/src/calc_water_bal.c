@@ -179,9 +179,10 @@ calc_water_bal(double             step_dt,
             else {
                 lateral_flow[i] = 0.0;
             }
-            mat_RHS[i] = esoil / CONST_RHOFW - liquid_flux[i] - vapor_flux[lidx] / CONST_RHOFW  - transp_sink[i] / 
-                            CONST_RHOFW - lateral_flow[i] - fact[i] * (liq[i] - last_liq[i] + 
-                            CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
+            mat_RHS[i] = esoil / CONST_RHOFW - liquid_flux[i] - vapor_flux[lidx] / CONST_RHOFW -
+                         transp_sink[i] / CONST_RHOFW - lateral_flow[i] - fact[i] * (liq[i] - 
+                         last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
+
             // 存在冰 - 计算冰含量的系数
             if (ice[i] > 0.0) {
                 mat_A[i] = 0.0;
@@ -200,7 +201,7 @@ calc_water_bal(double             step_dt,
 
                     if (matric[i] >= 0.0) {
                         // 节点饱和 - 检查边界是否定义不良
-                        if (-mat_B[i] < conduct_int[i] * 1.0e-6 || conduct_int[i] <= 0.0) {
+                        if (-mat_B[i] < conduct_int[i] * param.TOL_A || conduct_int[i] <= 0.0) {
                             // 边界定义不良 - 将节点视为饱和
                             ISAT[idx] = i;
                             idx++;
@@ -317,8 +318,9 @@ calc_water_bal(double             step_dt,
                 mat_C[i] = 0.0;
             }
             
-            mat_RHS[i] = liquid_flux[i-1] + vapor_flux[lidx-1] / CONST_RHOFW - transp_sink[i] / CONST_RHOFW - lateral_flow[i] -
-                        fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
+            mat_RHS[i] = liquid_flux[i-1] + vapor_flux[lidx-1] / CONST_RHOFW - transp_sink[i] / 
+                         CONST_RHOFW - lateral_flow[i] - fact[i] * (liq[i] - last_liq[i] + 
+                         CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
         }
     }
 
@@ -393,24 +395,26 @@ calc_water_bal(double             step_dt,
     }
 
     /* 检查收敛 */
-	double max_diff = 0.0;
+    double max_diff = 0.0;
 	for (i = 0; i < Nsoil; i++) {
 		double diff = mat_RHS[i];
         if (ice[i] > 0.0) {
             if (diff > 0.2) {
-                if (fabs(CONST_RHOICE * CONST_LATICE * diff * fact[i]) > 2000.0) {
+                double energy_flux = fabs(CONST_RHOICE * CONST_LATICE * fact[i] * diff);
+                if (energy_flux > 2000.0) {
                     mat_RHS[i] = diff / fabs(diff) * 2000.0 * step_dt / 
                     (CONST_RHOICE * CONST_LATICE * dz_soil[i]);
                 }
             }
             ice[i] -= mat_RHS[i];
             if (ice[i] < 0.0) {
-                if (liq[i] + ice[i] * CONST_RHOICE / CONST_RHOFW > 
-                        (liq[i] + Wpwp_node[i]) / 2.0) {
-                    liq[i] += ice[i] * CONST_RHOICE / CONST_RHOFW;
+                double total_liq = liq[i] + ice[i] * CONST_RHOICE / CONST_RHOFW;
+                double tol_liq = (liq[i] + Wpwp_node[i]) / 2.0;
+                if (total_liq > tol_liq) {
+                    liq[i] = total_liq;
                 }
                 else {
-                    liq[i] = liq[i] + Wpwp_node[i] / 2.0; 
+                    liq[i] = tol_liq;
                 }
                 if (liq[i] > Wpwp_node[i]) {
                     matric[i] = SoilWaterRetentionCurve(MATRIC_FLAG, i, 
@@ -420,31 +424,44 @@ calc_water_bal(double             step_dt,
             }
         }
         else {
+            double tmp_mat = matric[i];
+            if (fabs(tmp_mat) < 1.0) {
+                tmp_mat = 1.0;
+            }
+            // 计算基质势的相对变化量
+            diff /= tmp_mat;
             matric[i] -= diff;
             liq[i] = SoilWaterRetentionCurve(MOIST_FLAG, i,
                                              0.0, matric[i], soil_con);
         }
-        if (matric[0] > 0.0) {
-            for (j = 1; j < Nsoil; j++) {
-                if (matric[i] > 0.0) {
-                    matric[i] -= matric[0];
-                    liq[i] = SoilWaterRetentionCurve(MOIST_FLAG, i,
-                                                    0.0, matric[i], soil_con);
-                }
-                else {
-                    matric[0] = 0.0;
-                    liq[0] = SoilWaterRetentionCurve(MOIST_FLAG, i,
-                                                    0.0, matric[0], soil_con);
-                }
+        if (fabs(diff) > max_diff) {
+            max_diff = fabs(diff);
+        }
+	}
+    if (matric[0] > 0.0) {
+        double excess = matric[0];  // 超出的水头
+        for (j = 1; j < Nsoil; j++) {
+            if (matric[j] > 0.0) {
+                matric[j] -= excess;
+                liq[j] = SoilWaterRetentionCurve(MOIST_FLAG, j,
+                                                0.0, matric[j], soil_con);
+            }
+            else {
+                break;
             }
         }
-		if (fabs(diff) > max_diff) {
-			max_diff = fabs(diff);
-		}
-	}
-    // 冰变化量或基质势变化量
-    energy->delt_Q = max_diff;
-
-    return (0);
+        // 将地表基质势强制设为 0（自由水面）
+        matric[0] = 0.0;
+        liq[0] = SoilWaterRetentionCurve(MOIST_FLAG, 0,
+                                        0.0, matric[0], soil_con);
+    }
+    // 判断水量收敛标志
+    if (max_diff < 0.01) {
+        energy->moist_flag = true;
+    }
+    else {
+        energy->moist_flag = false;
+    }
     
+    return (0);
 }

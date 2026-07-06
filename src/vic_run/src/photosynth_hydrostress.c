@@ -304,11 +304,12 @@ photosynth_hydrostress(double            thm,
         }
         else {
             // 夜间或无光照条件下，光合作用为0，维护呼吸仍然存在
-            mat_VEG[0] = 1.0; // temporary signal for night time
             double gsminsun = veg_lib->medlynint;
             double gsminsha = veg_lib->medlynint;
-            // 调用calc_stress函数计算水分胁迫因子
             if (i == 0) {
+                mat_VEG[0] = 1.0; // temporary signal for night time
+
+                // 调用calc_stress函数计算水分胁迫因子
                 calc_stress(&bsun, &bsha, 
                             mat_VEG, thm, gb_mol, 
                             qsat_T, Qair_over,

@@ -51,9 +51,9 @@ snow_hydrology(double             step_dt,
     /** compute soil/snow surface evap,
         dew rate based on energy flux. **/
     // positive part of ground latent heat
-    vapor_grnd = max(latent / LatentVapGrnd, 0.);
+    vapor_grnd = max(latent / LatentVapGrnd, 0.); // mm/s
     // negative part of ground latent heat
-    conden_grnd = fabs(min(latent / LatentVapGrnd, 0.));
+    conden_grnd = fabs(min(latent / LatentVapGrnd, 0.)); // mm/s
     snow->last_swq = snow->swq;
     for (i = 0; i < snow->Nsnow; i++) {
         snow->last_snowfrac[i] = snow->snow_frac[i];
@@ -251,7 +251,7 @@ snow_hydrology(double             step_dt,
             liq[0] += ice[0];
             ice[0] = 0.0;
         }
-        cell->moist[0] = liq[0] + ice[0];
+        cell->moist[0] = liq[0] + ice[0] * CONST_RHOICE / CONST_RHOFW;
     }
 
     /* set esoil and transpiration mm/s -> m/s */

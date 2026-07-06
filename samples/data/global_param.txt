@@ -5,14 +5,14 @@
 #######################################################################
 # Simulation Parameters
 #######################################################################
-NLAYER                 7      # number of soil layers
+NLAYER                 6      # number of soil layers
 MODEL_STEPS_PER_DAY    8      # number of model time steps per day
 STARTYEAR              1951   # year model simulation starts
 STARTMONTH             1      # month model simulation starts
 STARTDAY               1      # day model simulation starts
 STARTSEC	           0
 ENDYEAR                1951   # year model simulation ends
-ENDMONTH               12     # month model simulation ends
+ENDMONTH               1     # month model simulation ends
 ENDDAY                 31     # day model simulation ends
 CALENDAR    	       PROLEPTIC_GREGORIAN
 
@@ -66,7 +66,7 @@ RESOLUTION  0.1
 #######################################################################
 # Output Files and Parameters
 #######################################################################
-RESULT_DIR  ./results # Results directory path
+RESULT_DIR  ../results # Results directory path
 OUTFILE     fluxes_VIC5_image  
 AGGFREQ     NSTEPS   1 
 COMPRESS    FALSE  # TRUE = compress input and output files when done

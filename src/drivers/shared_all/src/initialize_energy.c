@@ -22,10 +22,6 @@ initialize_energy(energy_bal_struct *energy,
 
         // Prognostic states
         for (i = 0; i < MAX_SWBANDS; i++) {
-            energy[veg].AbsDirSun[i] = 0.0;
-            energy[veg].AbsDirSha[i] = 0.0;
-            energy[veg].AbsDfsSun[i] = 0.0;
-            energy[veg].AbsDfsSha[i] = 0.0;
             energy[veg].AlbedoSnowDir[i] = 0.0;
             energy[veg].AlbedoSnowDfs[i] = 0.0;
             energy[veg].AlbedoSoilDir[i] = 0.0;
@@ -47,6 +43,12 @@ initialize_energy(energy_bal_struct *energy,
             energy[veg].ReflectVeg[i] = 0.0;
             energy[veg].TransmitVeg[i] = 0.0;
         }
+        for (i = 0; i < MAX_CANOPYS; i++) {
+            energy[veg].AbsDirSun[i] = 0.0;
+            energy[veg].AbsDirSha[i] = 0.0;
+            energy[veg].AbsDfsSun[i] = 0.0;
+            energy[veg].AbsDfsSha[i] = 0.0;
+        }
         energy[veg].FrozenOver = false;
         energy[veg].FrozenGrnd = false;
         energy[veg].Tcanopy = 0.0;
@@ -62,8 +64,8 @@ initialize_energy(energy_bal_struct *energy,
             energy[veg].last_T[lidx] = 0.0;
             energy[veg].kappa_int[lidx] = 0.0;
         }
-        energy[veg].delt_Q = 0.0;
-        energy[veg].delt_T = 0.0;
+        energy[veg].energy_flag = false;
+        energy[veg].moist_flag = false;
         // Fluxes
         energy[veg].advection = 0.0;
         energy[veg].AdvectOver = 0.0;

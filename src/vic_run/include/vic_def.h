@@ -598,8 +598,8 @@ typedef struct {
     double h2osfc;                     /**< surface water or glacier (mm) */
     double h2osfc_T;                   /**< surface water temperature or glacier [K] */
     double frac_h2o;                   /**< fraction of ground covered by surface water or glacier */
-    double h2osfc_ice;
-    double h2osfc_liq;
+    double h2osfc_ice;                 /**< surface water or glacier ice content (mm) */
+    double h2osfc_liq;                 /**< surface water or glacier liquid content (mm) */
     //double Qair_over;                /**< specific humidity of the air at the canopy layer (kg/kg) */
     double Qair_grnd;                  /**< specific humidity of the air at the ground surface (kg/kg) */
     double Qair_soil;                  /**< specific humidity of the air at the soil surface (kg/kg) */
@@ -645,8 +645,8 @@ typedef struct {
     double soil_excess;
     double root[MAX_SOILS];
     double hksr_int[MAX_SOILS];        /**< soil-root interface conductance (mm/s) */
-    double liquid_flux[MAX_NODES];
-    double vapor_flux[MAX_NODES];
+    double liquid_flux[MAX_NODES];     /**< liquid flux through the soil column (mm/s) */
+    double vapor_flux[MAX_NODES];      /**< vapor flux through the soil column (mm/s) */
     double soil_imped[MAX_SOILS];      /**< frost content of the frozen sublayer */
     double transp_sink[MAX_SOILS];     /**< transpiration sink term [m/s] */
     double conductivity[MAX_SOILS];    /**< soil hydraulic conductivity [m/s] */
@@ -663,24 +663,24 @@ typedef struct {
     // State variables
     bool FrozenGrnd;                   /**< TRUE = frozen soil present */
     bool FrozenOver;                   /**< TRUE = frozen canopy present */
+    bool energy_flag;                  /**< temperature converge flag */
+    bool moist_flag;                   /**< moisture or matric potential converge flag */
     double kappa_node[MAX_NODES];      /**< thermal conductivity of the soil thermal nodes (W/m/K) */
     double Cs_node[MAX_NODES];         /**< heat capacity of the soil thermal nodes (J/m^3/K) */   
     double last_Cs[MAX_NODES]; 
     double T[MAX_NODES];               /**< thermal node temperatures (k) */
     double last_T[MAX_NODES];
     double kappa_int[MAX_NODES];       /**< thermal conductivity used for interface between nodes (W/m/K) */
-    double Tcanopy;              /**< temperature of the canopy */
-    double Tsurf;                /**< temperature of the understory */
-    double Tgrnd;
-    double Tfoliage;
-    double Tstem;                /**< temperature of the stem */
-    double deriv_terms;          /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
-    double deriv_evap;
-    double delt_T;
-    double delt_Q;              
-    double error;                /**< energy balance error (W/m^2) */
+    double Tcanopy;                    /**< temperature of the canopy [K] */
+    double Tsurf;                      /**< temperature of the understory [K] */
+    double Tgrnd;                      /**< temperature of the bare ground [K] */
+    double Tfoliage;                   /**< temperature of the foliage [K] */
+    double Tstem;                      /**< temperature of the stem [K] */
+    double deriv_terms;                /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
+    double deriv_evap;                 /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
+    double error;                      /**< energy balance error (W/m^2) */
     // Fluxes
-    double advection;            /**< advective flux (Wm-2) */
+    double advection;                  /**< advective flux (Wm-2) */
     double AdvectSub;
     double AdvectGrnd;
     double AdvectOver;
@@ -722,10 +722,10 @@ typedef struct {
     // 辐射项
     double AbsSubDir[MAX_SWBANDS];
     double AbsSubDfs[MAX_SWBANDS];
-    double AbsDirSun[MAX_SWBANDS];
-    double AbsDirSha[MAX_SWBANDS];
-    double AbsDfsSun[MAX_SWBANDS];
-    double AbsDfsSha[MAX_SWBANDS];
+    double AbsDirSun[MAX_CANOPYS];  /**< absorbed sunlit leaf direct PAR */
+    double AbsDirSha[MAX_CANOPYS];  /**< absorbed shaded leaf direct PAR */
+    double AbsDfsSun[MAX_CANOPYS];  /**< absorbed sunlit leaf diffuse PAR */
+    double AbsDfsSha[MAX_CANOPYS];  /**< absorbed shaded leaf diffuse PAR */
     double AlbedoSoilDir[MAX_SWBANDS];
     double AlbedoSoilDfs[MAX_SWBANDS];
     double AlbedoSnowDir[MAX_SWBANDS];

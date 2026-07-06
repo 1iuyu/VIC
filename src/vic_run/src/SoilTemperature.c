@@ -44,6 +44,7 @@ SoilTemperature(double   		   step_dt,
     double *last_T = energy->last_T;
     double *matric = cell->matric;
     double *pack_liq = snow->pack_liq;
+    double *pack_ice = snow->pack_ice;
     double *last_matric = cell->last_matric;
     double deriv_terms = energy->deriv_terms;
 	/* initialization */
@@ -199,8 +200,9 @@ SoilTemperature(double   		   step_dt,
     double grnd_soil = energy->NetShortSoil + energy->NetLongSoil - 
                     energy->SensibleSoil - energy->LatentSoil + energy->advection;
     energy->grnd_flux = grnd_flux;
+
     // ============================================================
-    //      第一部分：雪层能量平衡矩阵
+    //     构建能量平衡三对角矩阵
     // ============================================================
     for (i = 0; i < Nnode; i++) {
         if (i < Nsnow) {
@@ -362,49 +364,59 @@ SoilTemperature(double   		   step_dt,
         }
     }
     // 修正能量平衡方程的系数
-    double tmp_T = 0.0;
     double liq_deriv1 = 0.0;
     double liq_deriv2 = 0.0;
-    double tmp_deriv = 0.0;
+    double mat_deriv = 0.0;
     double tmp_matric = 0.0;
     for (i = 0; i < Nsoil; i++) {
         lidx = tmp_Nsnow + i;
+        double tmp_tkfrz = CONST_TKTRIP;
         if (ice[i] > 0.0) {
-            if (last_ice[i] > 0.0) {
-                tmp_T = last_T[lidx];
+            double total_liq = liq[i] + ice[i] * CONST_RHOICE / CONST_RHOFW;
+            if (total_liq > Wsat_node[i]) {
+                total_liq = Wsat_node[i];
             }
-            else {
-                tmp_T = CONST_TKTRIP * CONST_LATICE / CONST_G / 
-                                (CONST_LATICE / CONST_G - last_matric[i]);
+            double tmp_mat = SoilWaterRetentionCurve(MATRIC_FLAG, i,
+                                                     total_liq, 0.0, soil_con);
+
+            if (tmp_mat < 0.0) {
+                tmp_tkfrz = CONST_TKTRIP * tmp_mat /
+                            (CONST_LATICE / CONST_G - tmp_mat) + CONST_TKTRIP;
             }
-            liq_deriv1 = water_curve_deriv(i, tmp_T,
-                                           last_liq[i], 
-                                           last_matric[i],
-                                           soil_con);
-            if (matric[i] > 0.0) {
-                tmp_T = T[lidx];
-                tmp_matric = CONST_LATICE * (tmp_T - CONST_TKFRZ) / tmp_T / CONST_G;
-                liq_deriv2 = water_curve_deriv(i, tmp_T, 
-                                               liq[i], 
-                                               tmp_matric,
-                                               soil_con);
-                tmp_deriv = SoilWaterRetentionCurve(DERIV_FLAG, i, liq[i],
-                                                    tmp_matric, soil_con);
-            }
-            else {
-                liq_deriv2 = water_curve_deriv(i, T[lidx], liq[i], 
-                                               matric[i], 
-                                               soil_con);
-                tmp_deriv = SoilWaterRetentionCurve(DERIV_FLAG, i, liq[i],
-                                                    matric[i], soil_con);
-            }
+        }
+        if (matric[i] >= 0.0) {
+            tmp_matric = CONST_LATICE * (T[lidx] - tmp_tkfrz) / T[lidx] / CONST_G;
+            liq_deriv2 = water_curve_deriv(i, T[lidx], 
+                                            liq[i], 
+                                            tmp_matric,
+                                            soil_con);
+            mat_deriv = SoilWaterRetentionCurve(DERIV_FLAG, i, liq[i],
+                                                tmp_matric, soil_con);
+        }
+        else {
+            liq_deriv2 = water_curve_deriv(i, T[lidx], liq[i], 
+                                            matric[i], 
+                                            soil_con);
+            mat_deriv = SoilWaterRetentionCurve(DERIV_FLAG, i, liq[i],
+                                                matric[i], soil_con);
+        }
+        if (last_matric[i] < 0.0 || last_ice[i] > 0.0) {
+            liq_deriv1 = water_curve_deriv(i, last_T[lidx],
+                                            last_liq[i], 
+                                            last_matric[i],
+                                            soil_con);
+        }
+        else if (ice[i] > 0.0) {
+            liq_deriv1 = liq_deriv2;
+        }
+        if ((liq_deriv1 > 0.0 || liq_deriv2 > 0.0) && (mat_deriv > 0.0)) {
             if (i == 0) {
                 mat_B[lidx] -= fact[lidx] * 0.5 * CONST_RHOFW * CONST_LATICE * (liq_deriv1 + liq_deriv2) +
-                        CONST_RHOFW * CONST_LATICE * conduct_int[i] * liq_deriv2 / liq_deriv1;
+                        CONST_RHOFW * CONST_LATICE * conduct_int[i] * liq_deriv2 / mat_deriv;
             }
             else if (i < Nsoil) {
                 mat_B[lidx] -= fact[lidx] * 0.5 * CONST_RHOFW * CONST_LATICE * (liq_deriv1 + liq_deriv2) +
-                    CONST_RHOFW * CONST_LATICE * (conduct_int[i-1] + conduct_int[i]) * liq_deriv2 / tmp_deriv;
+                    CONST_RHOFW * CONST_LATICE * (conduct_int[i-1] + conduct_int[i]) * liq_deriv2 / mat_deriv;
             }
         }
     }
@@ -418,22 +430,79 @@ SoilTemperature(double   		   step_dt,
 	}
 
 	/* 检查收敛 (温度变化) */
-	double max_diff = 0.0;
+    double max_diff = 0.0;
 	for (i = 0; i < Nnode; i++) {
 		double diff = mat_RHS[i];
-        T[i] -= diff;
-        // 判断是否需要处理相变
-        if (i < Nnode - 1) {
-            CalcPhaseChange(i, energy,
-                            cell, snow, soil_con);
+        if (i < Nsnow) {
+            if (pack_liq[i] == 0.0) {
+                T[i] -= diff;
+                if (T[i] > CONST_TKFRZ) {
+                    pack_liq[i] = CONST_RHOICE * CONST_CPICE * dz_snow[i] * 
+                                (T[i] - CONST_TKFRZ) / (CONST_RHOFW * CONST_LATICE);
+                    pack_ice[i] -= pack_liq[i];
+                    T[i] = CONST_TKFRZ;
+                }
+            }
+            else {
+                double tmp_liq = pack_liq[i];
+                pack_liq[i] -= diff;
+                if (pack_liq[i] < 0.0) {
+                    T[i] = CONST_TKFRZ + pack_liq[i] * CONST_RHOFW * CONST_LATICE / 
+                                    (CONST_RHOICE * CONST_CPICE * dz_snow[i]);
+                    pack_ice[i] += tmp_liq;
+                    pack_liq[i] = 0.0;
+                }
+                else {
+                    pack_ice[i] += diff;
+                    T[i] = CONST_TKFRZ;
+                }
+            }
         }
-        // 寻找变化量的最大值
-		if (fabs(diff) > max_diff) {
-			max_diff = fabs(diff);
-		}
+        else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
+            if (cell->h2osfc > param.TOL_A) {
+                if (cell->h2osfc_liq == 0.0) {
+                    T[i] -= diff;
+                    if (T[i] > CONST_TKFRZ) {
+                        cell->h2osfc_liq = CONST_RHOICE * CONST_CPICE * cell->h2osfc * 
+                                        (T[i] - CONST_TKFRZ) / (CONST_RHOFW * CONST_LATICE);
+                        cell->h2osfc_ice -= cell->h2osfc_liq;
+                        T[i] = CONST_TKFRZ;
+                    }
+                }
+                else {
+                    double tmp_liq = cell->h2osfc_liq;
+                    cell->h2osfc_liq -= diff;
+                    if (cell->h2osfc_liq < 0.0) {
+                        T[i] = CONST_TKFRZ + cell->h2osfc_liq * CONST_RHOFW * CONST_LATICE / 
+                                        (CONST_RHOICE * CONST_CPICE * cell->h2osfc);
+                        cell->h2osfc_ice += tmp_liq;
+                        cell->h2osfc_liq = 0.0;
+                    }
+                    else {
+                        cell->h2osfc_ice += diff;
+                        T[i] = CONST_TKFRZ;
+                    }
+                }
+            }
+        }
+        else if (i < Nnode - 1) {
+            T[i] -= diff;
+            lidx = i - tmp_Nsnow;
+            // 判断是否需要处理相变
+            CalcPhaseChange(lidx, energy,
+                            cell, soil_con);
+        }
+        if (fabs(diff) > max_diff) {
+            max_diff = fabs(diff);
+        }
 	}
-    // 记录温度变化量
-    energy->delt_T = max_diff;
+    // 判断能量收敛标志
+    if (max_diff < 0.01) {
+        energy->energy_flag = true;
+    }
+    else {
+        energy->energy_flag = false;
+    }
 
 	// 将组合温度T写回各自的温度数组中
 	for (i = 0; i < Nnode; i++) {
