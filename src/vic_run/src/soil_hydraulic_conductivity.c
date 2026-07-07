@@ -34,7 +34,7 @@ soil_hydraulic_conductivity(cell_data_struct *cell,
 
     for (i = 0; i < Nsoil; i++) {
         //  计算土壤水和冰的相对饱和度
-        frac_ice[i] = max(0.01, min(1.0, ice[i] / Wsat_node[i]));
+        frac_ice[i] = min(1.0, ice[i] / Wsat_node[i]);
         // 计算冻土导致的不透水率
         if (i == Nsoil - 1) {
             soil_imped[i] = pow(10.0, frac_ice[i] * ice_param);

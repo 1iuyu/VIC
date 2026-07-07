@@ -77,8 +77,6 @@ void hybrid_PHS(double           *x0sun,
     double gs0sha = 0.0;
     double transp = 0.0;    // 蒸腾通量[m/s]
 
-
-    
     // ========== 外层循环：更新水分胁迫因子 ==========
     while (1) {
 

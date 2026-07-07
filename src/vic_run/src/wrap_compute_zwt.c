@@ -50,7 +50,7 @@ wrap_compute_zwt(double            step_dt,
     double storage_aqf = cell->storage_aqf;
 
     for (i = 0; i < Nsoil; i++) {
-        frac_ice[i] = max(0.01, min(1.0, ice[i] / Wsat_node[i]));
+        frac_ice[i] = min(1.0, ice[i] / Wsat_node[i]);
     }
     // 寻找第一个非饱和层
     size_t zwt_lidx = Nsoil;
@@ -376,7 +376,7 @@ wrap_compute_zwt(double            step_dt,
         }
     }
     for (i = 0; i < Nsoil; i++) {
-        moist[i] = liq[i] + ice[i];
+        moist[i] = liq[i] + ice[i] * CONST_RHOICE / CONST_RHOFW;
     }
     // 计算排泄量
     discharge = baseflow + sub_excess;

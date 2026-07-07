@@ -489,8 +489,10 @@ SoilTemperature(double   		   step_dt,
             T[i] -= diff;
             lidx = i - tmp_Nsnow;
             // 判断是否需要处理相变
-            CalcPhaseChange(lidx, energy,
-                            cell, soil_con);
+            if (matric[lidx] < 0.0 || last_matric[lidx] < 0.0) {
+                CalcPhaseChange(lidx, energy,
+                                cell, soil_con);
+            }
         }
         if (fabs(diff) > max_diff) {
             max_diff = fabs(diff);
