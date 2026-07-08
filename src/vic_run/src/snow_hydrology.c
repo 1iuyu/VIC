@@ -175,8 +175,11 @@ snow_hydrology(double             step_dt,
         }
     }
     else {
-        for (i = 0; i < MAX_SNOWS; i++) {
-            pack_outflow[i] = 0.0;  // no snow, no outflow
+        // 清除残留的数据
+        if (pack_outflow[0] > 0.0) {
+            for (i = 0; i < MAX_SNOWS; i++) {
+                pack_outflow[i] = 0.0;  // no snow, no outflow
+            }
         }
     }
     for (i = 0; i < Nsnow; i++) {
