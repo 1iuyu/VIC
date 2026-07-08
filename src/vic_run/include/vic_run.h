@@ -56,7 +56,7 @@ void ci_func_PHS(bool, double, double, double *, double *, double *, double *,
                  double, double, double, double, double, double, double,
                  cell_data_struct *, soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 int distribute_node_moisture_properties(cell_data_struct *, soil_con_struct *);
-void distribute_snow_state(snow_data_struct *);
+void distribute_snow_state(double, snow_data_struct *);
 double devries_weight(double, double, double);
 double d1plc(double, double, double);
 int FrictionVelocity(double, double, double *, double *, double *, double *,

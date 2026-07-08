@@ -134,7 +134,7 @@ update_snow(double            air_temp,
         snow->snow_depth = 0.;
         pack_T[0] = min(CONST_TKTRIP, air_temp);
         pack_ice[0] = snow->swq;
-        pack_liq[0] = 0.;
+        pack_liq[0] = 0.0;
     }
     // 如果有雪层，且雪深大于0.025m，则更新现有雪层的厚度和水当量
     if (snow->Nsnow > 0 && new_layer == 0 && snowfall > 0.) {
@@ -197,64 +197,66 @@ update_snow_fluxes(double    *depth1,
 *           combined snowpack layer
 ******************************************************************************/
 void
-distribute_snow_state(snow_data_struct *snow)
+distribute_snow_state(double            air_temp,
+                      snow_data_struct *snow)
+
 {
+    // 定义局部变量指向结构体成员
+    double swq = snow->swq;
+    double snow_depth = snow->snow_depth;
     double *dz_snow = snow->dz_snow;
     double *Zsum_snow = snow->Zsum_snow;
     double *zc_snow = snow->zc_snow;
     double *pack_T = snow->pack_T;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
-    if (snow->snow_depth <= 0.025) {
+
+    if (snow_depth < 0.025) {
         snow->Nsnow = 0;
-        pack_T[0] = min(255., CONST_TKFRZ);   // K
-        pack_ice[0] = snow->swq;
-        pack_liq[0] = 0.;
     }
-    else if (snow->snow_depth <= 0.05) {
+    else if (snow_depth >= 0.025 && snow_depth < 0.05) {
         snow->Nsnow = 1;
-        dz_snow[0] = snow->snow_depth;
-        zc_snow[0] = -dz_snow[0] / 2.0;
-        Zsum_snow[0] = -dz_snow[0];
-        pack_T[0] = min(255., CONST_TKFRZ);   // K
-        pack_ice[0] = snow->swq;
-        pack_liq[0] = 0.;
+        dz_snow[0] = snow_depth;
+        zc_snow[0] = dz_snow[0] / 2.0;
+        Zsum_snow[0] = dz_snow[0];
+        pack_T[0] = min(air_temp, CONST_TKFRZ);   // K
+        pack_ice[0] = swq * (dz_snow[0] / snow_depth);
+        pack_liq[0] = 0.0;
     }
-    else if (snow->snow_depth <= 0.20) {
+    else if (snow_depth >= 0.05 && snow_depth < 0.20) {
         snow->Nsnow = 2;
         dz_snow[0] = 0.05;
-        dz_snow[1] = snow->snow_depth - 0.05;
-        zc_snow[0] = -dz_snow[0] / 2.0;
-        zc_snow[1] = -(dz_snow[0] + dz_snow[1] / 2.0);
-        Zsum_snow[0] = -dz_snow[0];
-        Zsum_snow[1] = -(dz_snow[0] + dz_snow[1]);
-        pack_T[0] = min(255., CONST_TKFRZ);   // K
-        pack_T[1] = min(255., CONST_TKFRZ);   // K
-        pack_ice[0] = snow->swq * (dz_snow[0] / snow->snow_depth);
-        pack_ice[1] = snow->swq * (dz_snow[1] / snow->snow_depth);
-        pack_liq[0] = 0.;
-        pack_liq[1] = 0.;
-
+        dz_snow[1] = snow_depth - 0.05;
+        zc_snow[0] = dz_snow[0] / 2.0;
+        zc_snow[1] = dz_snow[0] + dz_snow[1] / 2.0;
+        Zsum_snow[0] = dz_snow[0];
+        Zsum_snow[1] = dz_snow[0] + dz_snow[1];
+        pack_T[0] = min(air_temp, CONST_TKFRZ);   // K
+        pack_T[1] = min(air_temp, CONST_TKFRZ);   // K
+        pack_ice[0] = swq * (dz_snow[0] / snow_depth);
+        pack_ice[1] = swq * (dz_snow[1] / snow_depth);
+        pack_liq[0] = 0.0;
+        pack_liq[1] = 0.0;
     }
     else {
         snow->Nsnow = 3;
         dz_snow[0] = 0.05;
-        dz_snow[1] = 0.15;
-        dz_snow[2] = snow->snow_depth - 0.20;
-        zc_snow[0] = -dz_snow[0] / 2.0;
-        zc_snow[1] = -(dz_snow[0] + dz_snow[1] / 2.0);
-        zc_snow[2] = -(dz_snow[0] + dz_snow[1] + dz_snow[2] / 2.0);
-        Zsum_snow[0] = -dz_snow[0];
-        Zsum_snow[1] = -(dz_snow[0] + dz_snow[1]);
-        Zsum_snow[2] = -(dz_snow[0] + dz_snow[1] + dz_snow[2]);
-        pack_T[0] = min(255., CONST_TKFRZ);   // K
-        pack_T[1] = min(255., CONST_TKFRZ);   // K
-        pack_T[2] = min(255., CONST_TKFRZ);   // K
-        pack_ice[0] = snow->swq * (dz_snow[0] / snow->snow_depth);
-        pack_ice[1] = snow->swq * (dz_snow[1] / snow->snow_depth);
-        pack_ice[2] = snow->swq * (dz_snow[2] / snow->snow_depth);
-        pack_liq[0] = 0.;
-        pack_liq[1] = 0.;
-        pack_liq[2] = 0.;
+        dz_snow[1] = 0.05;
+        dz_snow[2] = snow_depth - 0.10;
+        zc_snow[0] = dz_snow[0] / 2.0;
+        zc_snow[1] = dz_snow[0] + dz_snow[1] / 2.0;
+        zc_snow[2] = dz_snow[0] + dz_snow[1] + dz_snow[2] / 2.0;
+        Zsum_snow[0] = dz_snow[0];
+        Zsum_snow[1] = dz_snow[0] + dz_snow[1];
+        Zsum_snow[2] = dz_snow[0] + dz_snow[1] + dz_snow[2];
+        pack_T[0] = min(air_temp, CONST_TKFRZ);   // K
+        pack_T[1] = min(air_temp, CONST_TKFRZ);   // K
+        pack_T[2] = min(air_temp, CONST_TKFRZ);   // K
+        pack_ice[0] = swq * (dz_snow[0] / snow_depth);
+        pack_ice[1] = swq * (dz_snow[1] / snow_depth);
+        pack_ice[2] = swq * (dz_snow[2] / snow_depth);
+        pack_liq[0] = 0.0;
+        pack_liq[1] = 0.0;
+        pack_liq[2] = 0.0;
     }
 }

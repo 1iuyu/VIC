@@ -87,8 +87,11 @@ generate_default_state(force_data_struct *force,
         if (veg_con[veg].Cv > 0) {
             snow[veg].swq = 0.0;   // [mm]
             snow[veg].last_swq = 0.0;   // [mm]
+            if (snow[veg].swq > 0.0) {
+                snow[veg].snow_depth = snow[veg].swq / 200.0;
+            }
             // set snow layer properties
-            distribute_snow_state(&snow[veg]);
+            distribute_snow_state(air_temp, &snow[veg]);
         }
     }
     /*********************************
