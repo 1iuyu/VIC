@@ -94,6 +94,23 @@ generate_default_state(force_data_struct *force,
             distribute_snow_state(air_temp, &snow[veg]);
         }
     }
+
+    /*********************************
+      Initialize Surface Water
+    *********************************/
+    for (veg = 0; veg <= Nveg; veg++) {
+        if (cell[veg].IS_WET) {
+            cell[veg].h2osfc = 0.0;
+            cell[veg].frac_h2o = 0.0;
+        }
+        else if (cell[veg].IS_GLAC) {
+            cell[veg].frac_h2o = veg_con[veg].Cv;
+            double glac_volume = 0.0365 * pow(soil_con->cell_area * cell[veg].frac_h2o, 1.375);
+            cell[veg].h2osfc = glac_volume / soil_con->cell_area * 
+                                MM_PER_M * (CONST_RHOICE / CONST_RHOFW);
+        }
+    }
+
     /*********************************
       Initialize Nnode_parameters
     *********************************/
@@ -103,7 +120,11 @@ generate_default_state(force_data_struct *force,
         Nsnow = snow[veg].Nsnow;
         if (veg_con[veg].Cv > 0) {
             cell[veg].Nsoil = Nsoil;
-            cell[veg].Nnode = Nsoil + Nsnow + 1;
+            cell[veg].Nnode = Nbedrock + Nsnow;
+            // If surface water exists, add an additional node for the surface water layer
+            if (cell[veg].h2osfc > 0.0) {
+                cell[veg].Nnode += 1;
+            }
         }
     }
 
@@ -192,17 +213,6 @@ generate_default_state(force_data_struct *force,
                     cell[veg].moist[lidx] =
                             soil_con->Wsat_node[lidx];
                 }
-            }
-            // Initialize Surface Water
-            if (cell[veg].IS_WET) {
-                cell[veg].h2osfc = 0.0;
-                cell[veg].frac_h2o = 0.0;
-            }
-            else if (cell[veg].IS_GLAC) {
-                cell[veg].frac_h2o = veg_con[veg].Cv;
-                double glac_volume = 0.0365 * pow(soil_con->cell_area * cell[veg].frac_h2o, 1.375);
-                cell[veg].h2osfc = glac_volume / soil_con->cell_area * 
-                                    MM_PER_M * (CONST_RHOICE / CONST_RHOFW);
             }
         }
     }

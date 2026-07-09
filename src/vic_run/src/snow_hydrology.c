@@ -207,25 +207,28 @@ snow_hydrology(double             step_dt,
     double cum_depth = 0.0;
     for (i = 0; i < Nsnow; i++) {
         cum_depth += snow->dz_snow[i];
-        snow->Zsum_snow[i] = -cum_depth;  // 累计厚度到该层底部
-        snow->zc_snow[i] = -(cum_depth - snow->dz_snow[i]/2.0);  // 中心位置（负值）
+        snow->Zsum_snow[i] = cum_depth;  // 累计厚度到该层底部
+        snow->zc_snow[i] = cum_depth - snow->dz_snow[i] / 2.0;  // 中心位置
+    }
+    // update the number of nodes in the soil column based on the presence of snow layers
+    if (Nsnow > 0) {
+        cell->Nnode = Nsnow + cell->Nsoil + 1;
+    }
+    else {
+        cell->Nnode = cell->Nsoil + 1;
     }
 
-    /* sum up snow mass for layered snow */
+    /* Update SnowDepth and snow mass for multi-layer snow */
     if (Nsnow > 0) {
         snow->swq = 0.0;
+        snow->snow_depth = 0.0;
+        cell->Nnode = Nsnow + cell->Nsoil + 1;
         for (i = 0; i < Nsnow; i++) {
             snow->swq += pack_ice[i] + pack_liq[i];
-        }
-    }
-
-    /* Update SnowDepth for multi-layer snow */
-    if (Nsnow > 0) {
-        snow->snow_depth = 0.0;
-        for (i = 0; i < Nsnow; i++) {
             snow->snow_depth += dz_snow[i];
         }
     }
+
     // update snow quantity
     if (snow->snow_depth < param.TOL_A || snow->swq < param.TOL_A) {
         snow->swq = 0.0;
@@ -238,8 +241,11 @@ snow_hydrology(double             step_dt,
         }
     }
     else {
-        for (i = 0; i < MAX_SNOWS; i++) {
-            snow->snow_frac[i] = 0.0;
+        // clear snow fraction if no snow layers exist
+        if (snow->snow_frac[0] > 0.0) {
+            for (i = 0; i < MAX_SNOWS; i++) {
+                snow->snow_frac[i] = 0.0;
+            }
         }
     }
     /* accumulate glacier excessive flow [mm] */

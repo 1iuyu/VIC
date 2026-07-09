@@ -122,7 +122,7 @@ update_snow(double            air_temp,
     size_t new_layer = 0;
     double delta_depth = snow->delta_depth;
     /* shallow snow or no layer */
-    if (snow->Nsnow == 0 && snowfall > 0.) {
+    if (snow->Nsnow == 0 && snowfall > 0.0) {
         snow->snow_depth += delta_depth * step_dt;
         snow->swq += snowfall * step_dt;
     }
@@ -137,7 +137,7 @@ update_snow(double            air_temp,
         pack_liq[0] = 0.0;
     }
     // 如果有雪层，且雪深大于0.025m，则更新现有雪层的厚度和水当量
-    if (snow->Nsnow > 0 && new_layer == 0 && snowfall > 0.) {
+    if (snow->Nsnow > 0 && new_layer == 0 && snowfall > 0.0) {
         pack_ice[0] += snowfall * step_dt;
         dz_snow[0] += delta_depth * step_dt;
     }

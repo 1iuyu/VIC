@@ -96,6 +96,13 @@ calc_surf_water(double            step_dt,
     snow->coverage = coverage;
     cell->h2osfc = h2osfc;
     cell->frac_h2o = frac_h2o;
+    // Update the number of nodes in the soil column based on the presence of surface water
+    if (cell->h2osfc > 0.0) {
+        cell->Nnode = soil_con->Nbedrock + snow->Nsnow + 1;
+    }
+    else {
+        cell->Nnode = soil_con->Nbedrock + snow->Nsnow;
+    }
     
     return (0);
 }
