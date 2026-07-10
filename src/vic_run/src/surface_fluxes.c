@@ -27,7 +27,6 @@ surface_fluxes(size_t             hidx,
 {
     extern parameters_struct param;
     int    ErrorFlag;
-    size_t i;
     // Structures holding values for current iteration
     cell_data_struct  iter_cell;
     energy_bal_struct iter_energy;
@@ -92,6 +91,13 @@ surface_fluxes(size_t             hidx,
     surface_radiation(shortwave_dir,
                       shortwave_dfs,
                       energy, cell, veg_var);
+    
+    /***************************
+      Update node properties
+    ***************************/    
+    update_nodes(pressure, 
+                 energy,  cell, 
+                 snow, soil_con);
 
     /******************************
       Compute longwave emissivity
@@ -115,21 +121,6 @@ surface_fluxes(size_t             hidx,
     energy->EmissLongGrnd = EmissLongGrnd;
     energy->EmissLongSurf = EmissLongSurf;
 
-    // 更新体积热容量
-    for (i = 0; i < cell->Nnode; i++) {
-        energy->last_T[i] = energy->T[i];
-        energy->last_Cs[i] = energy->Cs_node[i];
-    }
-    // 更新土层体积水和冰分数
-    for (i = 0; i < cell->Nsoil; i++) {
-        cell->last_ice[i] = cell->ice[i];
-        cell->last_liq[i] = cell->liq[i];
-        cell->last_matric[i] = cell->matric[i];
-    }
-    for (i = 0; i < snow->Nsnow; i++) {
-        snow->last_packice[i] = snow->theta_ice[i];
-        snow->last_packliq[i] = snow->theta_liq[i];
-    }
     // 初始化能量和水分收敛标志
     energy->energy_flag = false;
     energy->moist_flag = false;

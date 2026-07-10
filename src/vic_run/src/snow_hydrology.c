@@ -24,7 +24,7 @@ snow_hydrology(double             step_dt,
                soil_con_struct   *soil_con)
 {
     extern parameters_struct param;
-    size_t      i;  
+    size_t      i, lidx;  
     double      vapor_grnd;
     double      conden_grnd;
     double      snow_sublim;
@@ -51,13 +51,15 @@ snow_hydrology(double             step_dt,
     /** compute soil/snow surface evap,
         dew rate based on energy flux. **/
     // positive part of ground latent heat
-    vapor_grnd = max(latent / LatentVapGrnd, 0.); // mm/s
+    vapor_grnd = max(latent / LatentVapGrnd, 0.0); // mm/s
     // negative part of ground latent heat
-    conden_grnd = fabs(min(latent / LatentVapGrnd, 0.)); // mm/s
+    conden_grnd = fabs(min(latent / LatentVapGrnd, 0.0)); // mm/s
+    snow->last_Nsnow = snow->Nsnow;
     snow->last_swq = snow->swq;
     for (i = 0; i < snow->Nsnow; i++) {
         snow->last_snowfrac[i] = snow->snow_frac[i];
     }
+
     cell->evap = vapor_grnd - conden_grnd;
 
     /* ground sublimation and evaporation */
@@ -77,6 +79,20 @@ snow_hydrology(double             step_dt,
     /* snowpack water processs */
     update_snow(air_temp, step_dt,
                 snowfall, snow);
+
+    // update snow fraction for multi-layer snow
+    if (snow->Nsnow > 0) {
+        for (i = 0; i < snow->Nsnow; i++) {
+            snow->snow_frac[i] = pack_ice[i] / (pack_ice[i] + pack_liq[i]);
+        }
+    } else {
+        // clear snow fraction if no snow layers exist
+        if (snow->snow_frac[0] > 0.0) {
+            for (i = 0; i < MAX_SNOWS; i++) {
+                snow->snow_frac[i] = 0.0;
+            }
+        }
+    }
     
     if (snow->Nsnow > 0) {
         /* snow layer combination */
@@ -187,7 +203,8 @@ snow_hydrology(double             step_dt,
     }
     /* Liquid water from snow bottom to soil [mm/s] */
     if (Nsnow > 0) {
-        snow->snow_outflow = pack_outflow[Nsnow-1] / step_dt;
+        lidx = Nsnow - 1;
+        snow->snow_outflow = pack_outflow[lidx] / step_dt;
         for (i = 0; i < Nsnow; i++) {
             pack_outflow[i] /= step_dt;
         }
@@ -210,19 +227,11 @@ snow_hydrology(double             step_dt,
         snow->Zsum_snow[i] = cum_depth;  // 累计厚度到该层底部
         snow->zc_snow[i] = cum_depth - snow->dz_snow[i] / 2.0;  // 中心位置
     }
-    // update the number of nodes in the soil column based on the presence of snow layers
-    if (Nsnow > 0) {
-        cell->Nnode = Nsnow + cell->Nsoil + 1;
-    }
-    else {
-        cell->Nnode = cell->Nsoil + 1;
-    }
 
     /* Update SnowDepth and snow mass for multi-layer snow */
     if (Nsnow > 0) {
         snow->swq = 0.0;
         snow->snow_depth = 0.0;
-        cell->Nnode = Nsnow + cell->Nsoil + 1;
         for (i = 0; i < Nsnow; i++) {
             snow->swq += pack_ice[i] + pack_liq[i];
             snow->snow_depth += dz_snow[i];
@@ -234,20 +243,7 @@ snow_hydrology(double             step_dt,
         snow->swq = 0.0;
         snow->snow_depth = 0.0;
     }
-    // update snow fraction for multi-layer snow
-    if (Nsnow > 0) {
-        for (i = 0; i < Nsnow; i++) {
-            snow->snow_frac[i] = pack_ice[i] / (pack_ice[i] + pack_liq[i]);
-        }
-    }
-    else {
-        // clear snow fraction if no snow layers exist
-        if (snow->snow_frac[0] > 0.0) {
-            for (i = 0; i < MAX_SNOWS; i++) {
-                snow->snow_frac[i] = 0.0;
-            }
-        }
-    }
+
     /* accumulate glacier excessive flow [mm] */
     snow->glac_excess += excess_flux * step_dt;
 

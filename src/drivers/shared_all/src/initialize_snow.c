@@ -23,6 +23,7 @@ initialize_snow(snow_data_struct *snow,
     for (i = 0; i <= veg_num; i++) {
         // Prognostic states
         snow[i].Nsnow = 0;
+        snow[i].last_Nsnow = 0;
         snow[i].albedo = 0.0;
         snow[i].coverage = 0.0;
         snow[i].snowage = 0.0;
@@ -41,6 +42,8 @@ initialize_snow(snow_data_struct *snow,
             snow[i].pack_T[lidx] = 0.0;
             snow[i].density[lidx] = 0.0;
             snow[i].pack_outflow[lidx] = 0.0;
+            snow[i].last_packice[lidx] = 0.0;
+            snow[i].last_packliq[lidx] = 0.0;
             snow[i].porosity[lidx] = 0.0;
             snow[i].snow_frac[lidx] = 0.0;
             snow[i].last_snowfrac[lidx] = 0.0;

@@ -36,7 +36,6 @@ calc_water_bal(double             step_dt,
     double *last_liq = cell->last_liq;
     double *last_ice = cell->last_ice;
 	double *matric = cell->matric;
-    double *zc_soil = soil_con->zc_soil;
     double *liquid_flux = cell->liquid_flux;
     double *transp_sink = cell->transp_sink;
 	double *vapor_flux = cell->vapor_flux;

@@ -71,6 +71,8 @@ SoilTemperature(double   		   step_dt,
     double *conduct_int = cell->conduct_int;
     double *Wsat_node = soil_con->Wsat_node;
     double *theta_liq = snow->theta_liq;
+    double *theta_ice = snow->theta_ice;
+    double *porosity = snow->porosity;
     double *last_packliq = snow->last_packliq;
     for (i = Nsoil - 2; i > 0; i--) {
         if (ice[i] > 0.0) {
@@ -438,25 +440,43 @@ SoilTemperature(double   		   step_dt,
                 T[i] -= diff;
                 if (T[i] > CONST_TKFRZ) {
                     pack_liq[i] = CONST_RHOICE * CONST_CPICE * dz_snow[i] * 
-                                (T[i] - CONST_TKFRZ) / (CONST_RHOFW * CONST_LATICE);
+                                (T[i] - CONST_TKFRZ) / CONST_LATICE;
                     pack_ice[i] -= pack_liq[i];
+                    // 确保冰含量不为负
+                    if (pack_ice[i] < 0.0) {
+                        pack_liq[i] += pack_ice[i];
+                        pack_ice[i] = 0.0;
+                    }
                     T[i] = CONST_TKFRZ;
                 }
             }
             else {
                 double tmp_liq = pack_liq[i];
-                pack_liq[i] -= diff;
+                double diff_mass = diff * CONST_RHOFW;
+                pack_liq[i] -= diff_mass;
                 if (pack_liq[i] < 0.0) {
-                    T[i] = CONST_TKFRZ + pack_liq[i] * CONST_RHOFW * CONST_LATICE / 
+                    double excess_cold = (-pack_liq[i]) * CONST_LATICE;
+                    T[i] = CONST_TKFRZ - excess_cold /
                                     (CONST_RHOICE * CONST_CPICE * dz_snow[i]);
                     pack_ice[i] += tmp_liq;
                     pack_liq[i] = 0.0;
                 }
                 else {
-                    pack_ice[i] += diff;
+                    pack_ice[i] += diff_mass;
+                    double max_ice = CONST_RHOICE * dz_snow[i];
+                    if (pack_ice[i] > max_ice) {
+                        pack_ice[i] = max_ice;
+                    }
+                    if (pack_ice[i] < 0.0) {
+                        pack_ice[i] = 0.0;
+                    }
                     T[i] = CONST_TKFRZ;
                 }
             }
+            // 更新雪层水分含量和冰分数
+            theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
+            porosity[i] = 1.0 - theta_ice[i];
+            theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW));
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
             if (cell->h2osfc > param.TOL_A) {
@@ -464,14 +484,15 @@ SoilTemperature(double   		   step_dt,
                     T[i] -= diff;
                     if (T[i] > CONST_TKFRZ) {
                         cell->h2osfc_liq = CONST_RHOICE * CONST_CPICE * cell->h2osfc * 
-                                        (T[i] - CONST_TKFRZ) / (CONST_RHOFW * CONST_LATICE);
+                                        (T[i] - CONST_TKFRZ) / CONST_LATICE;
                         cell->h2osfc_ice -= cell->h2osfc_liq;
                         T[i] = CONST_TKFRZ;
                     }
                 }
                 else {
                     double tmp_liq = cell->h2osfc_liq;
-                    cell->h2osfc_liq -= diff;
+                    double diff_mm = diff * cell->h2osfc * CONST_RHOFW;
+                    cell->h2osfc_liq -= diff_mm;
                     if (cell->h2osfc_liq < 0.0) {
                         T[i] = CONST_TKFRZ + cell->h2osfc_liq * CONST_RHOFW * CONST_LATICE / 
                                         (CONST_RHOICE * CONST_CPICE * cell->h2osfc);
@@ -479,7 +500,7 @@ SoilTemperature(double   		   step_dt,
                         cell->h2osfc_liq = 0.0;
                     }
                     else {
-                        cell->h2osfc_ice += diff;
+                        cell->h2osfc_ice += diff_mm;
                         T[i] = CONST_TKFRZ;
                     }
                 }
@@ -490,10 +511,14 @@ SoilTemperature(double   		   step_dt,
             lidx = i - tmp_Nsnow;
             // 判断是否需要处理相变
             if (matric[lidx] < 0.0 || last_matric[lidx] < 0.0) {
-                CalcPhaseChange(lidx, energy,
+                CalcPhaseChange(lidx, &T[i], energy,
                                 cell, soil_con);
             }
         }
+        else {
+            T[i] -= diff;
+        }
+        // 计算最大温度变化
         if (fabs(diff) > max_diff) {
             max_diff = fabs(diff);
         }
@@ -519,6 +544,7 @@ SoilTemperature(double   		   step_dt,
             soil_T[lidx] = T[i];
         }	
 	}
-	
+
 	return(0);
+
 }

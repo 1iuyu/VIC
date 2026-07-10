@@ -809,12 +809,13 @@ typedef struct {
 typedef struct {
     // State variables
     size_t Nsnow;                   /**< Number of snow layers in the model */
+    size_t last_Nsnow;              /**< Number of snow layers in the model from previous time step */
     double albedo;                  /**< snow surface albedo (fraction) */
     double coverage;                /**< fraction of snow band that is covered with snow */
-    double density[MAX_SNOWS];                 /**< snow density (kg/m^3) */
-    double dz_snow[MAX_SNOWS];        /**< each snow pack depth (m) */
+    double density[MAX_SNOWS];      /**< snow density (kg/m^3) */
+    double dz_snow[MAX_SNOWS];      /**< each snow pack depth (m) */
     double delta_depth;             /**< snow depth increasing rate [m/s] due to snowfall */
-    double Zsum_snow[MAX_SNOWS];
+    double Zsum_snow[MAX_SNOWS];    /**< snow interface layer depth (m) */
     double zc_snow[MAX_SNOWS];      /**< depth of snow thermal nodes (m) */
     double snow_thresholds[MAX_SNOWS]; /**< snow depth thresholds for layer remobilization (m) */
     double glac_excess;

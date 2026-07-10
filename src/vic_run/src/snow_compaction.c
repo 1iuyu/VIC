@@ -90,7 +90,7 @@ snow_compaction(double            step_dt,
                                         density[i]) / param.SNOW_COMPACT_ETA;
 
             // Compaction occurring during melt
-            if (snow->last_swq - snow->swq) {
+            if (snow->last_swq - snow->swq > 0.0) {
                 SnowMelt[i] = max(0.0, (last_snowfrac[i] - snow_frac[i]) / 
                                                 max(param.TOL_A, last_snowfrac[i]));
                 SnowMelt[i] = -SnowMelt[i] / step_dt;

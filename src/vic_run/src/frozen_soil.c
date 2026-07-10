@@ -14,7 +14,7 @@
 double
 frozen_soil(size_t           nidx,
             double           tmp_tkfrz,
-            double          *T,
+            double           T,
             double          *liq,
             double          *ice,
             soil_con_struct *soil_con)
@@ -28,7 +28,7 @@ frozen_soil(size_t           nidx,
     double total_liq = liq[nidx] + ice[nidx] * CONST_RHOICE / CONST_RHOFW;
 
     // 通过 Clausius-Clapeyron 方程计算
-    double total_potent = CONST_LATICE * ((T[nidx] - tmp_tkfrz) / T[nidx]) / CONST_G;
+    double total_potent = CONST_LATICE * ((T - tmp_tkfrz) / T) / CONST_G;
     equil_liq = SoilWaterRetentionCurve(MOIST_FLAG, nidx, 0.0,
                                         total_potent, soil_con);
 

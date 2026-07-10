@@ -28,7 +28,7 @@ int calc_energy_bal(size_t, double, double, force_data_struct *,
                     soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 int calc_water_bal(double, double, energy_bal_struct *, 
                    cell_data_struct *, snow_data_struct *, soil_con_struct *);
-int CalcPhaseChange(size_t, energy_bal_struct *, cell_data_struct *, soil_con_struct *);
+int CalcPhaseChange(size_t, double *, energy_bal_struct *, cell_data_struct *, soil_con_struct *);
 void calc_rainonly(double, double, double, double, double, double, double *, double *);
 double calc_veg_displacement(double, double, double);
 void calc_snow_coverage(double, bool, double, snow_data_struct *, soil_con_struct *);
@@ -61,7 +61,7 @@ double devries_weight(double, double, double);
 double d1plc(double, double, double);
 int FrictionVelocity(double, double, double *, double *, double *, double *,
                       double *, double);
-double frozen_soil(size_t, double, double *, double *, double *, soil_con_struct *);
+double frozen_soil(size_t, double, double, double *, double *, soil_con_struct *);
 int func_canopy_energy_bal(size_t, double, double, force_data_struct *,
                            energy_bal_struct *, cell_data_struct *, 
                            snow_data_struct *, soil_con_struct *,
@@ -132,8 +132,10 @@ void spacF(double *, double *, double *, double, double, cell_data_struct *,
 double solve_quadratic_min(double, double, double);
 void solve_quadratic(double, double, double, double *, double *);
 void update_snow(double, double, double, snow_data_struct *);
-void update_fluxes(energy_bal_struct *, cell_data_struct *, snow_data_struct *,
-                  soil_con_struct *);
+void update_fluxes(energy_bal_struct *, cell_data_struct *, 
+                   snow_data_struct *, soil_con_struct *);
+void update_nodes(double, energy_bal_struct *, cell_data_struct *, 
+                 snow_data_struct *, soil_con_struct *);
 void update_snow_fluxes(double *, double *, double *, double *,
                            double, double, double, double);
 int vic_run(force_data_struct *, all_vars_struct *,

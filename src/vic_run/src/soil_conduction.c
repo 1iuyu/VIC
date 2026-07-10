@@ -330,7 +330,7 @@ distribute_node_moisture_properties(cell_data_struct *cell,
             if (soil_T[nidx] < CONST_TKFRZ) {
                 /* compute moisture and ice contents */
                 double equil_liq = frozen_soil(nidx, CONST_TKFRZ,
-                                               soil_T,
+                                               soil_T[nidx],
                                                liq, ice,
                                                soil_con);
                 liq[nidx] = equil_liq;
