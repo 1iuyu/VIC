@@ -45,6 +45,8 @@ SoilTemperature(double   		   step_dt,
     double *matric = cell->matric;
     double *pack_liq = snow->pack_liq;
     double *pack_ice = snow->pack_ice;
+    double *pack_melt = snow->pack_melt;
+    double *pack_frze = snow->pack_frze;
     double *last_matric = cell->last_matric;
     double deriv_terms = energy->deriv_terms;
 	/* initialization */
@@ -71,8 +73,6 @@ SoilTemperature(double   		   step_dt,
     double *conduct_int = cell->conduct_int;
     double *Wsat_node = soil_con->Wsat_node;
     double *theta_liq = snow->theta_liq;
-    double *theta_ice = snow->theta_ice;
-    double *porosity = snow->porosity;
     double *last_packliq = snow->last_packliq;
     for (i = Nsoil - 2; i > 0; i--) {
         if (ice[i] > 0.0) {
@@ -447,6 +447,7 @@ SoilTemperature(double   		   step_dt,
                         pack_liq[i] += pack_ice[i];
                         pack_ice[i] = 0.0;
                     }
+                    pack_melt[i] += pack_liq[i]; // 记录雪层融化量
                     T[i] = CONST_TKFRZ;
                 }
             }
@@ -460,23 +461,33 @@ SoilTemperature(double   		   step_dt,
                                     (CONST_RHOICE * CONST_CPICE * dz_snow[i]);
                     pack_ice[i] += tmp_liq;
                     pack_liq[i] = 0.0;
+                    pack_frze[i] += tmp_liq; // 记录雪层冻结量
                 }
                 else {
-                    pack_ice[i] += diff_mass;
+                    if (diff_mass > 0.0) {
+                        pack_ice[i] += diff_mass;
+                        pack_frze[i] += diff_mass;   // 记录冻结量
+                    } else if (diff_mass < 0.0) {
+                        pack_ice[i] += diff_mass;  // diff_mass 为负，所以冰减少
+                        pack_melt[i] += (-diff_mass); // 记录融化量（取正值）
+                    }  
+                    // 约束冰含量
                     double max_ice = CONST_RHOICE * dz_snow[i];
                     if (pack_ice[i] > max_ice) {
+                        // 超过最大冰含量，调整记录
+                        double excess_ice = pack_ice[i] - max_ice;
                         pack_ice[i] = max_ice;
+                        if (diff_mass > 0.0) {
+                            pack_frze[i] -= excess_ice;   // 修正冻结量
+                        }
                     }
                     if (pack_ice[i] < 0.0) {
                         pack_ice[i] = 0.0;
                     }
+                    // 约束温度不超过冰点
                     T[i] = CONST_TKFRZ;
                 }
             }
-            // 更新雪层水分含量和冰分数
-            theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
-            porosity[i] = 1.0 - theta_ice[i];
-            theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW));
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
             if (cell->h2osfc > param.TOL_A) {
@@ -523,6 +534,7 @@ SoilTemperature(double   		   step_dt,
             max_diff = fabs(diff);
         }
 	}
+
     // 判断能量收敛标志
     if (max_diff < 0.01) {
         energy->energy_flag = true;
@@ -546,5 +558,4 @@ SoilTemperature(double   		   step_dt,
 	}
 
 	return(0);
-
 }

@@ -220,7 +220,11 @@ surface_fluxes(size_t             hidx,
         size_t Nsnow = snow->Nsnow;
         snow_outflow = snow->pack_outflow[Nsnow-1] / step_dt;
     }
-    double soil_inflow = (snow->pack_melt + snow->pack_comb +
+    double pack_melt = 0.0;
+    for (size_t i = 0; i < snow->Nsnow; i++) {
+        pack_melt += snow->pack_melt[i];
+    }
+    double soil_inflow = (pack_melt + snow->pack_comb +
                             snow->pack_transp) / step_dt / MM_PER_M; // 转换为m/s
     // 添加雪层多余水分,露水,降水
     soil_inflow += (snow_outflow + cell->dewsoil + 

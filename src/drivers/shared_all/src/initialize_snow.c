@@ -46,12 +46,12 @@ initialize_snow(snow_data_struct *snow,
             snow[i].last_packliq[lidx] = 0.0;
             snow[i].porosity[lidx] = 0.0;
             snow[i].snow_frac[lidx] = 0.0;
+            snow[i].pack_melt[lidx] = 0.0;
+            snow[i].pack_frze[lidx] = 0.0;
             snow[i].last_snowfrac[lidx] = 0.0;
             snow[i].snow_thresholds[lidx] = dz_snow_min[lidx];
         }
         snow[i].glac_excess = 0.0;
-        snow[i].pack_melt = 0.0;
-        snow[i].pack_frze = 0.0;
         snow[i].pack_comb = 0.0;
         snow[i].pack_transp = 0.0;
         snow[i].delta_depth = 0.0;

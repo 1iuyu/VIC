@@ -411,7 +411,6 @@ print_snow_data(snow_data_struct *snow)
     fprintf(LOG_DEST, "\tsnowage           : %f\n", snow->snowage);
     fprintf(LOG_DEST, "\told_swq           : %f\n", snow->last_swq);
     fprintf(LOG_DEST, "\tswq               : %f\n", snow->swq);
-    fprintf(LOG_DEST, "\tpack_melt         : %f\n", snow->pack_melt);
     fprintf(LOG_DEST, "\tdelta_depth       : %f\n", snow->delta_depth);
     fprintf(LOG_DEST, "\tnew_snow_density  : %f\n", snow->new_snow_density);
 }

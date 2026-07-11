@@ -825,21 +825,21 @@ typedef struct {
     double pack_ice[MAX_SNOWS];     /**< ice content of the snow pack (mm) */
     double pack_liq[MAX_SNOWS];     /**< liquid water content of the snow pack (mm) */
     double pack_outflow[MAX_SNOWS]; /**< outflow of liq water from each snow pack (m/s) */
-    double theta_ice[MAX_SNOWS];    
-    double theta_liq[MAX_SNOWS];
-    double last_packice[MAX_SNOWS];
-    double last_packliq[MAX_SNOWS];
+    double theta_ice[MAX_SNOWS];    /**< partial volume of snow ice [m3/m3] */
+    double theta_liq[MAX_SNOWS];    /**< partial volume of snow liquid water [m3/m3] */
+    double last_packice[MAX_SNOWS]; /**< partial volume of snow ice from previous time step */
+    double last_packliq[MAX_SNOWS]; /**< partial volume of snow liquid water from previous time step */
     double porosity[MAX_SNOWS];     /**< porosity of each snow pack (fraction) */
     double snow_frac[MAX_SNOWS];    /**< fraction of each snow pack that is snow (fraction) */
-    double last_snowfrac[MAX_SNOWS];
+    double last_snowfrac[MAX_SNOWS]; /**< fraction of each snow pack that is snow from previous time step */
     double snow_outflow;            /**< outflow of liquid water from the snowpack bottom (m/s) */
     double new_snow_density;        /**< bulk density of snowfall [kg/m3] */
-    double pack_melt;
-    double pack_frze;
+    double pack_melt[MAX_SNOWS];
+    double pack_frze[MAX_SNOWS];
     double pack_transp;             /**< transpiration from each snow pack (m/s) */
     double pack_comb;               /**< combined heat and moisture of each snow pack (J/m^3) */
     double swq;                     /**< snow water equivalent of the entire pack (mm) */
-    double last_swq;                 /**< snow water equivalent of the entire pack from previous time step (mm) */
+    double last_swq;                /**< snow water equivalent of the entire pack from previous time step (mm) */
 } snow_data_struct;
 
 /******************************************************************************

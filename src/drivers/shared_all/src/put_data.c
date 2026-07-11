@@ -348,14 +348,14 @@ collect_wb_terms(cell_data_struct cell,
         out_data[OUT_SNOW_POROSITY][lidx] += snow.porosity[lidx] * Cv;
         /** record snow density **/
         out_data[OUT_SNOW_DENSITY][lidx] += snow.density[lidx] * Cv;
+        /** record snowpack melt **/
+        out_data[OUT_SNOW_MELT][lidx] += snow.pack_melt[lidx] * Cv;
     }
     /** record canopy intercepted snow **/
     if (HasVeg) {
         out_data[OUT_CANOPY_SWE][0] += (veg_var.canopy_swq) * Cv *
                                         MM_PER_M;
     }
-    /** record snowpack melt **/
-    out_data[OUT_SNOW_MELT][0] += snow.pack_melt * Cv;
     /** record snowpack transp **/
     out_data[OUT_SNOW_TRANSP][0] += snow.pack_transp * Cv;
     /** record snowpack combination **/
@@ -463,9 +463,6 @@ collect_eb_terms(energy_bal_struct energy,
 
     /** record band snowpack depth **/
     out_data[OUT_SNOW_DEPTH_BAND][band] += snow.snow_depth * Cv; // (M)
-
-    /** record band snow melt **/
-    out_data[OUT_SNOW_MELT_BAND][band] += snow.pack_melt * Cv;
 
     /** record band snow coverage **/
     out_data[OUT_SNOW_COVER_BAND][band] += snow.coverage * Cv;
