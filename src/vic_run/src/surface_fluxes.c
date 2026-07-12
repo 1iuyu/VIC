@@ -45,6 +45,7 @@ surface_fluxes(size_t             hidx,
     /***************************
        Compute surface fluxes
     ***************************/
+    double wind = force->wind[hidx];
     double coszen = force->coszen[hidx];
     double pressure = force->pressure[hidx];
     double shortwave = force->shortwave[hidx];
@@ -208,7 +209,7 @@ surface_fluxes(size_t             hidx,
     ********************************************************/
     snow_hydrology(step_dt, air_temp,
                    snowfall, rainfall,
-                   pressure,
+                   pressure, wind,
                    energy, cell, 
                    snow, soil_con);
     /* 计算进入土层表面的水量 */

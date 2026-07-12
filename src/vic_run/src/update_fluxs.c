@@ -17,7 +17,7 @@ update_fluxes(energy_bal_struct *energy,
               soil_con_struct   *soil_con)
 {
     extern option_struct     options;
-
+    size_t Nsnow = snow->Nsnow;
     /********************************
        初始化地表温度为各部分的面积加权
     ********************************/
@@ -25,8 +25,10 @@ update_fluxes(energy_bal_struct *energy,
     double frac_h2o = cell->frac_h2o;
     double *soil_T = cell->soil_T;
     double *pack_T = snow->pack_T;
+    double *pack_melt = snow->pack_melt;
+    double *pack_frze = snow->pack_frze;
     double h2osfc_T = cell->h2osfc_T;
-    if (snow->Nsnow > 0) {
+    if (Nsnow > 0) {
         if (frac_h2o > 0.0) {
             energy->Tgrnd = (1.0 - coverage) * h2osfc_T + coverage * pack_T[0];
         } else {
@@ -40,7 +42,11 @@ update_fluxes(energy_bal_struct *energy,
             energy->Tgrnd = soil_T[0];
         }
     }
-
+    // 重制雪层融化量和冻结量
+    for (size_t i = 0; i < Nsnow; i++) {
+        pack_frze[i] = 0.0;
+        pack_melt[i] = 0.0;
+    }
     /********************************
      计算活动层深度并更新根区分数
     ********************************/

@@ -18,6 +18,7 @@ snow_hydrology(double             step_dt,
                double             snowfall,
                double             rainfall,
                double             pressure,
+               double             wind,
                energy_bal_struct *energy,
                cell_data_struct  *cell,
                snow_data_struct  *snow,        
@@ -83,7 +84,7 @@ snow_hydrology(double             step_dt,
     if (snow->Nsnow > 0) {
         /* snow layer combination */
         snow_compaction(step_dt, 
-                        air_temp,
+                        air_temp, wind,
                         pressure, snow);
         /* snow layer combination */
         snow_combination(dz_soil[0], cell, snow);

@@ -14,12 +14,14 @@
 void 
 snow_compaction(double            step_dt,
                 double            air_temp,
+                double            wind,
                 double            pressure,
                 snow_data_struct *snow)
 {
     extern parameters_struct   param;
 
-    size_t i, Nsnow;                   
+    size_t i, Nsnow;
+    bool   DRIFT = true;              
     double pack_press = 0.0;                 // Pressure of overlying snow [kg/m2]
     double TempDiff;                   // ConstFreezePoint - [K]
     double SnowVoid;                   // Void (1 - pack_ice - pack_water)
@@ -28,8 +30,9 @@ snow_compaction(double            step_dt,
     double SnowAging = 0.0;       // rate of compaction due to destructive metamorphism [1/s]
     double SnowBurden = 0.0;      // rate of compaction of snowpack due to overburden [1/s]
     double SnowMelt = 0.0;        // rate of compaction of snowpack due to melt [1/s]
+    double WindDrift = 0.0;       // rate of compaction of snowpack due to wind drift [1/s]
     double Compact_depth = 0.0;   // change in snow layers-thickness due to compaction [1/s]
-
+    double pseudo_depth = 0.0;    // wind drift compaction pseudo depth
     // 定义指针指向结构体中的数组
     double *dz_snow = snow->dz_snow;
     double *pack_T = snow->pack_T;
@@ -101,9 +104,31 @@ snow_compaction(double            step_dt,
             else {
                 SnowMelt = 0.0;
             }
+            // Compute wind drift compaction
+            if (DRIFT) {
+                double mobil_density = 1.25 - 0.0042 * (max(param.SNOW_NEW_SNOW_DENSITY, 
+                                                density[i]) - param.SNOW_NEW_SNOW_DENSITY);
+                double mobil_index = 0.34 * (-0.583 * 0.00035 - 0.833 + 0.833) + 0.66 * mobil_density;
+                double driftability = -2.868 * exp(-0.085 * wind) + 1.0 + mobil_index;
+                if (driftability > 0.0) {
+                    driftability = min(driftability, 3.25);
+                    pseudo_depth += 0.5 * dz_snow[i] * (3.25 - driftability);
+                    double gamma_drift = driftability * exp(-pseudo_depth / 0.1);
+                    double tau_inverse = gamma_drift / 172800.0;
+                    WindDrift = -max(0.0, 350.0 - density[i]) * tau_inverse;
+                    pseudo_depth += 0.5 * dz_snow[i] * (3.25 - driftability);
+                }
+                else {
+                    DRIFT = false;
+                    WindDrift = 0.0;
+                }
+            }
+            else {
+                WindDrift = 0.0;
+            }
 
             // Time rate of fractional change in snow thickness (units of s-1)
-            Compact_depth = (SnowAging + SnowBurden + SnowMelt) * step_dt;
+            Compact_depth = (SnowAging + SnowBurden + SnowMelt + WindDrift) * step_dt;
             Compact_depth = min(0.0, max(-0.5, Compact_depth));
 
             // Change in thickness due to compaction
