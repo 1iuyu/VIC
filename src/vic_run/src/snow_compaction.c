@@ -37,6 +37,7 @@ snow_compaction(double            step_dt,
     double *pack_liq = snow->pack_liq;
     double *snow_frac = snow->snow_frac;
     double *pack_melt = snow->pack_melt;
+    double *theta_liq = snow->theta_liq;
     double *density = snow->density;  // Partial density of ice [kg/m3]
     double *last_snowfrac = snow->last_snowfrac;
     Nsnow = snow->Nsnow;
@@ -84,9 +85,12 @@ snow_compaction(double            step_dt,
             }
 
             // Compaction due to overburden
-            SnowBurden = -(pack_press + 0.5 * SnowMass) * 
+            /* SnowBurden = -(pack_press + 0.5 * SnowMass) * 
                                     exp(-0.08 * TempDiff - SNOW_COMPACT_P * 
-                                        density[i]) / param.SNOW_COMPACT_ETA;
+                                        density[i]) / param.SNOW_COMPACT_ETA; */
+            double f1 = 1.0 / (1.0 + 60.0 * theta_liq[i]);
+            double eta = 4.0 * f1 * (density[i] / 358.0) * exp(0.1 * TempDiff + 0.023 * density[i]) * 7622370.0;
+            SnowBurden = -(pack_press + 0.5 * SnowMass) / eta;
 
             // Compaction occurring during melt
             if (pack_melt[i] > 0.0) {
