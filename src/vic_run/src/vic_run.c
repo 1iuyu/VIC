@@ -108,8 +108,8 @@ vic_run(force_data_struct   *force,
                 force->snowf[hidx] += snowfall * Cv;
             }
             else if (has_rain && has_snow) {
-                snowfall = force->rainf[hidx] * soil_con->Pfactor[band];
-                rainfall = force->snowf[hidx] * soil_con->Pfactor[band];
+                rainfall = force->rainf[hidx] * soil_con->Pfactor[band];
+                snowfall = force->snowf[hidx] * soil_con->Pfactor[band];
                 force->prec[hidx] += (rainfall + snowfall) * Cv;
             }
             // 校正降雨和降雪

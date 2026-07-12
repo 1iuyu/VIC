@@ -182,7 +182,7 @@ func_canopy_energy_bal(size_t             hidx,
     // 初始化迭代变量
     double Tfoliage_init = Tfoliage;
     // double Tstem_init = Tstem;
-
+    double canopyevap = 0.0;
     // 迭代求解冠层温度和相关的能量通量
     do {
         // Perform stability iteration
@@ -311,9 +311,9 @@ func_canopy_energy_bal(size_t             hidx,
         efpot = air_density * (NetVEG / Ra_sub[1]) *
                 (wtgaq * (qsat_T + qsatdT * delt_T) -
                  wtgq0 * Qair_grnd - wtaq0 * Qair);
-        cell->canopyevap = rpp * efpot;
-        double res_energy = max(0.0, cell->canopyevap - cell->transp - canopy_swq / step_dt);
-        cell->canopyevap = min(cell->canopyevap, cell->transp + canopy_swq / step_dt);
+        canopyevap = rpp * efpot;
+        double res_energy = max(0.0, canopyevap - cell->transp - canopy_swq / step_dt);
+        canopyevap = min(canopyevap, cell->transp + canopy_swq / step_dt);
 
         // Update 
         SensibleLeaf += coef_sensible * wtga * delt_T + CONST_LATVAP * res_energy;
@@ -371,7 +371,7 @@ func_canopy_energy_bal(size_t             hidx,
     energy->error = (1.0 - f_abs_stem) * (NetShortSub + coef_lw_atmos + 
             coef_lw_canopy * pow(Tfoliage, 3.0) * (Tfoliage + 4.0 * 
             delt_T) + coef_lw_grnd * pow(Tgrnd, 4.0)) - SensibleLeaf - CONST_LATVAP * 
-            cell->canopyevap - ((Tfoliage - Tfoliage_init) * cp_leaf / step_dt);
+            canopyevap - ((Tfoliage - Tfoliage_init) * cp_leaf / step_dt);
     double dt_stem = 0.0;
     if (options.BIOMASST) {
         if (stem_biomass > 0.0) {
@@ -407,26 +407,28 @@ func_canopy_energy_bal(size_t             hidx,
 
     // 更新累积的露水 (kg/m2)
     if (Tfoliage > CONST_TKFRZ) {
-        if ((cell->canopyevap - cell->transp) * step_dt > veg_var->int_rain) {
-            veg_var->int_snow =max(0.0, veg_var->int_snow + veg_var->int_rain +
-                     (cell->canopyevap - cell->transp) * step_dt);
+        if ((canopyevap - cell->transp) * step_dt > veg_var->int_rain) {
+            veg_var->int_snow = max(0.0, veg_var->int_snow + veg_var->int_rain +
+                     (cell->transp - canopyevap) * step_dt);
         }
-        veg_var->int_rain += veg_var->int_snow + (cell->canopyevap - cell->transp) * step_dt;
+        veg_var->int_rain = max(0.0, veg_var->int_rain + (cell->transp - canopyevap) * step_dt);
     }
     else if (Tfoliage <= CONST_TKFRZ) {
-        if ((cell->canopyevap - cell->transp) * step_dt > veg_var->int_snow) {
-            veg_var->int_rain = max(0.0, veg_var->int_rain + (cell->canopyevap - cell->transp) * 
-                        step_dt - veg_var->int_snow);
+        if ((canopyevap - cell->transp) * step_dt > veg_var->int_snow) {
+            veg_var->int_rain = veg_var->int_rain + veg_var->int_snow + (cell->transp - 
+                                    canopyevap) * step_dt;
         }
-        veg_var->int_snow = max(0.0, veg_var->int_snow + (cell->canopyevap - cell->transp) * step_dt);
+        veg_var->int_snow = max(0.0, veg_var->int_snow + (cell->transp - canopyevap) * step_dt);
     }
-
+    veg_var->canopy_swq = veg_var->int_rain + veg_var->int_snow;
+    
     // 复制到energy结构体
     cell->Ra_leaf = Ra_leaf;
     cell->Ra_stem = Ra_stem;
     energy->Tcanopy = Tcanopy;
     energy->Tstem = Tstem;
     energy->Tfoliage = Tfoliage;
+    cell->canopyevap = canopyevap;
     energy->SensibleStem = SensibleStem;
     energy->SensibleLeaf = SensibleLeaf;
     energy->NetLongOver = NetLongOver;

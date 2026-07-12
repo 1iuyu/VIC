@@ -141,11 +141,6 @@ snow_hydrology(double             step_dt,
         }
     }
 
-    /* Porosity and partial volume */
-    for (i = 0; i < Nsnow; i++) {
-        theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
-        porosity[i] = 1.0 - theta_ice[i];
-    }
     /* compute inter-layer snow water flow */
     if (Nsnow > 0) {
         double snow_inflow = 0.0;
@@ -187,6 +182,17 @@ snow_hydrology(double             step_dt,
             for (i = 0; i < MAX_SNOWS; i++) {
                 pack_outflow[i] = 0.0;  // no snow, no outflow
             }
+        }
+        if (theta_ice[0] > 0.0) {
+            for (i = 0; i < MAX_SNOWS; i++) {
+                theta_ice[i] = 0.0;
+                porosity[i] = 0.0;
+            }
+        }
+        if (theta_liq[0] > 0.0) {
+            for (i = 0; i < MAX_SNOWS; i++) {
+                theta_liq[i] = 0.0;
+            }            
         }
     }
     for (i = 0; i < Nsnow; i++) {
