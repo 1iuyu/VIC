@@ -16,13 +16,9 @@ snow_combination(double            dz_soil,
                  cell_data_struct *cell,
                  snow_data_struct *snow)
 {
-
-    size_t      i, j, k;
-    size_t      lidx;
-    size_t      index;
-
     /* initialize */
-    size_t old_Nsnow = snow->Nsnow;
+    size_t i, j, k;
+    size_t lidx;
     double tmp_ice = 0.0;
     double tmp_liq = 0.0;
     double pack_comb = 0.0;
@@ -36,31 +32,48 @@ snow_combination(double            dz_soil,
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
 
-    for (i = 0; i < old_Nsnow; i++) {
+    i = 0;
+    while (i < snow->Nsnow) {
         if (pack_ice[i] < 0.1) {
-            // 如果不是底层雪层向下合并
-            if (i != 0) {
-                pack_liq[i-1] += pack_liq[i];
-                pack_ice[i-1] += pack_ice[i];
-                dz_snow[i-1] += dz_snow[i];
-            }
-            // 如果是底层雪层向上合并
-            else {
-                // 如果包含2至3雪层
+            // 如果是顶层（i == 0），将下层合并到顶层
+            if (i == 0) {
                 if (snow->Nsnow > 1) {
-                    pack_liq[i+1] += pack_liq[i];
-                    pack_ice[i+1] += pack_ice[i];
-                    dz_snow[i+1] += dz_snow[i];
+                    // 将第1层(i+1)合并到第0层(i)
+                    update_snow_fluxes(&dz_snow[0],
+                                       &pack_liq[0],
+                                       &pack_ice[0],
+                                       &pack_T[0],
+                                       dz_snow[1],
+                                       pack_liq[1],
+                                       pack_ice[1],
+                                       pack_T[1]);
+                    
+                    // 将下面所有层向上移动
+                    for (j = i+1; j < snow->Nsnow - 1; j++) {
+                        pack_T[j] = pack_T[j + 1];
+                        pack_liq[j] = pack_liq[j + 1];
+                        pack_ice[j] = pack_ice[j + 1];
+                        dz_snow[j] = dz_snow[j + 1];
+                    }
+                    
+                    // 清空最后一个元素
+                    j = snow->Nsnow - 1;
+                    pack_T[j] = 0.0;
+                    pack_liq[j] = 0.0;
+                    pack_ice[j] = 0.0;
+                    dz_snow[j] = 0.0;
+                    
+                    snow->Nsnow--;
                 }
-                // 只有1层
                 else {
+                    // 只有一层雪的处理
                     if (pack_ice[i] > 0.0) {
-                        pack_comb = pack_liq[i];
+                        pack_comb += pack_liq[i];
                         snow->swq = pack_ice[i];
                         snow->snow_depth = dz_snow[i];
-                    }
+                    } 
                     else {
-                        pack_comb = pack_liq[i] + pack_ice[i];
+                        pack_comb += pack_liq[i] + pack_ice[i];
                         if (pack_comb < 0.0) {
                             ice[0] += pack_comb / (dz_soil * MM_PER_M);
                             pack_comb = 0.0;
@@ -68,26 +81,58 @@ snow_combination(double            dz_soil,
                         snow->swq = 0.0;
                         snow->snow_depth = 0.0;
                     }
+                    
+                    // 清空唯一雪层
+                    pack_T[i] = 0.0;
                     pack_liq[i] = 0.0;
                     pack_ice[i] = 0.0;
                     dz_snow[i] = 0.0;
+                    snow->Nsnow--;
                 }
-            }   // if(i != 0)
-            if (i < snow->Nsnow && snow->Nsnow > 1) {
-                for (j = i; j < snow->Nsnow - 1; j++) {
-                    pack_T[j] = pack_T[j+1];
-                    pack_liq[j] = pack_liq[j+1];
-                    pack_ice[j] = pack_ice[j+1];
-                    dz_snow[j] = dz_snow[j+1];
-                }
+                
+                // 继续检查合并后的顶层（索引0）
+                continue;
             }
-            snow->Nsnow -= 1;
+            // 如果不是顶层（i > 0），将本层合并到上层
+            else {
+                update_snow_fluxes(&dz_snow[i-1],
+                                   &pack_liq[i-1],
+                                   &pack_ice[i-1],
+                                   &pack_T[i-1],
+                                   dz_snow[i],
+                                   pack_liq[i],
+                                   pack_ice[i],
+                                   pack_T[i]);
+                
+                // 将下面所有层向上移动
+                for (j = i; j < snow->Nsnow - 1; j++) {
+                    pack_T[j] = pack_T[j + 1];
+                    pack_liq[j] = pack_liq[j + 1];
+                    pack_ice[j] = pack_ice[j + 1];
+                    dz_snow[j] = dz_snow[j + 1];
+                }
+                
+                // 清空最后一个元素
+                j = snow->Nsnow - 1;
+                pack_T[j] = 0.0;
+                pack_liq[j] = 0.0;
+                pack_ice[j] = 0.0;
+                dz_snow[j] = 0.0;
+                
+                snow->Nsnow--;
+                
+                // 回退检查合并后的上层
+                i--;
+                continue;
+            }
         }
-    }   // i loop
+        i++;
+    }
+
     snow->pack_comb = pack_comb;
     
     if (ice[0] < 0.0) {
-        liq[0] += ice[0];
+        liq[0] += ice[0] * CONST_RHOICE / CONST_RHOFW;
         ice[0] = 0.0;
     }
     /* if no longer multi-layer */
@@ -108,67 +153,79 @@ snow_combination(double            dz_soil,
     if (snow->snow_depth < 0.025 && snow->Nsnow > 0) {
         snow->Nsnow = 0;
         snow->swq = tmp_ice;
-        pack_transp = tmp_liq;
+        pack_transp += tmp_liq;
         if (snow->swq <= 0.0) {
             snow->snow_depth = 0.0;
         }
+        for (i = 0; i < MAX_SNOWS; i++) {
+            pack_T[i] = 0.0;
+            pack_liq[i] = 0.0;
+            pack_ice[i] = 0.0;
+            dz_snow[i] = 0.0;
+        }
     }
     snow->pack_transp = pack_transp;
-
+    
     /* check the snow depth, snow layers combined */
     if (snow->Nsnow > 1) {
-        old_Nsnow = snow->Nsnow;
+
         lidx = 0;
-        for (i = 0; i < old_Nsnow; i++) {
+
+        i = 0;
+        while (i < snow->Nsnow) {
+
             if (dz_snow[i] < snow->snow_thresholds[lidx]) {
+                size_t source;
+                size_t target;         
+                // 选择源层和目标层
                 if (i == 0) {
-                    index = i + 1;
-                }
-                else if (i == old_Nsnow - 1) {
-                    index = i - 1;
+                    target = 0;
+                    source = 1;
                 }
                 else {
-                    index = i + 1;
-                    if (dz_snow[i+1] + dz_snow[i] < dz_snow[i-1] + dz_snow[i]) {
-                        index = i - 1;
-                    }
+                    target = i - 1;  // 目标层（上层）
+                    source = i;      // 源层（当前薄层）
                 }
 
-                if (index > i) {
-                    j = index;
-                    k = i;
+                update_snow_fluxes(&dz_snow[target],
+                                   &pack_liq[target],
+                                   &pack_ice[target],
+                                   &pack_T[target],
+                                   dz_snow[source],
+                                   pack_liq[source],
+                                   pack_ice[source],
+                                   pack_T[source]);
+
+                // 删除源层，将后面的层前移
+                for (j = source; j < snow->Nsnow - 1; j++) {
+                    pack_T[j] = pack_T[j + 1];
+                    pack_ice[j] = pack_ice[j + 1];
+                    pack_liq[j] = pack_liq[j + 1];
+                    dz_snow[j] = dz_snow[j + 1];
                 }
-                else {
-                    j = i;
-                    k = index;
-                }
-                /* update combined snow water & temperature */
-                update_snow_fluxes(&dz_snow[k], 
-                                   &pack_liq[k],
-                                   &pack_ice[k],
-                                   &pack_T[k],
-                                    dz_snow[j], 
-                                    pack_liq[j],
-                                    pack_ice[j],
-                                    pack_T[j]);
-                /* Now shift all elements above this down one. */
-                if (j + 1 < snow->Nsnow) {
-                    for (k = j + 1; k < snow->Nsnow - 1; k++) {
-                        pack_T[k] = pack_T[k+1];
-                        pack_ice[k] = pack_ice[k+1];
-                        pack_liq[k] = pack_liq[k+1];
-                        dz_snow[k] = dz_snow[k+1];
-                    }
-                }
-                /* Decrease the number of snow layers */
-                snow->Nsnow -= 1;
+
+                // 清空最后一层
+                j = snow->Nsnow - 1;
+                pack_T[j] = 0.0;
+                pack_ice[j] = 0.0;
+                pack_liq[j] = 0.0;
+                dz_snow[j] = 0.0;
+
+                snow->Nsnow--;
+
                 if (snow->Nsnow <= 1) {
-                    return;
+                    break;
                 }
+
+                /* 回到目标层重新检查 */
+                i = target;
+                lidx = target;
+
+                continue;
             }
-            else {
-                lidx++;
-            }
+
+            lidx++;
+            i++;
         }
     }
 }
