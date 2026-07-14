@@ -250,5 +250,5 @@ void solve_quadratic(double a, double b, double c, double *r1, double *r2) {
 double solve_quadratic_min(double a, double b, double c) {
     double r1, r2;
     solve_quadratic(a, b, c, &r1, &r2);
-    return fmin(r1, r2);
+    return min(r1, r2);
 }
