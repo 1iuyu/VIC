@@ -407,18 +407,18 @@ func_canopy_energy_bal(size_t             hidx,
 
     // 更新累积的露水 (kg/m2)
     if (Tfoliage > CONST_TKFRZ) {
-        if ((canopyevap - cell->transp) * step_dt > veg_var->int_rain) {
-            veg_var->int_snow = max(0.0, veg_var->int_snow + veg_var->int_rain +
+        if ((canopyevap - cell->transp) * step_dt > veg_var->iter_intrain) {
+            veg_var->int_snow = max(0.0, veg_var->iter_intsnow + veg_var->iter_intrain +
                      (cell->transp - canopyevap) * step_dt);
         }
-        veg_var->int_rain = max(0.0, veg_var->int_rain + (cell->transp - canopyevap) * step_dt);
+        veg_var->int_rain = max(0.0, veg_var->iter_intrain + (cell->transp - canopyevap) * step_dt);
     }
     else if (Tfoliage <= CONST_TKFRZ) {
-        if ((canopyevap - cell->transp) * step_dt > veg_var->int_snow) {
-            veg_var->int_rain = veg_var->int_rain + veg_var->int_snow + (cell->transp - 
+        if ((canopyevap - cell->transp) * step_dt > veg_var->iter_intsnow) {
+            veg_var->int_rain = veg_var->iter_intrain + veg_var->iter_intsnow + (cell->transp - 
                                     canopyevap) * step_dt;
         }
-        veg_var->int_snow = max(0.0, veg_var->int_snow + (cell->transp - canopyevap) * step_dt);
+        veg_var->int_snow = max(0.0, veg_var->iter_intsnow + (cell->transp - canopyevap) * step_dt);
     }
     veg_var->canopy_swq = veg_var->int_rain + veg_var->int_snow;
     

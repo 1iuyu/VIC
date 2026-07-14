@@ -148,7 +148,7 @@ generate_default_state(force_data_struct *force,
             double surf_temp = air_temp + soil_con->Tfactor[band];
             // Initialize snow node temperatures
             for (i = 0; i < Nsnow; i++) {
-                energy[veg].T[i] = snow[veg].pack_T[i];
+                energy[veg].last_T[i] = snow[veg].pack_T[i];
             }
             /* Initialize soil node temperatures */
             for (k = Nsnow; k < cell[veg].Nnode; k++) {
@@ -232,10 +232,21 @@ generate_default_state(force_data_struct *force,
                 log_err("Error setting physical properties for "
                         "soil thermal nodes"); 
             }
+            // initialize last step soil layer properties
+            for (i = 0; i < cell[veg].Nsoil; i++) {
+                cell[veg].last_ice[i] = cell[veg].ice[i];
+                cell[veg].last_liq[i] = cell[veg].liq[i];
+                cell[veg].last_matric[i] = cell[veg].matric[i];
+            }
             /* Soil and ice thermal properties for the layer */
             prepare_full_energy(pressure, &cell[veg], 
                                 &energy[veg],
                                 &snow[veg], soil_con);
+            // initialize last step Cs_node
+            for (i = 0; i < cell[veg].Nnode; i++) {
+                energy[veg].last_T[i] = energy[veg].T[i];
+                energy[veg].last_Cs[i] = energy[veg].Cs_node[i];
+            }
         }
     }
     /******************************************

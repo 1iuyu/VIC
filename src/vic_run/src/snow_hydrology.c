@@ -36,7 +36,6 @@ snow_hydrology(double             step_dt,
     double *dz_snow = snow->dz_snow;
     double *porosity = snow->porosity;
     double *theta_liq = snow->theta_liq;
-    double *theta_ice = snow->theta_ice;
     double *dz_soil = soil_con->dz_soil;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
@@ -55,13 +54,6 @@ snow_hydrology(double             step_dt,
     // negative part of ground latent heat
     conden_grnd = fabs(min(latent / LatentVapGrnd, 0.0)); // mm/s
     cell->evap = vapor_grnd - conden_grnd;
-    
-    // update snowpack state variables for the last time step
-    snow->last_Nsnow = snow->Nsnow;
-    snow->last_swq = snow->swq;
-    for (i = 0; i < snow->Nsnow; i++) {
-        snow->last_snowfrac[i] = snow->snow_frac[i];
-    }
 
     /* ground sublimation and evaporation */
     snow_sublim = 0.0;
@@ -95,7 +87,6 @@ snow_hydrology(double             step_dt,
     /*******************************
       Snowpack hydrology processes
     *******************************/
-    size_t Nsnow = snow->Nsnow;
     if (snow->swq == 0.0) {
         ice[0] += (snowfrost - snow_sublim) * step_dt / (dz_soil[0] * MM_PER_M);
         if (ice[0] < 0.0) {
@@ -103,7 +94,7 @@ snow_hydrology(double             step_dt,
             ice[0] = 0.0;
         }
     }
-    if (Nsnow == 0 && snow->swq > 0.0) {
+    if (snow->Nsnow == 0 && snow->swq > 0.0) {
         double tmp_swq = snow->swq;
         snow->swq = snow->swq - snow_sublim * step_dt + snowfrost * step_dt;   
         double ratio = snow->swq / tmp_swq;
@@ -125,23 +116,24 @@ snow_hydrology(double             step_dt,
     }
 
     /* for multi-layer (>= 1) snow */
-    if (Nsnow > 0) {
+    if (snow->Nsnow > 0) {
         double tmp_liq = pack_ice[0] + pack_liq[0]; // top layer total snow water before sublimation
         double tmp_ice = pack_ice[0] - snow_sublim * step_dt + snowfrost * step_dt;
         pack_ice[0] = tmp_ice;
-        if (tmp_ice < param.TOL_A && Nsnow > 0) {
+        if (tmp_ice < param.TOL_A && snow->Nsnow > 0) {
             snow_combination(dz_soil[0], cell, snow);
         }
-        if (tmp_ice > param.TOL_A && Nsnow > 0) {
+        if (tmp_ice > param.TOL_A && snow->Nsnow > 0) {
             dz_snow[0] *= (pack_ice[0] + pack_liq[0]) / tmp_liq;
         }
-        if (Nsnow > 0) {
+        if (snow->Nsnow > 0) {
             pack_liq[0] += rainfall * step_dt * snow->coverage;
             pack_liq[0] = max(0.0, pack_liq[0]);
         }
     }
 
     /* compute inter-layer snow water flow */
+    size_t Nsnow = snow->Nsnow;
     if (Nsnow > 0) {
         double snow_inflow = 0.0;
         for (i = 0; i < Nsnow; i++) {
@@ -154,8 +146,6 @@ snow_hydrology(double             step_dt,
             }
             // 更新雪层水分含量和冰分数
             pack_liq[i] += snow_inflow;
-            theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
-            porosity[i] = 1.0 - theta_ice[i];
             theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW));
             pack_outflow[i] = max(0.0, (theta_liq[i] - liquid_capacity *
                                                     porosity[i]) * dz_snow[i]);
@@ -174,25 +164,6 @@ snow_hydrology(double             step_dt,
             }
             snow_inflow = pack_outflow[i];
             theta_liq[i] = pack_liq[i] / (dz_snow[i] * CONST_RHOFW);
-        }
-    }
-    else {
-        // 清除残留的数据
-        if (pack_outflow[0] > 0.0) {
-            for (i = 0; i < MAX_SNOWS; i++) {
-                pack_outflow[i] = 0.0;  // no snow, no outflow
-            }
-        }
-        if (theta_ice[0] > 0.0) {
-            for (i = 0; i < MAX_SNOWS; i++) {
-                theta_ice[i] = 0.0;
-                porosity[i] = 0.0;
-            }
-        }
-        if (theta_liq[0] > 0.0) {
-            for (i = 0; i < MAX_SNOWS; i++) {
-                theta_liq[i] = 0.0;
-            }            
         }
     }
     for (i = 0; i < Nsnow; i++) {
@@ -241,18 +212,13 @@ snow_hydrology(double             step_dt,
         snow->snow_depth = 0.0;
     }
 
-    // update snow fraction for multi-layer snow
-    if (Nsnow == 0) {
-        // clear snow fraction if no snow layers exist
-        if (snow->snow_frac[0] > 0.0) {
-            for (i = 0; i < MAX_SNOWS; i++) {
-                snow->snow_frac[i] = 0.0;
-            }
-        }
-    }
-
     /* accumulate glacier excessive flow [mm] */
-    snow->glac_excess += excess_flux * step_dt;
+    snow->glac_excess = excess_flux * step_dt;
+
+    // Update node properties
+    update_nodes(pressure, 
+                 energy,  cell, 
+                 snow, soil_con);
 
     /* frozen ground and soil */
     if (energy->FrozenGrnd) {

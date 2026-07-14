@@ -92,13 +92,6 @@ surface_fluxes(size_t             hidx,
     surface_radiation(shortwave_dir,
                       shortwave_dfs,
                       energy, cell, veg_var);
-    
-    /***************************
-      Update node properties
-    ***************************/    
-    update_nodes(pressure, 
-                 energy,  cell, 
-                 snow, soil_con);
 
     /******************************
       Compute longwave emissivity
@@ -215,20 +208,13 @@ surface_fluxes(size_t             hidx,
     /* 计算进入土层表面的水量 */
     // pack_melt: 雪层融化的水量[mm]
     // pack_comb: 薄雪层合并中pack_liq导致的表面积水[mm]
-    // pack_transp: 从多层积雪转变为无积雪时由薄雪造成的地表积水深度[mm]
-    double snow_outflow = 0.0;
-    if (snow->Nsnow > 0) {
-        size_t Nsnow = snow->Nsnow;
-        snow_outflow = snow->pack_outflow[Nsnow-1] / step_dt;
-    }
     double pack_melt = 0.0;
     for (size_t i = 0; i < snow->Nsnow; i++) {
         pack_melt += snow->pack_melt[i];
     }
-    double soil_inflow = (pack_melt + snow->pack_comb +
-                            snow->pack_transp) / step_dt / MM_PER_M; // 转换为m/s
+    double soil_inflow = (pack_melt + snow->pack_comb) / step_dt / MM_PER_M; // 转换为m/s
     // 添加雪层多余水分,露水,降水
-    soil_inflow += (snow_outflow + cell->dewsoil + 
+    soil_inflow += (snow->snow_outflow + cell->dewsoil + 
                     rainfall * (1.0 - snow->coverage)) / MM_PER_M;
     soil_inflow -= cell->esoil;
     

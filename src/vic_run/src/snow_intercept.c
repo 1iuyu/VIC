@@ -161,6 +161,9 @@ snow_intercept(double            step_dt,
     veg_var->MaxSnowInt = MaxSnowInt;
     veg_var->MaxRainInt = MaxRainInt;
     veg_var->SnowUnload = SnowUnload;
+    // update the last time step values
+    veg_var->iter_intrain = veg_var->int_rain;
+    veg_var->iter_intsnow = veg_var->int_snow;
     /* rain or snow on the ground [mm/s] */
     (*RainFall) = RainDrip + RainThroughFall; 
     (*SnowFall) = SnowDrip + SnowThroughFall + SnowUnload;

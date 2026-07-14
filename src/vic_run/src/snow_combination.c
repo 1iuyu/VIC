@@ -17,12 +17,11 @@ snow_combination(double            dz_soil,
                  snow_data_struct *snow)
 {
     /* initialize */
-    size_t i, j, k;
+    size_t i, j;
     size_t lidx;
     double tmp_ice = 0.0;
     double tmp_liq = 0.0;
     double pack_comb = 0.0;
-    double pack_transp = 0.0;
 
     // 定义指针指向结构体中的数组
     double *ice = cell->ice;
@@ -128,8 +127,6 @@ snow_combination(double            dz_soil,
         }
         i++;
     }
-
-    snow->pack_comb = pack_comb;
     
     if (ice[0] < 0.0) {
         liq[0] += ice[0] * CONST_RHOICE / CONST_RHOFW;
@@ -153,7 +150,7 @@ snow_combination(double            dz_soil,
     if (snow->snow_depth < 0.025 && snow->Nsnow > 0) {
         snow->Nsnow = 0;
         snow->swq = tmp_ice;
-        pack_transp += tmp_liq;
+        pack_comb += tmp_liq;
         if (snow->swq <= 0.0) {
             snow->snow_depth = 0.0;
         }
@@ -164,7 +161,7 @@ snow_combination(double            dz_soil,
             dz_snow[i] = 0.0;
         }
     }
-    snow->pack_transp = pack_transp;
+    snow->pack_comb = pack_comb;
     
     /* check the snow depth, snow layers combined */
     if (snow->Nsnow > 1) {

@@ -23,6 +23,7 @@ update_nodes(double             pressure,
     size_t tmp_Nnode = soil_con->Nbedrock;
     size_t last_Nsnow = snow->last_Nsnow;
     double *T = energy->T;
+    double *density = snow->density;
     double *last_T = energy->last_T;
     double *Cs_node = energy->Cs_node;
     double *last_Cs = energy->last_Cs;
@@ -33,8 +34,17 @@ update_nodes(double             pressure,
     double *matric = cell->matric;
     double *last_matric = cell->last_matric;
     double *pack_T = snow->pack_T;
+    double *dz_snow = snow->dz_snow; 
+    double *pack_ice = snow->pack_ice;
+    double *pack_liq = snow->pack_liq;
+    double *porosity = snow->porosity;
+    double *snow_frac = snow->snow_frac;
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
+    double *kappa_node = energy->kappa_node;
+    double *kappa_int = energy->kappa_int;
+    double *last_snowfrac = snow->last_snowfrac;
+    double *pack_outflow = snow->pack_outflow;
     double *last_packice = snow->last_packice;
     double *last_packliq = snow->last_packliq;
     // update the number of nodes
@@ -44,7 +54,17 @@ update_nodes(double             pressure,
     if (Nsnow > 0) {
         tmp_Nnode += Nsnow;
     }
+    // update snow layer properties
     cell->Nnode = tmp_Nnode;
+    for (i = 0; i < Nsnow; i++) {
+        theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
+        porosity[i] = 1.0 - theta_ice[i];
+        theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW));
+        double SnowMass = pack_ice[i] + pack_liq[i];
+        snow_frac[i] = pack_ice[i] / SnowMass;
+        density[i] = pack_ice[i] / dz_snow[i];
+    }
+
     // update new snow layer properties
     if (Nsnow != last_Nsnow) {
         double new_T[MAX_NODES];
@@ -73,6 +93,8 @@ update_nodes(double             pressure,
     }
 
     // update the last time step values
+    snow->last_Nsnow = snow->Nsnow;
+    snow->last_swq = snow->swq;
     for (i = 0; i < tmp_Nnode; i++) {
         last_T[i] = T[i];
         last_Cs[i] = Cs_node[i];
@@ -85,5 +107,27 @@ update_nodes(double             pressure,
     for (i = 0; i < Nsnow; i++) {
         last_packice[i] = theta_ice[i];
         last_packliq[i] = theta_liq[i];
+        last_snowfrac[i] = snow_frac[i];
+    }
+    /* remove old snow layers */
+    for(i = Nsnow; i < last_Nsnow; i++) {
+        density[i] = 0.0;
+        porosity[i] = 0.0;
+        theta_ice[i] = 0.0;
+        theta_liq[i] = 0.0;
+        last_packice[i] = 0.0;
+        last_packliq[i] = 0.0;
+        pack_outflow[i] = 0.0;
+    }
+    if (last_Nsnow > Nsnow) {
+        lidx = last_Nsnow - Nsnow + tmp_Nnode;
+        for (i = tmp_Nnode; i < lidx; i++) {
+            T[i] = 0.0;
+            last_T[i] = 0.0;
+            last_Cs[i] = 0.0;
+            Cs_node[i] = 0.0;
+            kappa_int[i] = 0.0;
+            kappa_node[i] = 0.0;
+        }
     }
 }

@@ -779,6 +779,8 @@ typedef struct {
     double int_rain;            /**< rain intercepted on canopy (mm) */
     double int_snow;            /**< snow intercepted on canopy (mm) */
     double canopy_swq;          /**< snow water equivalent of the canopy (mm) */
+    double iter_intrain;
+    double iter_intsnow;
     // PHS terms
     double aPAR_sun[MAX_CANOPYS];            /**< par absorbed per unit lai for canopy layer (w/m**2) */
     double aPAR_sha[MAX_CANOPYS];            /**< par absorbed per unit lai for canopy layer (w/m**2) */
