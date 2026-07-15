@@ -31,11 +31,12 @@ soil_hydraulic_conductivity(cell_data_struct *cell,
     for (j = 0; j < MAX_SOILS; j++) {
         frac_ice[j] = 0.0;
     }
-
+    //  计算土壤水和冰的相对饱和度
     for (i = 0; i < Nsoil; i++) {
-        //  计算土壤水和冰的相对饱和度
         frac_ice[i] = min(1.0, ice[i] / Wsat_node[i]);
-        // 计算冻土导致的不透水率
+    }
+    // 计算冻土导致的不透水率
+    for (i = 0; i < Nsoil; i++) {
         if (i == Nsoil - 1) {
             soil_imped[i] = pow(10.0, frac_ice[i] * ice_param);
         }
@@ -44,7 +45,7 @@ soil_hydraulic_conductivity(cell_data_struct *cell,
         }
         // 修正冻土导致的不透水性
         conductivity[i] = soil_imped[i] * SoilWaterRetentionCurve(CONDUCT_FLAG, i, 
-                                                                  liq[i], 0.0, soil_con);
+                                                                  0.0, matric[i], soil_con);
     }
 
     // Calculates the liquid moisture flux between soil nodes.

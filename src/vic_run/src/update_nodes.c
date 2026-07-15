@@ -20,11 +20,13 @@ update_nodes(double             pressure,
     size_t i, lidx;
     size_t Nsnow = snow->Nsnow;
     size_t Nsoil = cell->Nsoil;
+    size_t tmp_Nsnow = snow->Nsnow;
     size_t tmp_Nnode = soil_con->Nbedrock;
     size_t last_Nsnow = snow->last_Nsnow;
     double *T = energy->T;
     double *density = snow->density;
     double *last_T = energy->last_T;
+    double *soil_T = cell->soil_T;
     double *Cs_node = energy->Cs_node;
     double *last_Cs = energy->last_Cs;
     double *ice = cell->ice;
@@ -50,6 +52,7 @@ update_nodes(double             pressure,
     // update the number of nodes
     if (cell->h2osfc > 0.0) {
         tmp_Nnode++;
+        tmp_Nsnow++;
     }
     if (Nsnow > 0) {
         tmp_Nnode += Nsnow;
@@ -79,8 +82,8 @@ update_nodes(double             pressure,
                 new_T[i] = cell->h2osfc_T;
             }
             else {
-                lidx = i - Nsnow;
-                new_T[i] = T[lidx];
+                lidx = i - tmp_Nsnow;
+                new_T[i] = soil_T[lidx];
             }
         }
         for (i = 0; i < cell->Nnode; i++) {

@@ -138,6 +138,7 @@ void update_nodes(double, energy_bal_struct *, cell_data_struct *,
                  snow_data_struct *, soil_con_struct *);
 void update_snow_fluxes(double *, double *, double *, double *,
                            double, double, double, double);
+void update_last_state(energy_bal_struct *, cell_data_struct *, snow_data_struct *);
 int vic_run(force_data_struct *, all_vars_struct *,
             global_param_struct *, soil_con_struct *,
             veg_con_struct *, veg_lib_struct *);

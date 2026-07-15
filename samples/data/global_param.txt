@@ -12,7 +12,7 @@ STARTMONTH             1      # month model simulation starts
 STARTDAY               1      # day model simulation starts
 STARTSEC	           0
 ENDYEAR                1951   # year model simulation ends
-ENDMONTH               1     # month model simulation ends
+ENDMONTH               12     # month model simulation ends
 ENDDAY                 31     # day model simulation ends
 CALENDAR    	       PROLEPTIC_GREGORIAN
 

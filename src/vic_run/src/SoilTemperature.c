@@ -433,8 +433,21 @@ SoilTemperature(double   		   step_dt,
 
 	/* 检查收敛 (温度变化) */
     double max_diff = 0.0;
+    double energy_error = energy->energy_error;
 	for (i = 0; i < Nnode; i++) {
 		double diff = mat_RHS[i];
+        if (i == 0) {
+            if (diff * energy_error < 0.0) {
+                energy->Esignchg_count++;
+            }
+            else if (fabs(diff) < fabs(energy_error)) {
+                energy->Esignchg_count = 0;
+            }
+            energy->energy_error = diff;
+        }
+        if (energy->Esignchg_count > 3) {
+            diff *= 0.5;
+        }
         if (i < Nsnow) {
             if (pack_liq[i] == 0.0) {
                 T[i] -= diff;

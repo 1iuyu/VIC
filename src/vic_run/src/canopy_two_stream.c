@@ -36,7 +36,7 @@ canopy_two_stream(double             coszen,
 	double LOI;
 	double Phi1, Phi2;
 	double tau_leafdir;
-	double tau_leafdif;
+	double tau_leafdfs;
 	double scat_leaf;
 	double tmp_0, tmp_1, tmp_2;
     double tmp_3, tmp_4, tmp_5;
@@ -137,15 +137,15 @@ canopy_two_stream(double             coszen,
     Phi2 = 0.877 * (1.0 - 2.0 * Phi1);
     proj_area = Phi1 + Phi2 * tmp_coszen;
     tau_leafdir = proj_area / tmp_coszen;
-    tau_leafdif = (1.0 - Phi1 / Phi2 * log((Phi1 + Phi2) / Phi1)) / Phi2;
+    tau_leafdfs = (1.0 - Phi1 / Phi2 * log((Phi1 + Phi2) / Phi1)) / Phi2;
     tmp_0 = max(proj_area + Phi2 * tmp_coszen, param.TOL_A);
     tmp_1 = Phi1 * tmp_coszen;
     tmp_2 = 1.0 - tmp_1 / tmp_0 * log((tmp_1 + tmp_0) / tmp_1);
     for (i = 0; i < options.Nswband; i++) {
         scat_leaf = ReflectVeg[i] + TransmitVeg[i];
         omega_0 = 0.5 * scat_leaf * proj_area / tmp_0 * tmp_2;
-        coef_leafdir = (1.0 + tau_leafdif * tau_leafdir) / 
-                    (scat_leaf * tau_leafdif * tau_leafdir) * omega_0;
+        coef_leafdir = (1.0 + tau_leafdfs * tau_leafdir) / 
+                    (scat_leaf * tau_leafdfs * tau_leafdir) * omega_0;
         coef_leafdfs = 0.5 * (ReflectVeg[i] + TransmitVeg[i] + (ReflectVeg[i] - 
                         TransmitVeg[i]) * pow((1.0 + LOI) / 2.0, 2.0)) / scat_leaf;
         /* adjust omega, betad, and betai for intercepted snow */
@@ -167,17 +167,17 @@ canopy_two_stream(double             coszen,
         /* absorbed, reflected, transmitted fluxes per unit incoming radiation */
         B = 1.0 - scat_canopy + scat_canopy * coef_candfs;
         C = scat_canopy * coef_candfs;
-        tmp_0 = tau_leafdif * tau_leafdir;
+        tmp_0 = tau_leafdfs * tau_leafdir;
         D = tmp_0 * scat_canopy * coef_candir;
         F = tmp_0 * scat_canopy * (1.0 - coef_candir);
         tmp_1 = B * B - C * C;
-        H = sqrt(tmp_1) / tau_leafdif;
+        H = sqrt(tmp_1) / tau_leafdfs;
         sigma = tmp_0 * tmp_0 - tmp_1;
         if (fabs(sigma) < param.TOL_A) {
             sigma = sign(param.TOL_A, sigma);
         }
-        P1 = B + tau_leafdif * H;
-        P2 = B - tau_leafdif * H;
+        P1 = B + tau_leafdfs * H;
+        P2 = B - tau_leafdfs * H;
         P3 = B + tmp_0;
         P4 = B - tmp_0;
         S1 = exp(-1.0 * min(H * NetVEG, 40.0));
@@ -186,14 +186,14 @@ canopy_two_stream(double             coszen,
         U1 = B - C / AlbedoGrndDfs[i];
         U2 = B - C * AlbedoGrndDfs[i];
         U3 = F + C * AlbedoGrndDfs[i];                        
-        tmp_2 = U1 - tau_leafdif * H;
-        tmp_3 = U1 + tau_leafdif * H;
+        tmp_2 = U1 - tau_leafdfs * H;
+        tmp_3 = U1 + tau_leafdfs * H;
         D1 = P1 * tmp_2 / S1 - P2 * tmp_3 * S1;
         if (fabs(D1) < param.TOL_A) {
             D1 = sign(param.TOL_A, D1);
         }
-        tmp_4 = U2 + tau_leafdif * H;
-        tmp_5 = U2 - tau_leafdif * H;
+        tmp_4 = U2 + tau_leafdfs * H;
+        tmp_5 = U2 - tau_leafdfs * H;
         D2 = tmp_4 / S1 - tmp_5 * S1;
         if (fabs(D2) < param.TOL_A) {
             D2 = sign(param.TOL_A, D2);
@@ -224,16 +224,16 @@ canopy_two_stream(double             coszen,
         A2 = H4 / sigma * (1.0 - S2 * S2) / (2.0 * tau_leafdir) + H5 *
             (1.0 - S2 * S1) / (tau_leafdir + H) + H6 * (1.0 - S2 / S1) /
             (tau_leafdir - H);
-        fabd_sun = (1.0 - scat_canopy) * (1.0 - S2 + (A1 + A2) / tau_leafdif);
+        fabd_sun = (1.0 - scat_canopy) * (1.0 - S2 + (A1 + A2) / tau_leafdfs);
         fabd_sha = AbsSubDir[i] - fabd_sun;
         // Diffuse
         U1 = B - C / AlbedoGrndDfs[i];
         U2 = B - C * AlbedoGrndDfs[i];
-        tmp_2 = U1 - tau_leafdif * H;
-        tmp_3 = U1 + tau_leafdif * H;
+        tmp_2 = U1 - tau_leafdfs * H;
+        tmp_3 = U1 + tau_leafdfs * H;
         D1 = P1 * tmp_2 / S1 - P2 * tmp_3 * S1;
-        tmp_4 = U2 + tau_leafdif * H;
-        tmp_5 = U2 - tau_leafdif * H;
+        tmp_4 = U2 + tau_leafdfs * H;
+        tmp_5 = U2 - tau_leafdfs * H;
         D2 = tmp_4 / S1 - tmp_5 * S1;
         H7 = C * tmp_2 / (D1 * S1);
         H8 = -C * tmp_3 * S1 / D1;
@@ -248,7 +248,7 @@ canopy_two_stream(double             coszen,
                     ShortDir2Dfs[i] - (1.0 - AlbedoGrndDfs[i]) * ShortDfs2Dfs[i];
         A1 = H7 * (1.0 - S2 * S1) / (tau_leafdir + H) + H8 * (1.0 - S2 / S1) / (tau_leafdir - H);
         A2 = H9 * (1.0 - S2 * S1) / (tau_leafdir + H) + H10 * (1.0 - S2 / S1) / (tau_leafdir - H);
-        fabi_sun = (1.0 - scat_canopy) * (A1 + A2) / tau_leafdif;
+        fabi_sun = (1.0 - scat_canopy) * (A1 + A2) / tau_leafdfs;
         fabi_sha = AbsSubDfs[i] - fabi_sun;
         if (i == 0) {
             if (Ncanopy == 1) {
@@ -330,7 +330,7 @@ canopy_two_stream(double             coszen,
 
                     d_fabd_sun = (1.0 - scat_canopy) *
                                 (tau_leafdir * S2 +
-                                (dA1 + dA2) / tau_leafdif);
+                                (dA1 + dA2) / tau_leafdfs);
                     d_fabd_sha = d_fabd - d_fabd_sun;
                     AbsDirSun[j] = max(d_fabd_sun, 0.0) / max(fsun_z[j], param.TOL_A);
                     AbsDirSha[j] = max(d_fabd_sha, 0.0)
@@ -362,7 +362,7 @@ canopy_two_stream(double             coszen,
                         + (1.0 - S2 / S1) / (tau_leafdir - H) * dH10;
                     d_ftii = -H * H9 * S1 + H * H10 / S1 + dH9 * S1 + dH10 / S1;
                     d_fabi = -(dH7 + dH8) - (1.0 - AlbedoGrndDfs[i]) * d_ftii;
-                    d_fabi_sun = (1.0 - scat_canopy) * (dA1 + dA2) / tau_leafdif;
+                    d_fabi_sun = (1.0 - scat_canopy) * (dA1 + dA2) / tau_leafdfs;
                     d_fabi_sha = d_fabi - d_fabi_sun;
                     AbsDfsSun[j] = max(d_fabi_sun, 0.0) / max(fsun_z[j], param.TOL_A);
                     AbsDfsSha[j] = max(d_fabi_sha, 0.0) / max(1.0 - fsun_z[j], param.TOL_A);

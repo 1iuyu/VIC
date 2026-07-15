@@ -665,6 +665,8 @@ typedef struct {
     bool FrozenOver;                   /**< TRUE = frozen canopy present */
     bool energy_flag;                  /**< temperature converge flag */
     bool moist_flag;                   /**< moisture or matric potential converge flag */
+    size_t Esignchg_count;
+    size_t Msignchg_count;
     double kappa_node[MAX_NODES];      /**< thermal conductivity of the soil thermal nodes (W/m/K) */
     double Cs_node[MAX_NODES];         /**< heat capacity of the soil thermal nodes (J/m^3/K) */   
     double last_Cs[MAX_NODES]; 
@@ -679,6 +681,8 @@ typedef struct {
     double deriv_terms;                /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
     double deriv_evap;                 /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
     double error;                      /**< energy balance error (W/m^2) */
+    double energy_error;
+    double moist_error;
     // Fluxes
     double advection;                  /**< advective flux (Wm-2) */
     double AdvectSub;

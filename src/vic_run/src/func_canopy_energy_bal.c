@@ -153,9 +153,9 @@ func_canopy_energy_bal(size_t             hidx,
     // 树冠和地面净吸收的长波辐射
     double coef_lw_atmos = EmissLongSub * (1.0 + (1.0 - EmissLongSub) * 
                         (1.0 - EmissLongGrnd)) * longwave;
-    double coef_lw_grnd = EmissLongSub * EmissLongGrnd * CONST_BOLTZ;
+    double coef_lw_grnd = EmissLongSub * EmissLongGrnd * CONST_STEBOL;
     double coef_lw_canopy = -(2.0 - EmissLongSub * (1.0 - EmissLongGrnd)) *
-                                       EmissLongSub * CONST_BOLTZ;
+                                       EmissLongSub * CONST_STEBOL;
     // 计算比湿和梯度
     double qsatdT = 0.0;
     double qsat_T = 0.0;
@@ -440,8 +440,8 @@ func_canopy_energy_bal(size_t             hidx,
     energy->Tsurf = EmissLongSub * Tfoliage + (1.0 - EmissLongSub) * sqrt(sqrt(pow(Tgrnd, 4.0)));
 
     double LongSubIn = (1.0 - EmissLongSub) * EmissLongGrnd * longwave + EmissLongSub * 
-                EmissLongGrnd * CONST_BOLTZ * pow(Tfoliage, 4.0) * (1.0 - f_abs_stem) + 
-                EmissLongSub * EmissLongGrnd * CONST_BOLTZ * pow(Tstem, 4.0) * f_abs_stem;
+                EmissLongGrnd * CONST_STEBOL * pow(Tfoliage, 4.0) * (1.0 - f_abs_stem) + 
+                EmissLongSub * EmissLongGrnd * CONST_STEBOL * pow(Tstem, 4.0) * f_abs_stem;
 
     energy->longwave += fcanopy * (LongSubIn - EmissLongGrnd * CONST_STEBOL * 
                         pow(Tgrnd, 4.0) - energy->longwave);

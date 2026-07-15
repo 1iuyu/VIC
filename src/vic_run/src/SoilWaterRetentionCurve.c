@@ -44,7 +44,7 @@ SoilWaterRetentionCurve(int              flag,
             return 0.0;
         }
         else if (Se <= 0.0) {
-            return -1e6; // 防止数值爆炸
+            return -1e4; // 防止数值爆炸
         }
         else {
             return -1.0 / fabs(alpha_node[idx]) *
@@ -78,17 +78,18 @@ SoilWaterRetentionCurve(int              flag,
     }
     else if (flag == CONDUCT_FLAG) {
         double *lpar_node = soil_con->lpar_node;
-        Se = (liq - Wpwp_node[idx]) / (Wsat_node[idx] - Wpwp_node[idx]);
-        Se = max(0.0, min(1.0, Se));
-        if (Se >= 1.0) {
+        if (matric >= 0.0) {
             return Ksat_node[idx];
         }
-        else {
-            // Van Genuchten-Mualem 公式
-            double Se_pow = pow(Se, 1.0 / mpar_node[idx]);
-            double term = 1.0 - pow(1.0 - Se_pow, mpar_node[idx]);
-            return Ksat_node[idx] * pow(Se, lpar_node[idx]) * term * term;
-        }
+        // Van Genuchten-Mualem 公式
+        double alpha_h = fabs(alpha_node[idx] * matric);
+        double alpha_pow = pow(alpha_h, expt_node[idx]);
+        double denom = pow(1.0 + alpha_pow, lpar_node[idx] * mpar_node[idx]);
+        double term = 1.0 - 1.0 / (1.0 + alpha_pow);
+        double term_pow = pow(term, mpar_node[idx]);
+        double numera = 1.0 - term_pow;
+        double numera_pow = numera * numera;
+        return Ksat_node[idx] * numera_pow / denom;
     }
     else {
         log_err("Unknown FLAG option");

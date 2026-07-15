@@ -51,6 +51,12 @@ initialize_energy(energy_bal_struct *energy,
         }
         energy[veg].FrozenOver = false;
         energy[veg].FrozenGrnd = false;
+        energy[veg].energy_flag = false;
+        energy[veg].moist_error = false;
+        energy[veg].Esignchg_count = 0;
+        energy[veg].Msignchg_count = 0;
+        energy[veg].energy_error = 0.0;
+        energy[veg].moist_error = 0.0;
         energy[veg].Tcanopy = 0.0;
         energy[veg].Tgrnd = 0.0;
         energy[veg].Tsurf = 0.0;

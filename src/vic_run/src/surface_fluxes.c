@@ -41,7 +41,7 @@ surface_fluxes(size_t             hidx,
     size_t dt_min = 1800; // seconds (half hour)
     size_t iter = 0;
     double time_accum = 0.0;
-
+    double iter_dt = step_dt;
     /***************************
        Compute surface fluxes
     ***************************/
@@ -122,9 +122,8 @@ surface_fluxes(size_t             hidx,
     /**************************************************
        Begin iterative solution of surface fluxes
     **************************************************/
-    do {
 
-        size_t iter_dt = step_dt;
+    do {
         // 将当前迭代的结构体值赋给临时结构体，以便在迭代过程中更新
         iter_cell = (*cell);
         iter_energy = (*energy);
@@ -137,7 +136,7 @@ surface_fluxes(size_t             hidx,
             /**********************************************
                 Solve Energy Balance Components
             **********************************************/
-            ErrorFlag = calc_energy_bal(hidx, step_dt, 
+            ErrorFlag = calc_energy_bal(hidx, iter_dt, 
                                         air_temp, force, 
                                         &iter_energy, 
                                         &iter_cell,
@@ -151,7 +150,7 @@ surface_fluxes(size_t             hidx,
             /*******************************************
                 Solve Water Balance Components
             ********************************************/
-            ErrorFlag = calc_water_bal(step_dt, pressure,
+            ErrorFlag = calc_water_bal(iter_dt, pressure,
                                        &iter_energy, 
                                        &iter_cell, 
                                        &iter_snow,
@@ -186,16 +185,19 @@ surface_fluxes(size_t             hidx,
                 }
             }
         }
+        // Update the original structures with the 
+        // converged values from the last iteration.
+        (*cell) = iter_cell;
+        (*energy) = iter_energy;
+        (*veg_var) = iter_veg_var;
+        (*snow) = iter_snow;
+        
         time_accum += iter_dt;
+        /* 保存当前子时间步结束状态 */
+        update_last_state(energy, cell, snow);
+        
     }
     while(time_accum < step_dt);
-
-    // Update the original structures with the 
-    // converged values from the last iteration.
-    (*cell) = iter_cell;
-    (*energy) = iter_energy;
-    (*veg_var) = iter_veg_var;
-    (*snow) = iter_snow;
 
     /********************************************************
       Compute Runoff, Baseflow, and Soil Moisture Transport
