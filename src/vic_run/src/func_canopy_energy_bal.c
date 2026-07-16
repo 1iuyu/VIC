@@ -206,7 +206,7 @@ func_canopy_energy_bal(size_t             hidx,
         cell->Ra_leaf = Ra_leaf;
         // 计算下垫面土壤与冠层空气之间的湍流传送系数
         double w_frac = exp(-(NetVEG));
-        double Cs_bare = CONST_KARMAN / 0.13 * pow((Z0m_sub[1] * wind_over / 1.5e-5), -0.45);
+        double Cs_bare = CONST_KARMAN / 0.13 * pow((Z0m_grnd[0] * wind_over / 1.5e-5), -0.45);
         double ri = (CONST_G * Canopy_Upper * (Tcanopy - Tgrnd)) / pow(Tcanopy * wind_over, 2.0);
         double Cs_dense = 0.004;
         if (Tcanopy - Tgrnd > 0.0) {

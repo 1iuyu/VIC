@@ -718,7 +718,6 @@ typedef struct {
     // 短波辐射项
     double shortwave;
     double NetShortOver;
-    double NetShortSurf;         /**< net shortwave to the atmosphere */
     double NetShortGrnd;         /**< net shortwave penetrating snowpack */
     double NetShortSub;        /**< net shortwave radiation from the understory (W/m^2) */
     double NetShortSoil;      /**< net shortwave radiation to the soil (W/m^2) */

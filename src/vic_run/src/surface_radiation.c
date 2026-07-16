@@ -16,6 +16,7 @@ surface_radiation(double            *shortwave_dir,
                   double            *shortwave_dfs,
                   energy_bal_struct *energy,
                   cell_data_struct  *cell,
+                  snow_data_struct  *snow,
                   veg_var_struct    *veg_var)
 {
     extern option_struct     options;
@@ -47,7 +48,7 @@ surface_radiation(double            *shortwave_dir,
     double *AlbedoSurfDfs = energy->AlbedoSurfDfs;
 
     for (i = 0; i < options.Nswband; i++) {
-        if (cell->IS_VEG) {
+        if (cell->IS_VEG || cell->IS_URBAN) {
             // absorbed by canopy
             ShortOverDir[i] = shortwave_dir[i] * AbsSubDir[i];
             ShortOverDfs[i] = shortwave_dfs[i] * AbsSubDfs[i];
@@ -62,19 +63,23 @@ surface_radiation(double            *shortwave_dir,
             NetShortGrnd += tmp_absorb_grnd;
 
             // calculate absorbed solar by soil/snow separately
-            NetShortSoil += transmit_dir * (1.0 - AlbedoSoilDir[i]) + 
-                                        transmit_dfs * (1.0 - AlbedoSoilDfs[i]);
-            NetShortSnow += transmit_dir * (1.0 - AlbedoSnowDir[i]) + 
-                                        transmit_dfs * (1.0 - AlbedoSnowDfs[i]);
+            if (snow->Nsnow > 0) {
+                NetShortSoil += transmit_dir * (1.0 - AlbedoSoilDir[i]) + 
+                                            transmit_dfs * (1.0 - AlbedoSoilDfs[i]);
+                NetShortSnow += transmit_dir * (1.0 - AlbedoSnowDir[i]) + 
+                                            transmit_dfs * (1.0 - AlbedoSnowDfs[i]);
+            }
+            else {
+                NetShortSoil = NetShortGrnd;
+                NetShortSnow = NetShortGrnd;
+            }
         }
         else if (cell->IS_GLAC) {
             NetShortGrnd += shortwave_dir[i] * (1.0 - AlbedoGrndDir[i]) +
                             shortwave_dfs[i] * (1.0 - AlbedoGrndDfs[i]);
         }
     }
-    NetShortSurf = NetShortGrnd + NetShortSub;
     energy->NetShortGrnd = NetShortGrnd;
-    energy->NetShortSurf = NetShortSurf;
     energy->shortwave = NetShortGrnd;
     energy->NetShortSub = NetShortSub;
     energy->NetShortSoil = NetShortSoil;

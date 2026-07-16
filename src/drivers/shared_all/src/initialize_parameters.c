@@ -193,7 +193,7 @@ initialize_parameters()
 
     // MOST Iterations
     param.MAX_ITER_MOST = 5;
-    param.MAX_ITER_OVER = 50;
+    param.MAX_ITER_OVER = 15;
 
     param.CN_FACTOR = 0.5;
 

@@ -118,7 +118,8 @@ void soil_hydraulic_conductivity(cell_data_struct *, soil_con_struct *);
 int surface_albedo(double, double, double, energy_bal_struct *, 
                    cell_data_struct *, snow_data_struct *, soil_con_struct *,
                    veg_var_struct *, veg_lib_struct *);
-int surface_radiation(double *, double *, energy_bal_struct *, cell_data_struct *, veg_var_struct *);
+int surface_radiation(double *, double *, energy_bal_struct *, cell_data_struct *,
+                        snow_data_struct *, veg_var_struct *);
 int surface_fluxes(size_t, double, double, double, double, force_data_struct *, 
                    energy_bal_struct *, cell_data_struct *, snow_data_struct *, 
                    soil_con_struct *, veg_var_struct *, veg_lib_struct *);                     

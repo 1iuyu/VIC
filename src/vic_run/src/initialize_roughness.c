@@ -34,7 +34,7 @@ initialize_roughness(double            Canopy_Upper,
         }
         Z0m_grnd[1] = Z0m_grnd[0];  // bare soil or glacier
         Z0m_grnd[2] = Z0m_grnd[0];  // veg cover
-        if (cell->IS_GLAC == false) {
+        if (cell->IS_VEG || cell->IS_URBAN) {
             if (Canopy_Upper > 0.0 && Canopy_Upper <= 1.0) {
                 ratio_Z0 = param.VEG_RATIO_RL_A;
                 ratio_dis = param.VEG_RATIO_DH_A;
@@ -67,7 +67,7 @@ initialize_roughness(double            Canopy_Upper,
         }
         Z0m_grnd[1] = Z0m_grnd[0];  // bare soil or glacier
         Z0m_grnd[2] = Z0m_grnd[0];  // veg cover
-        if (cell->IS_GLAC == false) {
+        if (cell->IS_VEG || cell->IS_URBAN) {
             if (Canopy_Upper > 0.0 && Canopy_Upper <= 1.0) {
                 ratio_Z0 = param.VEG_RATIO_RL_A;
                 ratio_dis = param.VEG_RATIO_DH_A;
@@ -80,8 +80,8 @@ initialize_roughness(double            Canopy_Upper,
             Z0m_sub[0] = exp(V * log(Canopy_Upper * ratio_Z0) + (1 - V) * Z0m_grnd[0]);
             Z0m_sub[1] = Z0m_sub[0];
             Z0m_sub[2] = Z0m_sub[0];
-            displacement[0] = 0.0;
-            displacement[1] = calc_veg_displacement(V, ratio_dis, Canopy_Upper);
+            displacement[0] = 0.0; // 裸土
+            displacement[1] = calc_veg_displacement(V, ratio_dis, Canopy_Upper); // 植被
         }
         else {
             Z0m_sub[0] = 0.0;

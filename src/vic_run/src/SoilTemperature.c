@@ -335,17 +335,16 @@ SoilTemperature(double   		   step_dt,
                     mat_A[i] = trans_left;
                     mat_B[i] = -trans_left - trans_right - fact[i] * Cs_node[i];
                     mat_C[i] = trans_right;
-                    mat_RHS[i] = trans_left * (T[i-1] - T[i]) - trans_right * 
-                            (T[i] - T[i+1]) - CONST_LATVAP * vapor_flux[i] - 
-                            fact[i] * (last_Cs[i] * (T[i] - last_T[i]) - ice_term);
+                    mat_RHS[i] = (1.0 - coverage) * grnd_soil + trans_left * (T[i-1] - T[i]) - 
+                                trans_right * (T[i] - T[i+1]) - CONST_LATVAP * vapor_flux[i] - 
+                                fact[i] * (last_Cs[i] * (T[i] - last_T[i]) - ice_term);
                 }
                 else {
                     mat_A[i] = 0.0; // 表土层裸露于大气
                     mat_B[i] = deriv_terms - trans_right - fact[i] * Cs_node[i];
                     mat_C[i] = trans_right;
-                    mat_RHS[i] = grnd_soil - trans_right * (T[i] - T[i+1]) - 
-                                 CONST_LATVAP * vapor_flux[i] - fact[i] * 
-                                 (last_Cs[i] * (T[i] - last_T[i]) - ice_term);
+                    mat_RHS[i] = grnd_soil - trans_right * (T[i] - T[i+1]) - CONST_LATVAP * 
+                        vapor_flux[i] - fact[i] * (last_Cs[i] * (T[i] - last_T[i]) - ice_term);
                 }
             }
             else if (i <= Nnode - 2) {
@@ -440,13 +439,12 @@ SoilTemperature(double   		   step_dt,
             if (diff * energy_error < 0.0) {
                 energy->Esignchg_count++;
             }
-            else if (fabs(diff) < fabs(energy_error)) {
-                energy->Esignchg_count = 0;
-            }
             energy->energy_error = diff;
         }
-        if (energy->Esignchg_count > 3) {
-            diff *= 0.5;
+        if (energy->Esignchg_count > 5) {
+            double relax = 0.3;
+            diff = diff * relax + (1.0 - relax) * energy_error;
+            energy->Esignchg_count = 0;
         }
         if (i < Nsnow) {
             if (pack_liq[i] == 0.0) {

@@ -91,7 +91,8 @@ surface_fluxes(size_t             hidx,
     ***************************/
     surface_radiation(shortwave_dir,
                       shortwave_dfs,
-                      energy, cell, veg_var);
+                      energy, cell,
+                      snow, veg_var);
 
     /******************************
       Compute longwave emissivity
@@ -114,15 +115,10 @@ surface_fluxes(size_t             hidx,
     energy->EmissLongSub = EmissLongSub;
     energy->EmissLongGrnd = EmissLongGrnd;
     energy->EmissLongSurf = EmissLongSurf;
-
-    // 初始化能量和水分收敛标志
-    energy->energy_flag = false;
-    energy->moist_flag = false;
                   
     /**************************************************
        Begin iterative solution of surface fluxes
     **************************************************/
-
     do {
         // 将当前迭代的结构体值赋给临时结构体，以便在迭代过程中更新
         iter_cell = (*cell);

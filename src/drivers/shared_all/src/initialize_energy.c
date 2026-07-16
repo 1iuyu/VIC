@@ -100,7 +100,6 @@ initialize_energy(energy_bal_struct *energy,
         energy[veg].NetLongOver = 0.0;
         // 短波辐射项
         energy[veg].shortwave = 0.0;
-        energy[veg].NetShortSurf = 0.0;
         energy[veg].NetShortGrnd = 0.0;
         energy[veg].NetShortSub = 0.0;
         energy[veg].NetShortSoil = 0.0;

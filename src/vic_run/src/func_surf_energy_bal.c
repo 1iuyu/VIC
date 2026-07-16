@@ -168,14 +168,14 @@ func_surf_energy_bal(size_t             hidx,
         coef_latent = air_density / (Ra_grnd[2] + cell->Ra_evap);
     }
     // 计算分子扩散最小通量（静稳空气限制）
-    double sensible_min = CONST_KDAIR / dth / (ref_height[1] - displacement[1]);
-    double vapor_min = CONST_VAPDIFF * dqh * air_density / (ref_height[2] - displacement[2]);
+    double sensible_min = CONST_KDAIR / dth / (ref_height[1] - displacement[0]);
+    double vapor_min = CONST_VAPDIFF * dqh * air_density / (ref_height[2] - displacement[0]);
     double SensibleGrnd = -coef_sensible * dth;
     double VaporGrnd = -coef_latent * dqh;
 
     if (fabs(SensibleGrnd) < sensible_min) {
         SensibleGrnd = sensible_min;
-        coef_sensible = CONST_KDAIR / (ref_height[1] - displacement[1]);
+        coef_sensible = CONST_KDAIR / (ref_height[1] - displacement[0]);
     }
     if (fabs(VaporGrnd) < vapor_min) {
         VaporGrnd = vapor_min;

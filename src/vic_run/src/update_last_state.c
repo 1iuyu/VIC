@@ -43,8 +43,13 @@ update_last_state(energy_bal_struct *energy,
         porosity[i] = 1.0 - theta_ice[i];
         theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW));
     }
+    // 
     energy->energy_flag = false;
     energy->moist_flag = false;
+    energy->Esignchg_count = 0;
+    energy->Msignchg_count = 0;
+    energy->energy_error = 0.0;
+    energy->moist_error = 0.0;
     
     // Update thermal states
     for (i = 0; i < Nnode; i++) {

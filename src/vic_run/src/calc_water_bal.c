@@ -390,8 +390,21 @@ calc_water_bal(double             step_dt,
 
     /* 检查收敛 */
     double max_diff = 0.0;
+    double moist_error = energy->moist_error;
 	for (i = 0; i < Nsoil; i++) {
 		double diff = mat_RHS[i];
+        if (i == 0) {
+            if (diff * moist_error < 0.0) {
+                energy->Msignchg_count++;
+            }
+            energy->moist_error = diff;
+        }
+        if (energy->Msignchg_count > 5) {
+            diff *= 0.5;
+            if (i == Nsoil - 1) {
+                energy->Msignchg_count = 0;
+            }
+        }
         if (ice[i] > 0.0) {
             if (diff > 0.2) {
                 double energy_flux = fabs(CONST_RHOICE * CONST_LATICE * fact[i] * diff);

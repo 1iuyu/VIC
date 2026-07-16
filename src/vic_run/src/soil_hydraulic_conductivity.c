@@ -17,7 +17,6 @@ soil_hydraulic_conductivity(cell_data_struct *cell,
     size_t i, j;
     double ice_param = -6.0;
     double *ice = cell->ice;
-    double *liq = cell->liq;
     double frac_ice[MAX_SOILS];
     double *matric = cell->matric;
     double *zc_soil = soil_con->zc_soil;
