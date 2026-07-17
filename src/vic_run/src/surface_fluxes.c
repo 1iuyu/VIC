@@ -49,10 +49,6 @@ surface_fluxes(size_t             hidx,
     double coszen = force->coszen[hidx];
     double pressure = force->pressure[hidx];
     double shortwave = force->shortwave[hidx];
-    double coverage = snow->coverage;
-    double NetLAI = veg_var->NetLAI;
-    double NetSAI = veg_var->NetSAI;
-    double fcanopy = veg_var->fcanopy;
 
     /**************************************
       计算直射和漫射辐射通量[0]-vis, [1]-nir.
@@ -97,24 +93,8 @@ surface_fluxes(size_t             hidx,
     /******************************
       Compute longwave emissivity
     ******************************/
-    double EmissLongSub = 0.0;
-    double EmissLongGrnd = 0.0;
-    double EmissLongSurf = 0.0;
-    if (cell->IS_VEG) {
-        EmissLongSub = 1.0 - exp(-(NetLAI + NetSAI) / 1.0);
-        EmissLongGrnd = param.EMISS_SNOW * coverage +
-                            param.EMISS_ICE * (1.0 - coverage);
-        EmissLongSurf = fcanopy * (EmissLongGrnd * (1.0 - EmissLongSub) + EmissLongSub + 
-                            EmissLongSub * (1.0 - EmissLongSub) * 
-                                (1.0 - EmissLongGrnd)) + (1.0 - fcanopy) * EmissLongGrnd;
-    }
-    else if (cell->IS_GLAC) {
-        EmissLongGrnd = param.EMISS_ICE * (1.0 - coverage) + 
-                                        param.EMISS_SNOW * coverage;      
-    }
-    energy->EmissLongSub = EmissLongSub;
-    energy->EmissLongGrnd = EmissLongGrnd;
-    energy->EmissLongSurf = EmissLongSurf;
+    surface_emissivity(energy, cell,
+                       snow, veg_var);
                   
     /**************************************************
        Begin iterative solution of surface fluxes

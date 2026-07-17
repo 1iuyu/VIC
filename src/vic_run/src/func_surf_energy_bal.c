@@ -9,7 +9,7 @@
 #include "vic_run.h"
 
 /******************************************************************************
- * @brief    Calculate the surface energy balance.
+ * @brief    Calculate the bare soil surface energy balance.
  *****************************************************************************/
 int
 func_surf_energy_bal(size_t             hidx,
@@ -191,17 +191,27 @@ func_surf_energy_bal(size_t             hidx,
     energy->sensible = SensibleGrnd;
     energy->latent = VaporGrnd * LatentVapGrnd;
     energy->longwave = EmissLongGrnd * longwave - coef_longwave * pow(Tgrnd, 4.0);
-    energy->NetLongSnow = EmissLongGrnd * longwave - coef_longwave * pow(T[0], 4.0);
-    energy->NetLongSoil = EmissLongGrnd * longwave - coef_longwave * pow(soil_T[0], 4.0);
     energy->deriv_terms = -(coef_sensible + 4.0 * coef_longwave * pow(Tgrnd, 3) +
                                     coef_latent * LatentVapGrnd * cell->Qair_deriv);
     energy->deriv_evap = -coef_latent * cell->Qair_grnd * CONST_G /
                                                 (CONST_RWV * Tgrnd) / CONST_RHOFW;
     // compute sensible and latent heat fluxes individually
-    energy->SensibleSnow = -coef_sensible * (thm - T[0]);
-    energy->SensibleSoil = -coef_sensible * (thm - soil_T[0]);
-    energy->LatentSnow = -coef_latent * (Qair - cell->Qair_snow) * LatentVapGrnd;
-    energy->LatentSoil = -coef_latent * (Qair - cell->Qair_soil) * LatentVapGrnd;
-                        
+    if (snow->Nsnow > 0) {
+        energy->NetLongSnow = EmissLongGrnd * longwave - coef_longwave * pow(T[0], 4.0);
+        energy->NetLongSoil = EmissLongGrnd * longwave - coef_longwave * pow(soil_T[0], 4.0);
+        energy->SensibleSnow = -coef_sensible * (thm - T[0]);
+        energy->SensibleSoil = -coef_sensible * (thm - soil_T[0]);
+        energy->LatentSnow = -coef_latent * (Qair - cell->Qair_snow) * LatentVapGrnd;
+        energy->LatentSoil = -coef_latent * (Qair - cell->Qair_soil) * LatentVapGrnd;
+    }
+    else {
+        energy->NetLongSnow = energy->longwave;
+        energy->NetLongSoil = energy->longwave;
+        energy->SensibleSnow = energy->sensible;
+        energy->SensibleSoil = energy->sensible;
+        energy->LatentSnow = energy->latent;
+        energy->LatentSoil = energy->latent;
+    }
+
     return (0);
 }

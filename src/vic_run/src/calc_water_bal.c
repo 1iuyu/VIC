@@ -400,10 +400,9 @@ calc_water_bal(double             step_dt,
             energy->moist_error = diff;
         }
         if (energy->Msignchg_count > 5) {
-            diff *= 0.5;
-            if (i == Nsoil - 1) {
-                energy->Msignchg_count = 0;
-            }
+            double relax = 0.3;
+            diff = diff * relax + (1.0 - relax) * moist_error;
+            energy->Msignchg_count = 0;
         }
         if (ice[i] > 0.0) {
             if (diff > 0.2) {

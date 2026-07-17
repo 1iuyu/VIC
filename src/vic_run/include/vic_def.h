@@ -690,6 +690,8 @@ typedef struct {
     double AdvectOver;
     // 地表热通量
     double grnd_flux;            /**< ground heat flux (Wm-2) */
+    double grnd_snow;
+    double grnd_soil;
     // 感热通量
     double sensible;
     double SensibleSoil;

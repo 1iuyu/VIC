@@ -79,6 +79,8 @@ initialize_energy(energy_bal_struct *energy,
         energy[veg].AdvectSub = 0.0;
         // 地表热通量
         energy[veg].grnd_flux = 0.0;
+        energy[veg].grnd_snow = 0.0;
+        energy[veg].grnd_soil = 0.0;
         // 潜热通量
         energy[veg].latent = 0.0;
         energy[veg].LatentLeaf = 0.0;
