@@ -27,10 +27,6 @@ update_last_state(energy_bal_struct *energy,
     double *matric = cell->matric;
     double *last_ice = cell->last_ice;
     double *last_liq = cell->last_liq;
-    double *dz_snow = snow->dz_snow;
-    double *porosity = snow->porosity;
-    double *pack_ice = snow->pack_ice;
-    double *pack_liq = snow->pack_liq;
     double *last_matric = cell->last_matric;
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
@@ -38,11 +34,6 @@ update_last_state(energy_bal_struct *energy,
     double *last_packice = snow->last_packice;
     double *last_packliq = snow->last_packliq;
     double *last_snowfrac = snow->last_snowfrac;
-    for (i = 0; i < Nsnow; i++) {
-        theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
-        porosity[i] = 1.0 - theta_ice[i];
-        theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW));
-    }
     // 
     energy->energy_flag = false;
     energy->moist_flag = false;

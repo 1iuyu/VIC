@@ -22,7 +22,6 @@ surface_radiation(double            *shortwave_dir,
     extern option_struct     options;
     size_t i;
     double NetShortSub = 0.0;
-    double NetShortSurf = 0.0;
     double NetShortGrnd = 0.0;
     double NetShortSoil = 0.0;
     double NetShortSnow = 0.0;

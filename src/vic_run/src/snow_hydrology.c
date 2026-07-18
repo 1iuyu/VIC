@@ -39,6 +39,9 @@ snow_hydrology(double             step_dt,
     double *dz_soil = soil_con->dz_soil;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
+    double *pack_frze = snow->pack_frze;
+    double *pack_melt = snow->pack_melt;
+    double *last_packice = snow->last_packice;
     double *pack_outflow = snow->pack_outflow;
 
     /* initialize */
@@ -47,6 +50,11 @@ snow_hydrology(double             step_dt,
     double latent = energy->latent;
     double liquid_capacity = 0.0;
     double LatentVapGrnd = energy->LatentVapGrnd;
+    // 重制雪层融化量和冻结量
+    for (i = 0; i < MAX_SNOWS; i++) {
+        pack_frze[i] = 0.0;
+        pack_melt[i] = 0.0;
+    }
     /** compute soil/snow surface evap,
         dew rate based on energy flux. **/
     // positive part of ground latent heat
@@ -68,6 +76,18 @@ snow_hydrology(double             step_dt,
         snowfrost = conden_grnd;
     }
     double dewsoil = conden_grnd - snowfrost;
+
+    for (i = 0; i < snow->Nsnow; i++) {
+        double delta_ice = pack_ice[i] - last_packice[i];
+        if (delta_ice > 0) {
+            pack_frze[i] = delta_ice;
+            pack_melt[i] = 0;
+        }
+        else {
+            pack_frze[i] = 0;
+            pack_melt[i] = -delta_ice;
+        }
+    }
 
     /* snowpack water processs */
     update_snow(air_temp, step_dt,

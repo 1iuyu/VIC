@@ -45,8 +45,6 @@ SoilTemperature(double   		   step_dt,
     double *matric = cell->matric;
     double *pack_liq = snow->pack_liq;
     double *pack_ice = snow->pack_ice;
-    double *pack_melt = snow->pack_melt;
-    double *pack_frze = snow->pack_frze;
     double *last_matric = cell->last_matric;
     double deriv_terms = energy->deriv_terms;
 	/* initialization */
@@ -72,7 +70,9 @@ SoilTemperature(double   		   step_dt,
     double *deric_vapor = cell->deriv_vapor;
     double *conduct_int = cell->conduct_int;
     double *Wsat_node = soil_con->Wsat_node;
+    double *porosity = snow->porosity;
     double *theta_liq = snow->theta_liq;
+    double *theta_ice = snow->theta_ice;
     double *last_packliq = snow->last_packliq;
     for (i = Nsoil - 2; i > 0; i--) {
         if (ice[i] > 0.0) {
@@ -460,22 +460,7 @@ SoilTemperature(double   		   step_dt,
             energy->Esignchg_count = 0;
         }
         if (i < Nsnow) {
-            if (pack_liq[i] == 0.0) {
-                T[i] -= diff;
-                if (T[i] > CONST_TKFRZ) {
-                    pack_liq[i] = CONST_RHOICE * CONST_CPICE * dz_snow[i] * 
-                                (T[i] - CONST_TKFRZ) / CONST_LATICE;
-                    pack_ice[i] -= pack_liq[i];
-                    // 确保冰含量不为负
-                    if (pack_ice[i] < 0.0) {
-                        pack_liq[i] += pack_ice[i];
-                        pack_ice[i] = 0.0;
-                    }
-                    pack_melt[i] += pack_liq[i]; // 记录雪层融化量
-                    T[i] = CONST_TKFRZ;
-                }
-            }
-            else {
+            if (pack_liq[i] > 0.0) {
                 double tmp_liq = pack_liq[i];
                 double diff_mass = diff * CONST_RHOFW;
                 pack_liq[i] -= diff_mass;
@@ -485,46 +470,58 @@ SoilTemperature(double   		   step_dt,
                                     (CONST_RHOICE * CONST_CPICE * dz_snow[i]);
                     pack_ice[i] += tmp_liq;
                     pack_liq[i] = 0.0;
-                    pack_frze[i] += tmp_liq; // 记录雪层冻结量
+                    double max_ice = CONST_RHOICE * dz_snow[i];
+                    if (pack_ice[i] > max_ice) {
+                        double excess_ice = pack_ice[i] - max_ice;
+                        pack_ice[i] = max_ice;
+                        // 多余冻结水无法进入冰相
+                        pack_liq[i] += excess_ice;
+                    }
                 }
                 else {
-                    if (diff_mass > 0.0) {
-                        pack_ice[i] += diff_mass;
-                        pack_frze[i] += diff_mass;   // 记录冻结量
-                    } else if (diff_mass < 0.0) {
-                        pack_ice[i] += diff_mass;  // diff_mass 为负，所以冰减少
-                        pack_melt[i] += (-diff_mass); // 记录融化量（取正值）
-                    }  
                     // 约束冰含量
                     double max_ice = CONST_RHOICE * dz_snow[i];
+                    pack_ice[i] += diff_mass;
                     if (pack_ice[i] > max_ice) {
                         // 超过最大冰含量，调整记录
                         double excess_ice = pack_ice[i] - max_ice;
                         pack_ice[i] = max_ice;
-                        if (diff_mass > 0.0) {
-                            pack_frze[i] -= excess_ice;   // 修正冻结量
-                        }
+                        pack_liq[i] += excess_ice;
                     }
                     if (pack_ice[i] < 0.0) {
+                        pack_liq[i] += pack_ice[i];
                         pack_ice[i] = 0.0;
                     }
                     // 约束温度不超过冰点
                     T[i] = CONST_TKFRZ;
                 }
             }
-        }
-        else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
-            if (cell->h2osfc > param.TOL_A) {
-                if (cell->h2osfc_liq == 0.0) {
-                    T[i] -= diff;
-                    if (T[i] > CONST_TKFRZ) {
-                        cell->h2osfc_liq = CONST_RHOICE * CONST_CPICE * cell->h2osfc * 
-                                        (T[i] - CONST_TKFRZ) / CONST_LATICE;
-                        cell->h2osfc_ice -= cell->h2osfc_liq;
+            else {
+                T[i] -= diff;
+                if (T[i] > CONST_TKFRZ) {
+                    pack_liq[i] = CONST_RHOICE * CONST_CPICE * dz_snow[i] * 
+                                (T[i] - CONST_TKFRZ) / CONST_LATICE;
+                    if (pack_liq[i] > pack_ice[i]) {
+                        double excess_energy =
+                            (pack_liq[i] - pack_ice[i]) * CONST_LATICE;
+                        pack_liq[i] = pack_ice[i];
+                        pack_ice[i] = 0.0;
+                        T[i] = CONST_TKFRZ + excess_energy /
+                                (CONST_RHOFW * CONST_CPICE * dz_snow[i]);              
+                    }
+                    else {
+                        pack_ice[i] -= pack_liq[i];
                         T[i] = CONST_TKFRZ;
                     }
                 }
-                else {
+            }
+            theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
+            porosity[i] = 1.0 - theta_ice[i];
+            theta_liq[i] = max(0.0, min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW)));
+        }
+        else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
+            if (cell->h2osfc > param.TOL_A) {
+                if (cell->h2osfc_liq > 0.0) {
                     double tmp_liq = cell->h2osfc_liq;
                     double diff_mm = diff * cell->h2osfc * CONST_RHOFW;
                     cell->h2osfc_liq -= diff_mm;
@@ -536,6 +533,15 @@ SoilTemperature(double   		   step_dt,
                     }
                     else {
                         cell->h2osfc_ice += diff_mm;
+                        T[i] = CONST_TKFRZ;
+                    }
+                }
+                else {
+                    T[i] -= diff;
+                    if (T[i] > CONST_TKFRZ) {
+                        cell->h2osfc_liq = CONST_RHOICE * CONST_CPICE * cell->h2osfc * 
+                                        (T[i] - CONST_TKFRZ) / CONST_LATICE;
+                        cell->h2osfc_ice -= cell->h2osfc_liq;
                         T[i] = CONST_TKFRZ;
                     }
                 }

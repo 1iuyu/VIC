@@ -19,7 +19,6 @@ update_nodes(double             pressure,
     // initialize variables
     size_t i, lidx;
     size_t Nsnow = snow->Nsnow;
-    size_t Nsoil = cell->Nsoil;
     size_t tmp_Nsnow = snow->Nsnow;
     size_t tmp_Nnode = soil_con->Nbedrock;
     size_t last_Nsnow = snow->last_Nsnow;
@@ -29,12 +28,6 @@ update_nodes(double             pressure,
     double *soil_T = cell->soil_T;
     double *Cs_node = energy->Cs_node;
     double *last_Cs = energy->last_Cs;
-    double *ice = cell->ice;
-    double *liq = cell->liq;
-    double *last_ice = cell->last_ice;
-    double *last_liq = cell->last_liq;
-    double *matric = cell->matric;
-    double *last_matric = cell->last_matric;
     double *pack_T = snow->pack_T;
     double *dz_snow = snow->dz_snow; 
     double *pack_ice = snow->pack_ice;
@@ -45,7 +38,6 @@ update_nodes(double             pressure,
     double *theta_liq = snow->theta_liq;
     double *kappa_node = energy->kappa_node;
     double *kappa_int = energy->kappa_int;
-    double *last_snowfrac = snow->last_snowfrac;
     double *pack_outflow = snow->pack_outflow;
     double *last_packice = snow->last_packice;
     double *last_packliq = snow->last_packliq;
@@ -98,20 +90,7 @@ update_nodes(double             pressure,
     // update the last time step values
     snow->last_Nsnow = snow->Nsnow;
     snow->last_swq = snow->swq;
-    for (i = 0; i < tmp_Nnode; i++) {
-        last_T[i] = T[i];
-        last_Cs[i] = Cs_node[i];
-    }
-    for (i = 0; i < Nsoil; i++) {
-        last_ice[i] = ice[i];
-        last_liq[i] = liq[i];
-        last_matric[i] = matric[i];
-    }
-    for (i = 0; i < Nsnow; i++) {
-        last_packice[i] = theta_ice[i];
-        last_packliq[i] = theta_liq[i];
-        last_snowfrac[i] = snow_frac[i];
-    }
+
     /* remove old snow layers */
     for(i = Nsnow; i < last_Nsnow; i++) {
         density[i] = 0.0;
