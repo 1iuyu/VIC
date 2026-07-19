@@ -462,7 +462,7 @@ SoilTemperature(double   		   step_dt,
         if (i < Nsnow) {
             if (pack_liq[i] > 0.0) {
                 double tmp_liq = pack_liq[i];
-                double diff_mass = diff * CONST_RHOFW;
+                double diff_mass = diff * CONST_RHOFW * dz_snow[i];
                 pack_liq[i] -= diff_mass;
                 if (pack_liq[i] < 0.0) {
                     double excess_cold = (-pack_liq[i]) * CONST_LATICE;

@@ -48,9 +48,6 @@ prepare_full_energy(double             pressure,
     double *Zsum_soil = soil_con->Zsum_soil;
     double *Zsum_snow = snow->Zsum_snow;
     double *organic_node = soil_con->organic_node;
-    double *theta_ice = snow->theta_ice;
-    double *theta_liq = snow->theta_liq;
-    double *porosity = snow->porosity;
     double *Wsat_node = soil_con->Wsat_node;
     double *kappa_node = energy->kappa_node;
     double *kappa_int = energy->kappa_int;
@@ -59,10 +56,6 @@ prepare_full_energy(double             pressure,
     // 计算雪的热导率和热容量
     if (Nsnow > 0) {
         for (i = 0; i < Nsnow; i++) {
-            theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
-            porosity[i] = 1.0 - theta_ice[i];
-            theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW));
-
             Cs_node[i] = max(param.TOL_A, (pack_ice[i] * CONST_CPICE +
                      pack_liq[i] * CONST_CPFWICE) / dz_snow[i]);
             

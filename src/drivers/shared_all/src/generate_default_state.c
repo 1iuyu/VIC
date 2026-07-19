@@ -85,8 +85,8 @@ generate_default_state(force_data_struct *force,
     ************************************/
     for (veg = 0; veg <= Nveg; veg++) {
         if (veg_con[veg].Cv > 0) {
-            snow[veg].swq = 0.0;   // [mm]
-            snow[veg].last_swq = 0.0;   // [mm]
+            snow[veg].swq = 10.0;   // [mm]
+            snow[veg].last_swq = 10.0;   // [mm]
             if (snow[veg].swq > 0.0) {
                 snow[veg].snow_depth = snow[veg].swq / 200.0;
             }
@@ -148,6 +148,7 @@ generate_default_state(force_data_struct *force,
             double surf_temp = air_temp + soil_con->Tfactor[band];
             // Initialize snow node temperatures
             for (i = 0; i < Nsnow; i++) {
+                energy[veg].T[i] = snow[veg].pack_T[i];
                 energy[veg].last_T[i] = snow[veg].pack_T[i];
             }
             /* Initialize soil node temperatures */
@@ -163,6 +164,7 @@ generate_default_state(force_data_struct *force,
                     T_soil = soil_con->avg_temp + 0.05 * (zc_soil[lidx] - 10.0);
                 }
                 energy[veg].T[k] = T_soil;
+                energy[veg].last_T[k] = T_soil;
                 cell[veg].soil_T[lidx] = T_soil;
             }
             /* Initial estimate of temperatures */
@@ -244,7 +246,6 @@ generate_default_state(force_data_struct *force,
                                 &snow[veg], soil_con);
             // initialize last step Cs_node
             for (i = 0; i < cell[veg].Nnode; i++) {
-                energy[veg].last_T[i] = energy[veg].T[i];
                 energy[veg].last_Cs[i] = energy[veg].Cs_node[i];
             }
         }

@@ -38,6 +38,7 @@ update_nodes(double             pressure,
     double *theta_liq = snow->theta_liq;
     double *kappa_node = energy->kappa_node;
     double *kappa_int = energy->kappa_int;
+    double *last_snowfrac = snow->last_snowfrac;
     double *pack_outflow = snow->pack_outflow;
     double *last_packice = snow->last_packice;
     double *last_packliq = snow->last_packliq;
@@ -90,6 +91,16 @@ update_nodes(double             pressure,
     // update the last time step values
     snow->last_Nsnow = snow->Nsnow;
     snow->last_swq = snow->swq;
+    for (i = 0; i < tmp_Nnode; i++) {
+        last_T[i] = T[i];
+        last_Cs[i] = Cs_node[i];
+    }
+    // Update snow states
+    for (i = 0; i < Nsnow; i++) {
+        last_packice[i] = theta_ice[i];
+        last_packliq[i] = theta_liq[i];
+        last_snowfrac[i] = snow_frac[i];
+    }
 
     /* remove old snow layers */
     for(i = Nsnow; i < last_Nsnow; i++) {

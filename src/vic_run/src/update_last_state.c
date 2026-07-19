@@ -14,6 +14,7 @@ update_last_state(energy_bal_struct *energy,
                   cell_data_struct  *cell,
                   snow_data_struct  *snow)
 {
+    // initialize variables
     size_t i;
     size_t Nnode = cell->Nnode;
     size_t Nsoil = cell->Nsoil;

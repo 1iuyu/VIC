@@ -208,8 +208,16 @@ distribute_snow_state(double            air_temp,
     double *Zsum_snow = snow->Zsum_snow;
     double *zc_snow = snow->zc_snow;
     double *pack_T = snow->pack_T;
+    double *density = snow->density;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
+    double *theta_ice = snow->theta_ice;
+    double *theta_liq = snow->theta_liq;
+    double *porosity = snow->porosity;
+    double *snow_frac = snow->snow_frac;
+    double *last_packice = snow->last_packice;
+    double *last_packliq = snow->last_packliq;
+    double *last_snowfrac = snow->last_snowfrac;
 
     if (snow_depth < 0.025) {
         snow->Nsnow = 0;
@@ -225,8 +233,8 @@ distribute_snow_state(double            air_temp,
     }
     else if (snow_depth >= 0.05 && snow_depth < 0.20) {
         snow->Nsnow = 2;
-        dz_snow[0] = 0.05;
-        dz_snow[1] = snow_depth - 0.05;
+        dz_snow[0] = snow_depth / 2.0;
+        dz_snow[1] = snow_depth / 2.0;
         zc_snow[0] = dz_snow[0] / 2.0;
         zc_snow[1] = dz_snow[0] + dz_snow[1] / 2.0;
         Zsum_snow[0] = dz_snow[0];
@@ -259,4 +267,19 @@ distribute_snow_state(double            air_temp,
         pack_liq[1] = 0.0;
         pack_liq[2] = 0.0;
     }
+    snow->last_Nsnow = snow->Nsnow;
+    snow->last_swq = snow->swq;
+    for (size_t i = 0; i < snow->Nsnow; i++) {
+        double SnowMass = pack_ice[i] + pack_liq[i];
+        snow_frac[i] = pack_ice[i] / SnowMass;
+        density[i] = pack_ice[i] / dz_snow[i];
+        theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
+        porosity[i] = 1.0 - theta_ice[i];
+        theta_liq[i] = max(0.0, min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW)));
+    }
+    for (size_t i = 0; i < snow->Nsnow; i++) {
+        last_packice[i] = theta_ice[i];
+        last_packliq[i] = theta_liq[i];
+        last_snowfrac[i] = snow_frac[i];
+    }  
 }
