@@ -70,7 +70,7 @@ surface_albedo(double             step_dt,
     }
     // compute snow age factor
     f_snowage = snow_aging(step_dt,
-                           energy->Tsurf,
+                           energy->Tgrnd,
                            snowfall, snow);
                            
     // Diagnose number of canopy layers for radiative transfer

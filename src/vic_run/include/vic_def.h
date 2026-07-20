@@ -749,6 +749,15 @@ typedef struct {
     double ReflSubDfs[MAX_SWBANDS];
     double ReflectVeg[MAX_SWBANDS];
     double TransmitVeg[MAX_SWBANDS];
+    double AlbGrndirPure[MAX_SWBANDS];
+    double AlbGrndfsPure[MAX_SWBANDS];
+    double AlbGrndirBC[MAX_SWBANDS];
+    double AlbGrndfsBC[MAX_SWBANDS];
+    double AlbGrndirOC[MAX_SWBANDS];
+    double AlbGrndfsOC[MAX_SWBANDS];
+    double AlbGrndirDST[MAX_SWBANDS];
+    double AlbGrndfsDST[MAX_SWBANDS];
+
 } energy_bal_struct;
 
 /******************************************************************************
@@ -834,8 +843,8 @@ typedef struct {
     double pack_outflow[MAX_SNOWS]; /**< outflow of liq water from each snow pack (m/s) */
     double theta_ice[MAX_SNOWS];    /**< partial volume of snow ice [m3/m3] */
     double theta_liq[MAX_SNOWS];    /**< partial volume of snow liquid water [m3/m3] */
-    double last_packice[MAX_SNOWS]; /**< partial volume of snow ice from previous time step */
-    double last_packliq[MAX_SNOWS]; /**< partial volume of snow liquid water from previous time step */
+    double last_thice[MAX_SNOWS];   /**< partial volume of snow ice from previous time step */
+    double last_thliq[MAX_SNOWS];   /**< partial volume of snow liquid water from previous time step */
     double porosity[MAX_SNOWS];     /**< porosity of each snow pack (fraction) */
     double snow_frac[MAX_SNOWS];    /**< fraction of each snow pack that is snow (fraction) */
     double last_snowfrac[MAX_SNOWS]; /**< fraction of each snow pack that is snow from previous time step */

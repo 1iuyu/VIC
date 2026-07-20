@@ -40,8 +40,8 @@ update_nodes(double             pressure,
     double *kappa_int = energy->kappa_int;
     double *last_snowfrac = snow->last_snowfrac;
     double *pack_outflow = snow->pack_outflow;
-    double *last_packice = snow->last_packice;
-    double *last_packliq = snow->last_packliq;
+    double *last_thice = snow->last_thice;
+    double *last_thliq = snow->last_thliq;
     // update the number of nodes
     if (cell->h2osfc > 0.0) {
         tmp_Nnode++;
@@ -97,8 +97,8 @@ update_nodes(double             pressure,
     }
     // Update snow states
     for (i = 0; i < Nsnow; i++) {
-        last_packice[i] = theta_ice[i];
-        last_packliq[i] = theta_liq[i];
+        last_thice[i] = theta_ice[i];
+        last_thliq[i] = theta_liq[i];
         last_snowfrac[i] = snow_frac[i];
     }
 
@@ -108,8 +108,8 @@ update_nodes(double             pressure,
         porosity[i] = 0.0;
         theta_ice[i] = 0.0;
         theta_liq[i] = 0.0;
-        last_packice[i] = 0.0;
-        last_packliq[i] = 0.0;
+        last_thice[i] = 0.0;
+        last_thliq[i] = 0.0;
         pack_outflow[i] = 0.0;
     }
     if (last_Nsnow > Nsnow) {

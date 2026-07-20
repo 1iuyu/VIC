@@ -32,8 +32,8 @@ update_last_state(energy_bal_struct *energy,
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
     double *snow_frac = snow->snow_frac;
-    double *last_packice = snow->last_packice;
-    double *last_packliq = snow->last_packliq;
+    double *last_thice = snow->last_thice;
+    double *last_thliq = snow->last_thliq;
     double *last_snowfrac = snow->last_snowfrac;
     // 
     energy->energy_flag = false;
@@ -58,8 +58,8 @@ update_last_state(energy_bal_struct *energy,
 
     // Update snow states
     for (i = 0; i < Nsnow; i++) {
-        last_packice[i] = theta_ice[i];
-        last_packliq[i] = theta_liq[i];
+        last_thice[i] = theta_ice[i];
+        last_thliq[i] = theta_liq[i];
         last_snowfrac[i] = snow_frac[i];
     }
 }

@@ -215,8 +215,8 @@ distribute_snow_state(double            air_temp,
     double *theta_liq = snow->theta_liq;
     double *porosity = snow->porosity;
     double *snow_frac = snow->snow_frac;
-    double *last_packice = snow->last_packice;
-    double *last_packliq = snow->last_packliq;
+    double *last_thice = snow->last_thice;
+    double *last_thliq = snow->last_thliq;
     double *last_snowfrac = snow->last_snowfrac;
 
     if (snow_depth < 0.025) {
@@ -278,8 +278,8 @@ distribute_snow_state(double            air_temp,
         theta_liq[i] = max(0.0, min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW)));
     }
     for (size_t i = 0; i < snow->Nsnow; i++) {
-        last_packice[i] = theta_ice[i];
-        last_packliq[i] = theta_liq[i];
+        last_thice[i] = theta_ice[i];
+        last_thliq[i] = theta_liq[i];
         last_snowfrac[i] = snow_frac[i];
     }  
 }

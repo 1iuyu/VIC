@@ -42,8 +42,8 @@ initialize_snow(snow_data_struct *snow,
             snow[i].pack_T[lidx] = 0.0;
             snow[i].density[lidx] = 0.0;
             snow[i].pack_outflow[lidx] = 0.0;
-            snow[i].last_packice[lidx] = 0.0;
-            snow[i].last_packliq[lidx] = 0.0;
+            snow[i].last_thice[lidx] = 0.0;
+            snow[i].last_thliq[lidx] = 0.0;
             snow[i].porosity[lidx] = 0.0;
             snow[i].snow_frac[lidx] = 0.0;
             snow[i].pack_melt[lidx] = 0.0;
