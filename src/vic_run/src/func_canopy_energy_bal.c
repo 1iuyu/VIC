@@ -415,9 +415,9 @@ func_canopy_energy_bal(size_t             hidx,
         energy->LatentSoil += fcanopy * (air_density * wtgq * 
                                     delq_soil * CONST_LATVAP - energy->LatentSoil);
         // compute individual longwave fluxes
-        energy->NetLongSnow += fcanopy * (LongSubIn - EmissLongGrnd * CONST_STEBOL * 
+        energy->NetLongSnow += fcanopy * (LongSubIn - param.EMISS_SNOW * CONST_STEBOL * 
                             pow(pack_T[0], 4.0) - energy->NetLongSnow);
-        energy->NetLongSoil += fcanopy * (LongSubIn - EmissLongGrnd * CONST_STEBOL * 
+        energy->NetLongSoil += fcanopy * (LongSubIn - param.EMISS_GRND * CONST_STEBOL * 
                             pow(soil_T[0], 4.0) - energy->NetLongSoil);
     }
     else {
@@ -461,6 +461,16 @@ func_canopy_energy_bal(size_t             hidx,
     double deriv_sub = -(coef_sensible + coef_latent + 4.0 * 
                         EmissLongSub * CONST_STEBOL * pow(Tgrnd, 3.0));
     energy->deriv_terms += fcanopy * (deriv_sub - energy->deriv_terms);
+    if (snow->Nsnow > 0) {
+        energy->deriv_snow += fcanopy * (-coef_sensible - coef_latent - 4.0 * param.EMISS_SNOW *
+                                CONST_STEBOL * pow(pack_T[0], 3.0) - energy->deriv_snow);
+        energy->deriv_soil += fcanopy * (-coef_sensible - coef_latent - 4.0 * EmissLongSub *
+                                CONST_STEBOL * pow(soil_T[0], 3.0) - energy->deriv_soil);
+    }
+    else {
+        energy->deriv_snow = energy->deriv_terms;
+        energy->deriv_soil = energy->deriv_terms;
+    }
     energy->Tsurf = EmissLongSub * Tfoliage + (1.0 - EmissLongSub) * sqrt(sqrt(pow(Tgrnd, 4.0)));
 
     return (0);

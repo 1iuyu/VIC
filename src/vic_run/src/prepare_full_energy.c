@@ -25,9 +25,10 @@ prepare_full_energy(double             pressure,
     size_t Nsnow = snow->Nsnow;
     size_t Nnode = cell->Nnode;
     size_t Nsoil = cell->Nsoil;
-    double tmp_ice = 0.;
     double dzp, k_int;
     double tmp_density = 0.;
+    double esat_T = 0.0;
+    double qsdT = 0.0;
     // 指针赋值
     double *liq = cell->liq;
     double *ice = cell->ice;
@@ -40,10 +41,13 @@ prepare_full_energy(double             pressure,
     double *Cs_node = energy->Cs_node;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
+    double *pack_T = snow->pack_T;
     double *zc_snow = snow->zc_snow;
     double *dz_snow = snow->dz_snow;
     double *soil_T = cell->soil_T;
     double *matric = cell->matric;
+    double *theta_liq = snow->theta_liq;
+    double *theta_ice = snow->theta_ice;
     double *zc_soil = soil_con->zc_soil;
     double *Zsum_soil = soil_con->Zsum_soil;
     double *Zsum_snow = snow->Zsum_snow;
@@ -56,9 +60,20 @@ prepare_full_energy(double             pressure,
     // 计算雪的热导率和热容量
     if (Nsnow > 0) {
         for (i = 0; i < Nsnow; i++) {
-            Cs_node[i] = max(param.TOL_A, (pack_ice[i] * CONST_CPICE +
+            double CP_snow = 92.96 + 7.37 * pack_T[i];
+            double air = 1.0 - theta_ice[i] - theta_liq[i];
+            Cs_node[i] = max(param.TOL_A, (pack_ice[i] * CP_snow +
                      pack_liq[i] * CONST_CPFWICE) / dz_snow[i]);
-            
+            if (air > 0.0) {
+                // 潜热贡献
+                svp_flags(pack_T[i], pressure,
+                          &esat_T, NULL, 
+                          NULL, &qsdT, 
+                          ESAT | QSDT);
+                double air_density = (pressure - 0.378 * esat_T) / (CONST_RDAIR * pack_T[i]);
+                Cs_node[i] += air * CONST_LATSUB * qsdT * air_density;
+            }
+            tmp_density = (pack_ice[i] + pack_liq[i]) / dz_snow[i];
             kappa_node[i] = CONST_KDAIR + (7.75e-5 * tmp_density + 1.105e-6 * 
                             tmp_density * tmp_density) * (CONST_KICE - CONST_KDAIR);
         }
@@ -85,10 +100,9 @@ prepare_full_energy(double             pressure,
     }
     for (i = 0; i < Nsoil; i++) {
         lidx = tmp_Nsnow + i;
-        tmp_ice = max(moist[i] - liq[i], 0.0);
         // 土壤节点体积热容
         Cs_node[lidx] = volumetric_heat_capacity(Wsat_node[i],
-                                                    liq[i], tmp_ice, 
+                                                    liq[i], ice[i], 
                                                     soil_T[i], 
                                                     moist[i], matric[i],
                                                     pressure,

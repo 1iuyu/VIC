@@ -29,8 +29,8 @@ surface_emissivity(energy_bal_struct *energy,
 
     if (cell->IS_VEG) {
         EmissLongSub = 1.0 - exp(-(NetLAI + NetSAI) / 1.0);
-        EmissLongGrnd = param.EMISS_GRND * coverage +
-                            param.EMISS_ICE * (1.0 - coverage);
+        EmissLongGrnd = param.EMISS_GRND * (1.0 - coverage) +
+                            param.EMISS_SNOW * coverage;
     }
     else if (cell->IS_GLAC) {
         EmissLongGrnd = param.EMISS_ICE * (1.0 - coverage) + 

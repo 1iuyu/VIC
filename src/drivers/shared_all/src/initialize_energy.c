@@ -42,6 +42,14 @@ initialize_energy(energy_bal_struct *energy,
             energy[veg].AbsSubDfs[i] = 0.0;
             energy[veg].ReflectVeg[i] = 0.0;
             energy[veg].TransmitVeg[i] = 0.0;
+            energy[veg].AlbGrndirPure[i] = 0.0;
+            energy[veg].AlbGrndfsPure[i] = 0.0;
+            energy[veg].AlbGrndirBC[i] = 0.0;
+            energy[veg].AlbGrndfsBC[i] = 0.0;
+            energy[veg].AlbGrndirOC[i] = 0.0;
+            energy[veg].AlbGrndfsOC[i] = 0.0;
+            energy[veg].AlbGrndirDST[i] = 0.0;
+            energy[veg].AlbGrndfsDST[i] = 0.0;
         }
         for (i = 0; i < MAX_CANOPYS; i++) {
             energy[veg].AbsDirSun[i] = 0.0;
@@ -62,6 +70,10 @@ initialize_energy(energy_bal_struct *energy,
         energy[veg].Tsurf = 0.0;
         energy[veg].Tfoliage = 0.0;
         energy[veg].Tstem = 0.0;
+        energy[veg].deriv_evap = 0.0;
+        energy[veg].deriv_snow = 0.0;
+        energy[veg].deriv_soil = 0.0;
+        energy[veg].deriv_terms = 0.0;
         for (lidx = 0; lidx < MAX_NODES; lidx++) {
             energy[veg].Cs_node[lidx] = 0.0;
             energy[veg].last_Cs[lidx] = 0.0;

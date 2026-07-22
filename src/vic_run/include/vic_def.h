@@ -678,6 +678,8 @@ typedef struct {
     double Tgrnd;                      /**< temperature of the bare ground [K] */
     double Tfoliage;                   /**< temperature of the foliage [K] */
     double Tstem;                      /**< temperature of the stem [K] */
+    double deriv_snow;
+    double deriv_soil;
     double deriv_terms;                /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
     double deriv_evap;                 /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
     double error;                      /**< energy balance error (W/m^2) */

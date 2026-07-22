@@ -26,7 +26,7 @@ func_surf_energy_bal(size_t             hidx,
     ***************/
     int ErrorFlag;
     double Tgrnd = energy->Tgrnd;
-    double *T = energy->T;
+    double *pack_T = snow->pack_T;
     double *soil_T = cell->soil_T;
     double *Ra_grnd = cell->Ra_grnd;
     double *Z0m_grnd = cell->Z0m_grnd;
@@ -197,12 +197,16 @@ func_surf_energy_bal(size_t             hidx,
                                                 (CONST_RWV * Tgrnd) / CONST_RHOFW;
     // compute sensible and latent heat fluxes individually
     if (snow->Nsnow > 0) {
-        energy->NetLongSnow = EmissLongGrnd * longwave - coef_longwave * pow(T[0], 4.0);
-        energy->NetLongSoil = EmissLongGrnd * longwave - coef_longwave * pow(soil_T[0], 4.0);
-        energy->SensibleSnow = -coef_sensible * (thm - T[0]);
+        energy->NetLongSnow = param.EMISS_SNOW * longwave - coef_longwave * pow(pack_T[0], 4.0);
+        energy->NetLongSoil = param.EMISS_GRND * longwave - coef_longwave * pow(soil_T[0], 4.0);
+        energy->SensibleSnow = -coef_sensible * (thm - pack_T[0]);
         energy->SensibleSoil = -coef_sensible * (thm - soil_T[0]);
         energy->LatentSnow = -coef_latent * (Qair - cell->Qair_snow) * LatentVapGrnd;
         energy->LatentSoil = -coef_latent * (Qair - cell->Qair_soil) * LatentVapGrnd;
+        energy->deriv_snow = -(coef_sensible + 4.0 * param.EMISS_ICE * CONST_STEBOL * pow(pack_T[0], 3) +
+                                     coef_latent * LatentVapGrnd * cell->Qair_deriv);
+        energy->deriv_soil = -(coef_sensible + 4.0 * param.EMISS_GRND * CONST_STEBOL * pow(soil_T[0], 3) +
+                                     coef_latent * LatentVapGrnd * cell->Qair_deriv);
     }
     else {
         energy->NetLongSnow = energy->longwave;
@@ -211,6 +215,8 @@ func_surf_energy_bal(size_t             hidx,
         energy->SensibleSoil = energy->sensible;
         energy->LatentSnow = energy->latent;
         energy->LatentSoil = energy->latent;
+        energy->deriv_snow = energy->deriv_terms;
+        energy->deriv_soil = energy->deriv_terms;
     }
 
     return (0);
