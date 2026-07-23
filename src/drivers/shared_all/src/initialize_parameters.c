@@ -149,7 +149,7 @@ initialize_parameters()
     param.SNOW_COMPACT_DM = 100.0;
     param.SNOW_COMPACT_ETA = 1.33e+6;
     param.SNOW_RADIUS_MIN = 54.526;
-    param.SNOW_RADIUS_MAX = 1500.;
+    param.SNOW_RADIUS_MAX = 1500.0;
     param.SNOW_NEW_RADIUS = 204.526;
     // BATS snow aging parameters
     param.SNOW_AGE_FACT = 1.0e6;
@@ -167,7 +167,11 @@ initialize_parameters()
     param.SNOW_NEW_SNOW_NIR = 0.65;
     param.SNOW_BETADS = 0.5;
     param.SNOW_BETAIS = 0.5;
-
+    // SNICAR snow albedo parameters
+    param.SNOW_WET_C1 = 0.0;
+    param.SNOW_WET_C2 = 4.22e-13;
+    param.SNOW_AGE_SCALE_F = 5.0;
+    param.SNOW_REFRZF = 1500.0;
     // Solar radiation fraction
     param.RAD_DIR_F = 0.7;
     param.RAD_VIS_F = 0.5;

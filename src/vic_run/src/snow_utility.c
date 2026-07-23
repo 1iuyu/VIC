@@ -67,7 +67,7 @@ new_snow_density(double air_temp)
 ******************************************************************************/
 void
 snow_albedo(double             coszen,
-            double             SnowAge_fact,
+            snow_data_struct  *snow,
             energy_bal_struct *energy)
 {
     extern parameters_struct param;
@@ -76,12 +76,8 @@ snow_albedo(double             coszen,
     double coszen_fact = 0.0;
     double *AlbedoSnowDir = energy->AlbedoSnowDir;
     double *AlbedoSnowDfs = energy->AlbedoSnowDfs;
-    // initialize albedo values for each band
-    for (size_t band = 0; band < options.Nswband; band++) {
-        AlbedoSnowDir[band] = 0.0;
-        AlbedoSnowDfs[band] = 0.0;
-    }
-    
+
+    double SnowAge_fact = snow->snowage / (1.0 + snow->snowage);
     /** New Snow **/
     solar_fact = param.SNOW_COSZEN_B;
     coszen_fact = (1.0 + 1.0 / solar_fact) / (1.0 + 2.0 * solar_fact * coszen) - 
@@ -282,4 +278,33 @@ distribute_snow_state(double            air_temp,
         last_thliq[i] = theta_liq[i];
         last_snowfrac[i] = snow_frac[i];
     }  
+}
+
+/******************************************************************************
+* @brief    This subroutine computes fresh snow grain radius
+*
+* @note     This is implemented to remedy an outstanding bias that SNICAR has 
+*           in initial grain size.
+******************************************************************************/
+double
+new_snow_radius(double air_temp)
+
+{
+    extern parameters_struct param;
+    double new_snow_radius = 0.0;
+    double tmax = CONST_TKFRZ;
+    double tmin = CONST_TKFRZ - 30.0;
+
+    if (air_temp < tmin) {
+        new_snow_radius = param.SNOW_RADIUS_MIN;
+    }
+    else if (air_temp > tmax) {
+        new_snow_radius = param.SNOW_RADIUS_MAX;
+    }
+    else {
+        new_snow_radius = (tmax - air_temp) / (tmax - tmin) * param.SNOW_RADIUS_MIN +
+                            (air_temp - tmin) / (tmax - tmin) * param.SNOW_RADIUS_MAX;
+    }
+
+    return(new_snow_radius);
 }

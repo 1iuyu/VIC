@@ -69,9 +69,8 @@ surface_albedo(double             step_dt,
         energy->AbsDfsSha[i] = 0.0;
     }
     // compute snow age factor
-    f_snowage = snow_aging(step_dt,
-                           energy->Tgrnd,
-                           snowfall, snow);
+    snow_aging(step_dt, energy->Tgrnd,
+                      snowfall, snow);
                            
     // Diagnose number of canopy layers for radiative transfer
     if (cell->IS_VEG == true) {
@@ -141,7 +140,7 @@ surface_albedo(double             step_dt,
 
         // age snow albedo if no new snowfall
         // solar radiation process is only done if there is light
-        snow_albedo(coszen, f_snowage, energy);
+        snow_albedo(coszen, snow, energy);
 
         /* Compute ground albedo based on soil and snow albedo */
         GroundAlbedo(cell->moist[0],

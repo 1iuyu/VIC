@@ -33,6 +33,7 @@ initialize_snow(snow_data_struct *snow,
 
         for (lidx = 0; lidx < MAX_SNOWS; lidx++) {
             snow[i].dz_snow[lidx] = 0.0;
+            snow[i].radius[lidx] = 0.0;
             snow[i].Zsum_snow[lidx] = 0.0;
             snow[i].zc_snow[lidx] = 0.0;
             snow[i].pack_liq[lidx] = 0.0;

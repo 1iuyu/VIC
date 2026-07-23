@@ -53,10 +53,10 @@ surface_fluxes(size_t             hidx,
     /**************************************
       计算直射和漫射辐射通量[0]-vis, [1]-nir.
     **************************************/
-    shortwave_dir[0] = shortwave * param.RAD_DIR_F * param.RAD_VIS_F;                 // 直射-可见光
-    shortwave_dir[1] = shortwave * param.RAD_DIR_F * (1.0 - param.RAD_VIS_F);         // 直射-近红外
-    shortwave_dfs[0] = shortwave * (1.0 - param.RAD_DIR_F) * param.RAD_VIS_F;         // 漫射-可见光
-    shortwave_dfs[1] = shortwave * (1.0 - param.RAD_DIR_F) * (1.0 - param.RAD_VIS_F); // 漫射-近红外
+    shortwave_dir[BAND_VIS] = shortwave * param.RAD_DIR_F * param.RAD_VIS_F;                 // 直射-可见光
+    shortwave_dir[BAND_NIR] = shortwave * param.RAD_DIR_F * (1.0 - param.RAD_VIS_F);         // 直射-近红外
+    shortwave_dfs[BAND_VIS] = shortwave * (1.0 - param.RAD_DIR_F) * param.RAD_VIS_F;         // 漫射-可见光
+    shortwave_dfs[BAND_NIR] = shortwave * (1.0 - param.RAD_DIR_F) * (1.0 - param.RAD_VIS_F); // 漫射-近红外
 
     /*******************************
       Advected heat flux from Prec

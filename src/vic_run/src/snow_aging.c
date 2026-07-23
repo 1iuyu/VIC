@@ -11,148 +11,143 @@
  * @brief    Determines from the air temperature what fraction of incoming
  *           precipitation is frozen and unfrozen (snow and rain).
  *****************************************************************************/
-double
+int
 snow_aging(double            step_dt,
            double            Tgrnd,
+           double            air_temp,
            double            snowfall,
            snow_data_struct *snow)
 {
     extern option_struct     options;
     extern parameters_struct param;
 
-    double t_factor;
-    double snow_vapor;
-    double snow_refrz;
-    double snow_soot;
-    double delta_aging;
-    double new_snow_fact;
-    double tmp_SnowAge;
-    double snowage = 0.0;
-    double f_snowage = 0.0;
-    double swq = snow->swq;
-    double last_swq = snow->last_swq;
-
     if (options.SNOW_AGING == SNICAR) {
-/*      size_t      i;
-        double      temp_upper;
-        double      temp_lower;
-        double      grad_temp;
-        double      temp_index;
-        double      grad_index;
-        double      dens_index;
-        double      tau;
-        double      kappa;
-        double      drdt0;
-        double      delta_new_radius;
-        double      part;
-        double      exponent;
-        double      delta_radius;
-        double      water_frac;
-        double      delta_wet_radius;
-        double      new_snow;
-        double      refrz_snow;
-        double      new_snow_frac;
-        double      refrz_frac;
-        double      old_snow_frac;
-
-        for (i = 0; i < options.Nsnows; i++) {
-            snow_mass = snow->pack_liq[i] + snow->pack_ice[i];
-            if (i == options.Nsnows) {
-                temp_upper = snow->pack_temp[i];
-                temp_lower = snow->pack_temp[i - 1] * snow->depth[i] +
-                             snow->pack_temp[i] * snow->depth[i - 1] /
-                             (snow->depth[i - 1] + snow->depth[i]);
+        size_t i, Nsnow;
+        double snow_mass = 0.0;
+        double grad_temp = 0.0;
+        double snow_density = 0.0;
+        double *tau_table;
+        double *kappa_table;
+        double *drdt_table;
+        double *pack_T = snow->pack_T;
+        double *radius = snow->radius;
+        double *dz_snow = snow->dz_snow;
+        double *pack_frze = snow->pack_frze;
+        double *pack_liq = snow->pack_liq;
+        double *pack_ice = snow->pack_ice;
+        double temp_upper;
+        double temp_lower;
+        double grad_temp;
+        double delta_new_radius;
+        double part;
+        double exponent;
+        double delta_radius = 0.0;
+        double frac_liq;
+        double delta_wet_radius;
+        double new_snow;
+        double refrz_snow;
+        double new_snow_frac;
+        double refrz_frac;
+        double old_snow_frac;
+        Nsnow = snow->Nsnow;
+        for (i = 0; i < Nsnow; i++) {
+            snow_mass = pack_liq[i] + pack_ice[i];
+            if (i == 0) {
+                temp_upper = pack_T[i];
+                temp_lower = pack_T[i+1] * dz_snow[i] + pack_T[i] * 
+                        dz_snow[i+1] / (dz_snow[i+1] + dz_snow[i]);
             }
             else {
-                temp_upper = snow->pack_temp[i + 1] * snow->depth[i] +
-                             snow->pack_temp[i] * snow->depth[i + 1] /
-                             (snow->depth[i] + snow->depth[i + 1]);
-                temp_lower = snow->pack_temp[i - 1] * snow->depth[i] +
-                             snow->pack_temp[i] * snow->depth[i - 1] /
-                             (snow->depth[i - 1] + snow->depth[i]);
+                temp_upper = pack_T[i-1] * dz_snow[i] + pack_T[i] * 
+                            dz_snow[i-1] / (dz_snow[i] + dz_snow[i-1]);
+                temp_lower = pack_T[i+1] * dz_snow[i] + pack_T[i] * 
+                            dz_snow[i+1] / (dz_snow[i+1] + dz_snow[i]);
             }
-            grad_temp[i] = fabs(temp_upper - temp_lower) / snow->depth[i];
+            grad_temp = fabs(temp_upper - temp_lower) / dz_snow[i];
 
-            snow_density = snow_mass / snow->depth[i];
+            snow_density = snow_mass / dz_snow[i];
             if (snow_density < param.SNOW_NEW_SNOW_DENSITY) {
                 snow_density = param.SNOW_NEW_SNOW_DENSITY;
             }
-
-            temp_index = nint((snow->pack_temp[i] - 223.15) / 5) + 1.;
-            grad_index = mint(grad_temp[i] / 10) + 1.;
-            dens_index = mint((snow_density - 50.) / 50) + 1.;
-
-            if (temp_index < param.SNOW_TEMP_MIN) {
-                temp_index = param.SNOW_TEMP_MIN;
-            }
-            if (grad_index < param.SNOW_GRAD_MIN) {
-                grad_index = param.SNOW_GRAD_MIN;
-            }
-            if (dens_index < param.SNOW_DENS_MIN) {
-                dens_index = param.SNOW_DENS_MIN;
-            }
-
-            tau = tau_table[temp_index, grad_index, dens_index];
-            kappa = kappa_table[temp_index, grad_index, dens_index];
-            drdt = drdt_table[temp_index, grad_index, dens_index];
-
-            delta_new_radius = snow->radius - param.SNOW_RADIUS_MIN;
-            part = tau / (delta_new_radius + tau);
-
+            // best-fit table indices
+            size_t temp_idx = nint((pack_T[i] - 223.15) / 5.0) + 1;
+            size_t grad_idx = mint(grad_temp / 10.0) + 1;
+            size_t dens_idx = mint((snow_density - 50.0) / 50.0) + 1;
+            // boundary checks
+            temp_idx = min(max(temp_idx, 1), 11);
+            grad_idx = min(max(grad_idx, 1), 31);
+            dens_idx = min(max(dens_idx, 1), 8);
+            // best-fit parameters
+            double best_tau = tau_table[temp_idx, grad_idx, dens_idx];
+            double best_kappa = kappa_table[temp_idx, grad_idx, dens_idx];
+            double best_drdt = drdt_table[temp_idx, grad_idx, dens_idx];
+            radius[i] = max(radius[i], param.SNOW_RADIUS_MIN);
+            delta_new_radius = radius[i] - param.SNOW_RADIUS_MIN;
+            part = best_tau / (delta_new_radius + best_tau);
             if (part < 0.0) {
                 part = 0.0; 
             }
-            exponent = 1.0 / kappa;
-            delta_radius = (drdt0 * pow(part, exponent));
+            exponent = 1.0 / best_kappa;
+            delta_radius = (best_drdt * pow(part, exponent)) * (step_dt / SEC_PER_HOUR);
 
-            water_frac = min(0.1, (pack_water / snow_mass));
-            delta_wet_radius = 1.0e18 * (step_dt * param.SNOW_WET_C1 + 
-                               param.SNOW_WET_C2 * pow(water_frac, 3.0) /
-                               (4.0 * CONST_PI * pow(snow->radius, 2.0)));
+            frac_liq = min(0.1, (pack_liq[i] / snow_mass));
+            delta_wet_radius = 1.0e18 * (step_dt * param.SNOW_WET_C2 * pow(frac_liq, 3.0) /
+                                                (4.0 * CONST_PI * pow(radius[i], 2.0)));
             delta_radius += delta_wet_radius;
 
             delta_radius *= param.SNOW_AGE_SCALE_F;
-
-            new_snow = snowfall / MM_PER_M;
-            refrz_snow = snowfreeze / MM_PER_M;
-
+            // new snowfall [mm]
+            new_snow = max(snowfall * step_dt, 0.0);
+            // snow that has re-frozen [mm]
+            refrz_snow = max(pack_frze[i] * step_dt, 0.0);
             refrz_frac = refrz_snow / snow_mass;
-
-            if (lindex == options.Nsnows) {
+            // fraction of layer mass that is new snow
+            if (i == 0) {
                 new_snow_frac = new_snow / snow_mass;
             }
             else {
-                new_snow_frac = 0.;
+                new_snow_frac = 0.0;
             }
 
-            if (new_snow_frac + refrz_frac > 1.) {
+            if (new_snow_frac + refrz_frac > 1.0) {
                 refrz_frac = refrz_frac / (refrz_frac + new_snow_frac);
                 new_snow_frac = 1.0 - refrz_frac;
                 old_snow_frac = 0.0;
             }
             else {
-                old_snow_frac = 1. - new_snow_frac - refrz_frac;
+                old_snow_frac = 1.0 - new_snow_frac - refrz_frac;
             }
+            // temperature dependent fresh grain size
+            double fresh_radius = new_snow_radius(air_temp);
 
-            snow->radius = (snow->radius + delta_radius) * old_snow_frac +
-                                        delta_new_radius * new_snow_frac + 
-                                        delta_wet_radius * refrz_frac;
+            radius[i] = (radius[i] + delta_radius) * old_snow_frac +
+                    fresh_radius * new_snow_frac + param.SNOW_REFRZF * refrz_frac;
 
-
-            if (snow->radius < param.SNOW_RADIUS_MIN) {
-                snow->radius = param.SNOW_RADIUS_MIN;
+            if (radius[i] < param.SNOW_RADIUS_MIN) {
+                radius[i] = param.SNOW_RADIUS_MIN;
             }
-            if (snow->radius > param.SNOW_RADIUS_MAX) {
-                snow->radius = param.SNOW_RADIUS_MAX;
+            if (radius[i] > param.SNOW_RADIUS_MAX) {
+                radius[i] = param.SNOW_RADIUS_MAX;
             }
         }
-
-        if (options.Nsnows == 0. && snowfall > 0. || 
-                    snow->swq > 0. || snow->snow_depth > 0.) {
-            snow->radius[0] = param.SNOW_NEW_RADIUS;
-        }   */
+        // set to fresh snow grain size
+        if (Nsnow == 0.0 && snowfall > 0.0 || 
+                    snow->swq > 0.0 || snow->snow_depth > 0.0) {
+            radius[0] = param.SNOW_NEW_RADIUS;
+        }
     }
     else if (options.SNOW_AGING == BATS) {
+        // initialize
+        double t_factor;
+        double snow_vapor;
+        double snow_refrz;
+        double snow_soot;
+        double delta_aging;
+        double new_snow_fact;
+        double tmp_SnowAge;
+        double snowage = 0.0;
+        double swq = snow->swq;
+        double last_swq = snow->last_swq;
 
         if (swq <= 0.0) {
             snowage = 0.;
@@ -172,12 +167,9 @@ snow_aging(double            step_dt,
             else {
                 snowage = tmp_SnowAge;
             }
-            f_snowage = snowage / (snowage + 1.0);
         }
         snow->snowage = snowage;
     }
-    return (f_snowage);
+
+    return (0);
 }
-
-
-

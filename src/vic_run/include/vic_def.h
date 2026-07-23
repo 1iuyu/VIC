@@ -54,8 +54,9 @@
 #define MIN_FCANOPY    0.0001  /**< Minimum allowable canopy fraction */
 #define MIN_SNOW_WETFRAC 0.01  /**< Minimum fraction of snow depth to be considered wet */
 #define MIN_SOILMOIST    0.01  /**< Minimum soil moisture content */
-#define MIN_VEG_LAI 0.05       /**< */
-#define MIN_TOL_LAI 0.001      /**< Minimum allowable leaf area index for transpiration calculations */
+#define MIN_SNOWMASS  1.0e-30
+#define MIN_VEG_LAI      0.05       /**< */
+#define MIN_TOL_LAI     0.001      /**< Minimum allowable leaf area index for transpiration calculations */
 
 /***** Define minimum and maximum values for model timesteps *****/
 #define MIN_SUBDAILY_STEPS_PER_DAY  4
@@ -128,6 +129,15 @@ enum
 {
     BAND_VIS,   /**< Visible light (400-700 nm) */
     BAND_NIR    /**< Near-infrared (700-1400 nm) */
+};
+
+/******************************************************************************
+ * @brief   Optical spectral bands
+ *****************************************************************************/
+enum
+{
+    BAND_DIR,   /**< direct-beam band */
+    BAND_DFS    /**< diffuse band */
 };
 
 /******************************************************************************
@@ -359,6 +369,7 @@ typedef struct {
     double SNOW_AGE_VAPF;
     double SNOW_AGE_FRZF;
     double SNOW_AGE_SOTF;
+    double SNOW_AGE_SCALE_F;    /**< Arbitrary tuning/scaling factor applied to snow aging rate (-) */
     double SNOW_NEW_SNOW_COVER;
     double SNOW_COSZEN_B;
     double SNOW_AGE_DIR_VIS;
@@ -368,6 +379,9 @@ typedef struct {
     double SNOW_NEW_SNOW_VIS;
     double SNOW_NEW_SNOW_NIR;
     double SNOW_RELEASE_FAC;
+    double SNOW_REFRZF;
+    double SNOW_WET_C1;     /**< constant for liquid water grain growth [m3 s-1], from Brun89 */
+    double SNOW_WET_C2;     /**< Constant for liquid water grain growth [m3 s-1], from Brun89: corrected for LWC [%] */
     double SNOW_RASNOW;     /**< aerodynamic resistance over snow surface (s/m) */
     double SNOW_BETADS;
     double SNOW_BETAIS;
@@ -428,7 +442,6 @@ typedef struct {
     double *AreaFract;                /**< Fraction of grid cell included in each snow elevation band */
     double *Pfactor;                  /**< Change in Precipitation due to elevation (fract) in each snow elevation band */
     double *Tfactor;                  /**< Change in temperature due to elevation (K) in each snow elevation band */
-
     double elevation;                 /**< grid cell elevation [m] */
     double lat;                       /**< grid cell central latitude */
     double lng;                       /**< grid cell central longitude */
@@ -839,6 +852,7 @@ typedef struct {
     double glac_excess;
     double snow_depth;              /**< snow depth (m) */
     double snowage;                 /**< snow age (s) */
+    double radius[MAX_SNOWS];       /**< effective grain radius [m-6] */
     double pack_T[MAX_SNOWS];       /**< temperature of each snow pack (k) */
     double pack_ice[MAX_SNOWS];     /**< ice content of the snow pack (mm) */
     double pack_liq[MAX_SNOWS];     /**< liquid water content of the snow pack (mm) */
