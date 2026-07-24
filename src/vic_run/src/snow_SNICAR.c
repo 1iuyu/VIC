@@ -66,7 +66,7 @@ snow_SNICAR(size_t             spectral_band,
             virtual_flag = false;
         }
         if (spectral_band == BAND_DIR) {
-            for (i =0; i < 5; i++) {
+            for (i = 0; i < 5; i++) {
                 band_wgt[i] = DIR_wgt[i];
             }
         }

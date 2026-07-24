@@ -41,8 +41,7 @@ calc_rainonly(double  air_temp,
     snowfrac = 0.;
     (*snowfall) = 0.;
     (*rainfall) = 0.;
-    // 转换为摄氏温度
-    air_temp = K_TO_C(air_temp);
+
     /* Ding et al. 2014, JH Eq.7.8.9 */
     delta_T = 0.215 - 0.099 * rel_humid + 1.018 * rel_humid * rel_humid;
     delta_S = 2.374 - 1.634 * rel_humid;
