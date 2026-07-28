@@ -116,7 +116,7 @@ int soil_transp(cell_data_struct *, soil_con_struct *);
 int soil_thermal_fluxes(double, double, double, cell_data_struct *, energy_bal_struct *, 
                              snow_data_struct *);
 void soil_hydraulic_conductivity(cell_data_struct *, soil_con_struct *);
-int surface_albedo(double, double, double, energy_bal_struct *, 
+int surface_albedo(double, double, double, double, energy_bal_struct *, 
                    cell_data_struct *, snow_data_struct *, soil_con_struct *,
                    veg_var_struct *, veg_lib_struct *);
 int surface_radiation(double *, double *, energy_bal_struct *, cell_data_struct *,

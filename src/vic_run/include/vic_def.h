@@ -55,8 +55,11 @@
 #define MIN_SNOW_WETFRAC 0.01  /**< Minimum fraction of snow depth to be considered wet */
 #define MIN_SOILMOIST    0.01  /**< Minimum soil moisture content */
 #define MIN_SNOWMASS  1.0e-30
-#define MIN_VEG_LAI      0.05       /**< */
-#define MIN_TOL_LAI     0.001      /**< Minimum allowable leaf area index for transpiration calculations */
+#define MIN_VEG_LAI      0.05  /**< */
+#define MIN_TOL_LAI     0.001  /**< Minimum allowable leaf area index for transpiration calculations */
+#define SNOW_NUM_AER        8  /**< number of aerosol species in snowpack */
+#define MAX_GAUSSIAN        8  /**< max gaussian integration index */
+#define SNICAR_BANDS        5  /**< wavelength bands used in SNICAR snow albedo calculation */
 
 /***** Define minimum and maximum values for model timesteps *****/
 #define MIN_SUBDAILY_STEPS_PER_DAY  4

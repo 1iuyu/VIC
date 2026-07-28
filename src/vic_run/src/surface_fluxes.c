@@ -51,7 +51,7 @@ surface_fluxes(size_t             hidx,
     double shortwave = force->shortwave[hidx];
 
     /**************************************
-      计算直射和漫射辐射通量[0]-vis, [1]-nir.
+      计算直射和漫射辐射通量
     **************************************/
     shortwave_dir[BAND_VIS] = shortwave * param.RAD_DIR_F * param.RAD_VIS_F;                 // 直射-可见光
     shortwave_dir[BAND_NIR] = shortwave * param.RAD_DIR_F * (1.0 - param.RAD_VIS_F);         // 直射-近红外
@@ -77,6 +77,7 @@ surface_fluxes(size_t             hidx,
       Surface shortwave albedo
     ***************************/
     surface_albedo(step_dt, coszen, 
+                   air_temp,
                    snowfall, energy, 
                    cell, snow, 
                    soil_con, 

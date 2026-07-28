@@ -13,6 +13,7 @@
 int
 surface_albedo(double             step_dt,
                double             coszen,
+               double             air_temp,
                double             snowfall,
                energy_bal_struct *energy,
                cell_data_struct  *cell,
@@ -23,7 +24,7 @@ surface_albedo(double             step_dt,
 {
     extern option_struct options;
     extern parameters_struct param;
-    size_t i, Nswband;
+    size_t i, j, nidx;
     double leaf_frac = 0.0;
     double stem_frac = 0.0;
     double f_snowage = 0.0;
@@ -32,8 +33,12 @@ surface_albedo(double             step_dt,
     double NetSAI = veg_var->NetSAI;
     double *LAI_z = veg_var->LAI_z;
     double *SAI_z = veg_var->SAI_z;
-
-    Nswband = options.Nswband;
+    double mass_aer_pure[MAX_SNOWS*SNOW_NUM_AER];
+    double mass_aer_bc[MAX_SNOWS*SNOW_NUM_AER];
+    double mass_aer_oc[MAX_SNOWS*SNOW_NUM_AER];
+    double mass_aer_dst[MAX_SNOWS*SNOW_NUM_AER];
+    double mass_aer_fdb[MAX_SNOWS*SNOW_NUM_AER];
+    size_t Nswband = options.Nswband;
     double NetVEG = NetLAI + NetSAI;
     // initialize albedo and two-stream fluxes
     for (i = 0; i < Nswband; i++) {
@@ -57,6 +62,14 @@ surface_albedo(double             step_dt,
         energy->ReflSubDfs[i] = 0.0;
         energy->ReflectVeg[i] = 0.0;
         energy->TransmitVeg[i] = 0.0;
+        energy->AlbGrndfsBC[i] = 0.0;
+        energy->AlbGrndirBC[i] = 0.0;
+        energy->AlbGrndfsDST[i] = 0.0;
+        energy->AlbGrndirDST[i] = 0.0;
+        energy->AlbGrndfsOC[i] = 0.0;
+        energy->AlbGrndirOC[i] = 0.0;
+        energy->AlbGrndfsPure[i] = 0.0;
+        energy->AlbGrndirPure[i] = 0.0;
     }
     for (i = 0; i < MAX_CANOPYS; i++) {
         veg_var->aPAR_sun[i] = 0.0;
@@ -68,9 +81,20 @@ surface_albedo(double             step_dt,
         energy->AbsDfsSun[i] = 0.0;
         energy->AbsDfsSha[i] = 0.0;
     }
+    // zero aerosol input arrays
+    for (i = 0; i < MAX_SNOWS; i++) {
+        for (j = 0; j < SNOW_NUM_AER; j++) {
+            nidx = i * j;
+            mass_aer_pure[nidx] = 0.0;
+            mass_aer_bc[nidx] = 0.0;
+            mass_aer_oc[nidx] = 0.0;
+            mass_aer_dst[nidx] = 0.0;
+            mass_aer_fdb[nidx] = 0.0;
+        }
+    }
     // compute snow age factor
     snow_aging(step_dt, energy->Tgrnd,
-                      snowfall, snow);
+               air_temp, snowfall, snow);
                            
     // Diagnose number of canopy layers for radiative transfer
     if (cell->IS_VEG == true) {
@@ -123,7 +147,7 @@ surface_albedo(double             step_dt,
     }
 
     /** compute understory albedo and net shortwave radiation **/
-    if (coszen > 0.) {
+    if (coszen > 0.0) {
         if (cell->IS_VEG) {
 
             leaf_frac = NetLAI / max(NetVEG, param.TOL_A);
