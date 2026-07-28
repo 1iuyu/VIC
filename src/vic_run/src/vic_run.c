@@ -114,8 +114,8 @@ vic_run(force_data_struct   *force,
             }
             // 校正降雨和降雪
             if (options.CORRPREC) {
-                snowfall *= gauge_correction[SNOW];
-                rainfall *= gauge_correction[RAIN];
+                rainfall *= gauge_correction[0];
+                snowfall *= gauge_correction[1];
             }
             // 计算新雪密度
             snow->new_snow_density = new_snow_density(Tair);
