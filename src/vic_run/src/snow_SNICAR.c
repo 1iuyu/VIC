@@ -14,16 +14,14 @@
  *****************************************************************************/
 int
 snow_SNICAR(size_t             comp_type,
-            double             step_dt,
             double             coszen,
-            double             snowfall,
             double            *mass_cnc_aer,
             energy_bal_struct *energy,
             cell_data_struct  *cell,
-            snow_data_struct  *snow,
-			soil_con_struct   *soil_con)
+            snow_data_struct  *snow)
 {
     extern parameters_struct param;
+    extern optical_struct optical;
     double zc_wave[5] = {0.5, 0.85, 1.1, 1.35, 3.25};
     // 高斯积分点（弧度）
     static const double difgaus_pt[8] = {
@@ -51,12 +49,7 @@ snow_SNICAR(size_t             comp_type,
         -2.66792E-4, 1.14088E-3, 2.37011E-4, -2.35905E-4,
         8.40449E-4, -4.71484E-4, -4.71484E-4
     };
-    double *ss_alb_dir;
-    double *ss_alb_dfs;
-    double *asym_snow_dir;
-    double *asym_snow_dfs;
-    double *mass_ext_dir;
-    double *mass_ext_dfs;
+    // hard code
     static const double ss_alb_bcphil_dir[5] = {0.758058, 0.708629, 0.654803, 0.599902, 0.415976};
     static const double ss_alb_bcphil_dfs[5] = {0.758067, 0.709739, 0.655509, 0.605827, 0.482284};
     static const double ss_alb_bcphob_dfs[5] = {0.366232, 0.301432, 0.250557, 0.214858, 0.151357};
@@ -119,13 +112,13 @@ snow_SNICAR(size_t             comp_type,
     bool solver_flag = true;
     double flux_dir;
     double flux_dfs;
-    double tmp_pack_liq;
-    double tmp_pack_ice;
-    double tmp_radius;
+    double tmp_pack_liq[MAX_SNOWS];
+    double tmp_pack_ice[MAX_SNOWS];
+    double tmp_radius[MAX_SNOWS];
     double tmp_albedo;
     double refk;
     double F_sfc_pls;
-    double band_wgt[5];
+    double band_wgt[SNICAR_BANDS];
     double ss_alb_aer[SNOW_NUM_AER];
     double asm_prm_aer[SNOW_NUM_AER];
     double ext_cff_mss_aer[SNOW_NUM_AER];
@@ -166,13 +159,18 @@ snow_SNICAR(size_t             comp_type,
         if (tmp_Nsnow == 0) {
             virtual_flag = true;
             tmp_Nsnow = 1;
-            tmp_pack_ice = snow->swq;
-            tmp_pack_liq = 0.0;
-            tmp_radius = param.SNOW_RADIUS_MIN;
+            tmp_pack_ice[0] = snow->swq;
+            tmp_pack_liq[0] = 0.0;
+            tmp_radius[0] = param.SNOW_RADIUS_MIN;
         }
         else {
             virtual_flag = false;
-            tmp_pack_ice = pack_ice[i];
+            tmp_Nsnow = snow->Nsnow;
+            for (j = 0; j < tmp_Nsnow; j++) {
+                tmp_pack_ice[j] = pack_ice[j];
+                tmp_pack_liq[j] = pack_liq[j];
+                tmp_radius[j] = radius[j];
+            }
         }
         // Set spectral underlying surface albedos to their corresponding VIS or NIR albedos
         if (cell->IS_VEG) { // soil tile
@@ -234,7 +232,7 @@ snow_SNICAR(size_t             comp_type,
                 if (i >= 3) {
                     for (k = 0; k < tmp_Nsnow; k++) {
                         for (j = 0; j < SNOW_NUM_AER; j++) {
-                            nidx = k * j;
+                            nidx = k * SNOW_NUM_AER + j;
                             mass_cnc_aer[nidx] = 0.0;
                         }
                     }
@@ -244,15 +242,15 @@ snow_SNICAR(size_t             comp_type,
                     nidx = radius[j] - min_mie_radius + 1;
                     if (comp_type == BAND_DIR) {                    
                         // snow optical properties (direct radiation)
-                        ss_alb_snow = ss_alb_dir[nidx];
-                        asm_prm_snow = asym_snow_dir[nidx];
-                        ext_cff_mss_snow = mass_ext_dir[nidx];
+                        ss_alb_snow = optical.ss_alb_dir[i][nidx];
+                        asm_prm_snow = optical.asym_snow_dir[i][nidx];
+                        ext_cff_mss_snow = optical.mass_ext_dir[i][nidx];
                     }
                     else if (comp_type == BAND_DFS) {
                         // snow optical properties (diffuse radiation)
-                        ss_alb_snow = ss_alb_dfs[nidx];
-                        asm_prm_snow = asym_snow_dfs[nidx];
-                        ext_cff_mss_snow = mass_ext_dfs[nidx];
+                        ss_alb_snow = optical.ss_alb_dfs[i][nidx];
+                        asm_prm_snow = optical.asym_snow_dfs[i][nidx];
+                        ext_cff_mss_snow = optical.mass_ext_dfs[i][nidx];
                     }
                     asm_prm_snow = max(0.99, asm_prm_snow);
                 }
@@ -289,20 +287,24 @@ snow_SNICAR(size_t             comp_type,
                 ss_alb_aer[7]      = ss_alb_dust4_dfs[i];
                 asm_prm_aer[7]     = asm_prm_dust4_dfs[i];
                 ext_cff_mss_aer[7] = ext_cff_mss_dust4_dfs[i];
+                // aerosol species 9 optical properties, dust size4
+                ss_alb_aer[8]      = ss_alb_dust5_dfs[i];
+                asm_prm_aer[8]     = asm_prm_dust5_dfs[i];
+                ext_cff_mss_aer[8] = ext_cff_mss_dust5_dfs[i];
                 double tau = 0.0, omega = 0.0, g = 0.0;
                 // 计算雪的光学厚度
                 for (j = 0; j < tmp_Nsnow; j++) {
                     double L_aer = 0.0, tau_aer = 0.0;
                     double tau_sum = 0.0, omega_sum = 0.0, g_sum = 0.0;
-                    double L_snow = pack_ice[j] + pack_liq[j];
+                    double L_snow = tmp_pack_ice[j] + tmp_pack_liq[j];
                     double tau_snow = L_snow * ext_cff_mss_snow;
                     // 计算气溶胶的光学贡献
                     for (j = 0; j < SNOW_NUM_AER; j++) {
                         L_aer = L_snow * mass_cnc_aer[i];
-                        tau_aer = L_aer * ext_cff_mss_aer[i];
+                        tau_aer = L_aer * ext_cff_mss_aer[j];
                         tau_sum += tau_aer;
-                        omega_sum += tau_aer * ss_alb_aer[i];
-                        g_sum += tau_aer * ss_alb_aer[i] * asm_prm_aer[i];
+                        omega_sum += tau_aer * ss_alb_aer[j];
+                        g_sum += tau_aer * ss_alb_aer[j] * asm_prm_aer[j];
                     }
                     tau = tau_sum + tau_snow;
                     omega = (1 / tau) * (omega_sum + (ss_alb_snow * tau_snow));

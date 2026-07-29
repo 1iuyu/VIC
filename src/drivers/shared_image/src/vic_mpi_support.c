@@ -514,7 +514,7 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     mpi_types[i++] = MPI_UNSIGNED_SHORT;
 
     // unsigned short SNOW_AGING;
-    offsets[i] = offsetof(option_struct, SNOW_AGING);
+    offsets[i] = offsetof(option_struct, SNOW_ALBEDO);
     mpi_types[i++] = MPI_UNSIGNED_SHORT;
 
     // unsigned short GRID_DECIMAL;

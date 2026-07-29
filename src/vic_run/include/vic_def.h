@@ -49,7 +49,7 @@
 #define MAX_CANOPYS     10     /**< maximum number of canopy layers for radiative transfer */
 #define MAX_HRUS        50     /**< maximum number of hydrological response units */
 
-/***** Define minimum values for model parameters *****/
+/***** Define values for model parameters *****/
 #define MINSOILDEPTH    0.001  /**< Minimum layer depth with which model can work (m) */
 #define MIN_FCANOPY    0.0001  /**< Minimum allowable canopy fraction */
 #define MIN_SNOW_WETFRAC 0.01  /**< Minimum fraction of snow depth to be considered wet */
@@ -60,15 +60,14 @@
 #define SNOW_NUM_AER        8  /**< number of aerosol species in snowpack */
 #define MAX_GAUSSIAN        8  /**< max gaussian integration index */
 #define SNICAR_BANDS        5  /**< wavelength bands used in SNICAR snow albedo calculation */
+#define SNICAR_RADII     1471  /**< number of effective radius indices used in Mie lookup table [idx] */
+#define LOOKUP_TEMP        11  /**< maximum temperature index used in aging lookup table [idx] */
+#define LOOKUP_DTDZ        31  /**< maximum temperature gradient index used in aging lookup table [idx] */
+#define LOOKUP_DENS         8  /**< maximum snow density index used in aging lookup table [idx] */
 
 /***** Define minimum and maximum values for model timesteps *****/
-#define MIN_SUBDAILY_STEPS_PER_DAY  4
+#define MIN_SUBDAILY_STEPS_PER_DAY  1
 #define MAX_SUBDAILY_STEPS_PER_DAY  1440
-
-#ifndef SNOW
-#define RAIN 0
-#define SNOW 1
-#endif
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -212,7 +211,7 @@ typedef struct {
     unsigned short int AERO_RESIST;    /**< AR_ZENG = use Zeng et al. (2005) method to calculate canopy aerodynamic resistance
           AR_MEIER = use Meier et al. (2017) method to calculate canopy aerodynamic resistance */
     unsigned short int CANOPY_INTERCEP;
-    unsigned short int SNOW_AGING;    /**< BATS and SNICAR */
+    unsigned short int SNOW_ALBEDO;    /**< BATS and SNICAR */
     unsigned short int GRID_DECIMAL; /**< Number of decimal places in grid file extensions */
     unsigned short int FCAN_SRC;       /**< FROM_VEGLIB = use fcanopy values from veg library file
                                           FROM_VEGPARAM = use fcanopy values from the veg param file */
@@ -405,6 +404,21 @@ typedef struct {
     // Crank Nicholson factor between 0 and 1
     double CN_FACTOR;
 } parameters_struct;
+
+/******************************************************************************
+ * @brief   This structure stores the optical parameters for snow layer.
+ *****************************************************************************/
+typedef struct {
+    double tau_table[LOOKUP_TEMP][LOOKUP_DTDZ][LOOKUP_DENS];
+    double kappa_table[LOOKUP_TEMP][LOOKUP_DTDZ][LOOKUP_DENS];
+    double drdt_table[LOOKUP_TEMP][LOOKUP_DTDZ][LOOKUP_DENS];
+    double ss_alb_dir[SNICAR_BANDS][SNICAR_RADII];
+    double ss_alb_dfs[SNICAR_BANDS][SNICAR_RADII];
+    double asym_snow_dir[SNICAR_BANDS][SNICAR_RADII];
+    double asym_snow_dfs[SNICAR_BANDS][SNICAR_RADII];
+    double mass_ext_dir[SNICAR_BANDS][SNICAR_RADII];
+    double mass_ext_dfs[SNICAR_BANDS][SNICAR_RADII];
+} optical_struct;
 
 /******************************************************************************
  * @brief   This structure stores the soil parameters for a grid cell.

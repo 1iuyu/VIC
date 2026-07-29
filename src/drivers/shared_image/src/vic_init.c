@@ -22,6 +22,7 @@ vic_init(void)
     extern veg_con_struct    **veg_con;
     extern veg_lib_struct     *veg_lib;
     extern parameters_struct   param;
+    extern optical_struct      optical;
     extern int                 mpi_rank;
 
     bool                       found;
@@ -717,8 +718,6 @@ vic_init(void)
             Cv_sum[i] += veg_con[i][j].Cv;
         }
 
-        // TODO: handle bare soil adjustment for compute treeline option
-
         // If the sum of the tile fractions is not within a tolerance,
         // readjust Cvs to sum to 1.0
         if (!assert_close_double(Cv_sum[i], 1., 0., AREA_SUM_ERROR_THRESH)) {
@@ -733,6 +732,77 @@ vic_init(void)
                 }
             }
         }
+    }
+    // 额外读取snow_SNICAR函数需要的数据
+    if (options.SNOW_ALBEDO == SNICAR) {
+
+        // Initialize optical parameters
+        memset(&optical, 0, sizeof(optical_struct));
+
+        size_t start[2] = {0, 0};
+        size_t count[2] = {
+                (size_t) SNICAR_BANDS,
+                (size_t) SNICAR_RADII};
+        size_t start3[3] = {0, 0, 0};
+        size_t count3[3] = {
+                (size_t) LOOKUP_TEMP,
+                (size_t) LOOKUP_DTDZ,
+                (size_t) LOOKUP_DENS};
+
+        double d2_size = SNICAR_BANDS * SNICAR_RADII;
+        double *local_d2 = malloc(d2_size * sizeof(double));
+        check_alloc_status(local_d2, "Memory allocation error.");
+        double d3_size = LOOKUP_TEMP * LOOKUP_DTDZ * LOOKUP_DENS;
+        double *local_d3 = malloc(d3_size * sizeof(double));
+        check_alloc_status(local_d3, "Memory allocation error.");
+        
+        // Mie single scatter albedos for direct-beam ice
+        get_scatter_nc_field_double(&(filenames.params), "ss_alb_dir",
+                                    start, count, local_d2);
+        memcpy(optical.ss_alb_dir, local_d2, d2_size * sizeof(double));
+
+        // Mie single scatter albedos for diffuse ice
+        get_scatter_nc_field_double(&(filenames.params), "ss_alb_dfs",
+                                    start, count, local_d2);
+        memcpy(optical.ss_alb_dfs, local_d2, d2_size * sizeof(double));
+
+        // asymmetry parameter of direct-beam ice  
+        get_scatter_nc_field_double(&(filenames.params), "asym_snow_dir",
+                                    start, count, local_d2);
+        memcpy(optical.asym_snow_dir, local_d2, d2_size * sizeof(double));
+
+        // asymmetry parameter of diffuse ice
+        get_scatter_nc_field_double(&(filenames.params), "asym_snow_dfs",
+                                    start, count, local_d2);
+        memcpy(optical.asym_snow_dfs, local_d2, d2_size * sizeof(double));
+
+        // mass extinction coefficient for direct-beam ice [m2/kg]
+        get_scatter_nc_field_double(&(filenames.params), "mass_ext_dir",
+                                    start, count, local_d2);
+        memcpy(optical.mass_ext_dir, local_d2, d2_size * sizeof(double));
+
+        // mass extinction coefficient for diffuse ice [m2/kg]
+        get_scatter_nc_field_double(&(filenames.params), "mass_ext_dfs",
+                                    start, count, local_d2);
+        memcpy(optical.mass_ext_dfs, local_d2, d2_size * sizeof(double));
+
+        // snow aging parameter retrieved from lookup table [hour]
+        get_scatter_nc_field_double(&(filenames.params), "tau_table",
+                                    start, count, local_d3);
+        memcpy(optical.tau_table, local_d3, d3_size * sizeof(double));
+
+        // snow aging parameter retrieved from lookup table [unitless]
+        get_scatter_nc_field_double(&(filenames.params), "kappa_table",
+                                    start, count, local_d3);
+        memcpy(optical.kappa_table, local_d3, d3_size * sizeof(double));
+
+        // snow aging parameter retrieved from lookup table [um hr-1]
+        get_scatter_nc_field_double(&(filenames.params), "drdt_table",
+                                    start, count, local_d3);
+        memcpy(optical.drdt_table, local_d3, d3_size * sizeof(double));
+
+        free(local_d2);
+        free(local_d3);
     }
 
     // initialize state variables with default values

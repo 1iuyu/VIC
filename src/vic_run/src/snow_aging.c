@@ -20,15 +20,13 @@ snow_aging(double            step_dt,
 {
     extern option_struct     options;
     extern parameters_struct param;
-
-    if (options.SNOW_AGING == SNICAR) {
+    extern optical_struct optical;
+    // 默认SNICAR积雪反照率方案
+    if (options.SNOW_ALBEDO == SNICAR) {
         size_t i, Nsnow;
         double snow_mass = 0.0;
         double grad_temp = 0.0;
         double snow_density = 0.0;
-        double *tau_table;
-        double *kappa_table;
-        double *drdt_table;
         double *pack_T = snow->pack_T;
         double *radius = snow->radius;
         double *dz_snow = snow->dz_snow;
@@ -70,17 +68,17 @@ snow_aging(double            step_dt,
                 snow_density = param.SNOW_NEW_SNOW_DENSITY;
             }
             // best-fit table indices
-            size_t temp_idx = nint((pack_T[i] - 223.15) / 5.0) + 1;
+            size_t temp_idx = nint((pack_T[i] - 223.15) / 5.0) + 1; //???
             size_t grad_idx = mint(grad_temp / 10.0) + 1;
             size_t dens_idx = mint((snow_density - 50.0) / 50.0) + 1;
             // boundary checks
-            temp_idx = min(max(temp_idx, 1), 11);
-            grad_idx = min(max(grad_idx, 1), 31);
-            dens_idx = min(max(dens_idx, 1), 8);
+            temp_idx = min(max(temp_idx, 0), LOOKUP_TEMP - 1);
+            grad_idx = min(max(grad_idx, 0), LOOKUP_DTDZ - 1);
+            dens_idx = min(max(dens_idx, 0), LOOKUP_DENS - 1);
             // best-fit parameters
-            double best_tau = tau_table[temp_idx, grad_idx, dens_idx];
-            double best_kappa = kappa_table[temp_idx, grad_idx, dens_idx];
-            double best_drdt = drdt_table[temp_idx, grad_idx, dens_idx];
+            double best_tau = optical.tau_table[temp_idx][grad_idx][dens_idx];
+            double best_kappa = optical.kappa_table[temp_idx][grad_idx][dens_idx];
+            double best_drdt = optical.drdt_table[temp_idx][grad_idx][dens_idx];
             radius[i] = max(radius[i], param.SNOW_RADIUS_MIN);
             delta_new_radius = radius[i] - param.SNOW_RADIUS_MIN;
             part = best_tau / (delta_new_radius + best_tau);
@@ -136,7 +134,7 @@ snow_aging(double            step_dt,
             radius[0] = param.SNOW_NEW_RADIUS;
         }
     }
-    else if (options.SNOW_AGING == BATS) {
+    else if (options.SNOW_ALBEDO == BATS) {
         // initialize
         double t_factor;
         double snow_vapor;
@@ -169,6 +167,9 @@ snow_aging(double            step_dt,
             }
         }
         snow->snowage = snowage;
+    }
+    else {
+        log_err("Unknown SNOW_ALBEDO option");
     }
 
     return (0);

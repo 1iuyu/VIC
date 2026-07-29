@@ -164,8 +164,21 @@ surface_albedo(double             step_dt,
 
         // age snow albedo if no new snowfall
         // solar radiation process is only done if there is light
-        snow_albedo(coszen, snow, energy);
-
+        if (options.SNOW_ALBEDO == BATS) {
+            snow_albedo(coszen, snow, energy);
+        }
+        else if (options.SNOW_ALBEDO == SNICAR) {
+            // Direct
+            snow_SNICAR(BAND_DIR, coszen,
+                        energy, cell, snow);
+            // Diffuse
+            snow_SNICAR(BAND_DFS, coszen,
+                        energy, cell, snow);
+        }
+        else {
+            log_err("Unknown SNOW_ALBEDO option");
+        }
+        
         /* Compute ground albedo based on soil and snow albedo */
         GroundAlbedo(cell->moist[0],
                      coszen,

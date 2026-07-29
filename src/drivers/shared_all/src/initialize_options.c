@@ -26,7 +26,7 @@ initialize_options()
     options.NOFLUX = false;
     options.BIOMASST = true;
     options.SNOW_DENSITY = DENS_BRAS;
-    options.SNOW_AGING = BATS;
+    options.SNOW_ALBEDO = SNICAR;
     options.CANOPY_INTERCEP = NOAH;
     options.TFALLBACK = true;
     // Model dimensions

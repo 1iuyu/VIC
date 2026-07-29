@@ -155,7 +155,8 @@ generate_default_state(force_data_struct *force,
             for (k = Nsnow; k < cell[veg].Nnode; k++) {
                 lidx = k - Nsnow;
                 if (zc_soil[lidx] <= 5.0) {
-                    T_soil = surf_temp + (soil_con->avg_temp - surf_temp) * (zc_soil[lidx] / 5.0);
+                    T_soil = surf_temp + (soil_con->avg_temp - 
+                                surf_temp) * (zc_soil[lidx] / 5.0);
                 }
                 else if (zc_soil[lidx] <= 10.0) {
                     T_soil = soil_con->avg_temp;
