@@ -12,11 +12,13 @@
  *           precipitation is frozen and unfrozen (snow and rain).
  *****************************************************************************/
 int
-snow_aging(double            step_dt,
-           double            Tgrnd,
-           double            air_temp,
-           double            snowfall,
-           snow_data_struct *snow)
+snow_aging(double             step_dt,
+           double             air_temp,
+           double             snowfall,
+           energy_bal_struct *energy,
+           cell_data_struct  *cell,
+           snow_data_struct  *snow,
+           soil_con_struct   *soil_con)
 {
     extern option_struct     options;
     extern parameters_struct param;
@@ -27,15 +29,15 @@ snow_aging(double            step_dt,
         double snow_mass = 0.0;
         double grad_temp = 0.0;
         double snow_density = 0.0;
-        double *pack_T = snow->pack_T;
+        double *T = energy->T;
         double *radius = snow->radius;
         double *dz_snow = snow->dz_snow;
+        double *dz_soil = soil_con->dz_soil;
         double *pack_frze = snow->pack_frze;
         double *pack_liq = snow->pack_liq;
         double *pack_ice = snow->pack_ice;
         double temp_upper;
         double temp_lower;
-        double grad_temp;
         double delta_new_radius;
         double part;
         double exponent;
@@ -47,30 +49,46 @@ snow_aging(double            step_dt,
         double new_snow_frac;
         double refrz_frac;
         double old_snow_frac;
+        double dz_node[MAX_SNOWS+1] = {0};
         Nsnow = snow->Nsnow;
+        // 设置临时dz_node数组
+        if (Nsnow > 0) {
+            for (i = 0; i < Nsnow; i++) {
+                dz_node[i] = dz_snow[i];
+            }
+            if (cell->IS_VEG || cell->IS_URBAN) {
+                dz_node[Nsnow] = dz_soil[0];
+            }
+            else if (cell->IS_GLAC) {
+                dz_node[Nsnow] = 0.5 * cell->h2osfc;
+            }
+        }
+        // temperature dependent fresh grain size
+        double fresh_radius = new_snow_radius(air_temp);
+        
         for (i = 0; i < Nsnow; i++) {
             snow_mass = pack_liq[i] + pack_ice[i];
             if (i == 0) {
-                temp_upper = pack_T[i];
-                temp_lower = pack_T[i+1] * dz_snow[i] + pack_T[i] * 
-                        dz_snow[i+1] / (dz_snow[i+1] + dz_snow[i]);
+                temp_upper = T[i];
+                temp_lower = (T[i+1] * dz_node[i] + T[i] * 
+                        dz_node[i+1]) / (dz_node[i+1] + dz_node[i]);
             }
             else {
-                temp_upper = pack_T[i-1] * dz_snow[i] + pack_T[i] * 
-                            dz_snow[i-1] / (dz_snow[i] + dz_snow[i-1]);
-                temp_lower = pack_T[i+1] * dz_snow[i] + pack_T[i] * 
-                            dz_snow[i+1] / (dz_snow[i+1] + dz_snow[i]);
+                temp_upper = (T[i-1] * dz_node[i] + T[i] * 
+                            dz_node[i-1]) / (dz_node[i] + dz_node[i-1]);
+                temp_lower = (T[i+1] * dz_node[i] + T[i] * 
+                            dz_node[i+1]) / (dz_node[i+1] + dz_node[i]);
             }
-            grad_temp = fabs(temp_upper - temp_lower) / dz_snow[i];
+            grad_temp = fabs(temp_upper - temp_lower) / dz_node[i];
 
-            snow_density = snow_mass / dz_snow[i];
+            snow_density = snow_mass / dz_node[i];
             if (snow_density < param.SNOW_NEW_SNOW_DENSITY) {
                 snow_density = param.SNOW_NEW_SNOW_DENSITY;
             }
             // best-fit table indices
-            size_t temp_idx = nint((pack_T[i] - 223.15) / 5.0) + 1; //???
-            size_t grad_idx = mint(grad_temp / 10.0) + 1;
-            size_t dens_idx = mint((snow_density - 50.0) / 50.0) + 1;
+            size_t temp_idx = (size_t) round((T[i] - 223.15) / 5.0);
+            size_t grad_idx = (size_t) round(grad_temp / 10.0);
+            size_t dens_idx = (size_t) round((snow_density - 50.0) / 50.0);
             // boundary checks
             temp_idx = min(max(temp_idx, 0), LOOKUP_TEMP - 1);
             grad_idx = min(max(grad_idx, 0), LOOKUP_DTDZ - 1);
@@ -115,8 +133,6 @@ snow_aging(double            step_dt,
             else {
                 old_snow_frac = 1.0 - new_snow_frac - refrz_frac;
             }
-            // temperature dependent fresh grain size
-            double fresh_radius = new_snow_radius(air_temp);
 
             radius[i] = (radius[i] + delta_radius) * old_snow_frac +
                     fresh_radius * new_snow_frac + param.SNOW_REFRZF * refrz_frac;
@@ -129,8 +145,8 @@ snow_aging(double            step_dt,
             }
         }
         // set to fresh snow grain size
-        if (Nsnow == 0.0 && snowfall > 0.0 || 
-                    snow->swq > 0.0 || snow->snow_depth > 0.0) {
+        if (Nsnow == 0.0 && (snowfall > 0.0 || 
+                    snow->swq > 0.0 || snow->snow_depth > 0.0)) {
             radius[0] = param.SNOW_NEW_RADIUS;
         }
     }
@@ -145,10 +161,11 @@ snow_aging(double            step_dt,
         double tmp_SnowAge;
         double snowage = 0.0;
         double swq = snow->swq;
+        double Tgrnd = energy->Tgrnd;
         double last_swq = snow->last_swq;
 
         if (swq <= 0.0) {
-            snowage = 0.;
+            snowage = 0.0;
         }
         else {
             /* No snow falling or present */

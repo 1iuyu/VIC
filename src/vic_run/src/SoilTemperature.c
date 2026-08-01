@@ -25,19 +25,22 @@ SoilTemperature(double   		   step_dt,
     size_t Nsoil = cell->Nsoil;
 	size_t Nnode = cell->Nnode;
     double coverage = snow->coverage;
-    double fact[MAX_NODES];
-	double mat_A[MAX_NODES];
-	double mat_B[MAX_NODES];
-	double mat_C[MAX_NODES];
-	double mat_RHS[MAX_NODES];
-    double FLOW[MAX_SOILS];
-    double EPSLON[MAX_SOILS];
+    double zc_node[MAX_SNOWS+1] = {0};
+    double fact[MAX_NODES] = {0};
+	double mat_A[MAX_NODES] = {0};
+	double mat_B[MAX_NODES] = {0};
+	double mat_C[MAX_NODES] = {0};
+	double mat_RHS[MAX_NODES] = {0};
+    double FLOW[MAX_SOILS] = {0};
+    double EPSLON[MAX_SOILS] = {0};
 	double *T = energy->T;
 	double *soil_T = cell->soil_T;
 	double *pack_T = snow->pack_T;
 	double *dz_soil = soil_con->dz_soil;
     double *zc_soil = soil_con->zc_soil;
+    double *zc_snow = snow->zc_snow;
     double *dz_snow = snow->dz_snow;
+    double *Zsum_snow = snow->Zsum_snow;
 	double *kappa_int = energy->kappa_int;
     double *Cs_node = energy->Cs_node;
     double *last_T = energy->last_T;
@@ -49,14 +52,14 @@ SoilTemperature(double   		   step_dt,
     double deriv_soil = energy->deriv_soil;
     double deriv_terms = energy->deriv_terms;
 	/* initialization */
-    for (i = 0; i < MAX_NODES; i++) {
-        fact[i] = 0.0;
-        FLOW[i] = 0.0;
-        EPSLON[i] = 0.0;
-        mat_A[i] = 0.0;
-        mat_B[i] = 0.0;
-        mat_C[i] = 0.0;
-        mat_RHS[i] = 0.0;
+    for (i = 0; i < Nsnow; i++) {
+        zc_node[i] = zc_snow[i];
+        if (cell->IS_VEG) {
+            zc_node[Nsnow] = zc_soil[0] + Zsum_snow[Nsnow-1];
+        }
+        else if (cell->IS_GLAC) {
+            zc_node[Nsnow] = cell->h2osfc * 0.25 + Zsum_snow[Nsnow-1];
+        }
     }
     // 计算地表水分通量限制
     size_t IFLAG = 0;
@@ -179,7 +182,7 @@ SoilTemperature(double   		   step_dt,
     double capr = 0.34;  // heat capacity ratio
     for (i = 0; i < Nnode; i++) {
         if (i < Nsnow) {
-            fact[i] = dz_snow[i] / step_dt;
+            fact[i] = 0.5 * (zc_node[i] + capr * zc_node[i+1]) / step_dt;
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
             fact[i] = 0.5 * cell->h2osfc / step_dt;

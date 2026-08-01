@@ -143,6 +143,17 @@ enum
 };
 
 /******************************************************************************
+ * @brief   Snow shape types
+ *****************************************************************************/
+enum
+{
+    SPHERE,       /**< sphere */
+    SPHEROID,     /**< spheroid */
+    HEXAGONAL,    /**< hexagonal plate */
+    KOCH          /**< koch snowflake */
+};
+
+/******************************************************************************
  * @brief   Landunit types
  *****************************************************************************/
 enum
@@ -219,6 +230,7 @@ typedef struct {
                                           FROM_VEGPARAM = use LAI values from the veg param file */
     unsigned short int SAI_SRC;        /**< FROM_VEGLIB = use SAI values from veg library file
                                           FROM_VEGPARAM = use SAI values from the veg param file */
+    unsigned short int SNOW_SHAPE;     /**< Snow shape type: 1=sphere; 2=spheroid; 3=hexagonal plate; 4=koch snowflake */
     bool PARAM_FROM_SOIL; /**< TRUE = bulk density and soil density (particle density) read from soil parameter file; otherwise set to 0.0 */
     bool ROUT;            /**< TRUE = */
     // state options
@@ -409,15 +421,69 @@ typedef struct {
  * @brief   This structure stores the optical parameters for snow layer.
  *****************************************************************************/
 typedef struct {
-    double tau_table[LOOKUP_TEMP][LOOKUP_DTDZ][LOOKUP_DENS];
-    double kappa_table[LOOKUP_TEMP][LOOKUP_DTDZ][LOOKUP_DENS];
-    double drdt_table[LOOKUP_TEMP][LOOKUP_DTDZ][LOOKUP_DENS];
+    double tau_table[LOOKUP_TEMP][LOOKUP_DTDZ][LOOKUP_DENS];    /**< snowage tau from table [hours] */
+    double kappa_table[LOOKUP_TEMP][LOOKUP_DTDZ][LOOKUP_DENS];  /**< snowage kappa from table [unitless] */
+    double drdt_table[LOOKUP_TEMP][LOOKUP_DTDZ][LOOKUP_DENS];   /**< snowage dr/dt_0 from table [m2kg-1hr-1] */
     double ss_alb_dir[SNICAR_BANDS][SNICAR_RADII];
     double ss_alb_dfs[SNICAR_BANDS][SNICAR_RADII];
     double asym_snow_dir[SNICAR_BANDS][SNICAR_RADII];
     double asym_snow_dfs[SNICAR_BANDS][SNICAR_RADII];
     double mass_ext_dir[SNICAR_BANDS][SNICAR_RADII];
     double mass_ext_dfs[SNICAR_BANDS][SNICAR_RADII];
+    double ss_alb_bcphil_dir[SNICAR_BANDS];
+    double ss_alb_bcphil_dfs[SNICAR_BANDS];
+    double ss_alb_bcphob_dfs[SNICAR_BANDS];
+    double ss_alb_bcphob_dir[SNICAR_BANDS];
+    double ss_alb_dust1_dir[SNICAR_BANDS];
+    double ss_alb_dust1_dfs[SNICAR_BANDS];
+    double ss_alb_dust2_dir[SNICAR_BANDS];
+    double ss_alb_dust2_dfs[SNICAR_BANDS];
+    double ss_alb_dust3_dir[SNICAR_BANDS];
+    double ss_alb_dust3_dfs[SNICAR_BANDS];
+    double ss_alb_dust4_dir[SNICAR_BANDS];
+    double ss_alb_dust4_dfs[SNICAR_BANDS];
+    double ss_alb_dust5_dir[SNICAR_BANDS];
+    double ss_alb_dust5_dfs[SNICAR_BANDS];
+    double asm_prm_bcphob_dir[SNICAR_BANDS];
+    double asm_prm_bcphob_dfs[SNICAR_BANDS];
+    double ss_alb_ocphil_dir[SNICAR_BANDS];
+    double ss_alb_ocphil_dfs[SNICAR_BANDS];
+    double asm_prm_ocphil_dir[SNICAR_BANDS];
+    double asm_prm_ocphil_dfs[SNICAR_BANDS];
+    double ext_cff_mss_ocphil_dir[SNICAR_BANDS];
+    double ext_cff_mss_ocphil_dfs[SNICAR_BANDS];
+    double ss_alb_ocphob_dir[SNICAR_BANDS];
+    double ss_alb_ocphob_dfs[SNICAR_BANDS];
+    double asm_prm_ocphob_dir[SNICAR_BANDS];
+    double asm_prm_ocphob_dfs[SNICAR_BANDS];
+    double ext_cff_mss_ocphob_dir[SNICAR_BANDS];
+    double ext_cff_mss_ocphob_dfs[SNICAR_BANDS];
+    double asm_prm_bcphil_dir[SNICAR_BANDS];
+    double asm_prm_bcphil_dfs[SNICAR_BANDS];
+    double ext_cff_mss_bcphob_dir[SNICAR_BANDS];
+    double ext_cff_mss_bcphob_dfs[SNICAR_BANDS];
+    double ext_cff_mss_bcphil_dir[SNICAR_BANDS];
+    double ext_cff_mss_bcphil_dfs[SNICAR_BANDS];
+    double asm_prm_dust1_dir[SNICAR_BANDS];
+    double asm_prm_dust1_dfs[SNICAR_BANDS];
+    double asm_prm_dust2_dir[SNICAR_BANDS];
+    double asm_prm_dust2_dfs[SNICAR_BANDS];
+    double asm_prm_dust3_dir[SNICAR_BANDS];
+    double asm_prm_dust3_dfs[SNICAR_BANDS];
+    double asm_prm_dust4_dir[SNICAR_BANDS];
+    double asm_prm_dust4_dfs[SNICAR_BANDS];
+    double asm_prm_dust5_dir[SNICAR_BANDS];
+    double asm_prm_dust5_dfs[SNICAR_BANDS];
+    double ext_cff_mss_dust1_dir[SNICAR_BANDS];
+    double ext_cff_mss_dust1_dfs[SNICAR_BANDS];
+    double ext_cff_mss_dust2_dir[SNICAR_BANDS];
+    double ext_cff_mss_dust2_dfs[SNICAR_BANDS];
+    double ext_cff_mss_dust3_dir[SNICAR_BANDS];
+    double ext_cff_mss_dust3_dfs[SNICAR_BANDS];
+    double ext_cff_mss_dust4_dir[SNICAR_BANDS];
+    double ext_cff_mss_dust4_dfs[SNICAR_BANDS];
+    double ext_cff_mss_dust5_dir[SNICAR_BANDS];
+    double ext_cff_mss_dust5_dfs[SNICAR_BANDS];
 } optical_struct;
 
 /******************************************************************************
@@ -523,9 +589,9 @@ typedef struct {
     double Z0sub_cw;
     double smpsc;
     double smpso;
-    char Landtype;
+    int landtype;
     // Carbon terms
-    char Ctype;                   /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
+    int Ctype;                   /**< Photosynthetic pathway; 0 = C3; 1 = C4 */
     double froot_leaf;            /**< ratio of fine root mass to leaf mass */
     double matric50;              /**< matric potential at which stomatal conductance is reduced by 50% (m) */
     double kcano_max;             /**< plant segment max conductance. m h2o (transpired)/m h2o (water potential gradient)/sec [1/s] */
@@ -756,6 +822,9 @@ typedef struct {
     double NetShortSub;        /**< net shortwave radiation from the understory (W/m^2) */
     double NetShortSoil;      /**< net shortwave radiation to the soil (W/m^2) */
     double NetShortSnow;      /**< net shortwave radiation to the snow (W/m^2) */
+    double AbsShortDir[MAX_SNOWS+1][MAX_SWBANDS]; /**< direct solar flux factor absorbed by snow [frc] */
+    double AbsShortDfs[MAX_SNOWS+1][MAX_SWBANDS]; /**< diffuse solar flux factor absorbed by snow [frc] */
+    double AbsShortLayer[MAX_SNOWS+1];
     // 辐射项
     double AbsSubDir[MAX_SWBANDS];
     double AbsSubDfs[MAX_SWBANDS];
@@ -781,6 +850,7 @@ typedef struct {
     double ReflSubDfs[MAX_SWBANDS];
     double ReflectVeg[MAX_SWBANDS];
     double TransmitVeg[MAX_SWBANDS];
+    // not used
     double AlbGrndirPure[MAX_SWBANDS];
     double AlbGrndfsPure[MAX_SWBANDS];
     double AlbGrndirBC[MAX_SWBANDS];
@@ -789,7 +859,6 @@ typedef struct {
     double AlbGrndfsOC[MAX_SWBANDS];
     double AlbGrndirDST[MAX_SWBANDS];
     double AlbGrndfsDST[MAX_SWBANDS];
-
 } energy_bal_struct;
 
 /******************************************************************************

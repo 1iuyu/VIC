@@ -29,7 +29,7 @@ vic_init(void)
     char                       locstr[MAXSTRING];
     double                     mean;
     double                     sum;
-    double                    *temp_array = NULL;
+    double                    *tmp_array = NULL;
     double                    *Cv_sum = NULL;
     double                    *dvar = NULL;
     int                       *ivar = NULL;
@@ -54,8 +54,8 @@ vic_init(void)
     ivar = malloc(local_domain.ncells_active * sizeof(*ivar));
     check_alloc_status(ivar, "Memory allocation error.");
     int total_size = local_domain.ncells_active * options.Nlayer;
-    temp_array = (double*) malloc(total_size * sizeof(*temp_array));
-    check_alloc_status(temp_array, "Memory allocation error.");
+    tmp_array = (double*) malloc(total_size * sizeof(*tmp_array));
+    check_alloc_status(tmp_array, "Memory allocation error.");
     
     // The method used to convert the NetCDF fields to VIC structures for
     // individual grid cells is to read a 2D slice and then loop over the
@@ -242,7 +242,7 @@ vic_init(void)
         }
         for (k = 0; k < Nbedrock; k++) {
             soil_con[i].zc_soil[k] = soil_con[i].Zsum_soil[k] - 
-                                    soil_con[i].dz_soil[k] / 2.;
+                                    soil_con[i].dz_soil[k] / 2.0;
         }
 
         // Calculate grid cell area.
@@ -266,7 +266,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            temp_array[lidx] = (double) dvar[i];
+            tmp_array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -274,7 +274,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].clay_node[0],
-                            &temp_array[i * Nlayer]);
+                            &tmp_array[i * Nlayer]);
     }
 
     // sand: sand content for each soil layer
@@ -284,7 +284,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            temp_array[lidx] = (double) dvar[i];
+            tmp_array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -292,7 +292,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].sand_node[0],
-                            &temp_array[i * Nlayer]);
+                            &tmp_array[i * Nlayer]);
     }
 
     // silt: silt content for each soil layer
@@ -302,7 +302,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            temp_array[lidx] = (double) dvar[i];
+            tmp_array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -310,7 +310,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].silt_node[0],
-                            &temp_array[i * Nlayer]);
+                            &tmp_array[i * Nlayer]);
     }
 
     // gravel: gravel content for each soil layer
@@ -320,7 +320,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            temp_array[lidx] = (double) dvar[i];
+            tmp_array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -328,7 +328,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].gravel_node[0],
-                            &temp_array[i * Nlayer]);
+                            &tmp_array[i * Nlayer]);
     }
 
     // Wsat: saturated point for each layer
@@ -338,7 +338,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            temp_array[lidx] = (double) dvar[i];
+            tmp_array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -346,7 +346,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].organic_node[0],
-                            &temp_array[i * Nlayer]);
+                            &tmp_array[i * Nlayer]);
     }
 
     for (j = 0; j < Nlayer; j++) {
@@ -355,7 +355,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            temp_array[lidx] = (double) dvar[i];
+            tmp_array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -363,7 +363,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].bulk_dens_node[0],
-                            &temp_array[i * Nlayer]);
+                            &tmp_array[i * Nlayer]);
     }
     
     /*  bulk density and soil density (particle density) read from 
@@ -378,7 +378,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                temp_array[lidx] = (double) dvar[i];
+                tmp_array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -386,7 +386,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].alpha_node[0],
-                                &temp_array[i * Nlayer]);
+                                &tmp_array[i * Nlayer]);
         }
         // expt: layer-specific exponent n in van Genuchten eqn
         for (j = 0; j < Nlayer; j++) {
@@ -395,7 +395,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                temp_array[lidx] = (double) dvar[i];
+                tmp_array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -403,7 +403,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].expt_node[0],
-                                &temp_array[i * Nlayer]);
+                                &tmp_array[i * Nlayer]);
         }
         // Ksat: saturated hydraulic conductivity [m/s]
         for (j = 0; j < Nlayer; j++) {
@@ -412,7 +412,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                temp_array[lidx] = (double) dvar[i];
+                tmp_array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -420,7 +420,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].Ksat_node[0],
-                                &temp_array[i * Nlayer]);
+                                &tmp_array[i * Nlayer]);
         }
         // Wpwp: soil moisture content at permanent wilting point [m3/m3]
         for (j = 0; j < Nlayer; j++) {
@@ -429,7 +429,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                temp_array[lidx] = (double) dvar[i];
+                tmp_array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -437,7 +437,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].Wpwp_node[0],
-                                &temp_array[i * Nlayer]);
+                                &tmp_array[i * Nlayer]);
         }
         // Wsat: soil moisture content at saturation [m3/m3]
         for (j = 0; j < Nlayer; j++) {
@@ -446,7 +446,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                temp_array[lidx] = (double) dvar[i];
+                tmp_array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -454,7 +454,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].Wsat_node[0],
-                                &temp_array[i * Nlayer]);
+                                &tmp_array[i * Nlayer]);
         }
         // lpar: unsaturated hydraulic conductivity exponent.
         for (j = 0; j < Nlayer; j++) {
@@ -463,7 +463,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                temp_array[lidx] = (double) dvar[i];
+                tmp_array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -471,7 +471,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].lpar_node[0],
-                                &temp_array[i * Nlayer]);
+                                &tmp_array[i * Nlayer]);
         }
     }
 
@@ -494,7 +494,10 @@ vic_init(void)
             get_scatter_nc_field_double(&(filenames.params), "AreaFract",
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
-                soil_con[i].AreaFract[j] = (double) dvar[i];
+                double value  = (double) dvar[i];
+                if (!isnan(value) && !isinf(value) && value > 0) {
+                    soil_con[i].AreaFract[j] = value;
+                }
             }
         }
         // elevation: elevation of each snow band
@@ -503,7 +506,10 @@ vic_init(void)
             get_scatter_nc_field_double(&(filenames.params), "elevation",
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
-                soil_con[i].BandElev[j] = (double) dvar[i];
+                double value  = (double) dvar[i];
+                if (!isnan(value) && !isinf(value) && value > 0) {
+                    soil_con[i].BandElev[j] = (double) dvar[i];
+                }
             }
         }
         // Run some checks and corrections for soil
@@ -560,7 +566,7 @@ vic_init(void)
                                             param.LAPSE_RATE;
                 }
                 else {
-                    soil_con[i].Tfactor[j] = 0.;
+                    soil_con[i].Tfactor[j] = 0.0;
                 }
             }
             // Pfactor: calculate Pfactor from the precipitation fraction read
@@ -580,10 +586,10 @@ vic_init(void)
                     sum += soil_con[i].Pfactor[j];
                 }
                 else {
-                    soil_con[i].Pfactor[j] = 0.;
+                    soil_con[i].Pfactor[j] = 0.0;
                 }
             }
-            if (!assert_close_double(sum, 1.0, 0., AREA_SUM_ERROR_THRESH)) {
+            if (!assert_close_double(sum, 1.0, 0.0, AREA_SUM_ERROR_THRESH)) {
                 sprint_location(locstr, &(local_domain.locations[i]));
                 log_warn("Sum of the snow band precipitation fractions does "
                          "not equal 1 (%f), dividing each fraction by the "
@@ -593,13 +599,359 @@ vic_init(void)
                 }
             }
             for (j = 0; j < options.SNOW_BAND; j++) {
-                if (soil_con[i].AreaFract[j] > 0) {
+                if (soil_con[i].AreaFract[j] > 0.0) {
                     soil_con[i].Pfactor[j] /= soil_con[i].AreaFract[j];
                 }
                 else {
-                    soil_con[i].Pfactor[j] = 0.;
+                    soil_con[i].Pfactor[j] = 0.0;
                 }
             }
+        }
+    }
+
+    /******************************************
+      Reading library of vegetation parameters
+    ******************************************/
+    // Initialize veg_lib parameters
+    memset(&veg_lib, 0, sizeof(veg_lib));
+    // 
+    size_t n1dims = 1, n2dims = 2, n3dims = 3;
+    size_t start1[1] = {0};
+    size_t count1[1] = {(size_t) options.NVEGTYPES};
+    size_t start2[2] = {0, 0};
+    size_t count2[2] = {
+            (size_t) options.NVEGTYPES,
+            (size_t) MONTHS_PER_YEAR};
+    double d1_size = options.NVEGTYPES;
+    double local_d1[options.NVEGTYPES];
+    int local_int[options.NVEGTYPES];
+    double d2_size = options.NVEGTYPES * MONTHS_PER_YEAR;
+    double *local_d2 = malloc(d2_size * sizeof(double));
+    check_alloc_status(local_d2, "Memory allocation error.");
+    // 读取 Canopy_Upper
+    get_scatter_nc_table_double(&(filenames.params), "Canopy_Upper", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].Canopy_Upper = local_d1[i];
+    }
+
+    // 读取 Canopy_Lower
+    get_scatter_nc_table_double(&(filenames.params), "Canopy_Lower", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].Canopy_Lower = local_d1[i];
+    }
+
+    // 读取 Canopy_Radius
+    get_scatter_nc_table_double(&(filenames.params), "Canopy_Radius", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].Canopy_Radius = local_d1[i];
+    }
+
+    // 读取 COI
+    get_scatter_nc_table_double(&(filenames.params), "COI", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].COI = local_d1[i];
+    }
+
+    // 读取 c_biomass
+    get_scatter_nc_table_double(&(filenames.params), "c_biomass", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].c_biomass = local_d1[i];
+    }
+
+    // 读取 d_leaf
+    get_scatter_nc_table_double(&(filenames.params), "d_leaf", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].d_leaf = local_d1[i];
+    }
+
+    // 读取 root_a
+    get_scatter_nc_table_double(&(filenames.params), "root_a", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].root_a = local_d1[i];
+    }
+
+    // 读取 root_b
+    get_scatter_nc_table_double(&(filenames.params), "root_b", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].root_b = local_d1[i];
+    }
+
+    // 读取 root_d
+    get_scatter_nc_table_double(&(filenames.params), "root_d", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].root_d = local_d1[i];
+    }
+
+    // 读取 liq_bioms
+    get_scatter_nc_table_double(&(filenames.params), "liq_bioms", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].liq_bioms = local_d1[i];
+    }
+
+    // 读取 slatop
+    get_scatter_nc_table_double(&(filenames.params), "slatop", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].slatop = local_d1[i];
+    }
+
+    // 读取 stem_num
+    get_scatter_nc_table_double(&(filenames.params), "stem_num", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].stem_num = local_d1[i];
+    }
+
+    // 读取 Z0sub_LAImax
+    get_scatter_nc_table_double(&(filenames.params), "Z0sub_LAImax", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].Z0sub_LAImax = local_d1[i];
+    }
+
+    // 读取 Z0sub_Cs
+    get_scatter_nc_table_double(&(filenames.params), "Z0sub_Cs", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].Z0sub_Cs = local_d1[i];
+    }
+
+    // 读取 Z0sub_Cr
+    get_scatter_nc_table_double(&(filenames.params), "Z0sub_Cr", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].Z0sub_Cr = local_d1[i];
+    }
+
+    // 读取 Z0sub_c
+    get_scatter_nc_table_double(&(filenames.params), "Z0sub_c", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].Z0sub_c = local_d1[i];
+    }
+
+    // 读取 Z0sub_cw
+    get_scatter_nc_table_double(&(filenames.params), "Z0sub_cw", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].Z0sub_cw = local_d1[i];
+    }
+
+    // 读取 smpsc
+    get_scatter_nc_table_double(&(filenames.params), "smpsc", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].smpsc = local_d1[i];
+    }
+
+    // 读取 smpso
+    get_scatter_nc_table_double(&(filenames.params), "smpso", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].smpso = local_d1[i];
+    }
+
+    // 读取 trunk_dia
+    get_scatter_nc_table_double(&(filenames.params), "trunk_dia", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].trunk_dia = local_d1[i];
+    }
+
+    // 读取 froot_leaf
+    get_scatter_nc_table_double(&(filenames.params), "froot_leaf", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].froot_leaf = local_d1[i];
+    }
+
+    // 读取 theta_cj
+    get_scatter_nc_table_double(&(filenames.params), "theta_cj", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].theta_cj = local_d1[i];
+    }
+
+    // 读取 kcano_max
+    get_scatter_nc_table_double(&(filenames.params), "kcano_max", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].kcano_max = local_d1[i];
+    }
+
+    // 读取 kroot_max
+    get_scatter_nc_table_double(&(filenames.params), "kroot_max", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].kroot_max = local_d1[i];
+    }
+
+    // 读取 matric50
+    get_scatter_nc_table_double(&(filenames.params), "matric50", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].matric50 = local_d1[i];
+    }
+
+    // 读取 leaf_CN
+    get_scatter_nc_table_double(&(filenames.params), "leaf_CN", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].leaf_CN = local_d1[i];
+    }
+
+    // 读取 SLA_top
+    get_scatter_nc_table_double(&(filenames.params), "SLA_top", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].SLA_top = local_d1[i];
+    }
+
+    // 读取 fN_rub
+    get_scatter_nc_table_double(&(filenames.params), "fN_rub", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].fN_rub = local_d1[i];
+    }
+
+    // 读取 medlynslope
+    get_scatter_nc_table_double(&(filenames.params), "medlynslope", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].medlynslope = local_d1[i];
+    }
+
+    // 读取 medlynint
+    get_scatter_nc_table_double(&(filenames.params), "medlynint", 
+                                n1dims, start1, count1, local_d1);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].medlynint = local_d1[i];
+    }
+
+    // 读取 landtype
+    get_scatter_nc_table_int(&(filenames.params), "landtype",
+                             n1dims, start1, count1, local_int);
+
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        if (local_int[i] == 0) {
+            veg_lib[i].landtype = LAND_SOIL;
+        }
+        else if (local_int[i] == 1) {
+            veg_lib[i].landtype = LAND_GLAC;
+        }
+        else if (local_int[i] == 2) {
+            veg_lib[i].landtype = LAND_WET;
+        }
+        else if (local_int[i] == 3) {
+            veg_lib[i].landtype = LAND_URBAN;
+        }
+        else {
+            log_warn("Warning: Unknown landtype %d for veg %d, setting to default LAND_SOIL", 
+                    local_int[i], i);
+            veg_lib[i].landtype = LAND_SOIL;  // 默认值
+        }
+    }
+
+    // 读取 Ctype
+    get_scatter_nc_table_int(&(filenames.params), "Ctype",
+                             n1dims, start1, count1, local_int);
+
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        if (local_int[i] == 0) {
+            veg_lib[i].Ctype = PHOTO_C3;
+        }
+        else if (local_int[i] == 1) {
+            veg_lib[i].Ctype = PHOTO_C4;
+        }
+        else {
+            log_warn("Warning: Unknown Ctype %d for veg %d, setting to default C3", 
+                    local_int[i], i);
+            veg_lib[i].Ctype = PHOTO_C3;  // 默认值
+        }
+    }
+
+    // 读取 LAI
+    get_scatter_nc_table_double(&(filenames.params), "LAI", 
+                                n2dims, start2, count2, local_d2);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        for (m = 0; m < MONTHS_PER_YEAR; m++) {
+            veg_lib[i].LAI[m] = local_d2[i * MONTHS_PER_YEAR + m];
+        }
+    }
+
+    // 读取 SAI
+    get_scatter_nc_table_double(&(filenames.params), "SAI", 
+                                n2dims, start2, count2, local_d2);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        for (m = 0; m < MONTHS_PER_YEAR; m++) {
+            veg_lib[i].SAI[m] = local_d2[i * MONTHS_PER_YEAR + m];
+        }
+    }
+
+    // 读取 fcanopy
+    if (options.FCAN_SRC != FROM_DEFAULT) {
+        get_scatter_nc_table_double(&(filenames.params), "fcanopy", 
+                                    n2dims, start2, count2, local_d2);
+        for (i = 0; i < options.NVEGTYPES; i++) {
+            for (m = 0; m < MONTHS_PER_YEAR; m++) {
+                veg_lib[i].fcanopy[m] = local_d2[i * MONTHS_PER_YEAR + m];
+                if (veg_lib[i].fcanopy[j] < 0 ||
+                    veg_lib[i].fcanopy[j] > 1) {
+                    log_err(
+                        "Veg cover fraction must be between 0 and 1 " "(%f)",
+                        veg_lib[i].fcanopy[j]);
+                }
+            }
+        }
+    }
+    // 设置植被反射和透射率count2
+    size_t count2[2] = {
+            (size_t) options.NVEGTYPES,
+            (size_t) MAX_SWBANDS};
+
+    // 读取 reflleaf
+    get_scatter_nc_table_double(&(filenames.params), "reflleaf", 
+                                n2dims, start2, count2, local_d2);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        for (m = 0; m < MAX_SWBANDS; m++) {
+            veg_lib[i].reflleaf[m] = local_d2[i * MAX_SWBANDS + m];
+        }
+    }
+
+    // 读取 reflstem
+    get_scatter_nc_table_double(&(filenames.params), "reflstem", 
+                                n2dims, start2, count2, local_d2);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        for (m = 0; m < MAX_SWBANDS; m++) {
+            veg_lib[i].reflstem[m] = local_d2[i * MAX_SWBANDS + m];
+        }
+    }
+
+    // 读取 transleaf
+    get_scatter_nc_table_double(&(filenames.params), "transleaf", 
+                                n2dims, start2, count2, local_d2);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        for (m = 0; m < MAX_SWBANDS; m++) {
+            veg_lib[i].transleaf[m] = local_d2[i * MAX_SWBANDS + m];
+        }
+    }
+
+    // 读取 transstem
+    get_scatter_nc_table_double(&(filenames.params), "transstem", 
+                                n2dims, start2, count2, local_d2);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        for (m = 0; m < MAX_SWBANDS; m++) {
+            veg_lib[i].transstem[m] = local_d2[i * MAX_SWBANDS + m];
         }
     }
 
@@ -609,7 +961,6 @@ vic_init(void)
 
     // number of vegetation types - in vic an extra veg tile is created
     // for above-treeline vegetation in some cases
-    // TODO: handle above treeline vegetation tile
     for (i = 0; i < local_domain.ncells_active; i++) {
         nveg = local_domain.locations[i].nveg;
         for (j = 0; j < local_domain.locations[i].nveg; j++) {
@@ -733,12 +1084,18 @@ vic_init(void)
             }
         }
     }
-    // 额外读取snow_SNICAR函数需要的数据
+
+    /******************************************
+       Reading the SNICAR parameters 
+    ******************************************/
     if (options.SNOW_ALBEDO == SNICAR) {
 
         // Initialize optical parameters
         memset(&optical, 0, sizeof(optical_struct));
 
+        size_t n1dims = 1, n2dims = 2, n3dims = 3;
+        size_t start1[1] = {0};
+        size_t count1[1] = {(size_t) SNICAR_BANDS};
         size_t start[2] = {0, 0};
         size_t count[2] = {
                 (size_t) SNICAR_BANDS,
@@ -748,7 +1105,8 @@ vic_init(void)
                 (size_t) LOOKUP_TEMP,
                 (size_t) LOOKUP_DTDZ,
                 (size_t) LOOKUP_DENS};
-
+        double d1_size = SNICAR_BANDS;
+        double local_d1[SNICAR_BANDS];
         double d2_size = SNICAR_BANDS * SNICAR_RADII;
         double *local_d2 = malloc(d2_size * sizeof(double));
         check_alloc_status(local_d2, "Memory allocation error.");
@@ -757,49 +1115,265 @@ vic_init(void)
         check_alloc_status(local_d3, "Memory allocation error.");
         
         // Mie single scatter albedos for direct-beam ice
-        get_scatter_nc_field_double(&(filenames.params), "ss_alb_dir",
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dir", n2dims,
                                     start, count, local_d2);
         memcpy(optical.ss_alb_dir, local_d2, d2_size * sizeof(double));
 
         // Mie single scatter albedos for diffuse ice
-        get_scatter_nc_field_double(&(filenames.params), "ss_alb_dfs",
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dfs", n2dims,
                                     start, count, local_d2);
         memcpy(optical.ss_alb_dfs, local_d2, d2_size * sizeof(double));
 
         // asymmetry parameter of direct-beam ice  
-        get_scatter_nc_field_double(&(filenames.params), "asym_snow_dir",
+        get_scatter_nc_table_double(&(filenames.params), "asym_snow_dir", n2dims,
                                     start, count, local_d2);
         memcpy(optical.asym_snow_dir, local_d2, d2_size * sizeof(double));
 
         // asymmetry parameter of diffuse ice
-        get_scatter_nc_field_double(&(filenames.params), "asym_snow_dfs",
+        get_scatter_nc_table_double(&(filenames.params), "asym_snow_dfs", n2dims,
                                     start, count, local_d2);
         memcpy(optical.asym_snow_dfs, local_d2, d2_size * sizeof(double));
 
         // mass extinction coefficient for direct-beam ice [m2/kg]
-        get_scatter_nc_field_double(&(filenames.params), "mass_ext_dir",
+        get_scatter_nc_table_double(&(filenames.params), "mass_ext_dir", n2dims,
                                     start, count, local_d2);
         memcpy(optical.mass_ext_dir, local_d2, d2_size * sizeof(double));
 
         // mass extinction coefficient for diffuse ice [m2/kg]
-        get_scatter_nc_field_double(&(filenames.params), "mass_ext_dfs",
+        get_scatter_nc_table_double(&(filenames.params), "mass_ext_dfs", n2dims,
                                     start, count, local_d2);
         memcpy(optical.mass_ext_dfs, local_d2, d2_size * sizeof(double));
 
         // snow aging parameter retrieved from lookup table [hour]
-        get_scatter_nc_field_double(&(filenames.params), "tau_table",
-                                    start, count, local_d3);
+        get_scatter_nc_table_double(&(filenames.params), "tau_table", n3dims,
+                              start3, count3, local_d3);
         memcpy(optical.tau_table, local_d3, d3_size * sizeof(double));
 
         // snow aging parameter retrieved from lookup table [unitless]
-        get_scatter_nc_field_double(&(filenames.params), "kappa_table",
-                                    start, count, local_d3);
+        get_scatter_nc_table_double(&(filenames.params), "kappa_table", n3dims,
+                              start3, count3, local_d3);
         memcpy(optical.kappa_table, local_d3, d3_size * sizeof(double));
 
         // snow aging parameter retrieved from lookup table [um hr-1]
-        get_scatter_nc_field_double(&(filenames.params), "drdt_table",
-                                    start, count, local_d3);
+        get_scatter_nc_table_double(&(filenames.params), "drdt_table", n3dims,
+                              start3, count3, local_d3);
         memcpy(optical.drdt_table, local_d3, d3_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_bcphil_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_bcphil_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_bcphil_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_bcphil_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_bcphob_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_bcphob_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_bcphob_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_bcphob_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dust1_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_dust1_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dust1_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_dust1_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dust2_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_dust2_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dust2_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_dust2_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dust3_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_dust3_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dust3_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_dust3_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dust4_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_dust4_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dust4_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_dust4_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dust5_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_dust5_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_dust5_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_dust5_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_bcphob_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_bcphob_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_bcphob_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_bcphob_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_ocphil_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_ocphil_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_ocphil_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_ocphil_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_ocphil_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_ocphil_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_ocphil_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_ocphil_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_ocphil_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_ocphil_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_ocphil_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_ocphil_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_ocphob_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_ocphob_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ss_alb_ocphob_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ss_alb_ocphob_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_ocphob_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_ocphob_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_ocphob_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_ocphob_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_ocphob_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_ocphob_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_ocphob_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_ocphob_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_bcphil_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_bcphil_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_bcphil_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_bcphil_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_bcphob_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_bcphob_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_bcphob_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_bcphob_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_bcphil_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_bcphil_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_bcphil_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_bcphil_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_dust1_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_dust1_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_dust1_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_dust1_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_dust2_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_dust2_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_dust2_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_dust2_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_dust3_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_dust3_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_dust3_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_dust3_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_dust4_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_dust4_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_dust4_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_dust4_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_dust5_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_dust5_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "asm_prm_dust5_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.asm_prm_dust5_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_dust1_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_dust1_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_dust1_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_dust1_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_dust2_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_dust2_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_dust2_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_dust2_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_dust3_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_dust3_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_dust3_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_dust3_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_dust4_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_dust4_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_dust4_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_dust4_dfs, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_dust5_dir", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_dust5_dir, local_d1, d1_size * sizeof(double));
+
+        get_scatter_nc_table_double(&(filenames.params), "ext_cff_mss_dust5_dfs", 
+                                    n1dims, start1, count1, local_d1);
+        memcpy(optical.ext_cff_mss_dust5_dfs, local_d1, d1_size * sizeof(double));
 
         free(local_d2);
         free(local_d3);
@@ -828,5 +1402,5 @@ vic_init(void)
     free(dvar);
     free(ivar);
     free(Cv_sum);
-    free(temp_array);
+    free(tmp_array);
 }

@@ -2054,3 +2054,69 @@ get_scatter_nc_field_int(nameid_struct *nc_nameid,
         free(ivar_mapped);
     }
 }
+
+/******************************************************************************
+ * @brief   读取多维 NetCDF 查找表并广播给所有进程
+ * @param   ndims - 数据的实际维度数（1, 2, 或 3）
+ *****************************************************************************/
+void
+get_scatter_nc_table_double(nameid_struct *nc_nameid,
+                             char          *var_name,
+                             size_t         ndims,
+                             size_t        *start,
+                             size_t        *count,
+                             double        *var)
+{
+    extern MPI_Comm MPI_COMM_VIC;
+    extern int      mpi_rank;
+    
+    // 计算实际数据大小
+    size_t total_size = 1;
+    for (size_t i = 0; i < ndims; i++) {
+        total_size *= count[i];
+    }
+    
+    // Root 进程读取数据
+    if (mpi_rank == VIC_MPI_ROOT) {      
+        get_nc_field_double(nc_nameid, var_name, 
+                                    start, count, var);
+    }
+    
+    // 广播给所有进程
+    int status = MPI_Bcast(var, total_size, MPI_DOUBLE, 
+                           VIC_MPI_ROOT, MPI_COMM_VIC);
+    check_mpi_status(status, "MPI_Bcast error");
+}
+
+/******************************************************************************
+ * @brief   读取多维 NetCDF 查找表（整数类型）并广播给所有进程
+ * @param   ndims - 数据的实际维度数（1, 2, 或 3）
+ *****************************************************************************/
+void
+get_scatter_nc_table_int(nameid_struct *nc_nameid,
+                         char          *var_name,
+                         size_t         ndims,
+                         size_t        *start,
+                         size_t        *count,
+                         int           *var)
+{
+    extern MPI_Comm MPI_COMM_VIC;
+    extern int      mpi_rank;
+    
+    // 计算实际数据大小
+    size_t total_size = 1;
+    for (size_t i = 0; i < ndims; i++) {
+        total_size *= count[i];
+    }
+    
+    // Root 进程读取数据
+    if (mpi_rank == VIC_MPI_ROOT) {      
+        get_nc_field_int(nc_nameid, var_name, 
+                                start, count, var);
+    }
+    
+    // 广播给所有进程
+    int status = MPI_Bcast(var, total_size, MPI_INT, 
+                           VIC_MPI_ROOT, MPI_COMM_VIC);
+    check_mpi_status(status, "MPI_Bcast error");
+}

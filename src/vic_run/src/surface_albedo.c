@@ -24,20 +24,14 @@ surface_albedo(double             step_dt,
 {
     extern option_struct options;
     extern parameters_struct param;
-    size_t i, j, nidx;
+    size_t i;
     double leaf_frac = 0.0;
     double stem_frac = 0.0;
-    double f_snowage = 0.0;
     double coverage = snow->coverage;
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
     double *LAI_z = veg_var->LAI_z;
     double *SAI_z = veg_var->SAI_z;
-    double mass_aer_pure[MAX_SNOWS*SNOW_NUM_AER];
-    double mass_aer_bc[MAX_SNOWS*SNOW_NUM_AER];
-    double mass_aer_oc[MAX_SNOWS*SNOW_NUM_AER];
-    double mass_aer_dst[MAX_SNOWS*SNOW_NUM_AER];
-    double mass_aer_fdb[MAX_SNOWS*SNOW_NUM_AER];
     size_t Nswband = options.Nswband;
     double NetVEG = NetLAI + NetSAI;
     // initialize albedo and two-stream fluxes
@@ -81,20 +75,11 @@ surface_albedo(double             step_dt,
         energy->AbsDfsSun[i] = 0.0;
         energy->AbsDfsSha[i] = 0.0;
     }
-    // zero aerosol input arrays
-    for (i = 0; i < MAX_SNOWS; i++) {
-        for (j = 0; j < SNOW_NUM_AER; j++) {
-            nidx = i * j;
-            mass_aer_pure[nidx] = 0.0;
-            mass_aer_bc[nidx] = 0.0;
-            mass_aer_oc[nidx] = 0.0;
-            mass_aer_dst[nidx] = 0.0;
-            mass_aer_fdb[nidx] = 0.0;
-        }
-    }
+
     // compute snow age factor
-    snow_aging(step_dt, energy->Tgrnd,
-               air_temp, snowfall, snow);
+    snow_aging(step_dt, air_temp, 
+               snowfall, energy, 
+               cell, snow, soil_con);
                            
     // Diagnose number of canopy layers for radiative transfer
     if (cell->IS_VEG == true) {
@@ -145,22 +130,22 @@ surface_albedo(double             step_dt,
         }
         cell->Ncanopy = nrad;
     }
+    // 植被的反射率和透射率
+    if (cell->IS_VEG || cell->IS_URBAN) {
 
+        leaf_frac = NetLAI / max(NetVEG, param.TOL_A);
+        stem_frac = NetSAI / max(NetVEG, param.TOL_A);
+        for (i = 0; i < Nswband; i++) {
+            energy->ReflectVeg[i] = max(veg_lib->reflleaf[i] * leaf_frac + 
+                                        veg_lib->reflstem[i] * 
+                                            stem_frac, param.TOL_A);
+            energy->TransmitVeg[i] = max(veg_lib->transleaf[i] * leaf_frac +
+                                        veg_lib->transstem[i] * 
+                                            stem_frac, param.TOL_A);
+        }
+    }
     /** compute understory albedo and net shortwave radiation **/
     if (coszen > 0.0) {
-        if (cell->IS_VEG) {
-
-            leaf_frac = NetLAI / max(NetVEG, param.TOL_A);
-            stem_frac = NetSAI / max(NetVEG, param.TOL_A);
-            for (i = 0; i < Nswband; i++) {
-                energy->ReflectVeg[i] = max(veg_lib->reflleaf[i] * leaf_frac + 
-                                            veg_lib->reflstem[i] * 
-                                                stem_frac, param.TOL_A);
-                energy->TransmitVeg[i] = max(veg_lib->transleaf[i] * leaf_frac +
-                                            veg_lib->transstem[i] * 
-                                                stem_frac, param.TOL_A);
-            }
-        }
 
         // age snow albedo if no new snowfall
         // solar radiation process is only done if there is light
@@ -189,9 +174,9 @@ surface_albedo(double             step_dt,
             /* Compute canopy radiative transfer 
             using two-stream approximation */
             canopy_two_stream(coszen, energy, 
-                            cell,
-                            veg_var, 
-                            veg_lib);
+                              cell,
+                              veg_var, 
+                              veg_lib);
         }
     } // end of coszen > 0.
 

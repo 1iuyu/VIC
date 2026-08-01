@@ -28,7 +28,7 @@ CalcPhaseChange(size_t             nidx,
     double *ice = cell->ice;
     double *liq = cell->liq; 
     double *matric = cell->matric;
-    double *last_Cs = energy->last_Cs;
+    double *Cs_node = energy->Cs_node;
     double *Wpwp_node = soil_con->Wpwp_node;
     double *Wsat_node = soil_con->Wsat_node;
     // 保存临时变量
@@ -52,7 +52,7 @@ CalcPhaseChange(size_t             nidx,
     // 计算等效热容量
     liq_deriv = water_curve_deriv(nidx, tmp_tkfrz, 
                                   total_liq, tmp_matric, soil_con);
-    eff_Cs = last_Cs[nidx] + CONST_RHOFW * CONST_LATICE * liq_deriv;
+    eff_Cs = Cs_node[nidx] + CONST_RHOFW * CONST_LATICE * liq_deriv;
 
     // 分情况处理
     if (*T <= tmp_tkfrz) {
@@ -67,7 +67,7 @@ CalcPhaseChange(size_t             nidx,
             double new_ice = (total_liq - equil_liq) * CONST_RHOFW / CONST_RHOICE;
             double new_liq = equil_liq;
             if (tmp_ice == 0.0 && new_ice > 0.0) {
-                EnergyRes = last_Cs[nidx] * (tmp_tkfrz - *T);
+                EnergyRes = Cs_node[nidx] * (tmp_tkfrz - *T);
                 *T = tmp_tkfrz - EnergyRes / eff_Cs;
                 // 用修正后的温度重新计算平衡态
                 equil_liq = frozen_soil(nidx, tmp_tkfrz, *T, liq, ice, soil_con);
@@ -86,7 +86,7 @@ CalcPhaseChange(size_t             nidx,
             ice[nidx] = 0.0;
         }
         else {
-            EnergyRes = last_Cs[nidx] * (tmp_T - tmp_tkfrz);
+            EnergyRes = Cs_node[nidx] * (tmp_T - tmp_tkfrz);
             fusion_flux = CONST_RHOICE * CONST_LATICE * ice[nidx];
             if (EnergyRes >= fusion_flux) {
                 liq[nidx] = total_liq;

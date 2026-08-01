@@ -20,6 +20,7 @@ vic_alloc(void)
     extern save_data_struct   *save_data;
     extern soil_con_struct    *soil_con;
     extern veg_con_struct    **veg_con;
+    extern veg_lib_struct     *veg_lib;
     extern veg_hist_struct   **veg_hist;
     size_t                     i, j;
 
@@ -38,6 +39,10 @@ vic_alloc(void)
     // allocate memory for vegetation structure
     veg_con = malloc(local_domain.ncells_active * sizeof(*veg_con));
     check_alloc_status(veg_con, "Memory allocation error.");
+
+    // allocate memory for vegetation structure
+    veg_lib = calloc(options.NVEGTYPES, sizeof(*(veg_lib)));
+    check_alloc_status(veg_lib, "Memory allocation error.");
 
     // all_vars allocation
     all_vars = malloc(local_domain.ncells_active * sizeof(*all_vars));

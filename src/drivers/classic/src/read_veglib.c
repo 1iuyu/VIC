@@ -6,7 +6,7 @@
  * information in this library.
  *****************************************************************************/
 
-#include "vic_driver_classic.h"
+#include "vic_driver_image.h"
 
 /******************************************************************************
  * @brief    Read in a library of vegetation parameters for all vegetation
@@ -24,6 +24,7 @@ read_veglib(FILE   *veglib,
     char                       str[MAXSTRING];
     char                       tmpstr[MAXSTRING];
     double                     tmp_double;
+
     rewind(veglib);
     fgets(str, MAXSTRING, veglib);
     Nveg_type = 0;
@@ -66,6 +67,28 @@ read_veglib(FILE   *veglib,
             fscanf(veglib, "%lf", &temp[i].smpso);
             fscanf(veglib, "%lf", &temp[i].trunk_dia);
 
+            fscanf(veglib, "%s", tmpstr); /* landunit type */
+            if (!strcmp(tmpstr, "0") || !strcmp(tmpstr, "SOIL")) {
+                temp[i].landtype = LAND_SOIL;
+            }
+            else if (!strcmp(tmpstr, "1") || !strcmp(tmpstr, "GLAC")) {
+                temp[i].landtype = LAND_GLAC;
+            }
+            else if (!strcmp(tmpstr, "2") || !strcmp(tmpstr, "WET")) {
+                temp[i].landtype = LAND_WET;
+            }
+            else if (!strcmp(tmpstr, "3") || !strcmp(tmpstr, "URBAN")) {
+                temp[i].landtype = LAND_URBAN;
+            }
+
+            /* 兼容性警告：字符串形式已弃用，建议使用数字 */
+            if (!strcmp(tmpstr, "VEG") || !strcmp(tmpstr, "GLAC") ||
+                !strcmp(tmpstr, "WET") || !strcmp(tmpstr, "URBAN")) {
+                log_warn("Use of strings (e.g., \"VEG\", \"GLAC\") as values of "
+                        "landtype is deprecated.  Please replace these with "
+                        "numeric codes: 0 (SOIL), 1 (GLAC), 2 (WET), or 3 (URBAN)");
+            }
+
             /* Carbon-cycling parameters */
             fscanf(veglib, "%s", tmpstr); /* photosynthetic pathway */
             if (!strcmp(tmpstr, "0") || !strcmp(tmpstr, "C3")) {
@@ -79,6 +102,7 @@ read_veglib(FILE   *veglib,
                             "Ctype is deprecated.  Please replace these with "
                             "\"0\" and \"1\", respectively");
             }
+            fscanf(veglib, "%lf", &temp[i].froot_leaf);
             fscanf(veglib, "%lf", &temp[i].theta_cj);
             fscanf(veglib, "%lf", &temp[i].kcano_max);
             fscanf(veglib, "%lf", &temp[i].kroot_max);
@@ -171,7 +195,9 @@ read_veglib(FILE   *veglib,
     temp[i].smpsc = 0.0;
     temp[i].smpso = 0.0;
     temp[i].trunk_dia = 0.0;
+    temp[i].landtype = LAND_SOIL;
     temp[i].Ctype = PHOTO_C3;
+    temp[i].froot_leaf = 0.0;
     temp[i].theta_cj = 0.0;
     temp[i].kcano_max = 0.0;
     temp[i].kroot_max = 0.0;
@@ -182,7 +208,7 @@ read_veglib(FILE   *veglib,
     temp[i].medlynint = 0.0;
     temp[i].medlynslope = 0.0;
 
-    return temp;
+    return (temp);
 }
 
 /******************************************************************************
@@ -191,5 +217,5 @@ read_veglib(FILE   *veglib,
 void
 free_veglib(veg_lib_struct **veg_lib)
 {
-    free((char*)(*veg_lib));
+    free(*veg_lib);
 }

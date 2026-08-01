@@ -94,7 +94,8 @@ vic_start(void)
 
         // get dimensions (number of vegetation types, soil zones, etc)
         options.Nlayer = get_nc_dimension(&(filenames.params), "nlayer");
-        options.MAX_HRU = get_nc_dimension(&(filenames.params), "hru");
+        options.MAX_HRU = get_nc_dimension(&(filenames.params), "hru_num");
+        options.NVEGTYPES = get_nc_dimension(&(filenames.params), "nvegtype");
         if (options.SNOW_BAND == SNOW_BAND_TRUE_BUT_UNSET) {
             options.SNOW_BAND = get_nc_dimension(&(filenames.params),
                                                  "snow_band");

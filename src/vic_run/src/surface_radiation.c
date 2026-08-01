@@ -20,7 +20,7 @@ surface_radiation(double            *shortwave_dir,
                   veg_var_struct    *veg_var)
 {
     extern option_struct     options;
-    size_t i;
+    size_t i, j, Nsnow;
     double NetShortSub = 0.0;
     double NetShortGrnd = 0.0;
     double NetShortSoil = 0.0;
@@ -28,12 +28,16 @@ surface_radiation(double            *shortwave_dir,
     double transmit_dir = 0.0;
     double transmit_dfs = 0.0;
     double tmp_absorb_grnd = 0.0;
-    double ShortOverDir[MAX_SWBANDS];
-    double ShortOverDfs[MAX_SWBANDS];
+    double coverage = snow->coverage;
+    double ShortOverDir[MAX_SWBANDS] = {0};
+    double ShortOverDfs[MAX_SWBANDS] = {0};
+    double abs_flux_dir[MAX_SNOWS+1][MAX_SWBANDS] = {0};
+    double abs_flux_dfs[MAX_SNOWS+1][MAX_SWBANDS] = {0};
     double *aPAR_sun = veg_var->aPAR_sun;
     double *aPAR_sha = veg_var->aPAR_sha;
     double *AbsSubDir = energy->AbsSubDir;
     double *AbsSubDfs = energy->AbsSubDfs;
+    double *AbsShortLayer = energy->AbsShortLayer;
     double *ShortDir2Dir = energy->ShortDir2Dir;
     double *ShortDfs2Dir = energy->ShortDfs2Dir;
     double *ShortDfs2Dfs = energy->ShortDfs2Dfs;
@@ -45,7 +49,9 @@ surface_radiation(double            *shortwave_dir,
     double *AlbedoSnowDfs = energy->AlbedoSnowDfs;
     double *AlbedoSurfDir = energy->AlbedoSurfDir;
     double *AlbedoSurfDfs = energy->AlbedoSurfDfs;
-
+    double **AbsShortDir = energy->AbsShortDir;
+    double **AbsShortDfs = energy->AbsShortDfs;
+    Nsnow = snow->Nsnow;
     for (i = 0; i < options.Nswband; i++) {
         if (cell->IS_VEG || cell->IS_URBAN) {
             // absorbed by canopy
@@ -76,6 +82,25 @@ surface_radiation(double            *shortwave_dir,
         else if (cell->IS_GLAC) {
             NetShortGrnd += shortwave_dir[i] * (1.0 - AlbedoGrndDir[i]) +
                             shortwave_dfs[i] * (1.0 - AlbedoGrndDfs[i]);
+        }
+        // SNICAR snow layer absorption
+        if (options.SNOW_ALBEDO == SNICAR) {
+            if (snow->Nsnow == 0) {
+                for (j = 0; j <= Nsnow; j++) {
+                    AbsShortLayer[j] = 0.0;
+                }
+                AbsShortLayer[0] = NetShortSnow;
+            }
+            else {
+                for (j = 0; j <= Nsnow; j++) {
+                    abs_flux_dir[j][i] = AbsShortDir[j][i] * coverage + ((1.0 - coverage) * 
+                        (1.0 - AlbedoSoilDir[i]) * (AbsShortDir[j][i] / (1.0 - AlbedoSnowDir[i])));
+                    abs_flux_dfs[j][i] = AbsShortDfs[j][i] * coverage + ((1.0 - coverage) * 
+                        (1.0 - AlbedoSoilDfs[i]) * (AbsShortDfs[j][i] / (1.0 - AlbedoSnowDfs[i])));
+
+                    AbsShortLayer[j] = transmit_dir * abs_flux_dir[j][i] + transmit_dfs * abs_flux_dfs[j][i];
+                }
+            }
         }
     }
     energy->NetShortGrnd = NetShortGrnd;

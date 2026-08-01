@@ -205,6 +205,7 @@ distribute_snow_state(double            air_temp,
     double *zc_snow = snow->zc_snow;
     double *pack_T = snow->pack_T;
     double *density = snow->density;
+    double *radius = snow->radius;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
     double *theta_ice = snow->theta_ice;
@@ -272,6 +273,7 @@ distribute_snow_state(double            air_temp,
         theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
         porosity[i] = 1.0 - theta_ice[i];
         theta_liq[i] = max(0.0, min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW)));
+        radius[i] = new_snow_radius(air_temp);
     }
     for (size_t i = 0; i < snow->Nsnow; i++) {
         last_thice[i] = theta_ice[i];

@@ -24,18 +24,18 @@ correct_precip(double *gauge_correction,
 {
     extern parameters_struct param;
 
-    double                   gauge_wind;
+    double gauge_wind;
 
     gauge_wind = wind * (log((param.GAUGE_HEIGHT + roughness) / roughness) /
                          log(wind_h / roughness));
 
-    gauge_correction[RAIN] = 100. / exp(4.606 - 0.041 *
+    gauge_correction[0] = 100.0 / exp(4.606 - 0.041 *
                                         pow(gauge_wind, 0.69));
 
     gauge_wind = wind * (log((param.GAUGE_HEIGHT + snow_roughness) /
                              snow_roughness) /
                          log(wind_h / snow_roughness));
 
-    gauge_correction[SNOW] = 100. / exp(4.606 - 0.036 *
+    gauge_correction[1] = 100.0 / exp(4.606 - 0.036 *
                                         pow(gauge_wind, 1.75));
 }

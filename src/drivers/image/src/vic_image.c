@@ -34,6 +34,7 @@ int                *mpi_map_global_array_offsets = NULL;
 int                 mpi_rank;
 int                 mpi_size;
 option_struct       options;
+optical_struct      optical;
 parameters_struct   param;
 param_set_struct    param_set;
 soil_con_struct    *soil_con = NULL;

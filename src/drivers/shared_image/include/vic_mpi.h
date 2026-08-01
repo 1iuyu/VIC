@@ -49,6 +49,10 @@ void get_scatter_nc_field_float(nameid_struct *nc_nameid, char *var_name,
                                 size_t *start, size_t *count, float *var);
 void get_scatter_nc_field_int(nameid_struct *nc_nameid, char *var_name,
                               size_t *start, size_t *count, int *var);
+void get_scatter_nc_table_double(nameid_struct *nc_nameid, char *var_name, size_t ndims,
+                                 size_t *start, size_t *count, double *var);
+void get_scatter_nc_table_int(nameid_struct *nc_nameid, char *var_name, size_t ndims,
+                              size_t *start, size_t *count, int *var);
 void initialize_mpi(void);
 void map(size_t size, size_t n, size_t *from_map, size_t *to_map, void *from,
          void *to);

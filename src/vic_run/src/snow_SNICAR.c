@@ -15,14 +15,15 @@
 int
 snow_SNICAR(size_t             comp_type,
             double             coszen,
-            double            *mass_cnc_aer,
             energy_bal_struct *energy,
             cell_data_struct  *cell,
             snow_data_struct  *snow)
 {
     extern parameters_struct param;
+    extern option_struct options;
     extern optical_struct optical;
-    double zc_wave[5] = {0.5, 0.85, 1.1, 1.35, 3.25};
+    static const double zc_wave[5] = {
+                        0.5, 0.85, 1.1, 1.35, 3.25};
     // 高斯积分点（弧度）
     static const double difgaus_pt[8] = {
         0.9894009, 0.9445750, 0.8656312, 0.7554044,
@@ -49,100 +50,48 @@ snow_SNICAR(size_t             comp_type,
         -2.66792E-4, 1.14088E-3, 2.37011E-4, -2.35905E-4,
         8.40449E-4, -4.71484E-4, -4.71484E-4
     };
-    // hard code
-    static const double ss_alb_bcphil_dir[5] = {0.758058, 0.708629, 0.654803, 0.599902, 0.415976};
-    static const double ss_alb_bcphil_dfs[5] = {0.758067, 0.709739, 0.655509, 0.605827, 0.482284};
-    static const double ss_alb_bcphob_dfs[5] = {0.366232, 0.301432, 0.250557, 0.214858, 0.151357};
-    static const double ss_alb_bcphob_dir[5] = {0.366239, 0.300250, 0.250005, 0.211183, 0.132030};
-    static const double ss_alb_dust1_dir[5] = {0.982610, 0.993620, 0.993858, 0.993084, 0.983789};
-    static const double ss_alb_dust1_dfs[5] = {0.982676, 0.993606, 0.993863, 0.993282, 0.988931};
-    static const double ss_alb_dust2_dir[5] = {0.951550, 0.981651, 0.989356, 0.992101, 0.992631};
-    static const double ss_alb_dust2_dfs[5] = {0.951619, 0.981442, 0.989298, 0.992030, 0.993126};
-    static const double ss_alb_dust3_dir[5] = {0.916266, 0.960250, 0.969149, 0.973407, 0.981918};
-    static const double ss_alb_dust3_dfs[5] = {0.916129, 0.960537, 0.969218, 0.973622, 0.984143};
-    static const double ss_alb_dust4_dir[5] = {0.865081, 0.934038, 0.950694, 0.955140, 0.966210};
-    static const double ss_alb_dust4_dfs[5] = {0.865239, 0.933621, 0.950604, 0.954943, 0.963697};
-    static const double ss_alb_dust5_dir[5] = {0.785926, 0.886459, 0.913632, 0.925360, 0.940251};
-    static const double ss_alb_dust5_dfs[5] = {0.786042, 0.885755, 0.913356, 0.925003, 0.936343};
-    static const double asm_prm_bcphob_dir[5] = {0.440809, 0.333372, 0.274836, 0.235804, 0.160655};
-    static const double asm_prm_bcphob_dfs[5] = {0.440763, 0.334865, 0.275412, 0.239339, 0.179417};
-    static const double ss_alb_ocphil_dir[5] = {0.963861, 0.999168, 0.999052, 0.998544, 0.854790};
-    static const double ss_alb_ocphil_dfs[5] = {0.963963, 0.999169, 0.999054, 0.998668, 0.977566};
-    static const double asm_prm_ocphil_dir[5] = {0.694844, 0.643041, 0.590617, 0.545134, 0.419638};
-    static const double asm_prm_ocphil_dfs[5] = {0.694939, 0.644230, 0.591232, 0.549758, 0.459431};
-    static const double ext_cff_mss_ocphil_dir[5] = {50107.07, 24353.02, 13745.27, 8713.34, 3646.99};
-    static const double ext_cff_mss_ocphil_dfs[5] = {50099.28, 24654.86, 13829.43, 9088.47, 4048.98};
-    static const double ss_alb_ocphob_dir[5] = {0.773160, 0.990013, 0.986363, 0.982205, 0.964227};
-    static const double ss_alb_ocphob_dfs[5] = {0.773243, 0.990086, 0.986413, 0.982688, 0.970958};
-    static const double asm_prm_ocphob_dir[5] = {0.579585, 0.461883, 0.387327, 0.333355, 0.223369};
-    static const double asm_prm_ocphob_dfs[5] = {0.579570, 0.463703, 0.388107, 0.338380, 0.251348};
-    static const double ext_cff_mss_ocphob_dir[5] = {4928.72, 1350.66, 611.17, 344.96, 111.45};
-    static const double ext_cff_mss_ocphob_dfs[5] = {4922.89, 1374.15, 615.92, 362.70, 139.92};
-    static const double asm_prm_bcphil_dir[5] = {0.645843, 0.576849, 0.516039, 0.464377, 0.337056};
-    static const double asm_prm_bcphil_dfs[5] = {0.645911, 0.578235, 0.516745, 0.469552, 0.372236};
-    static const double ext_cff_mss_bcphob_dir[5] = {12376.36, 7867.52, 5678.42, 4494.98, 2780.40};
-    static const double ext_cff_mss_bcphob_dfs[5] = {12376.82, 7927.52, 5697.23, 4591.12, 3133.56};
-    static const double ext_cff_mss_bcphil_dir[5] = {49947.83, 27984.92, 18265.60, 13249.65, 7306.51};
-    static const double ext_cff_mss_bcphil_dfs[5] = {49937.52, 28253.70, 18347.13, 13642.25, 8042.38};
-    static const double asm_prm_dust1_dir[5] = {0.677934, 0.707388, 0.662214, 0.601745, 0.410256};
-    static const double asm_prm_dust1_dfs[5] = {0.677869, 0.708229, 0.663041, 0.606302, 0.480786};
-    static const double asm_prm_dust2_dir[5] = {0.695228, 0.637981, 0.672995, 0.705675, 0.681674};
-    static const double asm_prm_dust2_dfs[5] = {0.695183, 0.637701, 0.672411, 0.704000, 0.706122};
-    static const double asm_prm_dust3_dir[5] = {0.778833, 0.746215, 0.683282, 0.620030, 0.643931};
-    static const double asm_prm_dust3_dfs[5] = {0.778799, 0.746797, 0.684328, 0.623973, 0.623736};
-    static const double asm_prm_dust4_dir[5] = {0.821899, 0.781644, 0.764708, 0.746967, 0.706380};
-    static const double asm_prm_dust4_dfs[5] = {0.821856, 0.782220, 0.765058, 0.746750, 0.728913};
-    static const double asm_prm_dust5_dir[5] = {0.861434, 0.821163, 0.804414, 0.793842, 0.767681};
-    static const double asm_prm_dust5_dfs[5] = {0.861395, 0.821530, 0.804506, 0.793945, 0.775716};
-    static const double ext_cff_mss_dust1_dir[5] = {2583.01, 2422.90, 1665.01, 1140.80, 447.84};
-    static const double ext_cff_mss_dust1_dfs[5] = {2583.66, 2440.83, 1673.37, 1181.23, 556.93};
-    static const double ext_cff_mss_dust2_dir[5] = {814.37, 947.72, 1131.89, 1231.69, 968.79};
-    static const double ext_cff_mss_dust2_dfs[5] = {814.22, 944.10, 1129.72, 1229.83, 1101.81};
-    static const double ext_cff_mss_dust3_dir[5] = {375.88, 405.16, 393.46, 386.27, 497.39};
-    static const double ext_cff_mss_dust3_dfs[5] = {375.91, 404.54, 393.81, 384.89, 467.81};
-    static const double ext_cff_mss_dust4_dir[5] = {190.59, 196.58, 203.70, 199.13, 220.91};
-    static const double ext_cff_mss_dust4_dfs[5] = {190.59, 196.49, 203.83, 198.14, 216.84};
-    static const double ext_cff_mss_dust5_dir[5] = {92.79, 94.66, 95.94, 96.87, 100.66};
-    static const double ext_cff_mss_dust5_dfs[5] = {92.79, 94.62, 95.88, 96.53, 98.94};
+
     // initialize
     size_t i, j, k, nidx;
     size_t min_mie_radius = 30;
     bool virtual_flag;
     bool DELTA_flag = true;
     bool solver_flag = true;
+    bool UseAerosol_flag = false;
     double flux_dir;
     double flux_dfs;
-    double tmp_pack_liq[MAX_SNOWS];
-    double tmp_pack_ice[MAX_SNOWS];
-    double tmp_radius[MAX_SNOWS];
+    double tmp_pack_liq[MAX_SNOWS] = {0};
+    double tmp_pack_ice[MAX_SNOWS] = {0};
+    double tmp_radius[MAX_SNOWS] = {0};
     double tmp_albedo;
     double refk;
     double F_sfc_pls;
-    double band_wgt[SNICAR_BANDS];
-    double ss_alb_aer[SNOW_NUM_AER];
-    double asm_prm_aer[SNOW_NUM_AER];
-    double ext_cff_mss_aer[SNOW_NUM_AER];
-    double trndir[MAX_SNOWS+1];
-    double trntdr[MAX_SNOWS+1];
-    double trndfs[MAX_SNOWS+1];
-    double rupdir[MAX_SNOWS+1];
-    double rupdfs[MAX_SNOWS+1];
-    double rdndfs[MAX_SNOWS+1];
-    double dfdir[MAX_SNOWS+1];
-    double dfdfs[MAX_SNOWS+1];
-    double rdir[MAX_SNOWS+1];
-    double rdfs_a[MAX_SNOWS+1];
-    double rdfs_b[MAX_SNOWS+1];
-    double tdir[MAX_SNOWS+1];
-    double tdfs_a[MAX_SNOWS+1];
-    double tdfs_b[MAX_SNOWS+1];
-    double trnlay[MAX_SNOWS+1];
-    double dftmp[MAX_SNOWS+1];
-    double albedo[MAX_SWBANDS];
-    double abs_flux[MAX_SWBANDS];
-    double abs_flux_dir[SNICAR_BANDS];
-    double abs_flux_dfs[SNICAR_BANDS];
-    double albsfc_layer[SNICAR_BANDS];
+    double band_wgt[SNICAR_BANDS] = {0};
+    double ss_alb_aer[SNOW_NUM_AER] = {0};
+    double asm_prm_aer[SNOW_NUM_AER] = {0};
+    double ext_cff_mss_aer[SNOW_NUM_AER] = {0};
+    double trndir[MAX_SNOWS+1] = {0};
+    double trntdr[MAX_SNOWS+1] = {0};
+    double trndfs[MAX_SNOWS+1] = {0};
+    double rupdir[MAX_SNOWS+1] = {0};
+    double rupdfs[MAX_SNOWS+1] = {0};
+    double rdndfs[MAX_SNOWS+1] = {0};
+    double dfdir[MAX_SNOWS+1] = {0};
+    double dfdfs[MAX_SNOWS+1] = {0};
+    double rdir[MAX_SNOWS+1] = {0};
+    double rdfs_a[MAX_SNOWS+1] = {0};
+    double rdfs_b[MAX_SNOWS+1] = {0};
+    double tdir[MAX_SNOWS+1] = {0};
+    double tdfs_a[MAX_SNOWS+1] = {0};
+    double tdfs_b[MAX_SNOWS+1] = {0};
+    double trnlay[MAX_SNOWS+1] = {0};
+    double dftmp[MAX_SNOWS+1] = {0};
+    double albedo[MAX_SWBANDS] = {0};
+    double abs_flux[MAX_SNOWS+1][MAX_SWBANDS] = {0};
+    double **AbsShortDir = energy->AbsShortDir;
+    double **AbsShortDfs = energy->AbsShortDfs;
+    double albsfc_layer[SNICAR_BANDS] = {0};
+    double mass_cnc_aer[MAX_SNOWS][SNOW_NUM_AER] = {0}; // 初始化为0
     double *radius = snow->radius;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
@@ -229,68 +178,81 @@ snow_SNICAR(size_t             comp_type,
                     flux_dfs = 1.0;
                 }
                 // Pre-emptive error handling: aerosols can reap havoc on these absorptive bands.
-                if (i >= 3) {
-                    for (k = 0; k < tmp_Nsnow; k++) {
-                        for (j = 0; j < SNOW_NUM_AER; j++) {
-                            nidx = k * SNOW_NUM_AER + j;
-                            mass_cnc_aer[nidx] = 0.0;
-                        }
-                    }
+                if (i >= 3 && UseAerosol_flag) {
+                    memset(mass_cnc_aer, 0, sizeof(mass_cnc_aer));
                 }
                 // 设置光学性质
                 for (j = 0; j < tmp_Nsnow; j++) {
-                    nidx = radius[j] - min_mie_radius + 1;
+                    nidx = tmp_radius[j] - min_mie_radius + 1;
                     if (comp_type == BAND_DIR) {                    
                         // snow optical properties (direct radiation)
                         ss_alb_snow = optical.ss_alb_dir[i][nidx];
-                        asm_prm_snow = optical.asym_snow_dir[i][nidx];
                         ext_cff_mss_snow = optical.mass_ext_dir[i][nidx];
+                        if (options.SNOW_SHAPE == SPHERE) {
+                            asm_prm_snow = optical.asym_snow_dir[i][nidx];
+                        }
                     }
                     else if (comp_type == BAND_DFS) {
                         // snow optical properties (diffuse radiation)
                         ss_alb_snow = optical.ss_alb_dfs[i][nidx];
-                        asm_prm_snow = optical.asym_snow_dfs[i][nidx];
                         ext_cff_mss_snow = optical.mass_ext_dfs[i][nidx];
+                        if (options.SNOW_SHAPE == SPHERE) {
+                            asm_prm_snow = optical.asym_snow_dfs[i][nidx];
+                        }
                     }
                     asm_prm_snow = max(0.99, asm_prm_snow);
                 }
+                // Nonspherical snow: shape-dependent asymmetry factors
+                if (options.SNOW_SHAPE == SPHEROID) {
+
+                }
+                else if (options.SNOW_SHAPE == HEXAGONAL) {
+
+                }
+                else if (options.SNOW_SHAPE == KOCH) {
+
+                }
+                else {
+                    log_err("Unknown SNOW_SHAPE option");
+                }
+
                 // aerosol species 2 optical properties, hydrophobic BC
-                ss_alb_aer[1]      = ss_alb_bcphob_dfs[i];
-                asm_prm_aer[1]     = asm_prm_bcphob_dfs[i];
-                ext_cff_mss_aer[1] = ext_cff_mss_bcphob_dfs[i];
+                ss_alb_aer[1]      = optical.ss_alb_bcphob_dfs[i];
+                asm_prm_aer[1]     = optical.asm_prm_bcphob_dfs[i];
+                ext_cff_mss_aer[1] = optical.ext_cff_mss_bcphob_dfs[i];
                 // aerosol species 3 optical properties, hydrophilic OC
-                ss_alb_aer[2]      = ss_alb_ocphil_dfs[i];
-                asm_prm_aer[2]     = asm_prm_ocphil_dfs[i];
-                ext_cff_mss_aer[2] = ext_cff_mss_ocphil_dfs[i];
+                ss_alb_aer[2]      = optical.ss_alb_ocphil_dfs[i];
+                asm_prm_aer[2]     = optical.asm_prm_ocphil_dfs[i];
+                ext_cff_mss_aer[2] = optical.ext_cff_mss_ocphil_dfs[i];
                 // aerosol species 4 optical properties, hydrophobic OC
-                ss_alb_aer[3]      = ss_alb_ocphob_dfs[i];
-                asm_prm_aer[3]     = asm_prm_ocphob_dfs[i];
-                ext_cff_mss_aer[3] = ext_cff_mss_ocphob_dfs[i];
+                ss_alb_aer[3]      = optical.ss_alb_ocphob_dfs[i];
+                asm_prm_aer[3]     = optical.asm_prm_ocphob_dfs[i];
+                ext_cff_mss_aer[3] = optical.ext_cff_mss_ocphob_dfs[i];
                 // Optics for BC/dust-snow external mixing:
                 // aerosol species 1 optical properties, hydrophilic BC
-                ss_alb_aer[0]      = ss_alb_bcphil_dfs[i];
-                asm_prm_aer[0]     = asm_prm_bcphil_dfs[i];
-                ext_cff_mss_aer[0] = ext_cff_mss_bcphil_dfs[i];
+                ss_alb_aer[0]      = optical.ss_alb_bcphil_dfs[i];
+                asm_prm_aer[0]     = optical.asm_prm_bcphil_dfs[i];
+                ext_cff_mss_aer[0] = optical.ext_cff_mss_bcphil_dfs[i];
                 // aerosol species 5 optical properties, dust size1
-                ss_alb_aer[4]      = ss_alb_dust1_dfs[i];
-                asm_prm_aer[4]     = asm_prm_dust1_dfs[i];
-                ext_cff_mss_aer[4] = ext_cff_mss_dust1_dfs[i];
+                ss_alb_aer[4]      = optical.ss_alb_dust1_dfs[i];
+                asm_prm_aer[4]     = optical.asm_prm_dust1_dfs[i];
+                ext_cff_mss_aer[4] = optical.ext_cff_mss_dust1_dfs[i];
                 // aerosol species 6 optical properties, dust size2
-                ss_alb_aer[5]      = ss_alb_dust2_dfs[i];
-                asm_prm_aer[5]     = asm_prm_dust2_dfs[i];
-                ext_cff_mss_aer[5] = ext_cff_mss_dust2_dfs[i];
+                ss_alb_aer[5]      = optical.ss_alb_dust2_dfs[i];
+                asm_prm_aer[5]     = optical.asm_prm_dust2_dfs[i];
+                ext_cff_mss_aer[5] = optical.ext_cff_mss_dust2_dfs[i];
                 // aerosol species 7 optical properties, dust size3
-                ss_alb_aer[6]      = ss_alb_dust3_dfs[i];
-                asm_prm_aer[6]     = asm_prm_dust3_dfs[i];
-                ext_cff_mss_aer[6] = ext_cff_mss_dust3_dfs[i];
+                ss_alb_aer[6]      = optical.ss_alb_dust3_dfs[i];
+                asm_prm_aer[6]     = optical.asm_prm_dust3_dfs[i];
+                ext_cff_mss_aer[6] = optical.ext_cff_mss_dust3_dfs[i];
                 // aerosol species 8 optical properties, dust size4
-                ss_alb_aer[7]      = ss_alb_dust4_dfs[i];
-                asm_prm_aer[7]     = asm_prm_dust4_dfs[i];
-                ext_cff_mss_aer[7] = ext_cff_mss_dust4_dfs[i];
+                ss_alb_aer[7]      = optical.ss_alb_dust4_dfs[i];
+                asm_prm_aer[7]     = optical.asm_prm_dust4_dfs[i];
+                ext_cff_mss_aer[7] = optical.ext_cff_mss_dust4_dfs[i];
                 // aerosol species 9 optical properties, dust size4
-                ss_alb_aer[8]      = ss_alb_dust5_dfs[i];
-                asm_prm_aer[8]     = asm_prm_dust5_dfs[i];
-                ext_cff_mss_aer[8] = ext_cff_mss_dust5_dfs[i];
+                ss_alb_aer[8]      = optical.ss_alb_dust5_dfs[i];
+                asm_prm_aer[8]     = optical.asm_prm_dust5_dfs[i];
+                ext_cff_mss_aer[8] = optical.ext_cff_mss_dust5_dfs[i];
                 double tau = 0.0, omega = 0.0, g = 0.0;
                 // 计算雪的光学厚度
                 for (j = 0; j < tmp_Nsnow; j++) {
@@ -300,7 +262,7 @@ snow_SNICAR(size_t             comp_type,
                     double tau_snow = L_snow * ext_cff_mss_snow;
                     // 计算气溶胶的光学贡献
                     for (j = 0; j < SNOW_NUM_AER; j++) {
-                        L_aer = L_snow * mass_cnc_aer[i];
+                        L_aer = L_snow * mass_cnc_aer[i][j];
                         tau_aer = L_aer * ext_cff_mss_aer[j];
                         tau_sum += tau_aer;
                         omega_sum += tau_aer * ss_alb_aer[j];
@@ -466,7 +428,8 @@ snow_SNICAR(size_t             comp_type,
                     rupdfs[tmp_Nsnow] = param.LAKE_ALBEDO[1];                    
                 }
 
-                for (j = tmp_Nsnow - 1; j >= 0; j--) {
+                for (k = tmp_Nsnow; k > 0; k--) {
+                    j = k - 1; // // 防止j下溢到SIZE_MAX
                     double refkp1 = 1.0 / (1.0 - rdfs_b[j] * rupdfs[j+1]);
                     
                     rupdir[j] = rdir[j] + 
@@ -511,20 +474,19 @@ snow_SNICAR(size_t             comp_type,
                 }
                 // Absorbed flux in each layer
                 for (j = 0; j < tmp_Nsnow; j++) {
-                    abs_flux[nidx] = dftmp[j] - dftmp[j+1];
-                    if (abs_flux[nidx] > 0.0001) {
-                        log_err("Error in snow SNICAR: negative absoption(%.4f)", abs_flux[nidx]);
+                    abs_flux[j][i] = dftmp[j] - dftmp[j+1];
+                    if (abs_flux[j][i] > 0.0001) {
+                        log_err("Error in snow SNICAR: negative absoption(%.4f)", abs_flux[j][i]);
                     }
                 }
                 // If there are no snow layers (but still snow)
                 if (virtual_flag) {
-                    abs_flux[0] = 0.0;
-                    abs_flux[1] = 0.0;
+                    abs_flux[0][i] = 0.0;
+                    abs_flux[1][i] = 0.0;
                 }
-                for (j = 0; j < tmp_Nsnow; j++) {
-                    nidx = j * SNICAR_BANDS; 
-                    if (abs_flux[nidx] < 0.0) {
-                        abs_flux[nidx] = 0.0;
+                for (j = 0; j < tmp_Nsnow; j++) { 
+                    if (abs_flux[j][i] < 0.0) {
+                        abs_flux[j][i] = 0.0;
                     }
                 }
                 // no need to repeat calculations for adding-doubling solver
@@ -533,7 +495,7 @@ snow_SNICAR(size_t             comp_type,
             albedo[i] = tmp_albedo;
             // Check that albedo is less than 1
             if (albedo[i] > 1.0) {
-                log_err("Error in snow SNICAR: albedo[%d](%.4f) > 1.0", albedo[i], i);
+                log_err("Error in snow SNICAR: albedo[%zu](%.4f) > 1.0", i, albedo[i]);
             }
         }
         // 加权平均得到VIS和NIR反照率
@@ -557,40 +519,37 @@ snow_SNICAR(size_t             comp_type,
         double flux_sum = 0.0;
         if (comp_type == BAND_DIR) {
             for (j = 0; j < tmp_Nsnow; j++) {
-                nidx = j * 1;
-                abs_flux_dir[nidx] = abs_flux[nidx];
+                AbsShortDir[j][i] = abs_flux[j][i];
             }
         }
         else if (comp_type == BAND_DFS) {
             for (j = 0; j < tmp_Nsnow; j++) {
-                nidx = j * 1;
-                abs_flux_dfs[nidx] = abs_flux[nidx];
+                AbsShortDfs[j][i] = abs_flux[j][i];
             }           
         }
         for (j = 0; j < tmp_Nsnow; j++) {
             for (k = 1; k < SNICAR_BANDS; k++) {
-                nidx = j * SNICAR_BANDS + k;
-                flux_sum += band_wgt[k] * abs_flux[nidx];
+                flux_sum += band_wgt[k] * abs_flux[j][k];
             }
             if (comp_type == BAND_DIR) {
-                abs_flux_dir[nidx] = flux_sum;
+                AbsShortDir[j][i] = flux_sum;
             }
             else if (comp_type == BAND_DFS) {
-                abs_flux_dfs[nidx] = flux_sum;
+                AbsShortDfs[j][i] = flux_sum;
             }
         }
         // 太阳天顶角调整（高天顶角时的修正）
         if (mu_not < 0.2588 && comp_type == BAND_DIR) {  // cos(75°) = 0.2588
             double sza_c1 = 0.085730 - 0.630883 * mu_not + 1.303723 * mu_not * mu_not;
             double sza_c0 = 1.467291 - 3.338043 * mu_not + 6.807489 * mu_not * mu_not;
-            double sza_factor = sza_c1 * (log10(radius[0]) - 6.0) + sza_c0;
+            double sza_factor = sza_c1 * (log10(tmp_radius[0]) - 6.0) + sza_c0;
             sza_factor = max(sza_factor, 0.0);
             
             double flux_sza_adjust = AlbedoSoilDir[1] * (sza_factor - 1.0);
             AlbedoSoilDir[1] *= sza_factor;
             
             // 调整顶层吸收通量
-            abs_flux_dir[tmp_Nsnow] -= flux_sza_adjust;
+            AbsShortDir[0][BAND_NIR] -= flux_sza_adjust;
         }
     }
     else if (coszen > 0.0 && snow->swq > 0.0) {
