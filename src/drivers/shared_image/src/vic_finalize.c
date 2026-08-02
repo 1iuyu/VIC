@@ -76,10 +76,9 @@ vic_finalize(void)
     free(soil_con);
     free(veg_con);
     free(veg_hist);
-    free_veglib(&veg_lib);
+    free(veg_lib);
     free(all_vars);
     free(save_data);
-    fclose(filep.veglib);
     free(local_domain.locations);
     if (mpi_rank == VIC_MPI_ROOT) {
         free(filter_active_cells);

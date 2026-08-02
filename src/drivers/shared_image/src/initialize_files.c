@@ -42,5 +42,4 @@ initialize_fileps()
     filep.globalparam = NULL;
     filep.constants = NULL;
     filep.logfile = NULL;
-    filep.veglib = NULL;
 }

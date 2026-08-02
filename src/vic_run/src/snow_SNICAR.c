@@ -88,8 +88,6 @@ snow_SNICAR(size_t             comp_type,
     double dftmp[MAX_SNOWS+1] = {0};
     double albedo[MAX_SWBANDS] = {0};
     double abs_flux[MAX_SNOWS+1][MAX_SWBANDS] = {0};
-    double **AbsShortDir = energy->AbsShortDir;
-    double **AbsShortDfs = energy->AbsShortDfs;
     double albsfc_layer[SNICAR_BANDS] = {0};
     double mass_cnc_aer[MAX_SNOWS][SNOW_NUM_AER] = {0}; // 初始化为0
     double *radius = snow->radius;
@@ -519,12 +517,12 @@ snow_SNICAR(size_t             comp_type,
         double flux_sum = 0.0;
         if (comp_type == BAND_DIR) {
             for (j = 0; j < tmp_Nsnow; j++) {
-                AbsShortDir[j][i] = abs_flux[j][i];
+                energy->AbsShortDir[j][i] = abs_flux[j][i];
             }
         }
         else if (comp_type == BAND_DFS) {
             for (j = 0; j < tmp_Nsnow; j++) {
-                AbsShortDfs[j][i] = abs_flux[j][i];
+                energy->AbsShortDfs[j][i] = abs_flux[j][i];
             }           
         }
         for (j = 0; j < tmp_Nsnow; j++) {
@@ -532,10 +530,10 @@ snow_SNICAR(size_t             comp_type,
                 flux_sum += band_wgt[k] * abs_flux[j][k];
             }
             if (comp_type == BAND_DIR) {
-                AbsShortDir[j][i] = flux_sum;
+                energy->AbsShortDir[j][i] = flux_sum;
             }
             else if (comp_type == BAND_DFS) {
-                AbsShortDfs[j][i] = flux_sum;
+                energy->AbsShortDfs[j][i] = flux_sum;
             }
         }
         // 太阳天顶角调整（高天顶角时的修正）
@@ -549,7 +547,7 @@ snow_SNICAR(size_t             comp_type,
             AlbedoSoilDir[1] *= sza_factor;
             
             // 调整顶层吸收通量
-            AbsShortDir[0][BAND_NIR] -= flux_sza_adjust;
+            energy->AbsShortDir[0][BAND_NIR] -= flux_sza_adjust;
         }
     }
     else if (coszen > 0.0 && snow->swq > 0.0) {

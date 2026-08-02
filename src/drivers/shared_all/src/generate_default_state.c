@@ -51,16 +51,16 @@ generate_default_state(force_data_struct *force,
     for (veg = 0; veg <= Nveg; veg++) {
         if (veg_con[veg].Cv > 0) {
             veg_class = veg_con[veg].veg_class;
-            if (veg_lib[veg_class].Landtype == 0) {
+            if (veg_lib[veg_class].landtype == 0) {
                 cell[veg].IS_VEG = true;
             }
-            else if (veg_lib[veg_class].Landtype == 1) {
+            else if (veg_lib[veg_class].landtype == 1) {
                 cell[veg].IS_GLAC = true;
             }
-            else if (veg_lib[veg_class].Landtype == 2) {
+            else if (veg_lib[veg_class].landtype == 2) {
                 cell[veg].IS_WET = true;
             }
-            else if (veg_lib[veg_class].Landtype == 3) {
+            else if (veg_lib[veg_class].landtype == 3) {
                 cell[veg].IS_URBAN = true;
             }
             else {

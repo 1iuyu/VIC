@@ -131,7 +131,6 @@ typedef struct {
     FILE *globalparam;  /**< global parameters file */
     FILE *constants;    /**< model constants parameter file */
     FILE *logfile;      /**< log file */
-    FILE *veglib;       /**< vegetation parameters for all vege types */
 } filep_struct;
 
 /******************************************************************************
@@ -150,7 +149,6 @@ typedef struct {
     char result_dir[MAXSTRING]; /**< result directory */
     char statefile[MAXSTRING];  /**< name of model state file */
     char log_path[MAXSTRING];   /**< Location to write log file to */
-    char veglib[MAXSTRING];     /**< vegetation parameter library file */
 } filenames_struct;
 
 void add_nveg_to_global_domain(nameid_struct *nc_nameid,

@@ -613,21 +613,26 @@ vic_init(void)
       Reading library of vegetation parameters
     ******************************************/
     // Initialize veg_lib parameters
-    memset(&veg_lib, 0, sizeof(veg_lib));
-    // 
-    size_t n1dims = 1, n2dims = 2, n3dims = 3;
+    size_t n1dims = 1, n2dims = 2;
     size_t start1[1] = {0};
     size_t count1[1] = {(size_t) options.NVEGTYPES};
     size_t start2[2] = {0, 0};
     size_t count2[2] = {
             (size_t) options.NVEGTYPES,
             (size_t) MONTHS_PER_YEAR};
-    double d1_size = options.NVEGTYPES;
     double local_d1[options.NVEGTYPES];
     int local_int[options.NVEGTYPES];
     double d2_size = options.NVEGTYPES * MONTHS_PER_YEAR;
     double *local_d2 = malloc(d2_size * sizeof(double));
     check_alloc_status(local_d2, "Memory allocation error.");
+
+    // 读取 Canopy_Upper
+    get_scatter_nc_table_int(&(filenames.params), "IGBP_class", 
+                             n1dims, start1, count1, local_int);
+    for (i = 0; i < options.NVEGTYPES; i++) {
+        veg_lib[i].veg_class = local_int[i];
+    }
+
     // 读取 Canopy_Upper
     get_scatter_nc_table_double(&(filenames.params), "Canopy_Upper", 
                                 n1dims, start1, count1, local_d1);
@@ -915,45 +920,49 @@ vic_init(void)
         }
     }
     // 设置植被反射和透射率count2
-    size_t count2[2] = {
-            (size_t) options.NVEGTYPES,
-            (size_t) MAX_SWBANDS};
+    count2[1] = (size_t) MAX_SWBANDS;
+    d2_size = options.NVEGTYPES * MAX_SWBANDS;
+    double *local_sw = malloc(d2_size * sizeof(double));
+    check_alloc_status(local_sw, "Memory allocation error.");
 
     // 读取 reflleaf
     get_scatter_nc_table_double(&(filenames.params), "reflleaf", 
-                                n2dims, start2, count2, local_d2);
+                                n2dims, start2, count2, local_sw);
     for (i = 0; i < options.NVEGTYPES; i++) {
         for (m = 0; m < MAX_SWBANDS; m++) {
-            veg_lib[i].reflleaf[m] = local_d2[i * MAX_SWBANDS + m];
+            veg_lib[i].reflleaf[m] = local_sw[i * MAX_SWBANDS + m];
         }
     }
 
     // 读取 reflstem
     get_scatter_nc_table_double(&(filenames.params), "reflstem", 
-                                n2dims, start2, count2, local_d2);
+                                n2dims, start2, count2, local_sw);
     for (i = 0; i < options.NVEGTYPES; i++) {
         for (m = 0; m < MAX_SWBANDS; m++) {
-            veg_lib[i].reflstem[m] = local_d2[i * MAX_SWBANDS + m];
+            veg_lib[i].reflstem[m] = local_sw[i * MAX_SWBANDS + m];
         }
     }
 
     // 读取 transleaf
     get_scatter_nc_table_double(&(filenames.params), "transleaf", 
-                                n2dims, start2, count2, local_d2);
+                                n2dims, start2, count2, local_sw);
     for (i = 0; i < options.NVEGTYPES; i++) {
         for (m = 0; m < MAX_SWBANDS; m++) {
-            veg_lib[i].transleaf[m] = local_d2[i * MAX_SWBANDS + m];
+            veg_lib[i].transleaf[m] = local_sw[i * MAX_SWBANDS + m];
         }
     }
 
     // 读取 transstem
     get_scatter_nc_table_double(&(filenames.params), "transstem", 
-                                n2dims, start2, count2, local_d2);
+                                n2dims, start2, count2, local_sw);
     for (i = 0; i < options.NVEGTYPES; i++) {
         for (m = 0; m < MAX_SWBANDS; m++) {
-            veg_lib[i].transstem[m] = local_d2[i * MAX_SWBANDS + m];
+            veg_lib[i].transstem[m] = local_sw[i * MAX_SWBANDS + m];
         }
     }
+
+    free(local_d2);
+    free(local_sw);
 
     /******************************************
        Reading the vegetation parameters 

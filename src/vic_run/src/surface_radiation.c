@@ -49,8 +49,7 @@ surface_radiation(double            *shortwave_dir,
     double *AlbedoSnowDfs = energy->AlbedoSnowDfs;
     double *AlbedoSurfDir = energy->AlbedoSurfDir;
     double *AlbedoSurfDfs = energy->AlbedoSurfDfs;
-    double **AbsShortDir = energy->AbsShortDir;
-    double **AbsShortDfs = energy->AbsShortDfs;
+
     Nsnow = snow->Nsnow;
     for (i = 0; i < options.Nswband; i++) {
         if (cell->IS_VEG || cell->IS_URBAN) {
@@ -93,10 +92,10 @@ surface_radiation(double            *shortwave_dir,
             }
             else {
                 for (j = 0; j <= Nsnow; j++) {
-                    abs_flux_dir[j][i] = AbsShortDir[j][i] * coverage + ((1.0 - coverage) * 
-                        (1.0 - AlbedoSoilDir[i]) * (AbsShortDir[j][i] / (1.0 - AlbedoSnowDir[i])));
-                    abs_flux_dfs[j][i] = AbsShortDfs[j][i] * coverage + ((1.0 - coverage) * 
-                        (1.0 - AlbedoSoilDfs[i]) * (AbsShortDfs[j][i] / (1.0 - AlbedoSnowDfs[i])));
+                    abs_flux_dir[j][i] = energy->AbsShortDir[j][i] * coverage + ((1.0 - coverage) * 
+                        (1.0 - AlbedoSoilDir[i]) * (energy->AbsShortDir[j][i] / (1.0 - AlbedoSnowDir[i])));
+                    abs_flux_dfs[j][i] = energy->AbsShortDfs[j][i] * coverage + ((1.0 - coverage) * 
+                        (1.0 - AlbedoSoilDfs[i]) * (energy->AbsShortDfs[j][i] / (1.0 - AlbedoSnowDfs[i])));
 
                     AbsShortLayer[j] = transmit_dir * abs_flux_dir[j][i] + transmit_dfs * abs_flux_dfs[j][i];
                 }

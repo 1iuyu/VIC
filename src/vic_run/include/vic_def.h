@@ -57,7 +57,7 @@
 #define MIN_SNOWMASS  1.0e-30
 #define MIN_VEG_LAI      0.05  /**< */
 #define MIN_TOL_LAI     0.001  /**< Minimum allowable leaf area index for transpiration calculations */
-#define SNOW_NUM_AER        8  /**< number of aerosol species in snowpack */
+#define SNOW_NUM_AER        9  /**< number of aerosol species in snowpack */
 #define MAX_GAUSSIAN        8  /**< max gaussian integration index */
 #define SNICAR_BANDS        5  /**< wavelength bands used in SNICAR snow albedo calculation */
 #define SNICAR_RADII     1471  /**< number of effective radius indices used in Mie lookup table [idx] */
