@@ -263,9 +263,6 @@ get_global_param(FILE *gp)
                 sscanf(cmdstr, "%*s %s", flgstr);
                 options.PARAM_FROM_SOIL = str_to_bool(flgstr);
             }
-            else if (strcasecmp("VEGLIB", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", filenames.veglib);
-            }
             else if (strcasecmp("LAI_SRC", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);
                 if (strcasecmp("FROM_VEGHIST", flgstr) == 0) {
