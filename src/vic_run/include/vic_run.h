@@ -97,6 +97,7 @@ int photosynth_hydrostress(double, double, double, double, double, double, doubl
 void prepare_full_energy(double, cell_data_struct *, energy_bal_struct *,
                          snow_data_struct *, soil_con_struct *);
 double plc(double, double);
+double piecewise_linear_interp(size_t, double *, double *, double);
 int runoff(double, double, cell_data_struct *, soil_con_struct *);
 void set_node_parameters(size_t, double *, double *, double *, double *);
 void snow_albedo(double, snow_data_struct *, energy_bal_struct *);

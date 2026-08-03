@@ -42,6 +42,7 @@ snow_hydrology(double             step_dt,
     double *pack_frze = snow->pack_frze;
     double *pack_melt = snow->pack_melt;
     double *last_thice = snow->last_thice;
+    double *theta_ice = snow->theta_ice;
     double *pack_outflow = snow->pack_outflow;
 
     /* initialize */
@@ -78,14 +79,18 @@ snow_hydrology(double             step_dt,
     double dewsoil = conden_grnd - snowfrost;
 
     for (i = 0; i < snow->Nsnow; i++) {
-        double delta_ice = pack_ice[i] - last_thice[i];
-        if (delta_ice > 0) {
-            pack_frze[i] = delta_ice;
-            pack_melt[i] = 0;
+        double delta_ice = theta_ice[i] - last_thice[i];
+        if (delta_ice > 0.0) {
+            pack_frze[i] = delta_ice * dz_snow[i] * CONST_RHOICE;
+            pack_melt[i] = 0.0;
+        }
+        else if (delta_ice < 0.0) {
+            pack_frze[i] = 0.0;
+            pack_melt[i] = -delta_ice * dz_snow[i] * CONST_RHOICE;
         }
         else {
-            pack_frze[i] = 0;
-            pack_melt[i] = -delta_ice;
+            pack_frze[i] = 0.0;
+            pack_melt[i] = 0.0;
         }
     }
 

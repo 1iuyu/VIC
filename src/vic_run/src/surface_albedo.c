@@ -140,12 +140,18 @@ surface_albedo(double             step_dt,
                                         veg_lib->reflstem[i] * 
                                             stem_frac, param.TOL_A);
             energy->TransmitVeg[i] = max(veg_lib->transleaf[i] * leaf_frac +
-                                        veg_lib->transstem[i] * 
+                                         veg_lib->transstem[i] * 
                                             stem_frac, param.TOL_A);
         }
     }
     /** compute understory albedo and net shortwave radiation **/
     if (coszen > 0.0) {
+
+        /* Compute ground albedo based on soil and snow albedo */
+        GroundAlbedo(cell->moist[0],
+                     coszen,
+                     coverage, energy,
+                     cell, soil_con);
 
         // age snow albedo if no new snowfall
         // solar radiation process is only done if there is light
@@ -163,12 +169,6 @@ surface_albedo(double             step_dt,
         else {
             log_err("Unknown SNOW_ALBEDO option");
         }
-        
-        /* Compute ground albedo based on soil and snow albedo */
-        GroundAlbedo(cell->moist[0],
-                     coszen,
-                     coverage, energy, 
-                     cell, soil_con);
         
         if (cell->IS_VEG) {
             /* Compute canopy radiative transfer 

@@ -28,6 +28,7 @@ initialize_options()
     options.SNOW_DENSITY = DENS_BRAS;
     options.SNOW_ALBEDO = SNICAR;
     options.CANOPY_INTERCEP = NOAH;
+    options.SNOW_SHAPE = SPHERE;
     options.TFALLBACK = true;
     // Model dimensions
     options.Nlayer = 3;

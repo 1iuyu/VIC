@@ -50,9 +50,33 @@ snow_SNICAR(size_t             comp_type,
         -2.66792E-4, 1.14088E-3, 2.37011E-4, -2.35905E-4,
         8.40449E-4, -4.71484E-4, -4.71484E-4
     };
+    static const double g_F07_c2[7] = {
+        1.349959E-1,  1.115697E-1,  9.853958E-2,  5.557793E-2,
+        -1.233493E-1,  0.0,          0.0
+    };
+    static const double g_F07_c1[7] = {
+        -3.987320E-1, -3.723287E-1, -3.924784E-1, -3.259404E-1,
+        4.429054E-2, -1.726586E-1, -1.726586E-1
+    };
+    static const double g_F07_c0[7] = {
+        7.938904E-1, 8.030084E-1, 8.513932E-1, 8.692241E-1,
+        7.085850E-1, 6.412701E-1, 6.412701E-1
+    };
+    static const double g_F07_p2[7] = {
+        3.165543E-3, 2.014810E-3, 1.780838E-3, 6.987734E-4,
+        -1.882932E-2, -2.277872E-2, -2.277872E-2
+    };
+    static const double g_F07_p1[7] = {
+        1.140557E-1, 1.143152E-1, 1.143814E-1, 1.071238E-1,
+        1.353873E-1, 1.914431E-1, 1.914431E-1
+    };
+    static const double g_F07_p0[7] = {
+        5.292852E-1, 5.425909E-1, 5.601598E-1, 6.023407E-1,
+        6.473899E-1, 4.634944E-1, 4.634944E-1
+    };
 
     // initialize
-    size_t i, j, k, nidx;
+    size_t i, j, k, igb, nidx;
     size_t min_mie_radius = 30;
     bool virtual_flag;
     bool DELTA_flag = true;
@@ -86,7 +110,10 @@ snow_SNICAR(size_t             comp_type,
     double tdfs_b[MAX_SNOWS+1] = {0};
     double trnlay[MAX_SNOWS+1] = {0};
     double dftmp[MAX_SNOWS+1] = {0};
-    double albedo[MAX_SWBANDS] = {0};
+    double albedo[SNICAR_BANDS] = {0};
+    double g_ice_Cg_tmp[7] = {0};
+    double g_wvl_ct[7] = {0};
+    double gg_ice_F07_tmp[7] = {0};
     double abs_flux[MAX_SNOWS+1][MAX_SWBANDS] = {0};
     double albsfc_layer[SNICAR_BANDS] = {0};
     double mass_cnc_aer[MAX_SNOWS][SNOW_NUM_AER] = {0}; // 初始化为0
@@ -159,11 +186,18 @@ snow_SNICAR(size_t             comp_type,
                 band_wgt[i] = DFS_wgt[i];
             }
         }
+        // initialize for nonspherical snow grains
+        for (i = 0; i < 7; i++) {
+            g_wvl_ct[i] = g_wvl[i+1] * 0.5 + g_wvl[i] * 0.5;
+        }
         double exp_min = exp(-10.0);
-        double ss_alb_snow = 0.0;
-        double asm_prm_snow = 0.0;
-        double ext_cff_mss_snow = 0.0;
+        double diam_ice = 0.0;
+        double fs_shape = 0.0;
+        double AR_tmp = 0.0;
         double mu_not = max(coszen, 0.01);
+        double g_star[MAX_SNOWS] = {0};
+        double omega_star[MAX_SNOWS] = {0};
+        double tau_star[MAX_SNOWS] = {0};
         // Loop over snow spectral bands
         for (i = 0; i < SNICAR_BANDS; i++) {
             while (solver_flag) {
@@ -179,41 +213,6 @@ snow_SNICAR(size_t             comp_type,
                 if (i >= 3 && UseAerosol_flag) {
                     memset(mass_cnc_aer, 0, sizeof(mass_cnc_aer));
                 }
-                // 设置光学性质
-                for (j = 0; j < tmp_Nsnow; j++) {
-                    nidx = tmp_radius[j] - min_mie_radius + 1;
-                    if (comp_type == BAND_DIR) {                    
-                        // snow optical properties (direct radiation)
-                        ss_alb_snow = optical.ss_alb_dir[i][nidx];
-                        ext_cff_mss_snow = optical.mass_ext_dir[i][nidx];
-                        if (options.SNOW_SHAPE == SPHERE) {
-                            asm_prm_snow = optical.asym_snow_dir[i][nidx];
-                        }
-                    }
-                    else if (comp_type == BAND_DFS) {
-                        // snow optical properties (diffuse radiation)
-                        ss_alb_snow = optical.ss_alb_dfs[i][nidx];
-                        ext_cff_mss_snow = optical.mass_ext_dfs[i][nidx];
-                        if (options.SNOW_SHAPE == SPHERE) {
-                            asm_prm_snow = optical.asym_snow_dfs[i][nidx];
-                        }
-                    }
-                    asm_prm_snow = max(0.99, asm_prm_snow);
-                }
-                // Nonspherical snow: shape-dependent asymmetry factors
-                if (options.SNOW_SHAPE == SPHEROID) {
-
-                }
-                else if (options.SNOW_SHAPE == HEXAGONAL) {
-
-                }
-                else if (options.SNOW_SHAPE == KOCH) {
-
-                }
-                else {
-                    log_err("Unknown SNOW_SHAPE option");
-                }
-
                 // aerosol species 2 optical properties, hydrophobic BC
                 ss_alb_aer[1]      = optical.ss_alb_bcphob_dfs[i];
                 asm_prm_aer[1]     = optical.asm_prm_bcphob_dfs[i];
@@ -251,40 +250,123 @@ snow_SNICAR(size_t             comp_type,
                 ss_alb_aer[8]      = optical.ss_alb_dust5_dfs[i];
                 asm_prm_aer[8]     = optical.asm_prm_dust5_dfs[i];
                 ext_cff_mss_aer[8] = optical.ext_cff_mss_dust5_dfs[i];
-                double tau = 0.0, omega = 0.0, g = 0.0;
-                // 计算雪的光学厚度
+                // 设置光学性质
                 for (j = 0; j < tmp_Nsnow; j++) {
+                    double ss_alb_snow = 0.0;
+                    double asm_prm_snow = 0.0;
+                    double ext_cff_mss_snow = 0.0;
+                    nidx = (size_t) round(tmp_radius[j] - min_mie_radius);
+                    nidx = min(max(nidx, 0), SNICAR_RADII - 1);
+                    if (comp_type == BAND_DIR) {
+                        // snow optical properties (direct radiation)
+                        ss_alb_snow = optical.ss_alb_dir[i][nidx];
+                        ext_cff_mss_snow = optical.mass_ext_dir[i][nidx];
+                    }
+                    else if (comp_type == BAND_DFS) {
+                        // snow optical properties (diffuse radiation)
+                        ss_alb_snow = optical.ss_alb_dfs[i][nidx];
+                        ext_cff_mss_snow = optical.mass_ext_dfs[i][nidx];
+                    }
+                    
+                    // 计算不对称因子（球形雪）
+                    if (options.SNOW_SHAPE == SPHERE) {
+                        if (comp_type == BAND_DIR) {
+                            asm_prm_snow = optical.asym_snow_dir[i][nidx];
+                        }
+                        else if (comp_type == BAND_DFS) {
+                            asm_prm_snow = optical.asym_snow_dfs[i][nidx];
+                        }
+                    }
+                    else {
+                        diam_ice = 2.0 * tmp_radius[j];
+                        // 根据形状设置参数
+                        if (options.SNOW_SHAPE == SPHEROID) {
+                            fs_shape = 0.929;
+                            AR_tmp = 0.5;
+                            
+                            for (igb = 0; igb < 7; igb++) {
+                                g_ice_Cg_tmp[igb] = g_b0[igb] * 
+                                    pow(fs_shape / 0.788, g_b1[igb]) * 
+                                    pow(diam_ice, g_b2[igb]);
+                                gg_ice_F07_tmp[igb] = g_F07_c0[igb] + 
+                                    g_F07_c1[igb] * AR_tmp + 
+                                    g_F07_c2[igb] * AR_tmp * AR_tmp;
+                            }
+                        }
+                        else if (options.SNOW_SHAPE == HEXAGONAL) {
+                            fs_shape = 0.788;
+                            AR_tmp = 2.5;
+                            
+                            for (igb = 0; igb < 7; igb++) {
+                                g_ice_Cg_tmp[igb] = g_b0[igb] * 
+                                    pow(fs_shape / 0.788, g_b1[igb]) * 
+                                    pow(diam_ice, g_b2[igb]);
+                                gg_ice_F07_tmp[igb] = g_F07_p0[igb] + 
+                                    g_F07_p1[igb] * log(AR_tmp) + 
+                                    g_F07_p2[igb] * log(AR_tmp) * log(AR_tmp);
+                            }
+                        }
+                        else if (options.SNOW_SHAPE == KOCH) {
+                            diam_ice = 2.0 * tmp_radius[j] / 0.544;
+                            fs_shape = 0.712;
+                            AR_tmp = 2.5;
+                            
+                            for (igb = 0; igb < 7; igb++) {
+                                g_ice_Cg_tmp[igb] = g_b0[igb] * 
+                                    pow(fs_shape / 0.788, g_b1[igb]) * 
+                                    pow(diam_ice, g_b2[igb]);
+                                gg_ice_F07_tmp[igb] = g_F07_p0[igb] + 
+                                    g_F07_p1[igb] * log(AR_tmp) + 
+                                    g_F07_p2[igb] * log(AR_tmp) * log(AR_tmp);
+                            }
+                        }
+                        else {
+                            log_err("Unknown SNOW_SHAPE option");
+                        }
+                        // 插值到目标波长
+                        double g_Cg_intp = piecewise_linear_interp(7, g_wvl_ct, g_ice_Cg_tmp, zc_wave[i]);
+                        double gg_F07_intp = piecewise_linear_interp(7, g_wvl_ct, gg_ice_F07_tmp, zc_wave[i]);
+                        
+                        // Fu(2007) eq.2.2
+                        double g_ice_F07 = gg_F07_intp + 0.5 * (1.0 - gg_F07_intp) / ss_alb_snow;
+                        
+                        // He et al. (2017) eq.6
+                        asm_prm_snow = g_ice_F07 * g_Cg_intp;
+                    }
+                    asm_prm_snow = max(0.99, asm_prm_snow);
+
+                    // 计算雪的光学厚度
                     double L_aer = 0.0, tau_aer = 0.0;
                     double tau_sum = 0.0, omega_sum = 0.0, g_sum = 0.0;
                     double L_snow = tmp_pack_ice[j] + tmp_pack_liq[j];
                     double tau_snow = L_snow * ext_cff_mss_snow;
                     // 计算气溶胶的光学贡献
-                    for (j = 0; j < SNOW_NUM_AER; j++) {
-                        L_aer = L_snow * mass_cnc_aer[i][j];
-                        tau_aer = L_aer * ext_cff_mss_aer[j];
+                    for (k = 0; k < SNOW_NUM_AER; k++) {
+                        L_aer = L_snow * mass_cnc_aer[i][k];
+                        tau_aer = L_aer * ext_cff_mss_aer[k];
                         tau_sum += tau_aer;
-                        omega_sum += tau_aer * ss_alb_aer[j];
-                        g_sum += tau_aer * ss_alb_aer[j] * asm_prm_aer[j];
+                        omega_sum += tau_aer * ss_alb_aer[k];
+                        g_sum += tau_aer * ss_alb_aer[k] * asm_prm_aer[k];
                     }
-                    tau = tau_sum + tau_snow;
-                    omega = (1 / tau) * (omega_sum + (ss_alb_snow * tau_snow));
-                    g = (1 / (tau * omega)) * (g_sum + (asm_prm_snow * ss_alb_snow * tau_snow));
-                }
-                double g_star = 0.0, omega_star = 0.0, tau_star = 0.0;
-                if (DELTA_flag) {
-                    for (j = 0; j < tmp_Nsnow; j++) {
-                        g_star = g / (1 + g);
-                        omega_star = (1.0 - g * g) * omega / (1.0 - omega * (g * g));
-                        tau_star = (1.0 - omega * (g * g)) * tau;
+                    double tau = tau_sum + tau_snow;
+                    double omega = (1 / tau) * (omega_sum + (ss_alb_snow * tau_snow));
+                    double g = (1 / (tau * omega)) * (g_sum + (asm_prm_snow * ss_alb_snow * tau_snow));
+                    if (DELTA_flag) {
+                        for (j = 0; j < tmp_Nsnow; j++) {
+                            g_star[j] = g / (1 + g);
+                            omega_star[j] = (1.0 - g * g) * omega / (1.0 - omega * (g * g));
+                            tau_star[j] = (1.0 - omega * (g * g)) * tau;
+                        }
+                    }
+                    else {
+                        for (j = 0; j < tmp_Nsnow; j++) {
+                            g_star[j] = g;
+                            omega_star[j] = omega;
+                            tau_star[j] = tau;
+                        }
                     }
                 }
-                else {
-                    for (j = 0; j < tmp_Nsnow; j++) {
-                        g_star = g;
-                        omega_star = omega;
-                        tau_star = tau;
-                    }
-                }
+
                 // Start Adding-doubling RT solver
                 for (j = 0; j <= tmp_Nsnow; j++) {
                     trndir[j] = 0.0;
@@ -321,9 +403,9 @@ snow_SNICAR(size_t             comp_type,
                     trnlay[j] = 0.0;
                     if (trntdr[j] > 0.001) {
                         // Delta变换后的单次散射性质
-                        double ts = tau_star;
-                        double ws = omega_star;
-                        double gs = g_star;
+                        double ts = tau_star[j];
+                        double ws = omega_star[j];
+                        double gs = g_star[j];
                         // Delta-Eddington解
                         double lm = sqrt(3.0 * (1.0 - ws) * (1.0 - ws * gs));
                         double ue = 1.5 * (1.0 - ws * gs) / lm;
@@ -473,14 +555,14 @@ snow_SNICAR(size_t             comp_type,
                 // Absorbed flux in each layer
                 for (j = 0; j < tmp_Nsnow; j++) {
                     abs_flux[j][i] = dftmp[j] - dftmp[j+1];
-                    if (abs_flux[j][i] > 0.0001) {
+                    if (abs_flux[j][i] < -0.0001) {
                         log_err("Error in snow SNICAR: negative absoption(%.4f)", abs_flux[j][i]);
                     }
                 }
                 // If there are no snow layers (but still snow)
                 if (virtual_flag) {
-                    abs_flux[0][i] = 0.0;
-                    abs_flux[1][i] = 0.0;
+                    abs_flux[0][i] = dftmp[0] - dftmp[1];
+                    abs_flux[tmp_Nsnow][i] = dftmp[tmp_Nsnow];
                 }
                 for (j = 0; j < tmp_Nsnow; j++) { 
                     if (abs_flux[j][i] < 0.0) {
@@ -489,6 +571,16 @@ snow_SNICAR(size_t             comp_type,
                 }
                 // no need to repeat calculations for adding-doubling solver
                 solver_flag = false;
+            }
+            // Energy conservation check:
+            double F_abs_sum = 0.0;
+            for (j = 0; j < tmp_Nsnow; j++) {
+                F_abs_sum += abs_flux[j][i];
+            }
+            double energy_err = (mu_not * CONST_PI * flux_dir) + flux_dfs - 
+                                    F_abs_sum - dftmp[tmp_Nsnow] - F_sfc_pls;
+            if (fabs(energy_err) > 0.0001) {
+                log_err("Error in snow SNICAR: energy not conserved(%.4f)", energy_err);
             }
             albedo[i] = tmp_albedo;
             // Check that albedo is less than 1
@@ -576,7 +668,7 @@ snow_SNICAR(size_t             comp_type,
             AlbedoSnowDir[1] = 0.0;         
         }
         else if (comp_type == BAND_DFS) {
-            AlbedoSnowDir[0] = 0.0;
+            AlbedoSnowDfs[0] = 0.0;
             AlbedoSnowDfs[1] = 0.0;
         }
     }

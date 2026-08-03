@@ -37,7 +37,7 @@ surface_radiation(double            *shortwave_dir,
     double *aPAR_sha = veg_var->aPAR_sha;
     double *AbsSubDir = energy->AbsSubDir;
     double *AbsSubDfs = energy->AbsSubDfs;
-    double *AbsShortLayer = energy->AbsShortLayer;
+    double *AbsSnowLyr = energy->AbsSnowLyr;
     double *ShortDir2Dir = energy->ShortDir2Dir;
     double *ShortDfs2Dir = energy->ShortDfs2Dir;
     double *ShortDfs2Dfs = energy->ShortDfs2Dfs;
@@ -86,9 +86,9 @@ surface_radiation(double            *shortwave_dir,
         if (options.SNOW_ALBEDO == SNICAR) {
             if (snow->Nsnow == 0) {
                 for (j = 0; j <= Nsnow; j++) {
-                    AbsShortLayer[j] = 0.0;
+                    AbsSnowLyr[j] = 0.0;
                 }
-                AbsShortLayer[0] = NetShortSnow;
+                AbsSnowLyr[0] = NetShortSnow;
             }
             else {
                 for (j = 0; j <= Nsnow; j++) {
@@ -97,7 +97,7 @@ surface_radiation(double            *shortwave_dir,
                     abs_flux_dfs[j][i] = energy->AbsShortDfs[j][i] * coverage + ((1.0 - coverage) * 
                         (1.0 - AlbedoSoilDfs[i]) * (energy->AbsShortDfs[j][i] / (1.0 - AlbedoSnowDfs[i])));
 
-                    AbsShortLayer[j] = transmit_dir * abs_flux_dir[j][i] + transmit_dfs * abs_flux_dfs[j][i];
+                    AbsSnowLyr[j] = transmit_dir * abs_flux_dir[j][i] + transmit_dfs * abs_flux_dfs[j][i];
                 }
             }
         }

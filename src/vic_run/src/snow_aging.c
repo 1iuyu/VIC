@@ -115,7 +115,7 @@ snow_aging(double             step_dt,
             // new snowfall [mm]
             new_snow = max(snowfall * step_dt, 0.0);
             // snow that has re-frozen [mm]
-            refrz_snow = max(pack_frze[i] * step_dt, 0.0);
+            refrz_snow = max(pack_frze[i], 0.0);
             refrz_frac = refrz_snow / snow_mass;
             // fraction of layer mass that is new snow
             if (i == 0) {

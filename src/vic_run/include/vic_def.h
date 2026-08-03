@@ -824,7 +824,7 @@ typedef struct {
     double NetShortSnow;      /**< net shortwave radiation to the snow (W/m^2) */
     double AbsShortDir[MAX_SNOWS+1][MAX_SWBANDS]; /**< direct solar flux factor absorbed by snow [frc] */
     double AbsShortDfs[MAX_SNOWS+1][MAX_SWBANDS]; /**< diffuse solar flux factor absorbed by snow [frc] */
-    double AbsShortLayer[MAX_SNOWS+1];
+    double AbsSnowLyr[MAX_SNOWS+1];               /**< total absorbed solar radiation by snow for each layer [W/m2] */
     // 辐射项
     double AbsSubDir[MAX_SWBANDS];
     double AbsSubDfs[MAX_SWBANDS];
