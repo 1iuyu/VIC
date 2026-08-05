@@ -27,12 +27,12 @@ surface_radiation(double            *shortwave_dir,
     double NetShortSnow = 0.0;
     double transmit_dir = 0.0;
     double transmit_dfs = 0.0;
+    double abs_tmp = 0.0;
+    double error_check = 0.0;
+    double abs_flux_sum = 0.0;
     double tmp_absorb_grnd = 0.0;
-    double coverage = snow->coverage;
     double ShortOverDir[MAX_SWBANDS] = {0};
     double ShortOverDfs[MAX_SWBANDS] = {0};
-    double abs_flux_dir[MAX_SNOWS+1][MAX_SWBANDS] = {0};
-    double abs_flux_dfs[MAX_SNOWS+1][MAX_SWBANDS] = {0};
     double *aPAR_sun = veg_var->aPAR_sun;
     double *aPAR_sha = veg_var->aPAR_sha;
     double *AbsSubDir = energy->AbsSubDir;
@@ -85,22 +85,39 @@ surface_radiation(double            *shortwave_dir,
         // SNICAR snow layer absorption
         if (options.SNOW_ALBEDO == SNICAR) {
             if (snow->Nsnow == 0) {
-                for (j = 0; j <= Nsnow; j++) {
-                    AbsSnowLyr[j] = 0.0;
-                }
-                AbsSnowLyr[0] = NetShortSnow;
+                AbsSnowLyr[0] = NetShortGrnd;
+                abs_flux_sum = NetShortGrnd;
             }
             else {
                 for (j = 0; j <= Nsnow; j++) {
-                    abs_flux_dir[j][i] = energy->AbsShortDir[j][i] * coverage + ((1.0 - coverage) * 
-                        (1.0 - AlbedoSoilDir[i]) * (energy->AbsShortDir[j][i] / (1.0 - AlbedoSnowDir[i])));
-                    abs_flux_dfs[j][i] = energy->AbsShortDfs[j][i] * coverage + ((1.0 - coverage) * 
-                        (1.0 - AlbedoSoilDfs[i]) * (energy->AbsShortDfs[j][i] / (1.0 - AlbedoSnowDfs[i])));
-
-                    AbsSnowLyr[j] = transmit_dir * abs_flux_dir[j][i] + transmit_dfs * abs_flux_dfs[j][i];
+                    abs_tmp =
+                        transmit_dir * energy->AbsShortDir[j][i] +
+                        transmit_dfs * energy->AbsShortDfs[j][i];
+                    AbsSnowLyr[j] += abs_tmp;
                 }
             }
         }
+    }
+    // check if snow layer absorption is consistent with total snow absorption
+    for (i = 0; i <= Nsnow; i++) {
+        abs_flux_sum += AbsSnowLyr[i];
+    }
+    if (fabs(abs_flux_sum - NetShortSnow) > 1.0e-5) {
+        if (Nsnow == 0) {
+            AbsSnowLyr[0] = NetShortGrnd;
+        }
+        else {
+            double ratio = NetShortSnow / abs_flux_sum;
+            for (i = 0; i <= Nsnow; i++) {
+                AbsSnowLyr[i] *= ratio;
+            }
+        }
+    }
+    error_check = abs_flux_sum - NetShortSnow;
+    if (fabs(error_check) > 1e-5) {
+        log_err("Error in snow layer absorption calculation: "
+                "NetShortSnow = %f, AbsSnowLyr sum = %f, error = %f",
+                NetShortSnow, abs_flux_sum, error_check);
     }
     energy->NetShortGrnd = NetShortGrnd;
     energy->shortwave = NetShortGrnd;

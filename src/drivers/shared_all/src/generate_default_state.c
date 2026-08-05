@@ -85,8 +85,8 @@ generate_default_state(force_data_struct *force,
     ************************************/
     for (veg = 0; veg <= Nveg; veg++) {
         if (veg_con[veg].Cv > 0) {
-            snow[veg].swq = 10.0;   // [mm]
-            snow[veg].last_swq = 10.0;   // [mm]
+            snow[veg].swq = 15.0;   // [mm]
+            snow[veg].last_swq = 15.0;   // [mm]
             if (snow[veg].swq > 0.0) {
                 snow[veg].snow_depth = snow[veg].swq / 200.0;
             }

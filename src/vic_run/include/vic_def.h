@@ -783,19 +783,19 @@ typedef struct {
     double moist_error;
     // Fluxes
     double advection;                  /**< advective flux (Wm-2) */
-    double AdvectSub;
-    double AdvectGrnd;
-    double AdvectOver;
+    double AdvectSub;                  /**< advective flux from understory vegetation (Wm-2) */
+    double AdvectGrnd;                 /**< advective flux from bare ground (Wm-2) */
+    double AdvectOver;                 /**< advective flux from overstory vegetation (Wm-2) */
     // 地表热通量
-    double grnd_flux;            /**< ground heat flux (Wm-2) */
-    double grnd_snow;
-    double grnd_soil;
+    double grnd_flux;                  /**< ground heat flux (Wm-2) */
+    double grnd_snow;                  /**< ground heat flux to snow (Wm-2) */
+    double grnd_soil;                  /**< ground heat flux to soil (Wm-2) */
     // 感热通量
-    double sensible;
-    double SensibleSoil;
-    double SensibleSnow;
-    double SensibleStem;
-    double SensibleLeaf;
+    double sensible;                   /**< sensible heat flux (Wm-2) */
+    double SensibleSoil;               /**< sensible heat flux to soil (Wm-2) */
+    double SensibleSnow;               /**< sensible heat flux to snow (Wm-2) */
+    double SensibleStem;               /**< sensible heat flux to stem (Wm-2) */
+    double SensibleLeaf;               /**< sensible heat flux to leaf (Wm-2) */
     // 潜热通量
     double latent;
     double LatentSoil;

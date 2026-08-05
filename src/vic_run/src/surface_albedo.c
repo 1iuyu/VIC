@@ -24,7 +24,7 @@ surface_albedo(double             step_dt,
 {
     extern option_struct options;
     extern parameters_struct param;
-    size_t i;
+    size_t i, j;
     double leaf_frac = 0.0;
     double stem_frac = 0.0;
     double coverage = snow->coverage;
@@ -74,6 +74,13 @@ surface_albedo(double             step_dt,
         energy->AbsDirSha[i] = 0.0;
         energy->AbsDfsSun[i] = 0.0;
         energy->AbsDfsSha[i] = 0.0;
+    }
+    for (i = 0; i < MAX_SNOWS+1; i++) {
+        energy->AbsSnowLyr[i] = 0.0;
+        for (j = 0; j < MAX_SWBANDS; j++) {
+            energy->AbsShortDir[i][j] = 0.0;
+            energy->AbsShortDfs[i][j] = 0.0;
+        }
     }
 
     // compute snow age factor

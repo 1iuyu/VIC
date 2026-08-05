@@ -1,16 +1,16 @@
 /******************************************************************************
  * @section DESCRIPTION
  *
- * This subroutine calculate albedo of snow containing impurities and the 
- * evolution of snow effective radius.
+ * This subroutine determine reflectance of, and vertically-resolved solar 
+ * absorption in, snow with impurities.
  *****************************************************************************/
 
 #include "vic_run.h"
 
 /******************************************************************************
  * @brief  
- * Compute the albedo of snow containing impurities and the evolution of 
- * snow effective radius.
+ * Compute the reflectance of snow containing impurities and the vertically-
+ * resolved solar absorption in snow.
  *****************************************************************************/
 int
 snow_SNICAR(size_t             comp_type,
@@ -22,6 +22,7 @@ snow_SNICAR(size_t             comp_type,
     extern parameters_struct param;
     extern option_struct options;
     extern optical_struct optical;
+    // 波长（微米）
     static const double zc_wave[5] = {
                         0.5, 0.85, 1.1, 1.35, 3.25};
     // 高斯积分点（弧度）
@@ -80,7 +81,6 @@ snow_SNICAR(size_t             comp_type,
     size_t min_mie_radius = 30;
     bool virtual_flag;
     bool DELTA_flag = true;
-    bool solver_flag = true;
     bool UseAerosol_flag = false;
     double flux_dir;
     double flux_dfs;
@@ -114,8 +114,7 @@ snow_SNICAR(size_t             comp_type,
     double g_ice_Cg_tmp[7] = {0};
     double g_wvl_ct[7] = {0};
     double gg_ice_F07_tmp[7] = {0};
-    double abs_flux[MAX_SNOWS+1][MAX_SWBANDS] = {0};
-    double albsfc_layer[SNICAR_BANDS] = {0};
+    double abs_flux[MAX_SNOWS+1][SNICAR_BANDS] = {0};
     double mass_cnc_aer[MAX_SNOWS][SNOW_NUM_AER] = {0}; // 初始化为0
     double *radius = snow->radius;
     double *pack_ice = snow->pack_ice;
@@ -146,33 +145,6 @@ snow_SNICAR(size_t             comp_type,
                 tmp_radius[j] = radius[j];
             }
         }
-        // Set spectral underlying surface albedos to their corresponding VIS or NIR albedos
-        if (cell->IS_VEG) { // soil tile
-            if (comp_type == BAND_DIR) {
-                for (i = 0; i < SNICAR_BANDS; i++) {
-                    albsfc_layer[i] = AlbedoSoilDir[1];
-                }
-                albsfc_layer[0] = AlbedoSoilDir[0];
-            }
-            else if (comp_type == BAND_DFS) {
-                for (i = 0; i < SNICAR_BANDS; i++) {
-                    albsfc_layer[i] = AlbedoSoilDfs[1];
-                }
-                albsfc_layer[0] = AlbedoSoilDfs[0];              
-            }
-        }
-        else if (cell->IS_GLAC) {   // glacier tile
-            for (i = 0; i < SNICAR_BANDS; i++) {
-                albsfc_layer[i] = param.LAKE_ALBEDO[1];
-            }
-            albsfc_layer[0] = param.LAKE_ALBEDO[0];      
-        }
-        else if (cell->IS_WET) {   // lake or wetland tile
-            for (i = 0; i < SNICAR_BANDS; i++) {
-                albsfc_layer[i] = param.GLAC_ALBEDO[1];
-            }
-            albsfc_layer[0] = param.GLAC_ALBEDO[0];             
-        }
 
         // The following weights are appropriate for 
         // surface-incident flux in a mid-latitude winter atmosphere
@@ -194,18 +166,21 @@ snow_SNICAR(size_t             comp_type,
         double diam_ice = 0.0;
         double fs_shape = 0.0;
         double AR_tmp = 0.0;
+        double F_abs_sum = 0.0;
+        double F_btm_net = 0.0;
         double mu_not = max(coszen, 0.01);
         double g_star[MAX_SNOWS] = {0};
         double omega_star[MAX_SNOWS] = {0};
         double tau_star[MAX_SNOWS] = {0};
         // Loop over snow spectral bands
         for (i = 0; i < SNICAR_BANDS; i++) {
+            bool solver_flag = true;
             while (solver_flag) {
-                if (comp_type == BAND_VIS) {
+                if (comp_type == BAND_DIR) {
                     flux_dir = 1.0 / (mu_not * CONST_PI);
                     flux_dfs = 0.0;
                 }
-                else if (comp_type == BAND_NIR) {
+                else if (comp_type == BAND_DFS) {
                     flux_dir = 0.0;
                     flux_dfs = 1.0;
                 }
@@ -213,43 +188,45 @@ snow_SNICAR(size_t             comp_type,
                 if (i >= 3 && UseAerosol_flag) {
                     memset(mass_cnc_aer, 0, sizeof(mass_cnc_aer));
                 }
+                if (UseAerosol_flag) {
                 // aerosol species 2 optical properties, hydrophobic BC
-                ss_alb_aer[1]      = optical.ss_alb_bcphob_dfs[i];
-                asm_prm_aer[1]     = optical.asm_prm_bcphob_dfs[i];
-                ext_cff_mss_aer[1] = optical.ext_cff_mss_bcphob_dfs[i];
-                // aerosol species 3 optical properties, hydrophilic OC
-                ss_alb_aer[2]      = optical.ss_alb_ocphil_dfs[i];
-                asm_prm_aer[2]     = optical.asm_prm_ocphil_dfs[i];
-                ext_cff_mss_aer[2] = optical.ext_cff_mss_ocphil_dfs[i];
-                // aerosol species 4 optical properties, hydrophobic OC
-                ss_alb_aer[3]      = optical.ss_alb_ocphob_dfs[i];
-                asm_prm_aer[3]     = optical.asm_prm_ocphob_dfs[i];
-                ext_cff_mss_aer[3] = optical.ext_cff_mss_ocphob_dfs[i];
-                // Optics for BC/dust-snow external mixing:
-                // aerosol species 1 optical properties, hydrophilic BC
-                ss_alb_aer[0]      = optical.ss_alb_bcphil_dfs[i];
-                asm_prm_aer[0]     = optical.asm_prm_bcphil_dfs[i];
-                ext_cff_mss_aer[0] = optical.ext_cff_mss_bcphil_dfs[i];
-                // aerosol species 5 optical properties, dust size1
-                ss_alb_aer[4]      = optical.ss_alb_dust1_dfs[i];
-                asm_prm_aer[4]     = optical.asm_prm_dust1_dfs[i];
-                ext_cff_mss_aer[4] = optical.ext_cff_mss_dust1_dfs[i];
-                // aerosol species 6 optical properties, dust size2
-                ss_alb_aer[5]      = optical.ss_alb_dust2_dfs[i];
-                asm_prm_aer[5]     = optical.asm_prm_dust2_dfs[i];
-                ext_cff_mss_aer[5] = optical.ext_cff_mss_dust2_dfs[i];
-                // aerosol species 7 optical properties, dust size3
-                ss_alb_aer[6]      = optical.ss_alb_dust3_dfs[i];
-                asm_prm_aer[6]     = optical.asm_prm_dust3_dfs[i];
-                ext_cff_mss_aer[6] = optical.ext_cff_mss_dust3_dfs[i];
-                // aerosol species 8 optical properties, dust size4
-                ss_alb_aer[7]      = optical.ss_alb_dust4_dfs[i];
-                asm_prm_aer[7]     = optical.asm_prm_dust4_dfs[i];
-                ext_cff_mss_aer[7] = optical.ext_cff_mss_dust4_dfs[i];
-                // aerosol species 9 optical properties, dust size4
-                ss_alb_aer[8]      = optical.ss_alb_dust5_dfs[i];
-                asm_prm_aer[8]     = optical.asm_prm_dust5_dfs[i];
-                ext_cff_mss_aer[8] = optical.ext_cff_mss_dust5_dfs[i];
+                    ss_alb_aer[1]      = optical.ss_alb_bcphob_dfs[i];
+                    asm_prm_aer[1]     = optical.asm_prm_bcphob_dfs[i];
+                    ext_cff_mss_aer[1] = optical.ext_cff_mss_bcphob_dfs[i];
+                    // aerosol species 3 optical properties, hydrophilic OC
+                    ss_alb_aer[2]      = optical.ss_alb_ocphil_dfs[i];
+                    asm_prm_aer[2]     = optical.asm_prm_ocphil_dfs[i];
+                    ext_cff_mss_aer[2] = optical.ext_cff_mss_ocphil_dfs[i];
+                    // aerosol species 4 optical properties, hydrophobic OC
+                    ss_alb_aer[3]      = optical.ss_alb_ocphob_dfs[i];
+                    asm_prm_aer[3]     = optical.asm_prm_ocphob_dfs[i];
+                    ext_cff_mss_aer[3] = optical.ext_cff_mss_ocphob_dfs[i];
+                    // Optics for BC/dust-snow external mixing:
+                    // aerosol species 1 optical properties, hydrophilic BC
+                    ss_alb_aer[0]      = optical.ss_alb_bcphil_dfs[i];
+                    asm_prm_aer[0]     = optical.asm_prm_bcphil_dfs[i];
+                    ext_cff_mss_aer[0] = optical.ext_cff_mss_bcphil_dfs[i];
+                    // aerosol species 5 optical properties, dust size1
+                    ss_alb_aer[4]      = optical.ss_alb_dust1_dfs[i];
+                    asm_prm_aer[4]     = optical.asm_prm_dust1_dfs[i];
+                    ext_cff_mss_aer[4] = optical.ext_cff_mss_dust1_dfs[i];
+                    // aerosol species 6 optical properties, dust size2
+                    ss_alb_aer[5]      = optical.ss_alb_dust2_dfs[i];
+                    asm_prm_aer[5]     = optical.asm_prm_dust2_dfs[i];
+                    ext_cff_mss_aer[5] = optical.ext_cff_mss_dust2_dfs[i];
+                    // aerosol species 7 optical properties, dust size3
+                    ss_alb_aer[6]      = optical.ss_alb_dust3_dfs[i];
+                    asm_prm_aer[6]     = optical.asm_prm_dust3_dfs[i];
+                    ext_cff_mss_aer[6] = optical.ext_cff_mss_dust3_dfs[i];
+                    // aerosol species 8 optical properties, dust size4
+                    ss_alb_aer[7]      = optical.ss_alb_dust4_dfs[i];
+                    asm_prm_aer[7]     = optical.asm_prm_dust4_dfs[i];
+                    ext_cff_mss_aer[7] = optical.ext_cff_mss_dust4_dfs[i];
+                    // aerosol species 9 optical properties, dust size4
+                    ss_alb_aer[8]      = optical.ss_alb_dust5_dfs[i];
+                    asm_prm_aer[8]     = optical.asm_prm_dust5_dfs[i];
+                    ext_cff_mss_aer[8] = optical.ext_cff_mss_dust5_dfs[i];
+                }
                 // 设置光学性质
                 for (j = 0; j < tmp_Nsnow; j++) {
                     double ss_alb_snow = 0.0;
@@ -332,8 +309,9 @@ snow_SNICAR(size_t             comp_type,
                         
                         // He et al. (2017) eq.6
                         asm_prm_snow = g_ice_F07 * g_Cg_intp;
+                        // 确保不对称因子在合理范围内
+                        asm_prm_snow = max(0.99, asm_prm_snow);
                     }
-                    asm_prm_snow = max(0.99, asm_prm_snow);
 
                     // 计算雪的光学厚度
                     double L_aer = 0.0, tau_aer = 0.0;
@@ -341,29 +319,27 @@ snow_SNICAR(size_t             comp_type,
                     double L_snow = tmp_pack_ice[j] + tmp_pack_liq[j];
                     double tau_snow = L_snow * ext_cff_mss_snow;
                     // 计算气溶胶的光学贡献
-                    for (k = 0; k < SNOW_NUM_AER; k++) {
-                        L_aer = L_snow * mass_cnc_aer[i][k];
-                        tau_aer = L_aer * ext_cff_mss_aer[k];
-                        tau_sum += tau_aer;
-                        omega_sum += tau_aer * ss_alb_aer[k];
-                        g_sum += tau_aer * ss_alb_aer[k] * asm_prm_aer[k];
+                    if (UseAerosol_flag) {
+                        for (k = 0; k < SNOW_NUM_AER; k++) {
+                            L_aer = L_snow * mass_cnc_aer[j][k];
+                            tau_aer = L_aer * ext_cff_mss_aer[k];
+                            tau_sum += tau_aer;
+                            omega_sum += tau_aer * ss_alb_aer[k];
+                            g_sum += tau_aer * ss_alb_aer[k] * asm_prm_aer[k];
+                        }
                     }
                     double tau = tau_sum + tau_snow;
                     double omega = (1 / tau) * (omega_sum + (ss_alb_snow * tau_snow));
                     double g = (1 / (tau * omega)) * (g_sum + (asm_prm_snow * ss_alb_snow * tau_snow));
                     if (DELTA_flag) {
-                        for (j = 0; j < tmp_Nsnow; j++) {
-                            g_star[j] = g / (1 + g);
-                            omega_star[j] = (1.0 - g * g) * omega / (1.0 - omega * (g * g));
-                            tau_star[j] = (1.0 - omega * (g * g)) * tau;
-                        }
+                        g_star[j] = g / (1 + g);
+                        omega_star[j] = (1.0 - g * g) * omega / (1.0 - omega * (g * g));
+                        tau_star[j] = (1.0 - omega * (g * g)) * tau;
                     }
                     else {
-                        for (j = 0; j < tmp_Nsnow; j++) {
-                            g_star[j] = g;
-                            omega_star[j] = omega;
-                            tau_star[j] = tau;
-                        }
+                        g_star[j] = g;
+                        omega_star[j] = omega;
+                        tau_star[j] = tau;
                     }
                 }
 
@@ -384,14 +360,15 @@ snow_SNICAR(size_t             comp_type,
                 // 1.snow and aerosol layer column mass (L_snw, L_aer [kg/m^2])
                 // 2.optical Depths (tau_snw, tau_aer)
                 // 3.weighted Mie properties (tau, omega, g)
-                for (j = 0; j < tmp_Nsnow; j++) {
-                    if (zc_wave[i] <= 1.2) {
-                        // BC-snow internal mixing applied to hydrophilic BC if activated
-                        // BC-snow internal mixing primarily affect snow single-scattering albedo
-
+                if (UseAerosol_flag) {
+                    for (j = 0; j < tmp_Nsnow; j++) {
+                        if (zc_wave[i] <= 1.2) {
+                            // BC-snow internal mixing applied to hydrophilic BC if activated
+                            // BC-snow internal mixing primarily affect snow single-scattering albedo
+                            // current do nothing
+                        }
                     }
                 }
-
                 // begin main level loop for snow layer interfaces except for the very bottom
                 for (j = 0; j < tmp_Nsnow; j++) {
                     rdir[j] = 0.0;
@@ -417,12 +394,18 @@ snow_SNICAR(size_t             comp_type,
                         tdfs_a[j] = 4.0 * ue / ne;
                         // 直接辐射处理
                         trnlay[j] = max(exp_min, exp(-ts / mu_not));
-                        
-                        double alp = 0.75 * ws * mu_not * 
-                                    ((1.0 + gs * (1.0 - ws)) / (1.0 - lm * lm * mu_not * mu_not));
-                        double gam = 0.5 * ws * 
-                                    ((1.0 + 3.0 * gs * (1.0 - ws) * mu_not * mu_not) / 
+                        double alp = 0.0, gam = 0.0; 
+                        if (1.0 - lm * lm * mu_not * mu_not != 0.0) {
+                            alp = 0.75 * ws * mu_not * ((1.0 + gs * (1.0 - ws)) / 
                                     (1.0 - lm * lm * mu_not * mu_not));
+                            gam = 0.5 * ws * ((1.0 + 3.0 * gs * (1.0 - ws) * mu_not * 
+                                    mu_not) / (1.0 - lm * lm * mu_not * mu_not));
+                        }
+                        else {
+                            alp = 0.0;
+                            gam = 0.0;
+                        }
+
                         double apg = alp + gam;
                         double amg = alp - gam;
                         
@@ -479,16 +462,20 @@ snow_SNICAR(size_t             comp_type,
                             rupdir[tmp_Nsnow] = AlbedoSoilDir[0];
                             rupdfs[tmp_Nsnow] = AlbedoSoilDir[0];    
                         }
-                        rupdir[tmp_Nsnow] = AlbedoSoilDir[1];
-                        rupdfs[tmp_Nsnow] = AlbedoSoilDir[1];                   
+                        else {
+                            rupdir[tmp_Nsnow] = AlbedoSoilDir[1];
+                            rupdfs[tmp_Nsnow] = AlbedoSoilDir[1];
+                        }
                     }
                     else if (comp_type == BAND_NIR) {
                         if (i == 0) {
                             rupdir[tmp_Nsnow] = AlbedoSoilDfs[0];
                             rupdfs[tmp_Nsnow] = AlbedoSoilDfs[0];                          
                         }
-                        rupdir[tmp_Nsnow] = AlbedoSoilDfs[1];
-                        rupdfs[tmp_Nsnow] = AlbedoSoilDfs[1];
+                        else {
+                            rupdir[tmp_Nsnow] = AlbedoSoilDfs[1];
+                            rupdfs[tmp_Nsnow] = AlbedoSoilDfs[1];
+                        }
                     }
                 }
                 else if (cell->IS_GLAC) {
@@ -496,16 +483,20 @@ snow_SNICAR(size_t             comp_type,
                         rupdir[tmp_Nsnow] = param.GLAC_ALBEDO[0];
                         rupdfs[tmp_Nsnow] = param.GLAC_ALBEDO[0];                          
                     }
-                    rupdir[tmp_Nsnow] = param.GLAC_ALBEDO[1];
-                    rupdfs[tmp_Nsnow] = param.GLAC_ALBEDO[1];                   
+                    else {
+                        rupdir[tmp_Nsnow] = param.GLAC_ALBEDO[1];
+                        rupdfs[tmp_Nsnow] = param.GLAC_ALBEDO[1];
+                    }                
                 }
                 else if (cell->IS_WET) {
                     if (i == 0) {
                         rupdir[tmp_Nsnow] = param.LAKE_ALBEDO[0];
                         rupdfs[tmp_Nsnow] = param.LAKE_ALBEDO[0];                          
                     }
-                    rupdir[tmp_Nsnow] = param.LAKE_ALBEDO[1];
-                    rupdfs[tmp_Nsnow] = param.LAKE_ALBEDO[1];                    
+                    else {
+                        rupdir[tmp_Nsnow] = param.LAKE_ALBEDO[1];
+                        rupdfs[tmp_Nsnow] = param.LAKE_ALBEDO[1];
+                    }               
                 }
 
                 for (k = tmp_Nsnow; k > 0; k--) {
@@ -559,6 +550,8 @@ snow_SNICAR(size_t             comp_type,
                         log_err("Error in snow SNICAR: negative absoption(%.4f)", abs_flux[j][i]);
                     }
                 }
+                F_btm_net = dftmp[tmp_Nsnow];
+                abs_flux[tmp_Nsnow][i] = F_btm_net;
                 // If there are no snow layers (but still snow)
                 if (virtual_flag) {
                     abs_flux[0][i] = dftmp[0] - dftmp[1];
@@ -569,16 +562,16 @@ snow_SNICAR(size_t             comp_type,
                         abs_flux[j][i] = 0.0;
                     }
                 }
+                for (j = 0; j < tmp_Nsnow; j++) {
+                    F_abs_sum = 0.0;
+                    F_abs_sum += abs_flux[j][i];
+                }
                 // no need to repeat calculations for adding-doubling solver
                 solver_flag = false;
             }
             // Energy conservation check:
-            double F_abs_sum = 0.0;
-            for (j = 0; j < tmp_Nsnow; j++) {
-                F_abs_sum += abs_flux[j][i];
-            }
             double energy_err = (mu_not * CONST_PI * flux_dir) + flux_dfs - 
-                                    F_abs_sum - dftmp[tmp_Nsnow] - F_sfc_pls;
+                                    F_abs_sum - F_btm_net - F_sfc_pls;
             if (fabs(energy_err) > 0.0001) {
                 log_err("Error in snow SNICAR: energy not conserved(%.4f)", energy_err);
             }
@@ -606,26 +599,26 @@ snow_SNICAR(size_t             comp_type,
             AlbedoSnowDfs[1] = albedo_sum;
         }
         // 加权平均得到VIS和NIR吸收的能量
-        double flux_sum = 0.0;
         if (comp_type == BAND_DIR) {
-            for (j = 0; j < tmp_Nsnow; j++) {
-                energy->AbsShortDir[j][i] = abs_flux[j][i];
+            for (j = 0; j <= tmp_Nsnow; j++) {
+                energy->AbsShortDir[j][0] = abs_flux[j][0];
             }
         }
         else if (comp_type == BAND_DFS) {
-            for (j = 0; j < tmp_Nsnow; j++) {
-                energy->AbsShortDfs[j][i] = abs_flux[j][i];
+            for (j = 0; j <= tmp_Nsnow; j++) {
+                energy->AbsShortDfs[j][0] = abs_flux[j][0];
             }           
         }
-        for (j = 0; j < tmp_Nsnow; j++) {
+        for (j = 0; j <= tmp_Nsnow; j++) {
+            double flux_sum = 0.0;
             for (k = 1; k < SNICAR_BANDS; k++) {
                 flux_sum += band_wgt[k] * abs_flux[j][k];
             }
             if (comp_type == BAND_DIR) {
-                energy->AbsShortDir[j][i] = flux_sum;
+                energy->AbsShortDir[j][1] = flux_sum;
             }
             else if (comp_type == BAND_DFS) {
-                energy->AbsShortDfs[j][i] = flux_sum;
+                energy->AbsShortDfs[j][1] = flux_sum;
             }
         }
         // 太阳天顶角调整（高天顶角时的修正）

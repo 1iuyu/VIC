@@ -170,14 +170,16 @@ calc_vapor_flux(double             pressure,
             conv_vapor[i] = vapor_diff[i] * vapor_diff[i+1] * dzp /
                 (vapor_diff[i] * (zc_snow[i+1] - Zsum_snow[i]) +
                 vapor_diff[i+1] * (Zsum_snow[i] - zc_snow[i]));
+            conv_vapor[i] /= dzp;
         }
-        vapor_flux[i] = conv_vapor[i] * (diff_vapor[i] - diff_vapor[i+1]) / dzp;
+        vapor_flux[i] = conv_vapor[i] * (diff_vapor[i] - diff_vapor[i+1]);
     }
     if (cell->h2osfc > param.TOL_A) {
         dzp = zc_soil[0] + 0.5 * cell->h2osfc;
         conv_vapor[Nsnow] = vapor_diff[Nsnow] * vapor_diff[Nsnow+1] * dzp /
             (vapor_diff[Nsnow] * zc_soil[0] + vapor_diff[Nsnow+1] * 0.5 * cell->h2osfc);
-        vapor_flux[Nsnow] = conv_vapor[Nsnow] * (diff_vapor[Nsnow] - diff_vapor[Nsnow+1]) / dzp;
+        conv_vapor[Nsnow] /= dzp;
+        vapor_flux[Nsnow] = conv_vapor[Nsnow] * (diff_vapor[Nsnow] - diff_vapor[Nsnow+1]);
     }
     for (i = 0; i < Nsoil - 1; i++) {
         lidx = tmp_Nsnow + i;
@@ -185,14 +187,18 @@ calc_vapor_flux(double             pressure,
         conv_temp = diff_therm[i] * diff_therm[i+1] * dzp /
                         (diff_therm[i] * (zc_soil[i+1] - Zsum_soil[i]) +
                         diff_therm[i+1] * (Zsum_soil[i] - zc_soil[i]));
+        conv_temp /= dzp;
         conv_vapor[lidx] = diff_vapor[lidx] * diff_vapor[lidx+1] * dzp /
                         (diff_vapor[lidx] * (zc_soil[i+1] - Zsum_soil[i]) +
                         diff_vapor[lidx+1] * (Zsum_soil[i] - zc_soil[i]));
+        conv_vapor[lidx] /= dzp;
         // 水汽通量 = 热梯度项 + 湿度梯度项
-        vapor_flux[lidx] = conv_temp * (soil_T[i] - soil_T[i+1]) / dzp + 
-                            conv_vapor[lidx] * (rel_humid[i] - rel_humid[i+1]) / dzp;
-        deric_vapor[lidx] = CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * conv_vapor[lidx] / dzp;
+        vapor_flux[lidx] = conv_temp * (soil_T[i] - soil_T[i+1]) + 
+                            conv_vapor[lidx] * (rel_humid[i] - rel_humid[i+1]);
+        deric_vapor[lidx] = CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * conv_vapor[lidx];
     }
+    deric_vapor[tmp_Nsnow+Nsoil-1] = CONST_MWWV * CONST_G / CONST_RGAS / soil_T[Nsoil-1] *
+                                     conv_vapor[tmp_Nsnow + Nsoil - 1];
 
     return (0);
 }
