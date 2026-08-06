@@ -72,7 +72,7 @@ SoilTemperature(double   		   step_dt,
     double *liquid_flux = cell->liquid_flux;
 	double *vapor_flux = cell->vapor_flux;
     double *conv_vapor = cell->conv_vapor;
-    double *deric_vapor = cell->deriv_vapor;
+    double *drhodT = cell->drhodT;
     double *conduct_int = cell->conduct_int;
     double *Wsat_node = soil_con->Wsat_node;
     double *porosity = snow->porosity;
@@ -228,15 +228,15 @@ SoilTemperature(double   		   step_dt,
             if (Nsnow == 1) {
                 if (pack_liq[i] > 0.0) {
                     mat_A[i] = 0.0;
-                    mat_B[i] = deriv_snow - coverage * (kappa_int[i] + CONST_LATSUB * deric_vapor[i] * 
+                    mat_B[i] = deriv_snow - coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i] * 
                                conv_vapor[i]) - CONST_RHOFW * CONST_LATICE / step_dt;
-                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * deric_vapor[i] * conv_vapor[i]);
+                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
                 }
                 else {
                     mat_A[i] = 0.0;
                     mat_B[i] = deriv_snow - coverage * (kappa_int[i] - CONST_LATSUB * conv_vapor[i] *
-                                deric_vapor[i]) - fact[i] * Cs_node[i];
-                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * deric_vapor[i] * conv_vapor[i]);
+                                drhodT[i]) - fact[i] * Cs_node[i];
+                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
                 }
                 mat_RHS[i] = grnd_snow - coverage * kappa_int[i] * (T[i] - T[i+1]) -
                          fact[i] * Cs_node[i] * (T[i]-last_T[i]) - CONST_RHOFW * CONST_LATICE *
@@ -250,9 +250,9 @@ SoilTemperature(double   		   step_dt,
                 }
                 else {
                     mat_A[i] = 0.0;
-                    mat_B[i] = deriv_snow - kappa_int[i] - CONST_LATSUB * deric_vapor[i] * 
+                    mat_B[i] = deriv_snow - kappa_int[i] - CONST_LATSUB * drhodT[i] * 
                                conv_vapor[i] - fact[i] * Cs_node[i];
-                    mat_C[i] = kappa_int[i] + CONST_LATSUB * deric_vapor[i] * conv_vapor[i];
+                    mat_C[i] = kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i];
                 }
                 mat_RHS[i] = grnd_snow - kappa_int[i] * (T[i] - T[i+1]) - fact[i] * 
                         Cs_node[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * 
@@ -265,10 +265,10 @@ SoilTemperature(double   		   step_dt,
                     mat_C[i] = 0.0;
                 }
                 else {
-                    mat_A[i] = kappa_int[i-1] + CONST_LATSUB * deric_vapor[i-1] * conv_vapor[i-1];
-                    mat_B[i] = -(kappa_int[i-1] + kappa_int[i]) - CONST_LATSUB * (deric_vapor[i] *
-                                conv_vapor[i] + deric_vapor[i-1] * conv_vapor[i-1]) - fact[i] * Cs_node[i];
-                    mat_C[i] = kappa_int[i] + CONST_LATSUB * deric_vapor[i] * conv_vapor[i];
+                    mat_A[i] = kappa_int[i-1] + CONST_LATSUB * drhodT[i-1] * conv_vapor[i-1];
+                    mat_B[i] = -(kappa_int[i-1] + kappa_int[i]) - CONST_LATSUB * drhodT[i] *
+                                (conv_vapor[i] + conv_vapor[i-1]) - fact[i] * Cs_node[i];
+                    mat_C[i] = kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i];
                 }
                 mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - kappa_int[i] * (T[i] - T[i+1]) - fact[i] * 
                             Cs_node[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * (theta_liq[i] - 
@@ -278,16 +278,15 @@ SoilTemperature(double   		   step_dt,
             else {
                 if (pack_liq[i] > 0.0) {
                     mat_A[i] = 0.0;
-                    mat_B[i] = -coverage * (kappa_int[i] + CONST_LATSUB * deric_vapor[i] * conv_vapor[i]) -
+                    mat_B[i] = -coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i] * conv_vapor[i]) -
                                 CONST_RHOFW * CONST_LATICE / step_dt;
                     mat_C[i] = 0.0;
                 }
                 else {
-                    mat_A[i] = kappa_int[i-1] + CONST_LATSUB * deric_vapor[i-1] * conv_vapor[i-1];
-                    mat_B[i] = -(kappa_int[i-1] + coverage * kappa_int[i]) - CONST_LATSUB * (coverage * 
-                                deric_vapor[i] * conv_vapor[i] + deric_vapor[i-1] * conv_vapor[i-1]) - 
-                                fact[i] * Cs_node[i];
-                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * deric_vapor[i] * conv_vapor[i]);
+                    mat_A[i] = kappa_int[i-1] + CONST_LATSUB * drhodT[i-1] * conv_vapor[i-1];
+                    mat_B[i] = -(kappa_int[i-1] + coverage * kappa_int[i]) - CONST_LATSUB * drhodT[i] * 
+                                (conv_vapor[i] + conv_vapor[i-1]) - fact[i] * Cs_node[i];
+                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
                 }
                 mat_RHS[i] = kappa_int[i-1] * (T[i-1]-T[i]) - coverage * kappa_int[i] * (T[i]-T[i+1]) - 
                              fact[i] * Cs_node[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * 
@@ -357,7 +356,7 @@ SoilTemperature(double   		   step_dt,
                 }
                 else if (Nsnow > 0) {
                     trans_left = coverage * (kappa_int[Nsnow-1] + CONST_LATSUB * 
-                                    conv_vapor[Nsnow-1] * deric_vapor[Nsnow-1]);
+                                    conv_vapor[Nsnow-1] * drhodT[Nsnow-1]);
                 }
             }
             else if (i < Nnode - 1) {

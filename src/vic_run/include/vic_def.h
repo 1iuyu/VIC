@@ -700,7 +700,9 @@ typedef struct {
     double Qair_grnd;                  /**< specific humidity of the air at the ground surface (kg/kg) */
     double Qair_soil;                  /**< specific humidity of the air at the soil surface (kg/kg) */
     double Qair_snow;                  /**< specific humidity of the air at the snow surface (kg/kg) */
-    double Qair_deriv;                 /**< temperature derivative of "Qair_grnd" */
+    double QsdT_grnd;                  /**< temperature derivative of "Qair_grnd" */
+    double QsdT_soil;                  /**< temperature derivative of "Qair_soil" */
+    double QsdT_snow;                  /**< temperature derivative of "Qair_snow" */
     double ice[MAX_SOILS];             /**< ice content of the soil sublayer [m3/m3] */
     double liq[MAX_SOILS];             /**< liq content of the soil sublayer [m3/m3] */
     double last_ice[MAX_SOILS];
@@ -718,9 +720,10 @@ typedef struct {
     double evap;
     double snowfrost;
     double snow_sublim;
-    double lateral_flow[MAX_SOILS];
-    double deriv_vapor[MAX_NODES];
-    double conv_vapor[MAX_NODES];
+    double lateral_flow[MAX_SOILS];    /**< lateral flow through the soil column (mm/s) */
+    double drhodT[MAX_SNOWS+1];        /**< density derivative of snowpack (kg/m^3/K) */
+    double dQvdSMP[MAX_SOILS];         /**< derivative of vapor density with respect to soil matric potential (m3/m3/m) */
+    double conv_vapor[MAX_NODES];      /**< convective vapor flux through the soil column (mm/s) */
     // Canopy terms
     double transp;
     double canopyevap;

@@ -40,7 +40,7 @@ calc_water_bal(double             step_dt,
     double *transp_sink = cell->transp_sink;
 	double *vapor_flux = cell->vapor_flux;
     double *lateral_flow = cell->lateral_flow;
-    double *deriv_vapor = cell->deriv_vapor;
+    double *dQvdSMP = cell->dQvdSMP;
     double *ksat_node = soil_con->Ksat_node;
     double *Wpwp_node = soil_con->Wpwp_node;
     double *Wsat_node = soil_con->Wsat_node;
@@ -207,16 +207,16 @@ calc_water_bal(double             step_dt,
                         }
                     }
                     mat_A[i] = 0.0;
-                    mat_B[i] = deriv_evap - (conduct_int[i] + deriv_vapor[lidx] / 
+                    mat_B[i] = deriv_evap - (conduct_int[i] + dQvdSMP[lidx] / 
                                             CONST_RHOFW) - fact[i] * deric_matric;
-                    mat_C[i] = conduct_int[i] + deriv_vapor[lidx] / CONST_RHOFW;
+                    mat_C[i] = conduct_int[i] + dQvdSMP[lidx] / CONST_RHOFW;
                     seepage = 0.0;
                 } 
                 else {
                     // 允许表层渗漏
                     mat_A[i] = conduct_int[i];
                     mat_B[i] = 1.0;
-                    mat_C[i] = conduct_int[i] + deriv_vapor[lidx] / CONST_RHOFW;
+                    mat_C[i] = conduct_int[i] + dQvdSMP[lidx] / CONST_RHOFW;
                     // 流入节点的净流量等于表层渗漏量
                     seepage = mat_RHS[i];
                     mat_RHS[i] = 0.0;
@@ -262,10 +262,10 @@ calc_water_bal(double             step_dt,
                 else {
                     lateral_flow[i] = 0.0;
                 }
-                mat_A[i] = conduct_int[i-1] + deriv_vapor[lidx-1] / CONST_RHOFW;
-                mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (deriv_vapor[lidx-1] + 
-                             deriv_vapor[lidx]) / CONST_RHOFW) - fact[i] * deric_matric;
-                mat_C[i] = conduct_int[i] + deriv_vapor[lidx] / CONST_RHOFW;
+                mat_A[i] = conduct_int[i-1] + dQvdSMP[lidx-1] / CONST_RHOFW;
+                mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (dQvdSMP[lidx-1] + 
+                             dQvdSMP[lidx]) / CONST_RHOFW) - fact[i] * deric_matric;
+                mat_C[i] = conduct_int[i] + dQvdSMP[lidx] / CONST_RHOFW;
             }
             
             mat_RHS[i] = liquid_flux[i-1] - liquid_flux[i] + (vapor_flux[lidx-1] - vapor_flux[lidx]) / 
@@ -311,9 +311,9 @@ calc_water_bal(double             step_dt,
                 else {
                     lateral_flow[i] = 0.0;
                 }
-                mat_A[i] = conduct_int[i-1] + deriv_vapor[lidx-1] / CONST_RHOFW;
-                mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (deriv_vapor[lidx-1] + 
-                            deriv_vapor[lidx]) / CONST_RHOFW) - fact[i] * deric_matric;
+                mat_A[i] = conduct_int[i-1] + dQvdSMP[lidx-1] / CONST_RHOFW;
+                mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (dQvdSMP[lidx-1] + 
+                            dQvdSMP[lidx]) / CONST_RHOFW) - fact[i] * deric_matric;
                 mat_C[i] = 0.0;
             }
             

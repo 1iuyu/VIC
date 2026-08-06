@@ -25,6 +25,8 @@ initialize_soil(cell_data_struct *cell,
         }
         cell[veg].IS_GLAC = false;
         cell[veg].IS_VEG = false;
+        cell[veg].IS_WET = false;
+        cell[veg].IS_URBAN = false;
         cell[veg].Nsoil = 0;
         cell[veg].Nroot = 0;
         cell[veg].Nnode = 0;
@@ -34,7 +36,9 @@ initialize_soil(cell_data_struct *cell,
         cell[veg].Qair_grnd = 0.0;
         cell[veg].Qair_soil = 0.0;
         cell[veg].Qair_snow = 0.0;
-        cell[veg].Qair_deriv = 0.0;
+        cell[veg].QsdT_grnd = 0.0;
+        cell[veg].QsdT_soil = 0.0;
+        cell[veg].QsdT_snow = 0.0;
         for (i = 0; i < 3; i++) {
             cell[veg].Z0m_grnd[i] = 0.0;
             cell[veg].Z0m_sub[i] = 0.0;
@@ -51,7 +55,7 @@ initialize_soil(cell_data_struct *cell,
             cell[veg].last_ice[lidx] = 0.0;
             cell[veg].last_liq[lidx] = 0.0;
             cell[veg].lateral_flow[lidx] = 0.0;
-            cell[veg].deriv_vapor[lidx] = 0.0;
+            cell[veg].dQvdSMP[lidx] = 0.0;
             cell[veg].moist[lidx] = 0.0;
             cell[veg].soil_T[lidx] = 0.0;
             cell[veg].porosity[lidx] = 0.0;
@@ -62,6 +66,14 @@ initialize_soil(cell_data_struct *cell,
             cell[veg].conduct_int[lidx] = 0.0;
             cell[veg].transp_sink[lidx] = 0.0;
             cell[veg].root[lidx] = 0.0;
+        }
+        for (lidx = 0; lidx < MAX_NODES; lidx++) {
+            cell[veg].liquid_flux[lidx] = 0.0;
+            cell[veg].vapor_flux[lidx] = 0.0;
+            cell[veg].conv_vapor[lidx] = 0.0;
+        }
+        for (i = 0; i < MAX_SNOWS+1; i++) {
+            cell[veg].drhodT[i] = 0.0;
         }
         cell[veg].rootmoist = 0.0;
         // Fluxes

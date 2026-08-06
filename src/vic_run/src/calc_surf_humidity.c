@@ -18,10 +18,11 @@ calc_surf_humidity(double            pressure,
                    cell_data_struct *cell)
 {
     double rh_grnd = 1.0;
-    double qsat_Tgrnd = 0.0;
-    double qsdT = 0.0;
+    double qsat_soil = 0.0;
+    double qsat_snow = 0.0;
+    double qsdT_soil = 0.0;
+    double qsdT_snow = 0.0;
     double alpha_soil = 0.0;
-    double ice_factor = 0.0;
     double coverage = snow->coverage;
     double *soil_T = cell->soil_T;
     double *matric = cell->matric;
@@ -39,42 +40,47 @@ calc_surf_humidity(double            pressure,
     }
     // compute humidities individually for snow, soil for vegetated
     if (cell->IS_VEG) {
-        svp_flags(Tgrnd, pressure, 
-                NULL, &qsat_Tgrnd, 
-                NULL, &qsdT, QSAT | QSDT);
+        svp_flags(soil_T[0], pressure, 
+                NULL, &qsat_soil, 
+                NULL, &qsdT_soil, QSAT | QSDT);
 
-        if (qsat_Tgrnd > Qair && Qair > alpha_soil * qsat_Tgrnd) {
-            cell->Qair_grnd = Qair;
-            cell->Qair_deriv = 0.0;
+        if (qsat_soil > Qair && Qair > alpha_soil * qsat_soil) {
+            qsat_soil = Qair;
+            qsdT_soil = 0.0;
         }
         // soil humidity
-        cell->Qair_soil = qsat_Tgrnd * alpha_soil;
+        cell->Qair_soil = qsat_soil * alpha_soil;
+        cell->QsdT_soil = qsdT_soil * alpha_soil;
         /* 2) snow 顶层饱和比湿 */
         if (snow->Nsnow > 0) {
-            ice_factor = exp(CONST_LATICE * (pack_T[0] - CONST_TKFRZ) / 
-                                        (CONST_RWV * pow(pack_T[0], 2.0)));
-            cell->Qair_snow = qsat_Tgrnd * ice_factor;
+            svp_flags(pack_T[0], pressure, 
+                      NULL, &qsat_snow, 
+                      NULL, &qsdT_snow, QSAT | QSDT);
+            cell->QsdT_snow = qsdT_snow;     
+            cell->QsdT_grnd = coverage * qsdT_snow + (1.0 - coverage) * alpha_soil * qsdT_soil;
+            cell->Qair_snow = qsat_snow;
+            cell->Qair_grnd = coverage * cell->Qair_snow + (1.0 - coverage) * cell->Qair_soil; 
         } else {
+            cell->QsdT_snow = alpha_soil * qsdT_soil;
             cell->Qair_snow = cell->Qair_soil;
-        }
-        
-        cell->Qair_grnd = coverage * cell->Qair_snow
-                + (1.0 - coverage) * cell->Qair_soil;
-        cell->Qair_deriv = coverage * qsdT * ice_factor +
-                        (1.0 - coverage) * alpha_soil * qsdT;        
+            cell->QsdT_grnd = alpha_soil * qsdT_soil;
+            cell->Qair_grnd = cell->Qair_soil;
+        }      
     }
     else {
         svp_flags(Tgrnd, pressure, 
-                  NULL, &qsat_Tgrnd,
-                  NULL, &qsdT, QSAT | QSDT);
-        cell->Qair_grnd = rh_grnd * qsat_Tgrnd;
-        cell->Qair_deriv = rh_grnd * qsdT;
-        if (qsat_Tgrnd > Qair && Qair > rh_grnd * qsat_Tgrnd) {
+                  NULL, &qsat_soil,
+                  NULL, &qsdT_soil, QSAT | QSDT);
+        cell->Qair_grnd = rh_grnd * qsat_soil;
+        cell->QsdT_grnd = rh_grnd * qsdT_soil;
+        if (qsat_soil > Qair && Qair > rh_grnd * qsat_soil) {
             cell->Qair_grnd = Qair;
-            cell->Qair_deriv = 0.0;
+            cell->QsdT_grnd = 0.0;
         }
         cell->Qair_soil = cell->Qair_grnd;
         cell->Qair_snow = cell->Qair_grnd;
+        cell->QsdT_snow = cell->QsdT_grnd;
+        cell->QsdT_soil = cell->QsdT_grnd;
     }
     
     return (0);

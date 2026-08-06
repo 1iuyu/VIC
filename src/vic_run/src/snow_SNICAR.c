@@ -557,13 +557,13 @@ snow_SNICAR(size_t             comp_type,
                     abs_flux[0][i] = dftmp[0] - dftmp[1];
                     abs_flux[tmp_Nsnow][i] = dftmp[tmp_Nsnow];
                 }
-                for (j = 0; j < tmp_Nsnow; j++) { 
+                for (j = 0; j <= tmp_Nsnow; j++) { 
                     if (abs_flux[j][i] < 0.0) {
                         abs_flux[j][i] = 0.0;
                     }
                 }
+                F_abs_sum = 0.0;
                 for (j = 0; j < tmp_Nsnow; j++) {
-                    F_abs_sum = 0.0;
                     F_abs_sum += abs_flux[j][i];
                 }
                 // no need to repeat calculations for adding-doubling solver

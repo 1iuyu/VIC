@@ -7,10 +7,9 @@
 #include "vic_run.h"
 
 /******************************************************************************
-* @brief    This subroutine computes the ground surface albedo.'
+* @brief    This subroutine computes the ground surface albedo.
 *
-* @note     Computes albedo as a function of snow age and season, based on the
-*           algorithm of the US Army Corps of Engineers.
+* @note     Computes ground albedo as a function of soil and snow albedo. 
 ******************************************************************************/
 void
 GroundAlbedo(double             moist,

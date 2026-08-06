@@ -25,17 +25,17 @@ calc_vapor_flux(double             pressure,
     double coef_vapor = 0.6;
     double vapor_exp  = 1.0;
     double enhance = 0.0;
-    double ice_corr = 0.0;
+    double dair_dT = 0.0;
     double qsdT = 0.0;
     double qsaT = 0.0;
     double esaT = 0.0;
     double conv_temp = 0.0;
     double air_density = 0.0;
     double enhanc_fact = 0.0;
-    double rel_humid[MAX_NODES];
-    double vapor_diff[MAX_NODES];
-    double diff_therm[MAX_NODES];
-    double diff_vapor[MAX_NODES];
+    double rel_humid[MAX_SOILS] = {0};
+    double vapor_diff[MAX_NODES] = {0};
+    double diff_therm[MAX_SOILS] = {0};
+    double diff_vapor[MAX_NODES] = {0};
     double *ice = cell->ice;
     double *liq = cell->liq;
     double *pack_T = snow->pack_T;
@@ -49,14 +49,9 @@ calc_vapor_flux(double             pressure,
     double *vapor_flux = cell->vapor_flux;
     double *clay_node = soil_con->clay_node;
     double *conv_vapor = cell->conv_vapor;
-    double *deric_vapor = cell->deriv_vapor;
+    double *drhodT = cell->drhodT;
+    double *dQvdSMP = cell->dQvdSMP;
     // 初始化变量
-    for (i = 0; i < MAX_NODES; i++) {
-        rel_humid[i] = 0.0;
-        vapor_diff[i] = 0.0;
-        diff_therm[i] = 0.0;
-        diff_vapor[i] = 0.0;
-    }
     size_t Nsnow = snow->Nsnow;
     size_t tmp_Nsnow = Nsnow;
     // 雪层水汽扩散
@@ -66,15 +61,15 @@ calc_vapor_flux(double             pressure,
                             pow(pack_T[i] / CONST_TKFRZ, 14.0);
             // 计算冰面饱和比湿
             svp_flags(pack_T[i], pressure, 
-                    NULL, &qsaT, 
-                    NULL, &qsdT, QSAT | QSDT);
+                      NULL, &qsaT, 
+                      NULL, &qsdT, QSAT | QSDT);
             air_density = pressure / (CONST_RDAIR * pack_T[i]);
-            ice_corr = exp(CONST_MWWV * CONST_LATICE * (pack_T[i] - CONST_TKFRZ)
-                                        / (CONST_RGAS * pack_T[i] * pack_T[i]));
-            diff_vapor[i] = qsaT * air_density * ice_corr;
-            deric_vapor[i] = qsdT * air_density * ice_corr;
+            dair_dT = -air_density / pack_T[i];
+            diff_vapor[i] = qsaT * air_density;
+            drhodT[i] = qsdT * air_density + qsaT * dair_dT;
         }
     }
+
     // 表层水汽扩散
     if (cell->h2osfc > param.TOL_A) {
         double h2osfc_T = cell->h2osfc_T;
@@ -83,21 +78,28 @@ calc_vapor_flux(double             pressure,
                   NULL, &qsdT, QSAT | QSDT);
         air_density = pressure / (CONST_RDAIR * h2osfc_T);
         if (cell->IS_GLAC) {
-            ice_corr = exp(CONST_MWWV * CONST_LATICE * (h2osfc_T - CONST_TKFRZ)
-                                        / (CONST_RGAS * h2osfc_T * h2osfc_T));
-            diff_vapor[Nsnow] = qsaT * air_density * ice_corr;
-            deric_vapor[Nsnow] = qsdT * air_density * ice_corr;
+            diff_vapor[Nsnow] = qsaT * air_density;
+            dair_dT = -air_density / h2osfc_T;
+            drhodT[Nsnow] = qsdT * air_density + qsaT * dair_dT; 
             vapor_diff[Nsnow] = 0.00009 * (CONST_PSTD / pressure) *
                                 pow(h2osfc_T / CONST_TKFRZ, 14.0);
         }
         else if (cell->IS_WET) {
             diff_vapor[Nsnow] = qsaT * air_density;
-            deric_vapor[Nsnow] = qsdT * air_density;  
+            drhodT[Nsnow] = qsdT * air_density + qsaT * dair_dT;
             vapor_diff[Nsnow] = CONST_VAPDIFF * pow(h2osfc_T / CONST_TKFRZ, 2.0) *
                                 (CONST_PSTD / pressure); // 水层：使用自由水面扩散系数
         }
-
         tmp_Nsnow++;
+    }
+    else {
+        svp_flags(soil_T[0], pressure, 
+                  NULL, &qsaT, 
+                  NULL, &qsdT, QSAT | QSDT);
+        air_density = pressure / (CONST_RDAIR * soil_T[0]);
+        double relh = exp(CONST_MWWV * CONST_G * matric[0] / 
+                         (CONST_RGAS * soil_T[0]));
+        drhodT[Nsnow] = qsdT * air_density + qsaT * dair_dT * relh;
     }
     // 土层水汽扩散
     size_t Nsoil = cell->Nsoil;
@@ -111,19 +113,23 @@ calc_vapor_flux(double             pressure,
                 (CONST_PSTD / pressure);
             vapor_diff[lidx] *= coef_vapor * pow(air, vapor_exp);
 
-            svp_flags(soil_T[i], pressure, 
+            svp_flags(soil_T[i], pressure,
                       &esaT, &qsaT, 
                       NULL, &qsdT, 
                       ESAT | QSAT | QSDT);
 
             // Calculate relative humidity
             rel_humid[i] = exp(CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * matric[i]);
-
-            // 计算实际水汽压
-            double e_actual = esaT * rel_humid[i];
             
             // 计算土层空气密度
-            air_density = (pressure - 0.378 * e_actual) / (CONST_RDAIR * soil_T[i]);
+            air_density = pressure / (CONST_RDAIR * soil_T[i]);
+
+            // 饱和水汽密度（kg/m³）
+            double sat_vap_dens = qsaT * air_density;
+            
+            // 饱和水汽密度的温度导数（kg/m³/K）
+            double dair_dT = -air_density / soil_T[i];
+            double sat_vap_dens_dT = qsdT * air_density + qsaT * dair_dT;
 
             // Calculate vapor fluxes due to potential gradient
             if (clay_node[i] <= 0.02) {
@@ -140,8 +146,8 @@ calc_vapor_flux(double             pressure,
             }
             enhance = 9.5 + 3.0 * liq[i] / Wsat_node[i] - 8.5 * expon;
 
-            diff_therm[i] = vapor_diff[lidx] * enhance * rel_humid[i] * qsdT * air_density;
-            diff_vapor[lidx] = vapor_diff[lidx] * qsaT * air_density;
+            diff_therm[i] = vapor_diff[lidx] * enhance * rel_humid[i] * sat_vap_dens_dT;
+            diff_vapor[lidx] = vapor_diff[lidx] * sat_vap_dens;
         }
         else {
             diff_therm[i] = 0.0;
@@ -157,12 +163,14 @@ calc_vapor_flux(double             pressure,
                 dzp = zc_snow[i] + 0.5 * cell->h2osfc;
                 conv_vapor[i] = vapor_diff[i] * vapor_diff[i+1] * dzp /
                     (vapor_diff[i] * 0.5 * cell->h2osfc + vapor_diff[i+1] * zc_snow[i]);
+                conv_vapor[i] /= dzp;
             } 
             else {
                 dzp = zc_soil[0] + zc_snow[i];
                 conv_vapor[i] = vapor_diff[i] * vapor_diff[i+1] * dzp /
                     (vapor_diff[i] * zc_soil[0] +
                     vapor_diff[i+1] * zc_snow[i]);
+                conv_vapor[i] /= dzp;
             }
         } 
         else {
@@ -195,9 +203,9 @@ calc_vapor_flux(double             pressure,
         // 水汽通量 = 热梯度项 + 湿度梯度项
         vapor_flux[lidx] = conv_temp * (soil_T[i] - soil_T[i+1]) + 
                             conv_vapor[lidx] * (rel_humid[i] - rel_humid[i+1]);
-        deric_vapor[lidx] = CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * conv_vapor[lidx];
+        dQvdSMP[i] = CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * conv_vapor[lidx];
     }
-    deric_vapor[tmp_Nsnow+Nsoil-1] = CONST_MWWV * CONST_G / CONST_RGAS / soil_T[Nsoil-1] *
+    dQvdSMP[Nsoil-1] = CONST_MWWV * CONST_G / CONST_RGAS / soil_T[Nsoil-1] *
                                      conv_vapor[tmp_Nsnow + Nsoil - 1];
 
     return (0);

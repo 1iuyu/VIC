@@ -192,7 +192,7 @@ func_surf_energy_bal(size_t             hidx,
     energy->latent = VaporGrnd * LatentVapGrnd;
     energy->longwave = EmissLongGrnd * longwave - coef_longwave * pow(Tgrnd, 4.0);
     energy->deriv_terms = -(coef_sensible + 4.0 * coef_longwave * pow(Tgrnd, 3) +
-                                    coef_latent * LatentVapGrnd * cell->Qair_deriv);
+                                    coef_latent * LatentVapGrnd * cell->QsdT_grnd);
     energy->deriv_evap = -coef_latent * cell->Qair_grnd * CONST_G /
                                                 (CONST_RWV * Tgrnd) / CONST_RHOFW;
     // compute sensible and latent heat fluxes individually
@@ -206,9 +206,9 @@ func_surf_energy_bal(size_t             hidx,
         energy->LatentSnow = -coef_latent * (Qair - cell->Qair_snow) * LatentVapGrnd;
         energy->LatentSoil = -coef_latent * (Qair - cell->Qair_soil) * LatentVapGrnd;
         energy->deriv_snow = -(coef_sensible + 4.0 * param.EMISS_ICE * CONST_STEBOL * pow(pack_T[0], 3) +
-                                     coef_latent * LatentVapGrnd * cell->Qair_deriv);
+                                     coef_latent * LatentVapGrnd * cell->QsdT_snow);
         energy->deriv_soil = -(coef_sensible + 4.0 * param.EMISS_GRND * CONST_STEBOL * pow(soil_T[0], 3) +
-                                     coef_latent * LatentVapGrnd * cell->Qair_deriv);
+                                     coef_latent * LatentVapGrnd * cell->QsdT_soil);
     }
     else {
         energy->NetLongSnow = energy->longwave;

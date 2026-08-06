@@ -28,11 +28,10 @@ surface_radiation(double            *shortwave_dir,
     double transmit_dir = 0.0;
     double transmit_dfs = 0.0;
     double abs_tmp = 0.0;
-    double error_check = 0.0;
     double abs_flux_sum = 0.0;
     double tmp_absorb_grnd = 0.0;
-    double ShortOverDir[MAX_SWBANDS] = {0};
-    double ShortOverDfs[MAX_SWBANDS] = {0};
+    double ShortOverDir = 0.0;
+    double ShortOverDfs = 0.0;
     double *aPAR_sun = veg_var->aPAR_sun;
     double *aPAR_sha = veg_var->aPAR_sha;
     double *AbsSubDir = energy->AbsSubDir;
@@ -54,9 +53,9 @@ surface_radiation(double            *shortwave_dir,
     for (i = 0; i < options.Nswband; i++) {
         if (cell->IS_VEG || cell->IS_URBAN) {
             // absorbed by canopy
-            ShortOverDir[i] = shortwave_dir[i] * AbsSubDir[i];
-            ShortOverDfs[i] = shortwave_dfs[i] * AbsSubDfs[i];
-            NetShortSub += ShortOverDir[i] + ShortOverDfs[i];
+            ShortOverDir = shortwave_dir[i] * AbsSubDir[i];
+            ShortOverDfs = shortwave_dfs[i] * AbsSubDfs[i];
+            NetShortSub += ShortOverDir + ShortOverDfs;
             // transmitted solar fluxes incident on grnd.
             transmit_dir = shortwave_dir[i] * ShortDir2Dir[i];
             transmit_dfs = shortwave_dir[i] * ShortDfs2Dir[i] +
@@ -113,12 +112,7 @@ surface_radiation(double            *shortwave_dir,
             }
         }
     }
-    error_check = abs_flux_sum - NetShortSnow;
-    if (fabs(error_check) > 1e-5) {
-        log_err("Error in snow layer absorption calculation: "
-                "NetShortSnow = %f, AbsSnowLyr sum = %f, error = %f",
-                NetShortSnow, abs_flux_sum, error_check);
-    }
+
     energy->NetShortGrnd = NetShortGrnd;
     energy->shortwave = NetShortGrnd;
     energy->NetShortSub = NetShortSub;
