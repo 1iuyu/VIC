@@ -33,6 +33,7 @@ snow_compaction(double            step_dt,
     double WindDrift = 0.0;       // rate of compaction of snowpack due to wind drift [1/s]
     double Compact_depth = 0.0;   // change in snow layers-thickness due to compaction [1/s]
     double pseudo_depth = 0.0;    // wind drift compaction pseudo depth
+    double density = 0.0;  // Partial density of ice [kg/m3]
     // 定义指针指向结构体中的数组
     double *dz_snow = snow->dz_snow;
     double *pack_T = snow->pack_T;
@@ -40,9 +41,8 @@ snow_compaction(double            step_dt,
     double *pack_liq = snow->pack_liq;
     double *snow_frac = snow->snow_frac;
     double *pack_melt = snow->pack_melt;
-    double *theta_liq = snow->theta_liq;
-    double *density = snow->density;  // Partial density of ice [kg/m3]
     double *last_snowfrac = snow->last_snowfrac;
+    double coverage = snow->coverage;
     Nsnow = snow->Nsnow;
     double SNOW_COMPACT_P = -0.000695 * air_temp + 0.206067;
     if (pressure >= 85000.0) {
@@ -73,17 +73,17 @@ snow_compaction(double            step_dt,
 
         // Allow compaction only for non-saturated node and higher ice lens node
         if (SnowVoid > 0.001 && pack_ice[i] > 0.1) {
-            density[i] = pack_ice[i] / dz_snow[i];
+            density = pack_ice[i] / (dz_snow[i] * coverage);
             TempDiff = max(0.0, CONST_TKFRZ - pack_T[i]);
 
             // Settling/compaction as a result of destructive metamorphism
             SnowAgeFac = exp(-param.SNOW_COMPACT_B * TempDiff);
             SnowAging = -param.SNOW_COMPACT_A * SnowAgeFac;
-            if (density[i] > param.SNOW_COMPACT_DM) {
-                SnowAging *= exp(-46.0e-3 * (density[i] - 
+            if (density > param.SNOW_COMPACT_DM) {
+                SnowAging *= exp(-46.0e-3 * (density - 
                                             param.SNOW_COMPACT_DM));
             }
-            if (pack_liq[i] > (0.01 * dz_snow[i])) {
+            if (pack_liq[i] > (0.01 * dz_snow[i] * coverage)) {
                 SnowAging *= param.SNOW_COMPACT_C; // Liquid water term
             }
 
@@ -91,8 +91,8 @@ snow_compaction(double            step_dt,
             /* SnowBurden = -(pack_press + 0.5 * SnowMass) * 
                                     exp(-0.08 * TempDiff - SNOW_COMPACT_P * 
                                         density[i]) / param.SNOW_COMPACT_ETA; */
-            double f1 = 1.0 / (1.0 + 60.0 * theta_liq[i]);
-            double eta = 4.0 * f1 * (density[i] / 358.0) * exp(0.1 * TempDiff + 0.023 * density[i]) * 7622370.0;
+            double f1 = 1.0 / (1.0 + 60.0 * pack_liq[i] / (dz_snow[i] * CONST_RHOFW));
+            double eta = 4.0 * f1 * (density / 358.0) * exp(0.1 * TempDiff + 0.023 * density) * 7622370.0;
             SnowBurden = -(pack_press + 0.5 * SnowMass) / eta;
 
             // Compaction occurring during melt
@@ -107,7 +107,7 @@ snow_compaction(double            step_dt,
             // Compute wind drift compaction
             if (DRIFT) {
                 double mobil_density = 1.25 - 0.0042 * (max(param.SNOW_NEW_SNOW_DENSITY, 
-                                                density[i]) - param.SNOW_NEW_SNOW_DENSITY);
+                                                density) - param.SNOW_NEW_SNOW_DENSITY);
                 double mobil_index = 0.34 * (-0.583 * 0.00035 - 0.833 + 0.833) + 0.66 * mobil_density;
                 double driftability = -2.868 * exp(-0.085 * wind) + 1.0 + mobil_index;
                 if (driftability > 0.0) {
@@ -115,7 +115,7 @@ snow_compaction(double            step_dt,
                     pseudo_depth += 0.5 * dz_snow[i] * (3.25 - driftability);
                     double gamma_drift = driftability * exp(-pseudo_depth / 0.1);
                     double tau_inverse = gamma_drift / 172800.0;
-                    WindDrift = -max(0.0, 350.0 - density[i]) * tau_inverse;
+                    WindDrift = -max(0.0, 350.0 - density) * tau_inverse;
                     pseudo_depth += 0.5 * dz_snow[i] * (3.25 - driftability);
                 }
                 else {
@@ -141,8 +141,6 @@ snow_compaction(double            step_dt,
             // Constrain snow density to a reasonable range (50~500 kg/m3)
             dz_snow[i] = min(max(dz_snow[i], (pack_ice[i] + pack_liq[i]) / 500.0), 
                                          (pack_ice[i] + pack_liq[i]) / 50.0);
-            // Update snow density
-            density[i] = pack_ice[i] / dz_snow[i];
         }
         // Update pressure of overlying snow
         pack_press += SnowMass;

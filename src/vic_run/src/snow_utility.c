@@ -103,9 +103,10 @@ snow_albedo(double             coszen,
 *           algorithm of the US Army Corps of Engineers.
 ******************************************************************************/
 void
-update_snow(double            air_temp,
-            double            step_dt,
+update_snow(double            step_dt,
+            double            air_temp,
             double            snowfall,
+            double            rainfall,
             snow_data_struct *snow)
 {
     /* 定义局部变量指向结构体成员 */
@@ -127,14 +128,14 @@ update_snow(double            air_temp,
         snow->Nsnow = 1;
         new_layer = 1;
         dz_snow[0] = snow->snow_depth;
-        snow->snow_depth = 0.;
         pack_T[0] = min(CONST_TKTRIP, air_temp);
         pack_ice[0] = snow->swq;
         pack_liq[0] = 0.0;
     }
     // 如果有雪层，且雪深大于0.025m，则更新现有雪层的厚度和水当量
-    if (snow->Nsnow > 0 && new_layer == 0 && snowfall > 0.0) {
+    if (snow->Nsnow > 0 && new_layer == 0 && (snowfall > 0.0 || rainfall > 0.0)) {
         pack_ice[0] += snowfall * step_dt;
+        pack_liq[0] += rainfall * step_dt;
         dz_snow[0] += delta_depth * step_dt;
     }
 }
@@ -199,18 +200,19 @@ distribute_snow_state(double            air_temp,
 {
     // 定义局部变量指向结构体成员
     double swq = snow->swq;
+    double coverage = snow->coverage;
     double snow_depth = snow->snow_depth;
     double *dz_snow = snow->dz_snow;
     double *Zsum_snow = snow->Zsum_snow;
     double *zc_snow = snow->zc_snow;
     double *pack_T = snow->pack_T;
-    double *density = snow->density;
     double *radius = snow->radius;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
     double *porosity = snow->porosity;
+    double *density = snow->density;
     double *snow_frac = snow->snow_frac;
     double *last_thice = snow->last_thice;
     double *last_thliq = snow->last_thliq;
@@ -225,7 +227,7 @@ distribute_snow_state(double            air_temp,
         zc_snow[0] = dz_snow[0] / 2.0;
         Zsum_snow[0] = dz_snow[0];
         pack_T[0] = min(air_temp, CONST_TKFRZ);   // K
-        pack_ice[0] = swq * (dz_snow[0] / snow_depth);
+        pack_ice[0] = swq;
         pack_liq[0] = 0.0;
     }
     else if (snow_depth >= 0.05 && snow_depth < 0.20) {
@@ -264,22 +266,28 @@ distribute_snow_state(double            air_temp,
         pack_liq[1] = 0.0;
         pack_liq[2] = 0.0;
     }
+
     snow->last_Nsnow = snow->Nsnow;
     snow->last_swq = snow->swq;
-    for (size_t i = 0; i < snow->Nsnow; i++) {
+    size_t i, Nsnow = snow->Nsnow;
+
+    for (i = 0; i < Nsnow; i++) {
         double SnowMass = pack_ice[i] + pack_liq[i];
         snow_frac[i] = pack_ice[i] / SnowMass;
-        density[i] = pack_ice[i] / dz_snow[i];
-        theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
+        theta_ice[i] = min(1.0, pack_ice[i] / 
+                        (dz_snow[i] * coverage * CONST_RHOICE));
         porosity[i] = 1.0 - theta_ice[i];
-        theta_liq[i] = max(0.0, min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW)));
-        radius[i] = new_snow_radius(air_temp);
+        // 积雪覆盖区域内的体积分数
+        theta_liq[i] = max(0.0, min(porosity[i], pack_liq[i] / 
+                        (dz_snow[i] * coverage * CONST_RHOFW)));
+        density[i] = pack_ice[i] / (dz_snow[i] * coverage);
+        radius[i] = new_snow_radius(air_temp); // 假设为新雪半径
     }
-    for (size_t i = 0; i < snow->Nsnow; i++) {
+    for (i = 0; i < Nsnow; i++) {
         last_thice[i] = theta_ice[i];
         last_thliq[i] = theta_liq[i];
         last_snowfrac[i] = snow_frac[i];
-    }  
+    }
 }
 
 /******************************************************************************

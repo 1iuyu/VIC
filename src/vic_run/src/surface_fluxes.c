@@ -180,23 +180,16 @@ surface_fluxes(size_t             hidx,
       Compute Runoff, Baseflow, and Soil Moisture Transport
     ********************************************************/
     snow_hydrology(step_dt, air_temp,
-                   snowfall, rainfall,
+                   rainfall,
                    pressure, wind,
                    energy, cell, 
                    snow, soil_con);
     /* 计算进入土层表面的水量 */
-    // pack_melt: 雪层融化的水量[mm]
     // pack_comb: 薄雪层合并中pack_liq导致的表面积水[mm]
-    double pack_melt = 0.0;
-    for (size_t i = 0; i < snow->Nsnow; i++) {
-        pack_melt += snow->pack_melt[i];
-    }
-    double soil_inflow = (pack_melt + snow->pack_comb) / step_dt / MM_PER_M; // 转换为m/s
-    // 添加雪层多余水分,露水,降水
-    soil_inflow += (snow->snow_outflow + cell->dewsoil + 
-                    rainfall * (1.0 - snow->coverage)) / MM_PER_M;
-    soil_inflow -= cell->esoil;
-    
+    // snow_outflow：流出雪层的水[mm/s]
+    // soil_inflow: 裸土区流入的水[mm/s]
+    double soil_inflow = (snow->pack_comb / step_dt + 
+                        snow->snow_outflow + cell->soil_inflow) / MM_PER_M; // 转换为m/s
     cell->soil_inflow = soil_inflow;
 
     ErrorFlag = runoff(step_dt, soil_inflow, cell, soil_con);

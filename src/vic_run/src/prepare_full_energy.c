@@ -27,7 +27,7 @@ prepare_full_energy(double             pressure,
     size_t Nsoil = cell->Nsoil;
     double dzp, k_int;
     double tmp_density = 0.;
-    double esat_T = 0.0;
+    double qsaT = 0.0;
     double qsdT = 0.0;
     // 指针赋值
     double *liq = cell->liq;
@@ -66,12 +66,18 @@ prepare_full_energy(double             pressure,
                      pack_liq[i] * CONST_CPFWICE) / dz_snow[i]);
             if (air > 0.0) {
                 // 潜热贡献
-                svp_flags(pack_T[i], pressure,
-                          &esat_T, NULL, 
-                          NULL, &qsdT, 
-                          ESAT | QSDT);
-                double air_density = (pressure - 0.378 * esat_T) / (CONST_RDAIR * pack_T[i]);
-                Cs_node[i] += air * CONST_LATSUB * qsdT * air_density;
+                svp_flags(pack_T[i], pressure, 
+                        NULL, &qsaT, 
+                        NULL, &qsdT, QSAT | QSDT);
+                double air_density = pressure / (CONST_RDAIR * pack_T[i]);
+                double dair_dT = -air_density / pack_T[i];
+                double drhodT = qsdT * air_density + qsaT * dair_dT;
+                if (pack_T[i] < CONST_TKFRZ) {
+                    Cs_node[i] += air * CONST_LATSUB * drhodT;
+                }
+                else {
+                    Cs_node[i] += air * CONST_LATVAP * drhodT;
+                }
             }
             tmp_density = (pack_ice[i] + pack_liq[i]) / dz_snow[i];
             kappa_node[i] = CONST_KDAIR + (7.75e-5 * tmp_density + 1.105e-6 * 

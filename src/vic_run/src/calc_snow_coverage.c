@@ -17,11 +17,9 @@ calc_snow_coverage(double             Cv,
                    double             snowfall,
                    snow_data_struct  *snow,
                    soil_con_struct   *soil_con)
-
 {
     extern parameters_struct param;
     double MeltFac;
-    double coverage;
     double GridSize;
     double density;
     double SNOW_MeltFac;
@@ -31,7 +29,7 @@ calc_snow_coverage(double             Cv,
     double snow_depth = snow->snow_depth;   // snow depth [m]
 
     /* initialization */
-    coverage = 0.;
+    double coverage = 0.0;
     /* glacier snow cover fraction */
     if (IS_GLAC == true) {
         double temp_intsnow = 0.0;
@@ -64,12 +62,15 @@ calc_snow_coverage(double             Cv,
     }
     /* ground snow cover fraction */
     else {
+        if (snow->swq == 0.0) {
+            snow_depth = 0.0;
+        }
         if (snow_depth > 0.0) {
             GridSize = sqrt(soil_con->cell_area * Cv);
             gridScalePara = min((max(GridSize, 500.0) / M_PER_KM), 36.0);
             SNOW_MeltFac = 0.9713 + tanh(0.7436 * gridScalePara);
             SNOW_CoverFac = 0.0062 * sinh(0.0555 * gridScalePara) + 0.0555;
-            density = snow->swq / snow_depth;
+            density = snow->swq / (snow->coverage * snow_depth);
             MeltFac = pow(density / 100, SNOW_MeltFac);
             coverage = tanh(snow_depth / (SNOW_CoverFac * MeltFac));
         }

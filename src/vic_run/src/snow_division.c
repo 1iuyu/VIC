@@ -15,30 +15,26 @@ void
 snow_division(snow_data_struct *snow)
 
 {              
-    size_t      i, tmp_Nsnow;
-    double      grad_temp;
-    double      extra_frac;
-    double      tmp_pack_ice[MAX_SNOWS];
-    double      tmp_pack_liq[MAX_SNOWS];
-    double      tmp_pack_T[MAX_SNOWS];
-    double      tmp_depth[MAX_SNOWS];
-
-    double total_depth = 0.;
-    double extra_ice = 0.;
-    double extra_liq = 0.;
-    /* 初始化临时数组 */
-    for (i = 0; i < MAX_SNOWS; i++) {
-        tmp_pack_ice[i] = 0.;
-        tmp_pack_liq[i] = 0.;
-        tmp_pack_T[i] = 0.;
-        tmp_depth[i] = 0.;
-    }
+    size_t i, tmp_Nsnow;
+    double grad_temp;
+    double extra_frac;
+    double tmp_pack_ice[MAX_SNOWS] = {0};
+    double tmp_pack_liq[MAX_SNOWS] = {0};
+    double tmp_pack_T[MAX_SNOWS] = {0};
+    double tmp_depth[MAX_SNOWS] = {0};
+    double *dz_snow = snow->dz_snow;
+    double *pack_T = snow->pack_T;
+    double *pack_liq = snow->pack_liq;
+    double *pack_ice = snow->pack_ice;
+    double total_depth = 0.0;
+    double extra_ice = 0.0;
+    double extra_liq = 0.0;
 
     for (i = 0; i < snow->Nsnow; i++) {
-        tmp_depth[i] = snow->dz_snow[i];
-        tmp_pack_ice[i] = snow->pack_ice[i];
-        tmp_pack_liq[i] = snow->pack_liq[i];
-        tmp_pack_T[i] = snow->pack_T[i];
+        tmp_depth[i] = dz_snow[i];
+        tmp_pack_ice[i] = pack_ice[i];
+        tmp_pack_liq[i] = pack_liq[i];
+        tmp_pack_T[i] = pack_T[i];
     }
     tmp_Nsnow = snow->Nsnow;
 
@@ -122,9 +118,9 @@ snow_division(snow_data_struct *snow)
     }
     snow->Nsnow = tmp_Nsnow;
     for (i = 0; i < snow->Nsnow; i++) {
-        snow->dz_snow[i] = tmp_depth[i];
-        snow->pack_ice[i] = tmp_pack_ice[i];
-        snow->pack_liq[i] = tmp_pack_liq[i];
-        snow->pack_T[i] = tmp_pack_T[i];
+        dz_snow[i] = tmp_depth[i];
+        pack_ice[i] = tmp_pack_ice[i];
+        pack_liq[i] = tmp_pack_liq[i];
+        pack_T[i] = tmp_pack_T[i];
     }
 }

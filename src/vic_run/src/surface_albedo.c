@@ -176,7 +176,14 @@ surface_albedo(double             step_dt,
         else {
             log_err("Unknown SNOW_ALBEDO option");
         }
-        
+        // Compute ground albedo
+        for (i = 0; i < Nswband; i++) {
+            energy->AlbedoGrndDir[i] = energy->AlbedoSoilDir[i] * (1.0 - coverage) + 
+                                    energy->AlbedoSnowDir[i] * coverage;
+            energy->AlbedoGrndDfs[i] = energy->AlbedoSoilDfs[i] * (1.0 - coverage) + 
+                                    energy->AlbedoSnowDfs[i] * coverage;
+        }
+
         if (cell->IS_VEG) {
             /* Compute canopy radiative transfer 
             using two-stream approximation */

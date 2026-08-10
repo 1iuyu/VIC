@@ -85,10 +85,23 @@ generate_default_state(force_data_struct *force,
     ************************************/
     for (veg = 0; veg <= Nveg; veg++) {
         if (veg_con[veg].Cv > 0) {
-            snow[veg].swq = 15.0;   // [mm]
-            snow[veg].last_swq = 15.0;   // [mm]
+            snow[veg].swq = 15.0;   // [mm] or [kg/m^2]
+            double snow_density = 200.0;   // [kg/m^3]
             if (snow[veg].swq > 0.0) {
-                snow[veg].snow_depth = snow[veg].swq / 200.0;
+                snow[veg].snow_depth = snow[veg].swq / snow_density;
+            }
+            // 假设初始积雪覆盖整个CELL, 调用calc_snow_coverage后会覆盖初始值
+            snow[veg].coverage = 1.0;
+            snow[veg].new_snow_density = new_snow_density(air_temp);
+            // calculate snow coverage
+            calc_snow_coverage(veg_con[veg].Cv, cell[veg].IS_GLAC, 
+                               0.0, &snow[veg], soil_con);
+            /* convert cell SWE to snow-covered depth */
+            if (snow[veg].coverage > 0.0) {
+
+                snow[veg].snow_depth =
+                    snow[veg].swq /
+                    (snow[veg].coverage * snow_density);
             }
             // set snow layer properties
             distribute_snow_state(air_temp, &snow[veg]);

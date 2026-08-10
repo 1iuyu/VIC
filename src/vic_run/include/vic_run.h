@@ -102,9 +102,9 @@ int runoff(double, double, cell_data_struct *, soil_con_struct *);
 void set_node_parameters(size_t, double *, double *, double *, double *);
 void snow_albedo(double, snow_data_struct *, energy_bal_struct *);
 double snow_density(snow_data_struct *, double, double, double, double);
-int snow_hydrology(double, double, double, double, double, double, energy_bal_struct *, 
+int snow_hydrology(double, double, double, double, double, energy_bal_struct *, 
                    cell_data_struct *, snow_data_struct *, soil_con_struct *);
-int snow_intercept(double, double, double *, double *, double,
+int snow_intercept(double, double, double, double *, double *, double,
                    snow_data_struct *, veg_var_struct *);
 int snow_aging(double, double, double, energy_bal_struct *, cell_data_struct *, 
                snow_data_struct *, soil_con_struct *);
@@ -139,7 +139,7 @@ void spacF(double *, double *, double *, double, double, cell_data_struct *,
            soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 double solve_quadratic_min(double, double, double);
 void solve_quadratic(double, double, double, double *, double *);
-void update_snow(double, double, double, snow_data_struct *);
+void update_snow(double, double, double, double, snow_data_struct *);
 void update_fluxes(energy_bal_struct *, cell_data_struct *, 
                    snow_data_struct *, soil_con_struct *);
 void update_nodes(double, energy_bal_struct *, cell_data_struct *, 

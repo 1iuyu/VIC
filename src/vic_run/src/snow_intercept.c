@@ -12,6 +12,7 @@
 ******************************************************************************/
 int
 snow_intercept(double            step_dt,
+               double            air_temp,
                double            Tcanopy,  // canopy air temperature
                double           *SnowFall,
                double           *RainFall,
@@ -67,24 +68,24 @@ snow_intercept(double            step_dt,
 
         /* now update snowfall and total accumulated intercepted snow amounts */
         int_snow += (DeltaSnowInt - SnowUnload) * step_dt;
-        if (int_snow < 0.) {
-            int_snow = 0.;
+        if (int_snow < 0.0) {
+            int_snow = 0.0;
         }
     }
     else {
-        DeltaSnowInt = 0.;
-        SnowDrip = 0.;
+        DeltaSnowInt = 0.0;
+        SnowDrip = 0.0;
         SnowThroughFall = (*SnowFall);
         /* canopy gets buried by snow */
-        if (int_snow > 0.) {
+        if (int_snow > 0.0) {
             SnowDrip += int_snow / step_dt;
-            int_snow = 0.;
+            int_snow = 0.0;
         }
     }
     /* Calculate amount of rain intercepted on branches and stored in
     intercepted snow. */
     MaxRainInt = fcanopy * Wdew * NetVEG;
-    if (NetVEG > 0.) {
+    if (NetVEG > 0.0) {
         DeltaRainInt = fcanopy * (*RainFall);
         DeltaRainInt = min(DeltaRainInt, (MaxRainInt - int_rain) / step_dt *
                                         (1.0 - exp(-*RainFall * step_dt / MaxRainInt)));
@@ -92,18 +93,18 @@ snow_intercept(double            step_dt,
         RainDrip = (*RainFall) * fcanopy - DeltaRainInt;
         RainThroughFall = (*RainFall) * (1 - fcanopy);
         int_rain += DeltaRainInt * step_dt;
-        if (int_rain < 0.) {
-            int_rain = 0.;
+        if (int_rain < 0.0) {
+            int_rain = 0.0;
         }
     }
     else {
-        DeltaRainInt = 0.;
-        RainDrip = 0.;
+        DeltaRainInt = 0.0;
+        RainDrip = 0.0;
         RainThroughFall = (*RainFall);
         /* canopy gets buried by rain */
-        if (int_rain > 0.) {
+        if (int_rain > 0.0) {
             RainDrip += int_rain / step_dt;
-            int_rain = 0.; 
+            int_rain = 0.0; 
         }
     }
 
@@ -168,12 +169,16 @@ snow_intercept(double            step_dt,
     (*RainFall) = RainDrip + RainThroughFall; 
     (*SnowFall) = SnowDrip + SnowThroughFall + SnowUnload;
     /* Update snow water equivalent and snow depth */
-    if (*SnowFall > 0.0) {
-        snow->delta_depth = *SnowFall / new_snow_density;
+    if (*SnowFall > 0.0 && snow->coverage > 0.0 && new_snow_density > 0.0) {
+        snow->delta_depth = *SnowFall / (snow->coverage * new_snow_density);
     }
     else {
         snow->delta_depth = 0.0;
     }
+
+    /* snowpack water processs */
+    update_snow(step_dt, air_temp,
+                *SnowFall, *RainFall, snow);
     
     return (0);
 }

@@ -35,7 +35,7 @@ update_last_state(energy_bal_struct *energy,
     double *last_thice = snow->last_thice;
     double *last_thliq = snow->last_thliq;
     double *last_snowfrac = snow->last_snowfrac;
-    // 
+    // Set to the default value
     energy->energy_flag = false;
     energy->moist_flag = false;
     energy->Esignchg_count = 0;

@@ -139,7 +139,7 @@ vic_run(force_data_struct   *force,
                              snow->snow_depth,
                              veg_var);
 
-                ErrorFlag = snow_intercept(step_dt, Tfoliage,
+                ErrorFlag = snow_intercept(step_dt, Tair, Tfoliage,
                                            &snowfall, &rainfall,
                                            wind, snow, veg_var);
 

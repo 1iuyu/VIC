@@ -22,6 +22,7 @@ update_nodes(double             pressure,
     size_t tmp_Nsnow = snow->Nsnow;
     size_t tmp_Nnode = soil_con->Nbedrock;
     size_t last_Nsnow = snow->last_Nsnow;
+    double coverage = snow->coverage;
     double *T = energy->T;
     double *density = snow->density;
     double *last_T = energy->last_T;
@@ -58,12 +59,12 @@ update_nodes(double             pressure,
     // update snow layer properties
     cell->Nnode = tmp_Nnode;
     for (i = 0; i < Nsnow; i++) {
-        theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
+        theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * coverage * CONST_RHOICE));
         porosity[i] = 1.0 - theta_ice[i];
-        theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW));
+        theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW));
         double SnowMass = pack_ice[i] + pack_liq[i];
         snow_frac[i] = pack_ice[i] / SnowMass;
-        density[i] = pack_ice[i] / dz_snow[i];
+        density[i] = pack_ice[i] / (dz_snow[i] * coverage);
     }
 
     // update new snow layer properties

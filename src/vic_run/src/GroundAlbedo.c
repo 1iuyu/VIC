@@ -26,10 +26,6 @@ GroundAlbedo(double             moist,
     double *AlbedoDry = soil_con->AlbedoDry;
     double *AlbedoSoilDir = energy->AlbedoSoilDir;
     double *AlbedoSoilDfs = energy->AlbedoSoilDfs;
-    double *AlbedoGrndDir = energy->AlbedoGrndDir;
-    double *AlbedoGrndDfs = energy->AlbedoGrndDfs;
-    double *AlbedoSnowDir = energy->AlbedoSnowDir;
-    double *AlbedoSnowDfs = energy->AlbedoSnowDfs;
 
     for (size_t i = 0; i < options.Nswband; i++) {
         /* 植被：基于湿度动态计算裸土反照率 */
@@ -39,27 +35,21 @@ GroundAlbedo(double             moist,
                                     swcf_albedo, AlbedoDry[i]);
             
             AlbedoSoilDfs[i] = AlbedoSoilDir[i];
-            AlbedoGrndDir[i] = AlbedoSoilDir[i] * (1.0 - coverage) + 
-                                    AlbedoSnowDir[i] * coverage;
-            AlbedoGrndDfs[i] = AlbedoSoilDfs[i] * (1.0 - coverage) + 
-                                    AlbedoSnowDfs[i] * coverage;
         }
         else if (cell->IS_GLAC) {
             /* 冰川：使用固定冰川反照率 */
-            AlbedoGrndDir[i] = param.GLAC_ALBEDO[i] * (1.0 - coverage) +
-                               AlbedoSnowDir[i] * coverage;
-            AlbedoGrndDfs[i] = param.GLAC_ALBEDO[i] * (1.0 - coverage) +
-                               AlbedoSnowDfs[i] * coverage;           
+            AlbedoSoilDir[i] = param.GLAC_ALBEDO[i];
+            AlbedoSoilDfs[i] = AlbedoSoilDir[i];           
         }
         else if (cell->IS_WET) {
             // 水体或湿地
             if (energy->Tgrnd > 0.0) {
-                AlbedoGrndDir[i] = 0.05 / (max(0.001, coszen) + 0.15);
-                AlbedoGrndDfs[i] = 0.1;
+                AlbedoSoilDir[i] = 0.05 / (max(0.001, coszen) + 0.15);
+                AlbedoSoilDfs[i] = 0.1;
             }
             else {
-                AlbedoGrndDir[i] = param.LAKE_ALBEDO[i];
-                AlbedoGrndDfs[i] = AlbedoGrndDir[i];
+                AlbedoSoilDir[i] = param.LAKE_ALBEDO[i];
+                AlbedoSoilDfs[i] = AlbedoSoilDir[i];
             }
         }
     }

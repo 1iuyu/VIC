@@ -226,7 +226,7 @@ SoilTemperature(double   		   step_dt,
     for (i = 0; i < Nnode; i++) {
         if (i < Nsnow) {
             if (Nsnow == 1) {
-                if (pack_liq[i] > 0.0) {
+                if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
                     mat_A[i] = 0.0;
                     mat_B[i] = deriv_snow - coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i] * 
                                conv_vapor[i]) - CONST_RHOFW * CONST_LATICE / step_dt;
@@ -243,7 +243,7 @@ SoilTemperature(double   		   step_dt,
                          (theta_liq[i]-last_thliq[i]) / step_dt - CONST_LATSUB * vapor_flux[i];
             }
             else if (i == 0) {
-                if (pack_liq[i] > 0.0) {
+                if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
                     mat_A[i] = 0.0;
                     mat_B[i] = deriv_snow - CONST_RHOFW * CONST_LATICE / step_dt;
                     mat_C[i] = 0.0;
@@ -259,7 +259,7 @@ SoilTemperature(double   		   step_dt,
                         (theta_liq[i] - last_thliq[i]) / step_dt - CONST_LATSUB * vapor_flux[i];
             }
             else if (i < Nsnow - 1) {
-                if (pack_liq[i] > 0.0) {
+                if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
                     mat_A[i] = 0.0;
                     mat_B[i] = -CONST_RHOFW * CONST_LATICE / step_dt;
                     mat_C[i] = 0.0;
@@ -276,7 +276,7 @@ SoilTemperature(double   		   step_dt,
                             AbsSnowLyr[i];
             }
             else {
-                if (pack_liq[i] > 0.0) {
+                if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
                     mat_A[i] = 0.0;
                     mat_B[i] = -coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i] * conv_vapor[i]) -
                                 CONST_RHOFW * CONST_LATICE / step_dt;
@@ -296,7 +296,7 @@ SoilTemperature(double   		   step_dt,
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
             if (Nsnow == 0) {
-                if (cell->h2osfc_liq > 0.0) {
+                if (cell->h2osfc_liq > 0.0 && T[i] >= CONST_TKFRZ) {
                     mat_A[i] = 0.0;
                     mat_B[i] = deriv_terms - CONST_RHOFW * CONST_LATICE / step_dt - fact[i] * Cs_node[i];
                     mat_C[i] = 0.0;
@@ -313,7 +313,7 @@ SoilTemperature(double   		   step_dt,
                 }
             } 
             else {
-                if (cell->h2osfc_liq > 0.0) {
+                if (cell->h2osfc_liq > 0.0 && T[i] >= CONST_TKFRZ) {
                     mat_A[i] = 0.0;
                     mat_B[i] = (1.0 - coverage) * deriv_soil - CONST_RHOFW * CONST_LATICE / 
                                 step_dt - fact[i] * Cs_node[i];
@@ -538,9 +538,9 @@ SoilTemperature(double   		   step_dt,
                     }
                 }
             }
-            theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * CONST_RHOICE));
+            theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * coverage * CONST_RHOICE));
             porosity[i] = 1.0 - theta_ice[i];
-            theta_liq[i] = max(0.0, min(porosity[i], pack_liq[i] / (dz_snow[i] * CONST_RHOFW)));
+            theta_liq[i] = max(0.0, min(porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW)));
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
             if (cell->h2osfc > param.TOL_A) {
