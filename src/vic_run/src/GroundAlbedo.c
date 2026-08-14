@@ -14,7 +14,6 @@
 void
 GroundAlbedo(double             moist,
              double             coszen,
-             double             coverage,
              energy_bal_struct *energy,
              cell_data_struct  *cell,
              soil_con_struct   *soil_con)

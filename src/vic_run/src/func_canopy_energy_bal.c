@@ -130,8 +130,8 @@ func_canopy_energy_bal(size_t             hidx,
             delt = fabs(ustar1 - ustar_prev);
         }
         ustar1 = 4.0 * ustar1 / lt / veg_lib->Z0sub_c;
-        Z0m_sub[0] = Canopy_Upper * (1.0 - displacement[1] / Canopy_Upper) * exp(-CONST_KARMAN * ustar1 +
-                      log(veg_lib->Z0sub_cw) - 1.0 + pow(veg_lib->Z0sub_cw, -1.0));
+        Z0m_sub[0] = Canopy_Upper * (1.0 - displacement[1] / Canopy_Upper) * exp(-CONST_KARMAN * 
+                     ustar1 + log(veg_lib->Z0sub_cw) - 1.0 + pow(veg_lib->Z0sub_cw, -1.0));
     }
     else {
         log_err("Unknown AERO_RESIST option");
@@ -157,12 +157,12 @@ func_canopy_energy_bal(size_t             hidx,
     double coef_lw_canopy = -(2.0 - EmissLongSub * (1.0 - EmissLongGrnd)) *
                                        EmissLongSub * CONST_STEBOL;
     // 计算比湿和梯度
-    double qsatdT = 0.0;
+    double qsdT_leaf = 0.0;
     double qsat_T = 0.0;
     double esat_T = 0.0;
     svp_flags(Tfoliage, pressure,
                 &esat_T, &qsat_T, 
-                NULL, &qsatdT,
+                NULL, &qsdT_leaf,
                 ESAT| QSAT | QSDT);
     // 初始化植被/地面表面温度、树冠内部空气温度
     Tcanopy = (Tgrnd + thm) / 2.0; // 初始猜测
@@ -207,7 +207,7 @@ func_canopy_energy_bal(size_t             hidx,
         // 计算下垫面土壤与冠层空气之间的湍流传送系数
         double w_frac = exp(-(NetVEG));
         double Cs_bare = CONST_KARMAN / 0.13 * pow((Z0m_grnd[0] * wind_over / 1.5e-5), -0.45);
-        double ri = (CONST_G * Canopy_Upper * (Tcanopy - Tgrnd)) / pow(Tcanopy * wind_over, 2.0);
+        double ri = (CONST_G * Canopy_Upper * (Tcanopy - Tgrnd)) / (Tcanopy * wind_over * wind_over);
         double Cs_dense = 0.004;
         if (Tcanopy - Tgrnd > 0.0) {
             Cs_dense = 0.004 / (1.0 + 0.5 * min(ri, 10.0));
@@ -304,12 +304,12 @@ func_canopy_energy_bal(size_t             hidx,
         RestTerm = (1.0 - f_abs_stem) * (NetShortSub + NetLongOver + coef_lw_grnd * pow(Tgrnd, 4.0)) -
                     SensibleLeaf - LatentLeaf - (cp_leaf / step_dt) * (Tfoliage - Tfoliage_init);
         coef_flux = (1.0 - f_abs_stem) * (-4.0 * coef_lw_canopy * pow(Tfoliage, 3.0)) +
-                    coef_sensible * wtga + coef_latent * wtgaq * qsatdT + cp_leaf / step_dt;
+                    coef_sensible * wtga + coef_latent * wtgaq * qsdT_leaf + cp_leaf / step_dt;
         delt_T = RestTerm / coef_flux;
         Tfoliage += delt_T;
 
-        efpot = air_density * (NetVEG / Ra_sub[1]) *
-                (wtgaq * (qsat_T + qsatdT * delt_T) -
+        efpot = air_density * (NetVEG / Ra_leaf) *
+                (wtgaq * (qsat_T + qsdT_leaf * delt_T) -
                  wtgq0 * Qair_grnd - wtaq0 * Qair);
         canopyevap = rpp * efpot;
         double res_energy = max(0.0, canopyevap - cell->transp - canopy_swq / step_dt);
@@ -320,8 +320,8 @@ func_canopy_energy_bal(size_t             hidx,
         SensibleStem += air_density * CONST_CPDAIR * wtstem * (-wtl0 * delt_T);
 
         svp_flags(Tfoliage, pressure, 
-                  NULL, &qsat_T, NULL, 
-                  &qsatdT, QSAT | QSDT);
+                  NULL, &qsat_T, NULL,
+                  &qsdT_leaf, QSAT | QSDT);
         // 更新冠层温度和水汽含量的加权平均值
         Tcanopy = wtg0 * Tgrnd + wta0 * thm + wtl0 * Tfoliage + wtstem0 * Tstem;
         Qair_over = wtlq0 * qsat_T + Qair * wtaq0 + wtgq0 * Qair_grnd;
@@ -334,7 +334,7 @@ func_canopy_energy_bal(size_t             hidx,
         double qstar = Qair_profile * dqh;
 
         double thvstar = tstar * (1.0 + 0.61 * Qair) + 0.61 * theta_pot * qstar;
-        double zeta = zL_over * CONST_KARMAN * CONST_G * thvstar / (pow(ustar, 2.0) * theta_v);
+        double zeta = zL_over * CONST_KARMAN * CONST_G * thvstar / (ustar * ustar * theta_v);
 
         if (zeta >= 0.0) {
             zeta = min(2.0, max(zeta, 0.01));
@@ -457,7 +457,7 @@ func_canopy_energy_bal(size_t             hidx,
     energy->SensibleLeaf = SensibleLeaf;
     energy->NetLongOver = NetLongOver;
     coef_sensible = air_density * CONST_CPDAIR * wtg * wtal;
-    coef_latent = air_density * wtgq * wtalq * qsatdT * energy->LatentVapOver;
+    coef_latent = air_density * wtgq * wtalq * qsdT_leaf * energy->LatentVapOver;
     double deriv_sub = -(coef_sensible + coef_latent + 4.0 * 
                         EmissLongSub * CONST_STEBOL * pow(Tgrnd, 3.0));
     energy->deriv_terms += fcanopy * (deriv_sub - energy->deriv_terms);

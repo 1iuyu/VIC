@@ -19,6 +19,7 @@ compute_coszen(double         lat,
                double        *coszen,
                double        *daylen)
 {
+    extern option_struct options;
     double coslat;
     double sinlat;
     double decl;
@@ -27,11 +28,26 @@ compute_coszen(double         lat,
     double cosegeom;
     double sinegeom;
     double coshss;
-    double hour_offset;
     double cosh;
     double hour;
+    double local_solar_time = 0.0;
 
     hour = second / SEC_PER_HOUR;
+
+    /* calculate cos of hour angle */
+    if (options.FORCE_TIME == FORCE_LOCAL) {
+        local_solar_time = hour;
+    }
+    else if (options.FORCE_TIME == FORCE_UTC) {
+        local_solar_time = hour + (time_zone_lng / 15.0) + 
+                           (lng - time_zone_lng) / 15.0;      
+    }
+    while (local_solar_time < 0.0)  {
+        local_solar_time += 24.0;
+    }
+    while (local_solar_time >= 24.0) {
+        local_solar_time -= 24.0;
+    }
 
     /* calculate cos and sin of latitude */
     coslat = cos(lat * CONST_PI / 180);
@@ -54,10 +70,8 @@ compute_coszen(double         lat,
         coshss = 1.0; /* 0-hr daylight */
     }
     (*daylen) = 2.0 * CONST_SECPERRAD * acos(coshss);
-    /* calculate cos of hour angle */
-    // hour_offset = (time_zone_lng - lng) * HOURS_PER_DAY / 360;
-    hour_offset = lng / 15.;
-    cosh = cos((hour + hour_offset - 12) * CONST_PI / 12);
+
+    cosh = cos((local_solar_time - 12) * CONST_PI / 12);
 
     /* calculate cosine of solar zenith angle */
     (*coszen) = cosegeom * cosh + sinegeom;

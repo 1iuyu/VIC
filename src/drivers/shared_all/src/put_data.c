@@ -84,7 +84,8 @@ put_data(all_vars_struct   *all_vars,
     /** compute running totals of various landcovers **/
     for (veg = 0; veg <= veg_con[0].vegetat_type_num; veg++) {
         band = veg_con[veg].BandIndex;
-        if (veg < veg_con[0].vegetat_type_num && cell[veg].IS_GLAC == false) {
+        if (veg < veg_con[0].vegetat_type_num && 
+            (!cell[veg].IS_GLAC || !cell[veg].IS_URBAN || !cell[veg].IS_WET)) {
             cv_veg += veg_con[veg].Cv;
         }
         else {
@@ -103,7 +104,8 @@ put_data(all_vars_struct   *all_vars,
     ****************************************/
     for (veg = 0; veg <= veg_con[0].vegetat_type_num; veg++) {
         Cv = veg_con[veg].Cv;
-        if (veg < veg_con[0].vegetat_type_num && cell[veg].IS_GLAC == false) {
+        if (veg < veg_con[0].vegetat_type_num && 
+            (!cell[veg].IS_GLAC || !cell[veg].IS_URBAN || !cell[veg].IS_WET)) {
             HasVeg = true;
         }
         else {
@@ -139,7 +141,6 @@ put_data(all_vars_struct   *all_vars,
                              out_data);
         } // End if Cv > 0
     } // End loop over veg
-
 
     /*****************************************
        Finish aggregation of special-case variables

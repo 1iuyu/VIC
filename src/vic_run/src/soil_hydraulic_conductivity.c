@@ -17,7 +17,7 @@ soil_hydraulic_conductivity(cell_data_struct *cell,
     size_t i, j;
     double ice_param = -6.0;
     double *ice = cell->ice;
-    double frac_ice[MAX_SOILS];
+    double frac_ice[MAX_SOILS] = {0};
     double *matric = cell->matric;
     double *zc_soil = soil_con->zc_soil;
     double *Zsum_soil = soil_con->Zsum_soil;
@@ -26,10 +26,6 @@ soil_hydraulic_conductivity(cell_data_struct *cell,
     double *conduct_int = cell->conduct_int;
     double *liquid_flux = cell->liquid_flux;
     double *soil_imped = cell->soil_imped;
-    // 初始化变量
-    for (j = 0; j < MAX_SOILS; j++) {
-        frac_ice[j] = 0.0;
-    }
     //  计算土壤水和冰的相对饱和度
     for (i = 0; i < Nsoil; i++) {
         frac_ice[i] = min(1.0, ice[i] / Wsat_node[i]);

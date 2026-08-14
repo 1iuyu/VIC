@@ -12,7 +12,6 @@
 ******************************************************************************/
 int
 snow_intercept(double            step_dt,
-               double            air_temp,
                double            Tcanopy,  // canopy air temperature
                double           *SnowFall,
                double           *RainFall,
@@ -53,7 +52,7 @@ snow_intercept(double            step_dt,
     MaxSnowInt = fcanopy * 6.6 * (0.27 + 46.0 / new_snow_density) * NetVEG;
 
     /* Calculate snow interception. */
-    if (NetLAI + NetSAI > 0.) {
+    if (NetLAI + NetSAI > 0.0) {
         DeltaSnowInt = fcanopy * (*SnowFall);
         DeltaSnowInt = min(DeltaSnowInt, (MaxSnowInt - int_snow) / step_dt * 
                             (1.0 - exp(-*SnowFall * step_dt / MaxSnowInt)));
@@ -175,10 +174,6 @@ snow_intercept(double            step_dt,
     else {
         snow->delta_depth = 0.0;
     }
-
-    /* snowpack water processs */
-    update_snow(step_dt, air_temp,
-                *SnowFall, *RainFall, snow);
     
     return (0);
 }

@@ -30,7 +30,7 @@ compute_soil_resis(double            coverage,
                     pow(eps / Wsat_node[0], 2.0 + log(pow(eps100, 0.25)) / log(eps100 / Wsat_node[0]));
         // 计算气体扩散度
         double dg = d0 * tao;
-                
+        // SL14, Swenson and Lawrence (2014)
         double dsl = 0.015 * max(param.TOL_A, (0.8 * porosity[0] - liq[0])) /
                     max(param.TOL_A, (0.8 * Wsat_node[0] - aird)); // [m/s]
 

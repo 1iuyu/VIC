@@ -41,6 +41,7 @@ initialize_options()
     options.FCAN_SRC = FROM_DEFAULT;
     options.GRID_DECIMAL = 2;
     options.LAI_SRC = FROM_VEGLIB;
+    options.FORCE_TIME = FORCE_UTC;
     options.PARAM_FROM_SOIL = true;
     options.ROUT = false;
     // state options

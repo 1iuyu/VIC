@@ -19,6 +19,7 @@ generate_default_state(force_data_struct *force,
                        veg_lib_struct    *veg_lib)
 {
     extern option_struct     options;
+    extern global_param_struct global_param;
     int         ErrorFlag;
     size_t      Nveg;
     size_t      veg;
@@ -42,6 +43,8 @@ generate_default_state(force_data_struct *force,
     double *expt_node = soil_con->expt_node;
     double *zc_soil = soil_con->zc_soil;
     double *bulk_dens_node = soil_con->bulk_dens_node;
+    double step_dt = global_param.step_dt;
+    double wind = force->wind[NR];
     double air_temp = force->air_temp[NR];
     double pressure = force->pressure[NR];
 
@@ -81,30 +84,43 @@ generate_default_state(force_data_struct *force,
     }
 
     /************************************
-      Initialize snowpack temperatures
+      Initialize snowpack properties
     ************************************/
     for (veg = 0; veg <= Nveg; veg++) {
         if (veg_con[veg].Cv > 0) {
             snow[veg].swq = 15.0;   // [mm] or [kg/m^2]
             double snow_density = 200.0;   // [kg/m^3]
             if (snow[veg].swq > 0.0) {
-                snow[veg].snow_depth = snow[veg].swq / snow_density;
-            }
-            // 假设初始积雪覆盖整个CELL, 调用calc_snow_coverage后会覆盖初始值
-            snow[veg].coverage = 1.0;
-            snow[veg].new_snow_density = new_snow_density(air_temp);
-            // calculate snow coverage
-            calc_snow_coverage(veg_con[veg].Cv, cell[veg].IS_GLAC, 
-                               0.0, &snow[veg], soil_con);
-            /* convert cell SWE to snow-covered depth */
-            if (snow[veg].coverage > 0.0) {
-
-                snow[veg].snow_depth =
-                    snow[veg].swq /
-                    (snow[veg].coverage * snow_density);
+                // calculate snow coverage
+                double GridSize = sqrt(soil_con->cell_area * veg_con[veg].Cv);
+                double gridScalePara = min((max(GridSize, 500.0) / M_PER_KM), 36.0);
+                double SNOW_MeltFac = 0.9713 + tanh(0.7436 * gridScalePara);
+                double SNOW_CoverFac = 0.0062 * sinh(0.0555 * gridScalePara) + 0.0555;
+                double MeltFac = pow(snow_density / 100, SNOW_MeltFac);
+                // 迭代求解一个合理的coverage
+                double coverage = 1.0;
+                double A = snow[veg].swq / (snow_density * SNOW_CoverFac * MeltFac);
+                for (int iter = 0; iter < 10; iter++) {
+                    double A_over_c = A / coverage;
+                    double new_coverage = tanh(A_over_c);
+                    double sech2_val = 1.0 - new_coverage * new_coverage;  // sech²(x) = 1 - tanh²(x)
+                    
+                    double f = coverage - new_coverage;
+                    double df = 1.0 + sech2_val * A / (coverage * coverage);
+                    
+                    double delta = f / df;
+                    coverage -= delta;
+                    if (fabs(delta) < 1.0e-4) {
+                        break;
+                    }
+                }
+                snow[veg].snow_depth = snow[veg].swq / (coverage * snow_density);
+                snow[veg].coverage = coverage;
             }
             // set snow layer properties
-            distribute_snow_state(air_temp, &snow[veg]);
+            distribute_snow_state(step_dt, wind, 
+                                  air_temp,
+                                  pressure, &snow[veg]);
         }
     }
 
@@ -261,6 +277,9 @@ generate_default_state(force_data_struct *force,
             // initialize last step Cs_node
             for (i = 0; i < cell[veg].Nnode; i++) {
                 energy[veg].last_Cs[i] = energy[veg].Cs_node[i];
+            }
+            for (i = 0; i <= snow[veg].Nsnow; i++) {
+                snow[veg].last_enthalpy[i] = snow[veg].enthalpy[i];
             }
         }
     }

@@ -156,8 +156,7 @@ surface_albedo(double             step_dt,
 
         /* Compute ground albedo based on soil and snow albedo */
         GroundAlbedo(cell->moist[0],
-                     coszen,
-                     coverage, energy,
+                     coszen, energy,
                      cell, soil_con);
 
         // age snow albedo if no new snowfall

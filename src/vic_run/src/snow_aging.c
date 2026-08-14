@@ -50,6 +50,7 @@ snow_aging(double             step_dt,
         double refrz_frac;
         double old_snow_frac;
         double dz_node[MAX_SNOWS+1] = {0};
+        double coverage = snow->coverage;
         Nsnow = snow->Nsnow;
         // 设置临时dz_node数组
         if (Nsnow > 0) {
@@ -79,9 +80,9 @@ snow_aging(double             step_dt,
                 temp_lower = (T[i+1] * dz_node[i] + T[i] * 
                             dz_node[i+1]) / (dz_node[i+1] + dz_node[i]);
             }
-            grad_temp = fabs(temp_upper - temp_lower) / dz_node[i];
+            grad_temp = fabs(temp_upper - temp_lower) / (dz_node[i] * coverage);
 
-            snow_density = snow_mass / dz_node[i];
+            snow_density = snow_mass / (dz_node[i] * coverage);
             if (snow_density < param.SNOW_NEW_SNOW_DENSITY) {
                 snow_density = param.SNOW_NEW_SNOW_DENSITY;
             }

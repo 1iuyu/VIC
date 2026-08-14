@@ -439,7 +439,7 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     MPI_Datatype   *mpi_types;
 
     // nitems has to equal the number of elements in option_struct
-    nitems = 24;
+    nitems = 28;
     blocklengths = malloc(nitems * sizeof(*blocklengths));
     check_alloc_status(blocklengths, "Memory allocation error.");
 
@@ -460,6 +460,14 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     // unsigned short AERO_RESIST;
     offsets[i] = offsetof(option_struct, AERO_RESIST);
     mpi_types[i++] = MPI_UNSIGNED_SHORT;
+
+    // bool ACTIVE_LAYER;
+    offsets[i] = offsetof(option_struct, ACTIVE_LAYER);
+    mpi_types[i++] = MPI_C_BOOL;
+
+    // bool BIOMASST;
+    offsets[i] = offsetof(option_struct, BIOMASST);
+    mpi_types[i++] = MPI_C_BOOL;
 
     // bool CARBON;
     offsets[i] = offsetof(option_struct, CARBON);
@@ -531,6 +539,14 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
 
     // unsigned short SAI_SRC;
     offsets[i] = offsetof(option_struct, SAI_SRC);
+    mpi_types[i++] = MPI_UNSIGNED_SHORT;
+
+    // unsigned short SNOW_SHAPE;
+    offsets[i] = offsetof(option_struct, SNOW_SHAPE);
+    mpi_types[i++] = MPI_UNSIGNED_SHORT;
+
+    // unsigned short FORCE_TIME;
+    offsets[i] = offsetof(option_struct, FORCE_TIME);
     mpi_types[i++] = MPI_UNSIGNED_SHORT;
 
     // bool DENSITY_FROM_SOIL;

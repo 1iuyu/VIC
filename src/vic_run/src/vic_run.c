@@ -136,10 +136,9 @@ vic_run(force_data_struct   *force,
                 /* Calculate net LAI and SAI */
                 calc_net_veg(Canopy_Upper, 
                              Canopy_Lower,
-                             snow->snow_depth,
-                             veg_var);
+                             snow, veg_var);
 
-                ErrorFlag = snow_intercept(step_dt, Tair, Tfoliage,
+                ErrorFlag = snow_intercept(step_dt, Tfoliage,
                                            &snowfall, &rainfall,
                                            wind, snow, veg_var);
 
@@ -148,7 +147,8 @@ vic_run(force_data_struct   *force,
                 }
             }
             // 设置土地类型指示器
-            if (veg_var->fcanopy > 0.0 && veg_var->NetLAI + veg_var->NetSAI > 0.0) {
+            if (veg_var->fcanopy > 0.0 && veg_var->NetLAI + 
+                                          veg_var->NetSAI > 0.0) {
                 cell->IS_VEG = true;
             }
             else {
@@ -156,9 +156,9 @@ vic_run(force_data_struct   *force,
             }
             
             /* Initialize snow coverage */
-            calc_snow_coverage(Cv, cell->IS_GLAC,
-                               snowfall * step_dt,  // (mm H2O)
-                               snow, soil_con);
+            calc_snow_coverage(Cv, step_dt, Tair,
+                               snowfall, rainfall, 
+                               cell, snow, soil_con);
 
             // 初始化粗糙度
             initialize_roughness(Canopy_Upper,

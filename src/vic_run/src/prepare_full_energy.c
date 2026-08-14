@@ -29,6 +29,7 @@ prepare_full_energy(double             pressure,
     double tmp_density = 0.;
     double qsaT = 0.0;
     double qsdT = 0.0;
+    double coverage = snow->coverage;
     // 指针赋值
     double *liq = cell->liq;
     double *ice = cell->ice;
@@ -55,6 +56,7 @@ prepare_full_energy(double             pressure,
     double *Wsat_node = soil_con->Wsat_node;
     double *kappa_node = energy->kappa_node;
     double *kappa_int = energy->kappa_int;
+    double *enthalpy = snow->enthalpy;
     double *bulk_dens_node = soil_con->bulk_dens_node;
     double *soil_dens_org = soil_con->soil_dens_org;
     // 计算雪的热导率和热容量
@@ -63,7 +65,10 @@ prepare_full_energy(double             pressure,
             double CP_snow = 92.96 + 7.37 * pack_T[i];
             double air = 1.0 - theta_ice[i] - theta_liq[i];
             Cs_node[i] = max(param.TOL_A, (pack_ice[i] * CP_snow +
-                     pack_liq[i] * CONST_CPFWICE) / dz_snow[i]);
+                     pack_liq[i] * CONST_CPFWICE) / (dz_snow[i] * coverage));
+            enthalpy[i] = (pack_ice[i] * CP_snow + pack_liq[i] * CONST_CPFWICE) * 
+                          (pack_T[i] - CONST_TKFRZ) - pack_ice[i] * CONST_LATICE;
+            enthalpy[i] /= coverage;
             if (air > 0.0) {
                 // 潜热贡献
                 svp_flags(pack_T[i], pressure, 
@@ -79,7 +84,7 @@ prepare_full_energy(double             pressure,
                     Cs_node[i] += air * CONST_LATVAP * drhodT;
                 }
             }
-            tmp_density = (pack_ice[i] + pack_liq[i]) / dz_snow[i];
+            tmp_density = (pack_ice[i] + pack_liq[i]) / (dz_snow[i] * coverage);
             kappa_node[i] = CONST_KDAIR + (7.75e-5 * tmp_density + 1.105e-6 * 
                             tmp_density * tmp_density) * (CONST_KICE - CONST_KDAIR);
         }
@@ -90,9 +95,14 @@ prepare_full_energy(double             pressure,
     if (cell->h2osfc > param.TOL_A) {
         if (cell->IS_GLAC) {  
             // 计算冰川热属性
-            Cs_node[Nsnow] = cell->h2osfc * CONST_RHOICE * 
-                    CONST_CPICE + liq[0] * CONST_RHOFW * CONST_CPFWICE;
-            kappa_node[Nsnow] = 9.828 * exp(-0.0057 * cell->h2osfc_T);
+            double h2osfc_ice = cell->h2osfc_ice;
+            double h2osfc_liq = cell->h2osfc_liq;
+            double h2osfc_T = cell->h2osfc_T;
+            Cs_node[Nsnow] = h2osfc_ice * CONST_RHOICE * 
+                    CONST_CPICE + h2osfc_liq * CONST_RHOFW * CONST_CPFWICE;
+            enthalpy[Nsnow] = (h2osfc_ice * CONST_CPICE + h2osfc_liq * CONST_CPFWICE) * 
+                              (h2osfc_T - CONST_TKFRZ) - h2osfc_ice * CONST_LATSUB;
+            kappa_node[Nsnow] = 9.828 * exp(-0.0057 * h2osfc_T);
         }
         else if (cell->IS_WET) {
             Cs_node[Nsnow] = CONST_CPFWICE;

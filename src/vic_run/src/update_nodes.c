@@ -48,6 +48,8 @@ update_nodes(double             pressure,
     double *pack_outflow = snow->pack_outflow;
     double *last_thice = snow->last_thice;
     double *last_thliq = snow->last_thliq;
+    double *enthalpy = snow->enthalpy;
+    double *last_enthalpy = snow->last_enthalpy;
     // update the number of nodes
     if (cell->h2osfc > 0.0) {
         tmp_Nnode++;
@@ -65,6 +67,10 @@ update_nodes(double             pressure,
         double SnowMass = pack_ice[i] + pack_liq[i];
         snow_frac[i] = pack_ice[i] / SnowMass;
         density[i] = pack_ice[i] / (dz_snow[i] * coverage);
+        double CP_snow = 92.96 + 7.37 * pack_T[i];
+        enthalpy[i] = (pack_ice[i] * CP_snow + pack_liq[i] * CONST_CPFWICE) * 
+                        (pack_T[i] - CONST_TKFRZ) - pack_ice[i] * CONST_LATICE;
+        enthalpy[i] /= coverage;      
     }
 
     // update new snow layer properties
@@ -106,7 +112,9 @@ update_nodes(double             pressure,
         last_thice[i] = theta_ice[i];
         last_thliq[i] = theta_liq[i];
         last_snowfrac[i] = snow_frac[i];
+        last_enthalpy[i] = enthalpy[i];
     }
+    last_enthalpy[Nsnow] = enthalpy[Nsnow];
 
     /* remove old snow layers */
     for(i = Nsnow; i < last_Nsnow; i++) {
@@ -116,6 +124,7 @@ update_nodes(double             pressure,
         Zsum_snow[i] = 0.0;
         last_snowfrac[i] = 0.0;
         density[i] = 0.0;
+        enthalpy[i] = 0.0;
         porosity[i] = 0.0;
         theta_ice[i] = 0.0;
         theta_liq[i] = 0.0;
@@ -123,6 +132,7 @@ update_nodes(double             pressure,
         pack_melt[i] = 0.0;
         snow_frac[i] = 0.0;
         last_thice[i] = 0.0;
+        last_enthalpy[i] = 0.0;
         last_thliq[i] = 0.0;
         pack_outflow[i] = 0.0;
     }

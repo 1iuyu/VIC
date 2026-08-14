@@ -404,7 +404,6 @@ print_snow_data(snow_data_struct *snow)
 {
     // Print state variables
     fprintf(LOG_DEST, "snow_data - states:\n");
-    fprintf(LOG_DEST, "\talbedo            : %f\n", snow->albedo);
     fprintf(LOG_DEST, "\tcoverage          : %f\n", snow->coverage);
     fprintf(LOG_DEST, "\tsnow_depth        : %f\n", snow->snow_depth);
     fprintf(LOG_DEST, "\tsnowage           : %f\n", snow->snowage);

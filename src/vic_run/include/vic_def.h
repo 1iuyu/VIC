@@ -116,6 +116,15 @@ enum
 };
 
 /******************************************************************************
+ * @brief   Soil water transpiration factor options
+ *****************************************************************************/
+enum
+{
+    FORCE_UTC,
+    FORCE_LOCAL
+};
+
+/******************************************************************************
  * @brief   Photosynthetic pathways
  *****************************************************************************/
 enum
@@ -231,6 +240,7 @@ typedef struct {
     unsigned short int SAI_SRC;        /**< FROM_VEGLIB = use SAI values from veg library file
                                           FROM_VEGPARAM = use SAI values from the veg param file */
     unsigned short int SNOW_SHAPE;     /**< Snow shape type: 1=sphere; 2=spheroid; 3=hexagonal plate; 4=koch snowflake */
+    unsigned short int FORCE_TIME;
     bool PARAM_FROM_SOIL; /**< TRUE = bulk density and soil density (particle density) read from soil parameter file; otherwise set to 0.0 */
     bool ROUT;            /**< TRUE = */
     // state options
@@ -930,7 +940,6 @@ typedef struct {
     // State variables
     size_t Nsnow;                   /**< Number of snow layers in the model */
     size_t last_Nsnow;              /**< Number of snow layers in the model from previous time step */
-    double albedo;                  /**< snow surface albedo (fraction) */
     double coverage;                /**< fraction of snow band that is covered with snow */
     double density[MAX_SNOWS];      /**< snow density (kg/m^3) */
     double dz_snow[MAX_SNOWS];      /**< each snow pack depth (m) */
@@ -957,6 +966,8 @@ typedef struct {
     double new_snow_density;        /**< bulk density of snowfall [kg/m3] */
     double pack_melt[MAX_SNOWS];
     double pack_frze[MAX_SNOWS];
+    double enthalpy[MAX_SNOWS+1];
+    double last_enthalpy[MAX_SNOWS+1];
     double pack_transp;             /**< transpiration from each snow pack (m/s) */
     double pack_comb;               /**< combined heat and moisture of each snow pack (J/m^3) */
     double swq;                     /**< snow water equivalent of the entire pack (mm) */

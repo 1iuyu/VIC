@@ -32,6 +32,8 @@ calc_vapor_flux(double             pressure,
     double conv_temp = 0.0;
     double air_density = 0.0;
     double enhanc_fact = 0.0;
+    double zc_node[MAX_SNOWS+1] = {0};
+    double Zsum_node[MAX_SNOWS+1] = {0};
     double rel_humid[MAX_SOILS] = {0};
     double vapor_diff[MAX_NODES] = {0};
     double diff_therm[MAX_SOILS] = {0};
@@ -54,6 +56,19 @@ calc_vapor_flux(double             pressure,
     // 初始化变量
     size_t Nsnow = snow->Nsnow;
     size_t tmp_Nsnow = Nsnow;
+    double h2osfc = cell->h2osfc;
+    for (i = 0; i < tmp_Nsnow; i++) {
+        zc_node[i] = zc_snow[i];
+        Zsum_node[i] = Zsum_snow[i];
+    }
+    if (cell->h2osfc > param.TOL_A) {
+        zc_node[Nsnow] = 0.5 * cell->h2osfc + Zsum_snow[Nsnow-1];
+        Zsum_node[Nsnow] = cell->h2osfc + Zsum_snow[Nsnow-1];
+    }
+    else {
+        zc_node[Nsnow] = zc_soil[0] + Zsum_snow[Nsnow-1];
+        Zsum_node[Nsnow] = Zsum_soil[0] + Zsum_snow[Nsnow-1];
+    }
     // 雪层水汽扩散
     if (Nsnow > 0) {
         for (i = 0; i < Nsnow; i++) {
@@ -158,34 +173,17 @@ calc_vapor_flux(double             pressure,
     
     // 计算层间调和平均传导系数
     for (i = 0; i < Nsnow; i++) {
-        if (i == Nsnow - 1) {
-            if (cell->h2osfc > param.TOL_A) {
-                dzp = zc_snow[i] + 0.5 * cell->h2osfc;
-                conv_vapor[i] = vapor_diff[i] * vapor_diff[i+1] * dzp /
-                    (vapor_diff[i] * 0.5 * cell->h2osfc + vapor_diff[i+1] * zc_snow[i]);
-                conv_vapor[i] /= dzp;
-            } 
-            else {
-                dzp = zc_soil[0] + zc_snow[i];
-                conv_vapor[i] = vapor_diff[i] * vapor_diff[i+1] * dzp /
-                    (vapor_diff[i] * zc_soil[0] +
-                    vapor_diff[i+1] * zc_snow[i]);
-                conv_vapor[i] /= dzp;
-            }
-        } 
-        else {
-            dzp = zc_snow[i+1] - zc_snow[i];
-            conv_vapor[i] = vapor_diff[i] * vapor_diff[i+1] * dzp /
-                (vapor_diff[i] * (zc_snow[i+1] - Zsum_snow[i]) +
-                vapor_diff[i+1] * (Zsum_snow[i] - zc_snow[i]));
-            conv_vapor[i] /= dzp;
-        }
+        dzp = zc_node[i+1] - zc_node[i];
+        conv_vapor[i] = vapor_diff[i] * vapor_diff[i+1] * dzp /
+            (vapor_diff[i] * (zc_node[i+1] - Zsum_node[i]) +
+            vapor_diff[i+1] * (Zsum_node[i] - zc_node[i]));
+        conv_vapor[i] /= dzp;
         vapor_flux[i] = conv_vapor[i] * (diff_vapor[i] - diff_vapor[i+1]);
     }
-    if (cell->h2osfc > param.TOL_A) {
-        dzp = zc_soil[0] + 0.5 * cell->h2osfc;
+    if (h2osfc > param.TOL_A) {
+        dzp = zc_soil[0] + 0.5 * h2osfc;
         conv_vapor[Nsnow] = vapor_diff[Nsnow] * vapor_diff[Nsnow+1] * dzp /
-            (vapor_diff[Nsnow] * zc_soil[0] + vapor_diff[Nsnow+1] * 0.5 * cell->h2osfc);
+            (vapor_diff[Nsnow] * zc_soil[0] + vapor_diff[Nsnow+1] * 0.5 * h2osfc);
         conv_vapor[Nsnow] /= dzp;
         vapor_flux[Nsnow] = conv_vapor[Nsnow] * (diff_vapor[Nsnow] - diff_vapor[Nsnow+1]);
     }

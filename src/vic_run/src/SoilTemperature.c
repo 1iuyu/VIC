@@ -21,6 +21,7 @@ SoilTemperature(double   		   step_dt,
     extern parameters_struct param;
     /* Initialize variables */
 	size_t i, lidx;
+    bool use_enthalpy = false;
 	size_t Nsnow = snow->Nsnow;
     size_t Nsoil = cell->Nsoil;
 	size_t Nnode = cell->Nnode;
@@ -33,6 +34,7 @@ SoilTemperature(double   		   step_dt,
 	double mat_RHS[MAX_NODES] = {0};
     double FLOW[MAX_SOILS] = {0};
     double EPSLON[MAX_SOILS] = {0};
+    double dTdenthalpy[MAX_SNOWS+1] = {0.0};
 	double *T = energy->T;
 	double *soil_T = cell->soil_T;
 	double *pack_T = snow->pack_T;
@@ -47,6 +49,8 @@ SoilTemperature(double   		   step_dt,
     double *matric = cell->matric;
     double *pack_liq = snow->pack_liq;
     double *pack_ice = snow->pack_ice;
+    double *enthalpy = snow->enthalpy;
+    double *last_enthalpy = snow->last_enthalpy;
     double *last_matric = cell->last_matric;
     double *AbsSnowLyr = energy->AbsSnowLyr;
     double deriv_snow = energy->deriv_snow;
@@ -184,9 +188,11 @@ SoilTemperature(double   		   step_dt,
     for (i = 0; i < Nnode; i++) {
         if (i < Nsnow) {
             fact[i] = 0.5 * (zc_node[i] + capr * zc_node[i+1]) / step_dt;
+            dTdenthalpy[i] = 1.0 / (Cs_node[i] * dz_snow[i]);
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
             fact[i] = 0.5 * cell->h2osfc / step_dt;
+            dTdenthalpy[i] = 1.0 / (Cs_node[i] * 0.5 * cell->h2osfc);
             tmp_Nsnow++;
         }
         else {
@@ -199,6 +205,8 @@ SoilTemperature(double   		   step_dt,
             }
         }
     }
+    dTdenthalpy[Nsnow] = 1.0;
+    
     // 计算雪层和土层地表热通量
     double grnd_snow = 0.0;
     double grnd_soil = 0.0;
@@ -225,73 +233,112 @@ SoilTemperature(double   		   step_dt,
     // ============================================================
     for (i = 0; i < Nnode; i++) {
         if (i < Nsnow) {
-            if (Nsnow == 1) {
-                if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
+            if (use_enthalpy) {
+                if (Nsnow == 1) {
                     mat_A[i] = 0.0;
-                    mat_B[i] = deriv_snow - coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i] * 
-                               conv_vapor[i]) - CONST_RHOFW * CONST_LATICE / step_dt;
-                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
+                    mat_B[i] = (deriv_snow - coverage * (kappa_int[i] - CONST_LATSUB * conv_vapor[i] *
+                                drhodT[i])) * dTdenthalpy[i] - 1.0 / step_dt;
+                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * coverage * 
+                            conv_vapor[i]) * dTdenthalpy[i+1];
+                    mat_RHS[i] = grnd_snow - coverage * (kappa_int[i] * (T[i] - T[i+1]) - CONST_LATSUB * 
+                                vapor_flux[i]) - (enthalpy[i] - last_enthalpy[i]) / step_dt;
+                }
+                else if (i == 0) {
+                    mat_A[i] = 0.0;
+                    mat_B[i] = (deriv_snow - kappa_int[i] - CONST_LATSUB * drhodT[i] * conv_vapor[i]) * 
+                                dTdenthalpy[i] - 1.0 / step_dt;
+                    mat_C[i] = (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]) * dTdenthalpy[i+1];
+                    mat_RHS[i] = grnd_snow - kappa_int[i] * (T[i] - T[i+1]) - (enthalpy[i] - last_enthalpy[i]) / 
+                                step_dt - CONST_LATSUB * vapor_flux[i];
+                }
+                else if (i < Nsnow - 1) {
+                    mat_A[i] = (kappa_int[i-1] + CONST_LATSUB * drhodT[i-1] * conv_vapor[i-1]) * dTdenthalpy[i-1];
+                    mat_B[i] = (-(kappa_int[i-1] + kappa_int[i]) - CONST_LATSUB * drhodT[i] * (conv_vapor[i] + 
+                                conv_vapor[i-1])) * dTdenthalpy[i] - 1.0 / step_dt;
+                    mat_C[i] = (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
+                    mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - kappa_int[i] * (T[i] - T[i+1]) - 
+                                (enthalpy[i] - last_enthalpy[i]) / step_dt - CONST_LATSUB * (vapor_flux[i] - 
+                                vapor_flux[i-1]) + AbsSnowLyr[i];
                 }
                 else {
-                    mat_A[i] = 0.0;
-                    mat_B[i] = deriv_snow - coverage * (kappa_int[i] - CONST_LATSUB * conv_vapor[i] *
-                                drhodT[i]) - fact[i] * Cs_node[i];
-                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
+                    mat_A[i] = (kappa_int[i-1] + CONST_LATSUB * drhodT[i-1] * conv_vapor[i-1]) * dTdenthalpy[i-1];
+                    mat_B[i] = (-(kappa_int[i-1] + coverage * kappa_int[i]) - CONST_LATSUB * drhodT[i] * 
+                                (coverage * conv_vapor[i] + conv_vapor[i-1])) * dTdenthalpy[i] - 1.0 / step_dt;
+                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]) * dTdenthalpy[i+1];
+                    mat_RHS[i] = kappa_int[i-1] * (T[i-1]-T[i]) - coverage * kappa_int[i] * (T[i] - T[i+1]) - 
+                                (enthalpy[i] - last_enthalpy[i]) / step_dt - CONST_LATSUB * (vapor_flux[i] * coverage - 
+                                vapor_flux[i-1]) + AbsSnowLyr[i];
                 }
-                mat_RHS[i] = grnd_snow - coverage * kappa_int[i] * (T[i] - T[i+1]) -
-                         fact[i] * Cs_node[i] * (T[i]-last_T[i]) - CONST_RHOFW * CONST_LATICE *
-                         (theta_liq[i]-last_thliq[i]) / step_dt - CONST_LATSUB * vapor_flux[i];
-            }
-            else if (i == 0) {
-                if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
-                    mat_A[i] = 0.0;
-                    mat_B[i] = deriv_snow - CONST_RHOFW * CONST_LATICE / step_dt;
-                    mat_C[i] = 0.0;
-                }
-                else {
-                    mat_A[i] = 0.0;
-                    mat_B[i] = deriv_snow - kappa_int[i] - CONST_LATSUB * drhodT[i] * 
-                               conv_vapor[i] - fact[i] * Cs_node[i];
-                    mat_C[i] = kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i];
-                }
-                mat_RHS[i] = grnd_snow - kappa_int[i] * (T[i] - T[i+1]) - fact[i] * 
-                        Cs_node[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * 
-                        (theta_liq[i] - last_thliq[i]) / step_dt - CONST_LATSUB * vapor_flux[i];
-            }
-            else if (i < Nsnow - 1) {
-                if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
-                    mat_A[i] = 0.0;
-                    mat_B[i] = -CONST_RHOFW * CONST_LATICE / step_dt;
-                    mat_C[i] = 0.0;
-                }
-                else {
-                    mat_A[i] = kappa_int[i-1] + CONST_LATSUB * drhodT[i-1] * conv_vapor[i-1];
-                    mat_B[i] = -(kappa_int[i-1] + kappa_int[i]) - CONST_LATSUB * drhodT[i] *
-                                (conv_vapor[i] + conv_vapor[i-1]) - fact[i] * Cs_node[i];
-                    mat_C[i] = kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i];
-                }
-                mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - kappa_int[i] * (T[i] - T[i+1]) - fact[i] * 
-                            Cs_node[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * (theta_liq[i] - 
-                            last_thliq[i]) / step_dt - CONST_LATSUB * (vapor_flux[i] - vapor_flux[i-1]) + 
-                            AbsSnowLyr[i];
             }
             else {
-                if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
-                    mat_A[i] = 0.0;
-                    mat_B[i] = -coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i] * conv_vapor[i]) -
-                                CONST_RHOFW * CONST_LATICE / step_dt;
-                    mat_C[i] = 0.0;
+                if (Nsnow == 1) {
+                    if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
+                        mat_A[i] = 0.0;
+                        mat_B[i] = deriv_snow - coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i] * 
+                                conv_vapor[i]) - CONST_RHOFW * CONST_LATICE / step_dt;
+                        mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
+                    }
+                    else {
+                        mat_A[i] = 0.0;
+                        mat_B[i] = deriv_snow - coverage * (kappa_int[i] - CONST_LATSUB * conv_vapor[i] *
+                                    drhodT[i]) - fact[i] * Cs_node[i];
+                        mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
+                    }
+                    mat_RHS[i] = grnd_snow - coverage * kappa_int[i] * (T[i] - T[i+1]) -
+                            fact[i] * Cs_node[i] * (T[i]-last_T[i]) - CONST_RHOFW * CONST_LATICE *
+                            (theta_liq[i]-last_thliq[i]) / step_dt - CONST_LATSUB * vapor_flux[i];
+                }
+                else if (i == 0) {
+                    if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
+                        mat_A[i] = 0.0;
+                        mat_B[i] = deriv_snow - CONST_RHOFW * CONST_LATICE / step_dt;
+                        mat_C[i] = 0.0;
+                    }
+                    else {
+                        mat_A[i] = 0.0;
+                        mat_B[i] = deriv_snow - kappa_int[i] - CONST_LATSUB * drhodT[i] * 
+                                conv_vapor[i] - fact[i] * Cs_node[i];
+                        mat_C[i] = kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i];
+                    }
+                    mat_RHS[i] = grnd_snow - kappa_int[i] * (T[i] - T[i+1]) - fact[i] * 
+                            Cs_node[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * 
+                            (theta_liq[i] - last_thliq[i]) / step_dt - CONST_LATSUB * vapor_flux[i];
+                }
+                else if (i < Nsnow - 1) {
+                    if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
+                        mat_A[i] = 0.0;
+                        mat_B[i] = -CONST_RHOFW * CONST_LATICE / step_dt;
+                        mat_C[i] = 0.0;
+                    }
+                    else {
+                        mat_A[i] = kappa_int[i-1] + CONST_LATSUB * drhodT[i-1] * conv_vapor[i-1];
+                        mat_B[i] = -(kappa_int[i-1] + kappa_int[i]) - CONST_LATSUB * drhodT[i] *
+                                    (conv_vapor[i] + conv_vapor[i-1]) - fact[i] * Cs_node[i];
+                        mat_C[i] = kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i];
+                    }
+                    mat_RHS[i] = kappa_int[i-1] * (T[i-1] - T[i]) - kappa_int[i] * (T[i] - T[i+1]) - fact[i] * 
+                                Cs_node[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * (theta_liq[i] - 
+                                last_thliq[i]) / step_dt - CONST_LATSUB * (vapor_flux[i] - vapor_flux[i-1]) + 
+                                AbsSnowLyr[i];
                 }
                 else {
-                    mat_A[i] = kappa_int[i-1] + CONST_LATSUB * drhodT[i-1] * conv_vapor[i-1];
-                    mat_B[i] = -(kappa_int[i-1] + coverage * kappa_int[i]) - CONST_LATSUB * drhodT[i] * 
-                                (conv_vapor[i] + conv_vapor[i-1]) - fact[i] * Cs_node[i];
-                    mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
+                    if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
+                        mat_A[i] = 0.0;
+                        mat_B[i] = -coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i] * conv_vapor[i]) -
+                                    CONST_RHOFW * CONST_LATICE / step_dt;
+                        mat_C[i] = 0.0;
+                    }
+                    else {
+                        mat_A[i] = kappa_int[i-1] + CONST_LATSUB * drhodT[i-1] * conv_vapor[i-1];
+                        mat_B[i] = -(kappa_int[i-1] + coverage * kappa_int[i]) - CONST_LATSUB * drhodT[i] * 
+                                    (conv_vapor[i] + conv_vapor[i-1]) - fact[i] * Cs_node[i];
+                        mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
+                    }
+                    mat_RHS[i] = kappa_int[i-1] * (T[i-1]-T[i]) - coverage * kappa_int[i] * (T[i]-T[i+1]) - 
+                                fact[i] * Cs_node[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * 
+                                (theta_liq[i] - last_thliq[i]) / step_dt - CONST_LATSUB * (vapor_flux[i] - 
+                                vapor_flux[i-1]) + AbsSnowLyr[i];
                 }
-                mat_RHS[i] = kappa_int[i-1] * (T[i-1]-T[i]) - coverage * kappa_int[i] * (T[i]-T[i+1]) - 
-                             fact[i] * Cs_node[i] * (T[i] - last_T[i]) - CONST_RHOFW * CONST_LATICE * 
-                             (theta_liq[i] - last_thliq[i]) / step_dt - CONST_LATSUB * (vapor_flux[i] - 
-                             vapor_flux[i-1]) + AbsSnowLyr[i];
             }
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
@@ -355,8 +402,14 @@ SoilTemperature(double   		   step_dt,
                     trans_left = kappa_int[i-1];
                 }
                 else if (Nsnow > 0) {
-                    trans_left = coverage * (kappa_int[Nsnow-1] + CONST_LATSUB * 
-                                    conv_vapor[Nsnow-1] * drhodT[Nsnow-1]);
+                    if (use_enthalpy) {
+                        trans_left = coverage * (kappa_int[Nsnow-1] + CONST_LATSUB * 
+                                        conv_vapor[Nsnow-1] * drhodT[Nsnow-1]) * dTdenthalpy[Nsnow-1];
+                    }
+                    else {
+                        trans_left = coverage * (kappa_int[Nsnow-1] + CONST_LATSUB * 
+                                        conv_vapor[Nsnow-1] * drhodT[Nsnow-1]);
+                    }
                 }
             }
             else if (i < Nnode - 1) {
@@ -477,64 +530,89 @@ SoilTemperature(double   		   step_dt,
             }
             energy->energy_error = diff;
         }
-        if (energy->Esignchg_count > 5) {
+        if (energy->Esignchg_count > 10) {
             double relax = 0.3;
             diff = diff * relax + (1.0 - relax) * energy_error;
             energy->Esignchg_count = 0;
         }
         if (i < Nsnow) {
-            if (pack_liq[i] > 0.0) {
-                double tmp_liq = pack_liq[i];
-                double diff_mass = diff * CONST_RHOFW * dz_snow[i];
-                pack_liq[i] -= diff_mass;
-                if (pack_liq[i] < 0.0) {
-                    double excess_cold = (-pack_liq[i]) * CONST_LATICE;
-                    T[i] = CONST_TKFRZ - excess_cold /
-                                    (CONST_RHOICE * CONST_CPICE * dz_snow[i]);
-                    pack_ice[i] += tmp_liq;
+            // 雪层使用焓
+            if (use_enthalpy) {
+                double snow_temp = T[i];
+                enthalpy[i] -= diff;
+                double mass_flux = (pack_liq[i] + pack_ice[i]) / coverage;
+                if (enthalpy[i] >= 0.0) {
+                    pack_ice[i] = 0.0;
+                    pack_liq[i] = mass_flux * coverage;
+                    T[i] = CONST_TKFRZ + enthalpy[i] / (mass_flux * CONST_CPFWICE);
+                }
+                else if (enthalpy[i] > -mass_flux * CONST_LATICE) {
+                    pack_ice[i] = (-enthalpy[i] / CONST_LATICE) * coverage;
+                    pack_liq[i] = mass_flux * coverage - pack_ice[i];
+                    T[i] = CONST_TKFRZ;
+                }
+                else {
+                    pack_ice[i] = mass_flux * coverage;
                     pack_liq[i] = 0.0;
-                    double max_ice = CONST_RHOICE * dz_snow[i];
-                    if (pack_ice[i] > max_ice) {
-                        double excess_ice = pack_ice[i] - max_ice;
-                        pack_ice[i] = max_ice;
-                        // 多余冻结水无法进入冰相
-                        pack_liq[i] += excess_ice;
+                    T[i] = CONST_TKFRZ + (enthalpy[i] + mass_flux * CONST_LATICE) / (mass_flux * CONST_CPICE);
+                }
+                diff = T[i] - snow_temp;
+            }
+            else {  // 雪层使用温度
+                if (pack_liq[i] > 0.0 && T[i] >= CONST_TKFRZ) {
+                    double tmp_liq = pack_liq[i];
+                    double diff_mass = diff * CONST_RHOFW * dz_snow[i] * coverage;
+                    pack_liq[i] -= diff_mass;
+                    if (pack_liq[i] < 0.0) {
+                        double excess_cold = (-pack_liq[i]) * CONST_LATICE;
+                        T[i] = CONST_TKFRZ - excess_cold /
+                                        (CONST_RHOICE * CONST_CPICE * dz_snow[i] * coverage);
+                        pack_ice[i] += tmp_liq;
+                        pack_liq[i] = 0.0;
+                        double max_ice = CONST_RHOICE * dz_snow[i] * coverage;
+                        if (pack_ice[i] > max_ice) {
+                            double excess_ice = pack_ice[i] - max_ice;
+                            pack_ice[i] = max_ice;
+                            // 多余冻结水无法进入冰相
+                            pack_liq[i] += excess_ice;
+                        }
+                    }
+                    else {
+                        // 约束冰含量
+                        double max_ice = CONST_RHOICE * dz_snow[i] * coverage;
+                        pack_ice[i] += diff_mass;
+                        if (pack_ice[i] > max_ice) {
+                            // 超过最大冰含量，调整记录
+                            double excess_ice = pack_ice[i] - max_ice;
+                            pack_ice[i] = max_ice;
+                            pack_liq[i] += excess_ice;
+                        }
+                        if (pack_ice[i] < 0.0) {
+                            pack_liq[i] += pack_ice[i];
+                            pack_ice[i] = 0.0;
+                        }
+                        // 约束温度不超过冰点
+                        T[i] = CONST_TKFRZ;
                     }
                 }
                 else {
-                    // 约束冰含量
-                    double max_ice = CONST_RHOICE * dz_snow[i];
-                    pack_ice[i] += diff_mass;
-                    if (pack_ice[i] > max_ice) {
-                        // 超过最大冰含量，调整记录
-                        double excess_ice = pack_ice[i] - max_ice;
-                        pack_ice[i] = max_ice;
-                        pack_liq[i] += excess_ice;
-                    }
-                    if (pack_ice[i] < 0.0) {
-                        pack_liq[i] += pack_ice[i];
-                        pack_ice[i] = 0.0;
-                    }
-                    // 约束温度不超过冰点
-                    T[i] = CONST_TKFRZ;
-                }
-            }
-            else {
-                T[i] -= diff;
-                if (T[i] > CONST_TKFRZ) {
-                    pack_liq[i] = CONST_RHOICE * CONST_CPICE * dz_snow[i] * 
-                                (T[i] - CONST_TKFRZ) / CONST_LATICE;
-                    if (pack_liq[i] > pack_ice[i]) {
-                        double excess_energy =
-                            (pack_liq[i] - pack_ice[i]) * CONST_LATICE;
-                        pack_liq[i] = pack_ice[i];
-                        pack_ice[i] = 0.0;
-                        T[i] = CONST_TKFRZ + excess_energy /
-                                (CONST_RHOFW * CONST_CPICE * dz_snow[i]);              
-                    }
-                    else {
-                        pack_ice[i] -= pack_liq[i];
-                        T[i] = CONST_TKFRZ;
+                    T[i] -= diff;
+                    if (T[i] > CONST_TKFRZ) {
+                        pack_liq[i] = CONST_RHOICE * CONST_CPICE * dz_snow[i] * coverage *
+                                    (T[i] - CONST_TKFRZ) / CONST_LATICE;
+                        if (pack_liq[i] > pack_ice[i]) {
+                            double excess_energy =
+                                (pack_liq[i] - pack_ice[i]) * CONST_LATICE;
+                            pack_liq[i] = pack_ice[i];
+                            pack_ice[i] = 0.0;
+                            T[i] = CONST_TKFRZ + excess_energy /
+                                    (CONST_RHOFW * CONST_CPICE * dz_snow[i] * coverage);              
+                        }
+                        else {
+                            // 部分融化
+                            pack_ice[i] -= pack_liq[i];
+                            T[i] = CONST_TKFRZ;
+                        }
                     }
                 }
             }
@@ -544,7 +622,7 @@ SoilTemperature(double   		   step_dt,
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
             if (cell->h2osfc > param.TOL_A) {
-                if (cell->h2osfc_liq > 0.0) {
+                if (cell->h2osfc_liq > 0.0 && T[i] >= CONST_TKFRZ) {
                     double tmp_liq = cell->h2osfc_liq;
                     double diff_mm = diff * cell->h2osfc * CONST_RHOFW;
                     cell->h2osfc_liq -= diff_mm;

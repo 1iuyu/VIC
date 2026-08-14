@@ -32,6 +32,8 @@ update_last_state(energy_bal_struct *energy,
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
     double *snow_frac = snow->snow_frac;
+    double *enthalpy = snow->enthalpy;
+    double *last_enthalpy= snow->last_enthalpy;
     double *last_thice = snow->last_thice;
     double *last_thliq = snow->last_thliq;
     double *last_snowfrac = snow->last_snowfrac;
@@ -61,5 +63,7 @@ update_last_state(energy_bal_struct *energy,
         last_thice[i] = theta_ice[i];
         last_thliq[i] = theta_liq[i];
         last_snowfrac[i] = snow_frac[i];
+        last_enthalpy[i] = enthalpy[i];
     }
+    last_enthalpy[Nsnow] = enthalpy[Nsnow];
 }

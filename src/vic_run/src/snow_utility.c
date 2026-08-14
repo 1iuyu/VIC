@@ -194,7 +194,10 @@ update_snow_fluxes(double    *depth1,
 *           combined snowpack layer
 ******************************************************************************/
 void
-distribute_snow_state(double            air_temp,
+distribute_snow_state(double            step_dt,
+                      double            wind,
+                      double            air_temp,
+                      double            pressure,
                       snow_data_struct *snow)
 
 {
@@ -270,6 +273,17 @@ distribute_snow_state(double            air_temp,
     snow->last_Nsnow = snow->Nsnow;
     snow->last_swq = snow->swq;
     size_t i, Nsnow = snow->Nsnow;
+
+    // snow layer compaction, combination, and division
+    if (Nsnow > 0) {
+        /* snow layer combination */
+        snow_compaction(step_dt, 
+                        air_temp, wind,
+                        pressure, snow);
+
+        /* snow layer division */
+        snow_division(snow);
+    }
 
     for (i = 0; i < Nsnow; i++) {
         double SnowMass = pack_ice[i] + pack_liq[i];

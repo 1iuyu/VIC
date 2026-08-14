@@ -24,7 +24,6 @@ initialize_snow(snow_data_struct *snow,
         // Prognostic states
         snow[i].Nsnow = 0;
         snow[i].last_Nsnow = 0;
-        snow[i].albedo = 0.0;
         snow[i].coverage = 0.0;
         snow[i].snowage = 0.0;
         snow[i].last_swq = 0.0;
@@ -51,6 +50,10 @@ initialize_snow(snow_data_struct *snow,
             snow[i].pack_frze[lidx] = 0.0;
             snow[i].last_snowfrac[lidx] = 0.0;
             snow[i].snow_thresholds[lidx] = dz_snow_min[lidx];
+        }
+        for (lidx = 0; lidx < MAX_SNOWS+1; lidx++) {
+            snow[i].enthalpy[lidx] = 0.0;
+            snow[i].last_enthalpy[lidx] = 0.0;
         }
         snow[i].glac_excess = 0.0;
         snow[i].pack_comb = 0.0;
