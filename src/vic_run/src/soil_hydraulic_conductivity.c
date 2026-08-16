@@ -13,8 +13,7 @@ void
 soil_hydraulic_conductivity(cell_data_struct *cell,
                             soil_con_struct  *soil_con)
 {
-    size_t Nsoil = cell->Nsoil;
-    size_t i, j;
+    size_t i, Nsoil = cell->Nsoil;
     double ice_param = -6.0;
     double *ice = cell->ice;
     double frac_ice[MAX_SOILS] = {0};

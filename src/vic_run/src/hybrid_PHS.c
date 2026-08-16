@@ -11,41 +11,42 @@
  * @brief  use a hybrid solver to find the root of the ci_func equation 
  *         for sunlit and shaded leaves
  *****************************************************************************/
-void hybrid_PHS(double           *x0sun, 
-                double           *x0sha,
-                double           *mat_VEG,
-                double           *bsun, 
-                double           *bsha,
-                double            jesun, 
-                double            jesha,
-                double            CP,
-                double            KC,
-                double            KO,
-                double            thm, 
-                double            gb_mol,
-                double            qsat_T, 
-                double            Qair_over,
-                double            pressure, 
-                double            air_density,
-                double            atmosCO2, 
-                double            atmosO2,
-                double            lmr_sun, 
-                double            lmr_sha,
-                double            rh_canopy,
-                double            vcmax_sun,
-                double            vcmax_sha,
-                double            tpu_sun,
-                double            tpu_sha,
-                double            kp_sun,
-                double            kp_sha,
-                double            aPAR_sun,
-                double            aPAR_sha,
-                double           *gs_mol_sun, 
-                double           *gs_mol_sha,
-                cell_data_struct *cell,
-                soil_con_struct  *soil_con,
-                veg_var_struct   *veg_var,
-                veg_lib_struct   *veg_lib)
+void 
+hybrid_PHS(double           *x0sun, 
+           double           *x0sha,
+           double           *mat_VEG,
+           double           *bsun, 
+           double           *bsha,
+           double            jesun, 
+           double            jesha,
+           double            CP,
+           double            KC,
+           double            KO,
+           double            thm, 
+           double            gb_mol,
+           double            qsat_T, 
+           double            Qair_over,
+           double            pressure, 
+           double            air_density,
+           double            atmosCO2, 
+           double            atmosO2,
+           double            lmr_sun, 
+           double            lmr_sha,
+           double            rh_canopy,
+           double            vcmax_sun,
+           double            vcmax_sha,
+           double            tpu_sun,
+           double            tpu_sha,
+           double            kp_sun,
+           double            kp_sha,
+           double            aPAR_sun,
+           double            aPAR_sha,
+           double           *gs_mol_sun, 
+           double           *gs_mol_sha,
+           cell_data_struct *cell,
+           soil_con_struct  *soil_con,
+           veg_var_struct   *veg_var,
+           veg_lib_struct   *veg_lib)
 {
     // 局部变量
     double x[4];
@@ -87,11 +88,11 @@ void hybrid_PHS(double           *x0sun,
         iter1++;
         iter2 = 0;
         
-        x1sun = *x0sun;
+        //x1sun = *x0sun;
         *x0sun = max(0.1, x1sun);
         x1sun = 0.99 * x1sun;
         
-        x1sha = *x0sha;
+        //x1sha = *x0sha;
         *x0sha = max(0.1, x1sha);
         x1sha = 0.99 * x1sha;
         

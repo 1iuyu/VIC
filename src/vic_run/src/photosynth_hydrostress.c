@@ -26,16 +26,17 @@ photosynth_hydrostress(double            thm,
                        veg_lib_struct   *veg_lib)
 {   
     extern parameters_struct param;
-    size_t i, Ncanopy;
+    size_t i, Ncanopy = cell->Ncanopy;
     double *aPAR_sun = veg_var->aPAR_sun;
     double *aPAR_sha = veg_var->aPAR_sha;
     double *dz_soil = soil_con->dz_soil;
     double *root = cell->root;
     double *LAI_z = veg_var->LAI_z;
+    double *LAIsun_z = veg_var->LAIsun_z;
+    double *LAIsha_z = veg_var->LAIsha_z;
     double *hksr_int = cell->hksr_int; // soil-root interface conductance (mm/s)
     double *mat_VEG = veg_var->mat_VEG; // 水势：0-阳叶，1-阴叶，2-木质部，3-根部
     // initialize variables
-    Ncanopy = cell->Ncanopy;
     double f_N = 0.0;
     double CF = pressure / (CONST_RGAS * thm) * 1.0e6;
     double gb_mol = 1.0 / cell->Ra_leaf * CF;
@@ -121,13 +122,9 @@ photosynth_hydrostress(double            thm,
     double cs_sha = 0.0;
     double gs_mol_sun = 0.0;
     double gs_mol_sha = 0.0;
-    double Ra_sun[MAX_CANOPYS];
-    double Ra_sha[MAX_CANOPYS];
+    double Ra_sun[MAX_CANOPYS] = {0};
+    double Ra_sha[MAX_CANOPYS] = {0};
     // 初始化光合作用和水分胁迫变量
-    for (i = 0; i < MAX_CANOPYS; i++) {
-        Ra_sun[i] = 0.0;
-        Ra_sha[i] = 0.0;
-    }
     double LAIcanopy = 0.0;
     double nscaler_sun = 0.0;
     double nscaler_sha = 0.0;
@@ -183,13 +180,19 @@ photosynth_hydrostress(double            thm,
             double jmaxc = fth25(param.PHOTO_DJ, jmaxse);
             double tpuc = fth25(param.PHOTO_DT, tpuse);
             
-            vcmax_sun = vcmax25 * nscaler_sun * ft(Tfoliage, param.PHOTO_EV) * fth(Tfoliage, param.PHOTO_DV, vcmaxse, vcmaxc);
-            jmax_sun = jmax25 * nscaler_sun * ft(Tfoliage, param.PHOTO_EJ) * fth(Tfoliage, param.PHOTO_DJ, jmaxse, jmaxc);
-            tpu_sun = tpu25 * nscaler_sun * ft(Tfoliage, param.PHOTO_ET) * fth(Tfoliage, param.PHOTO_DT, tpuse, tpuc);
+            vcmax_sun = vcmax25 * nscaler_sun * ft(Tfoliage, param.PHOTO_EV) * 
+                                    fth(Tfoliage, param.PHOTO_DV, vcmaxse, vcmaxc);
+            jmax_sun = jmax25 * nscaler_sun * ft(Tfoliage, param.PHOTO_EJ) * 
+                                    fth(Tfoliage, param.PHOTO_DJ, jmaxse, jmaxc);
+            tpu_sun = tpu25 * nscaler_sun * ft(Tfoliage, param.PHOTO_ET) * 
+                                    fth(Tfoliage, param.PHOTO_DT, tpuse, tpuc);
             
-            vcmax_sha = vcmax25 * nscaler_sha * ft(Tfoliage, param.PHOTO_EV) * fth(Tfoliage, param.PHOTO_DV, vcmaxse, vcmaxc);
-            jmax_sha = jmax25 * nscaler_sha * ft(Tfoliage, param.PHOTO_EJ) * fth(Tfoliage, param.PHOTO_DJ, jmaxse, jmaxc);
-            tpu_sha = tpu25 * nscaler_sha * ft(Tfoliage, param.PHOTO_ET) * fth(Tfoliage, param.PHOTO_DT, tpuse, tpuc);
+            vcmax_sha = vcmax25 * nscaler_sha * ft(Tfoliage, param.PHOTO_EV) * 
+                                    fth(Tfoliage, param.PHOTO_DV, vcmaxse, vcmaxc);
+            jmax_sha = jmax25 * nscaler_sha * ft(Tfoliage, param.PHOTO_EJ) * 
+                                    fth(Tfoliage, param.PHOTO_DJ, jmaxse, jmaxc);
+            tpu_sha = tpu25 * nscaler_sha * ft(Tfoliage, param.PHOTO_ET) * 
+                                    fth(Tfoliage, param.PHOTO_DT, tpuse, tpuc);
             
             if (veg_lib->Ctype == PHOTO_C4) {
                 // C4植物的温度响应
@@ -213,7 +216,7 @@ photosynth_hydrostress(double            thm,
             
             // 阳叶
             double theta_psii = 0.7;  // 经验曲率参数
-            double r1, r2;
+            double r1 = 0.0, r2 = 0.0;
             double aquad, bquad, cquad;
             double qabs = 0.5 * (1.0 - param.PHOTO_FNPS) * aPAR_sun[i] * 4.6;
             aquad = theta_psii;
@@ -287,6 +290,11 @@ photosynth_hydrostress(double            thm,
             
             gs = gs_mol_sha / CF;
             Ra_sha[i] = min(1.0 / gs, param.PHOTO_RSMAX);
+
+            // Make sure iterative solution is correct
+            if (gs_mol_sun < 0.0 || gs_mol_sha < 0.0) {
+                log_err("Negative stomatal conductance: gs_mol_sun = %.4f, gs_mol_sha = %.4f", gs_mol_sun, gs_mol_sha);
+            }
             
             // ========== Ball-Berry 一致性校验 ==========
             // 阳叶
@@ -339,8 +347,8 @@ photosynth_hydrostress(double            thm,
     double RS_sunlit = 0.0;
     double RS_shade = 0.0;
     for (i = 0; i < Ncanopy; i++) {
-        gscan_sun += LAI_z[i] / (Ra_sun[i] + cell->Ra_leaf);
-        laican_sun += LAI_z[i];
+        gscan_sun += LAIsun_z[i] / (Ra_sun[i] + cell->Ra_leaf);
+        laican_sun += LAIsun_z[i];
     }
     if (laican_sun > 0.0) {
         RS_sunlit = laican_sun / gscan_sun - cell->Ra_leaf;
@@ -351,8 +359,8 @@ photosynth_hydrostress(double            thm,
     double laican_sha = 0.0;
     double gscan_sha = 0.0;
     for (i = 0; i < Ncanopy; i++) {
-        gscan_sha += LAI_z[i] / (Ra_sha[i] + cell->Ra_leaf);
-        laican_sha += LAI_z[i];
+        gscan_sha += LAIsha_z[i] / (Ra_sha[i] + cell->Ra_leaf);
+        laican_sha += LAIsha_z[i];
     }
     if (laican_sha > 0.0) {
         RS_shade = laican_sha / gscan_sha - cell->Ra_leaf;
