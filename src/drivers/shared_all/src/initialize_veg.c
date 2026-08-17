@@ -41,6 +41,17 @@ initialize_veg(veg_var_struct *veg_var,
             veg_var[i].LAIsha_z[j] = 0.0;
             veg_var[i].aPAR_sun[j] = 0.0;
             veg_var[i].aPAR_sha[j] = 0.0;
+            // PHS terms
+            veg_var[i].ac_sun[j] = 0.0;
+            veg_var[i].ac_sha[j] = 0.0;
+            veg_var[i].ag_sun[j] = 0.0;
+            veg_var[i].ag_sha[j] = 0.0;
+            veg_var[i].aj_sun[j] = 0.0;
+            veg_var[i].aj_sha[j] = 0.0;
+            veg_var[i].an_sun[j] = 0.0;
+            veg_var[i].an_sha[j] = 0.0;
+            veg_var[i].ap_sun[j] = 0.0;
+            veg_var[i].ap_sha[j] = 0.0;
         }
         for (j = 0; j < 4; j++) {
             veg_var[i].mat_VEG[j] = 0.0;
@@ -52,18 +63,8 @@ initialize_veg(veg_var_struct *veg_var,
         veg_var[i].SnowDrip = 0.0;
         veg_var[i].SnowUnload = 0.0;
         // PHS terms
-        veg_var[i].ac_sun = 0.0;
-        veg_var[i].ac_sha = 0.0;
-        veg_var[i].ag_sun = 0.0;
-        veg_var[i].ag_sha = 0.0;
-        veg_var[i].aj_sun = 0.0;
-        veg_var[i].aj_sha = 0.0;
-        veg_var[i].an_sun = 0.0;
-        veg_var[i].an_sha = 0.0;
-        veg_var[i].ap_sun = 0.0;
-        veg_var[i].ap_sha = 0.0;
-        veg_var[i].RS_sunlit = 0.0;
-        veg_var[i].RS_shade = 0.0;
+        veg_var[i].RS_sun = 0.0;
+        veg_var[i].RS_sha = 0.0;
         veg_var[i].NetPhotosun = 0.0;
         veg_var[i].NetPhotosha = 0.0;
         veg_var[i].ksun_vcmax = 0.0;

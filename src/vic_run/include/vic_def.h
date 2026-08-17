@@ -727,9 +727,11 @@ typedef struct {
                                             the soil column (mm) */
     double recharge;                   /**< aquifer recharge rate (mm/s) */
     double storage_aqf;
-    double evap;
-    double snowfrost;
+    double evap;                       /**< total net evaporation [mm/s] */
+    double snow_frost;
     double snow_sublim;
+    double snow_dew;
+    double snow_evap;
     double lateral_flow[MAX_SOILS];    /**< lateral flow through the soil column (mm/s) */
     double drhodT[MAX_SNOWS+1];        /**< density derivative of snowpack (kg/m^3/K) */
     double dQvdSMP[MAX_SOILS];         /**< derivative of vapor density with respect to soil matric potential (m3/m3/m) */
@@ -746,10 +748,12 @@ typedef struct {
     size_t Nfrost;
     double fdepth;
     double tdepth;
-    double esoil;                      /**< soil evaporation from soil layer (mm) */
+    double soil_evap;                      /**< soil evaporation from soil layer (mm) */
+    double soil_sublim;
+    double soil_frost;
+    double soil_dew;                    /**< evapotranspiration from soil layer (mm) */
     double esoil_sub;
     double esoil_grnd;
-    double dewsoil;                    /**< evapotranspiration from soil layer (mm) */
     double transp_fact;                   /**< soil water transpiration factor (0 to 1) */
     double soil_excess;
     double root[MAX_SOILS];
@@ -912,18 +916,18 @@ typedef struct {
     // PHS terms
     double aPAR_sun[MAX_CANOPYS];            /**< par absorbed per unit lai for canopy layer (w/m**2) */
     double aPAR_sha[MAX_CANOPYS];            /**< par absorbed per unit lai for canopy layer (w/m**2) */
-    double ac_sun;              /**< Rubisco-limited gross photosynthesis (umol CO2/m**2/s) */
-    double ac_sha;              /**< Rubisco-limited gross photosynthesis (umol CO2/m**2/s) */
-    double ag_sun;              /**< co-limited gross leaf photosynthesis (umol CO2/m**2/s) */
-    double ag_sha;              /**< co-limited gross leaf photosynthesis (umol CO2/m**2/s) */
-    double aj_sun;              /**< RuBP-limited gross photosynthesis (umol CO2/m**2/s) */
-    double aj_sha;              /**< RuBP-limited gross photosynthesis (umol CO2/m**2/s) */
-    double ap_sun;              /**< product-limited (C3) or CO2-limited (C4) gross photosynthesis (umol CO2/m**2/s) */
-    double ap_sha;              /**< product-limited (C3) or CO2-limited (C4) gross photosynthesis (umol CO2/m**2/s) */
-    double an_sun;              /**< net sunlit leaf photosynthesis (umol CO2/m**2/s) */
-    double an_sha;              /**< net shaded leaf photosynthesis (umol CO2/m**2/s) */
-    double RS_sunlit;           /**< sunlit leaf stomatal resistance [s/m] */
-    double RS_shade;            /**< shaded leaf stomatal resistance [s/m] */
+    double ac_sun[MAX_CANOPYS];              /**< Rubisco-limited gross photosynthesis (umol CO2/m**2/s) */
+    double ac_sha[MAX_CANOPYS];              /**< Rubisco-limited gross photosynthesis (umol CO2/m**2/s) */
+    double ag_sun[MAX_CANOPYS];              /**< co-limited gross leaf photosynthesis (umol CO2/m**2/s) */
+    double ag_sha[MAX_CANOPYS];              /**< co-limited gross leaf photosynthesis (umol CO2/m**2/s) */
+    double aj_sun[MAX_CANOPYS];              /**< RuBP-limited gross photosynthesis (umol CO2/m**2/s) */
+    double aj_sha[MAX_CANOPYS];              /**< RuBP-limited gross photosynthesis (umol CO2/m**2/s) */
+    double ap_sun[MAX_CANOPYS];              /**< product-limited (C3) or CO2-limited (C4) gross photosynthesis (umol CO2/m**2/s) */
+    double ap_sha[MAX_CANOPYS];              /**< product-limited (C3) or CO2-limited (C4) gross photosynthesis (umol CO2/m**2/s) */
+    double an_sun[MAX_CANOPYS];              /**< net sunlit leaf photosynthesis (umol CO2/m**2/s) */
+    double an_sha[MAX_CANOPYS];              /**< net shaded leaf photosynthesis (umol CO2/m**2/s) */
+    double RS_sun;              /**< sunlit leaf stomatal resistance [s/m] */
+    double RS_sha;              /**< shaded leaf stomatal resistance [s/m] */
     double ksun_vcmax;          /**< leaf to canopy scaling coefficient, sunlit leaf vcmax */
     double ksha_vcmax;          /**< leaf to canopy scaling coefficient, shaded leaf vcmax */
     double NetPhotosha;         /**< net shaded leaf photosynthesis (umol CO2/m**2/s) */

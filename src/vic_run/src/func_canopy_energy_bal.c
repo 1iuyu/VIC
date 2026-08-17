@@ -250,8 +250,8 @@ func_canopy_energy_bal(size_t             hidx,
         // 计算叶片潜在蒸发量的比例
         double rppdry = 0.0;
         if (dryFrac > 0.0) {
-            rppdry = dryFrac * Ra_leaf * (veg_var->LAI_sun / (Ra_leaf + veg_var->RS_sunlit) + 
-                            veg_var->LAI_sha / (Ra_leaf + veg_var->RS_shade)) / NetLAI;
+            rppdry = dryFrac * Ra_leaf * (veg_var->LAI_sun / (Ra_leaf + veg_var->RS_sun) + 
+                            veg_var->LAI_sha / (Ra_leaf + veg_var->RS_sha)) / NetLAI;
         }
         else {
             rppdry = 0.0;
@@ -430,19 +430,22 @@ func_canopy_energy_bal(size_t             hidx,
     }
 
     // 更新累积的露水 (kg/m2)
+    double transp = cell->transp * fcanopy; // 转换为区域平均值
+    canopyevap *= fcanopy;
+    double iter_intsnow = veg_var->iter_intsnow;
+    double iter_intrain = veg_var->iter_intrain;
     if (Tfoliage > CONST_TKFRZ) {
-        if ((canopyevap - cell->transp) * step_dt > veg_var->iter_intrain) {
-            veg_var->int_snow = max(0.0, veg_var->iter_intsnow + veg_var->iter_intrain +
-                     (cell->transp - canopyevap) * step_dt);
+        if ((canopyevap - transp) * step_dt > iter_intrain) {
+            veg_var->int_snow = max(0.0, iter_intsnow + iter_intrain +
+                     (transp - canopyevap) * step_dt);
         }
-        veg_var->int_rain = max(0.0, veg_var->iter_intrain + (cell->transp - canopyevap) * step_dt);
+        veg_var->int_rain = max(0.0, iter_intrain + (transp - canopyevap) * step_dt);
     }
     else if (Tfoliage <= CONST_TKFRZ) {
-        if ((canopyevap - cell->transp) * step_dt > veg_var->iter_intsnow) {
-            veg_var->int_rain = veg_var->iter_intrain + veg_var->iter_intsnow + (cell->transp - 
-                                    canopyevap) * step_dt;
+        if ((canopyevap - transp) * step_dt > iter_intsnow) {
+            veg_var->int_rain = iter_intrain + iter_intsnow + (transp - canopyevap) * step_dt;
         }
-        veg_var->int_snow = max(0.0, veg_var->iter_intsnow + (cell->transp - canopyevap) * step_dt);
+        veg_var->int_snow = max(0.0, iter_intsnow + (transp - canopyevap) * step_dt);
     }
     veg_var->canopy_swq = veg_var->int_rain + veg_var->int_snow;
     
@@ -452,6 +455,7 @@ func_canopy_energy_bal(size_t             hidx,
     energy->Tcanopy = Tcanopy;
     energy->Tstem = Tstem;
     energy->Tfoliage = Tfoliage;
+    cell->transp = transp;
     cell->canopyevap = canopyevap;
     energy->SensibleStem = SensibleStem;
     energy->SensibleLeaf = SensibleLeaf;

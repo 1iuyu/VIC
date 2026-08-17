@@ -359,11 +359,20 @@ snow_hydrology(double             step_dt,
                  energy,  cell, 
                  snow, soil_con);
 
-    /* set esoil and transpiration mm/s -> m/s */
-    cell->esoil = soil_evap * (1.0 - coverage);
-    cell->dewsoil = soil_dew * (1.0 - coverage);
-    cell->snowfrost = snowfrost * coverage;
-    cell->snow_sublim = snow_sublim * coverage;
+    // === 损失项（正值） ===
+    cell->soil_evap = soil_evap * (1.0 - coverage);       // 裸土蒸发
+    cell->soil_sublim = soil_sublim * (1.0 - coverage);   // 裸土升华
+    cell->snow_evap = snow_evap * coverage;               // 雪面蒸发
+    cell->snow_sublim = snow_sublim * coverage;           // 雪面升华
+
+    // === 收入项（负值） ===
+    cell->soil_dew = soil_dew * (1.0 - coverage);         // 裸土露水
+    cell->soil_frost = soilfrost * (1.0 - coverage);      // 裸土霜凝华
+    cell->snow_dew = snow_dew * coverage;                 // 雪面露水
+    cell->snow_frost = snowfrost * coverage;              // 雪面霜凝华
+
+    cell->evap = (cell->soil_evap + cell->soil_sublim + cell->snow_evap + cell->snow_sublim)
+               - (cell->soil_dew + cell->soil_frost + cell->snow_dew + cell->snow_frost);
 
     return (0);
 }

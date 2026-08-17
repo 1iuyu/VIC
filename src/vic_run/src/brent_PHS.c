@@ -12,7 +12,8 @@
  *         for sunlit and shaded leaves
  *****************************************************************************/
 void 
-brent_PHS(double            x1sun, 
+brent_PHS(size_t            iv,
+          double            x1sun, 
           double            x2sun, 
           double            f1sun, 
           double            f2sun, 
@@ -206,7 +207,7 @@ brent_PHS(double            x1sun,
         gs0sha = *gs_mol_sha;
         
         // 调用ci_func_PHS计算新点的函数值
-        ci_func_PHS(bflag, b[0], b[1], 
+        ci_func_PHS(iv, bflag, b[0], b[1], 
                     &fb[0], &fb[1],
                     bsun, bsha, 
                     gs_mol_sun, gs_mol_sha,

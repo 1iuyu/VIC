@@ -260,8 +260,8 @@ collect_wb_terms(cell_data_struct cell,
     double tmp_evap = 0.0;
     tmp_evap += cell.evap;
     out_data[OUT_NET_EVAP][0] += cell.evap * Cv * dt_sec;
-    out_data[OUT_DEW_SOIL][0] += cell.dewsoil * Cv * dt_sec;
-    out_data[OUT_FROST_SNOW][0] += cell.snowfrost * Cv * dt_sec;
+    out_data[OUT_DEW_SOIL][0] += cell.soil_dew * Cv * dt_sec;
+    out_data[OUT_FROST_SNOW][0] += cell.snow_frost * Cv * dt_sec;
     out_data[OUT_SUB_SNOW][0] += cell.snow_sublim * Cv * dt_sec;
 
     // Canopy evaporation
@@ -290,7 +290,7 @@ collect_wb_terms(cell_data_struct cell,
     /** record recharge to groundwater storage */
     out_data[OUT_RECHARGE][0] += cell.recharge * Cv;
 
-    /** record soil_inflow **/
+    /** record soil_inflow[mm] **/
     out_data[OUT_INFLOW][0] += cell.soil_inflow * Cv * dt_sec * MM_PER_M;
 
     /** record canopy interception **/

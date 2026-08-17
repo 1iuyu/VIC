@@ -12,7 +12,8 @@
  *         for sunlit and shaded leaves
  *****************************************************************************/
 void 
-hybrid_PHS(double           *x0sun, 
+hybrid_PHS(size_t            iv,
+           double           *x0sun, 
            double           *x0sha,
            double           *mat_VEG,
            double           *bsun, 
@@ -101,7 +102,7 @@ hybrid_PHS(double           *x0sun,
         tolsha = fabs(x1sha) * eps;
         
         // 第一次ci_func调用
-        ci_func_PHS(bflag, *x0sun, *x0sha, &f0sun, &f0sha,
+        ci_func_PHS(bflag, iv, *x0sun, *x0sha, &f0sun, &f0sha,
                     bsun, bsha, gs_mol_sun, gs_mol_sha, 
                     x, aPAR_sun, aPAR_sha, gs0sun, 
                     gs0sha, vcmax_sun, vcmax_sha,
@@ -120,7 +121,7 @@ hybrid_PHS(double           *x0sun,
         bflag = false;
         
         // 第二次ci_func调用（计算f(x1)）
-        ci_func_PHS(bflag, x1sun, x1sha, &f1sun, &f1sha,
+        ci_func_PHS(bflag, iv, x1sun, x1sha, &f1sun, &f1sha,
                     bsun, bsha, gs_mol_sun, gs_mol_sha, 
                     x, aPAR_sun, aPAR_sha, gs0sun, 
                     gs0sha, vcmax_sun, vcmax_sha,
@@ -166,7 +167,7 @@ hybrid_PHS(double           *x0sun,
             x1sha = x1sha + dxsha;
             
             // 调用ci_func计算新的f值
-            ci_func_PHS(bflag, x1sun, x1sha, &f1sun, &f1sha,
+            ci_func_PHS(bflag, iv, x1sun, x1sha, &f1sun, &f1sha,
                         bsun, bsha, gs_mol_sun, gs_mol_sha, 
                         x, aPAR_sun, aPAR_sha, gs0sun, 
                         gs0sha, vcmax_sun, vcmax_sha,
@@ -204,7 +205,7 @@ hybrid_PHS(double           *x0sun,
             
             // 如果函数值异号（根被包围），切换到Brent方法
             if ((f1sun * f0sun < 0.0) && (f1sha * f0sha < 0.0)) {
-                brent_PHS(*x0sun, x1sun, f0sun, f1sun,
+                brent_PHS(iv, *x0sun, x1sun, f0sun, f1sun,
                           *x0sha, x1sha, f0sha, f1sha,
                           tolsun, x, aPAR_sun, aPAR_sha,
                           vcmax_sun, vcmax_sha,
@@ -228,7 +229,7 @@ hybrid_PHS(double           *x0sun,
             if (iter2 > itmax) {
                 x1sun = minxsun;
                 x1sha = minxsha;
-                ci_func_PHS(bflag, x1sun, x1sha, &f1sun, &f1sha,
+                ci_func_PHS(bflag, iv, x1sun, x1sha, &f1sun, &f1sha,
                             bsun, bsha, gs_mol_sun, gs_mol_sha, 
                             x, aPAR_sun, aPAR_sha, gs0sun, 
                             gs0sha, vcmax_sun, vcmax_sha,

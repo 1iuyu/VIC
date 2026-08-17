@@ -55,7 +55,7 @@ calc_stress(double           *bsun,
     double gs0sun = gs_mol_sun;
     double gs0sha = gs_mol_sha;
     
-    /* 计算蒸腾需求（未受胁迫的潜在蒸腾） */
+    /* 计算蒸腾需求（未受胁迫的潜在蒸腾）*/
     bool CALC_TRANSP = true;
     get_qflx(CALC_TRANSP, gb_mol,
              qsat_T, Qair_over,

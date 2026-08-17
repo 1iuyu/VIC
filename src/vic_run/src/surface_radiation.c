@@ -32,10 +32,14 @@ surface_radiation(double            *shortwave_dir,
     double tmp_absorb_grnd = 0.0;
     double ShortOverDir = 0.0;
     double ShortOverDfs = 0.0;
+    double *LAI_z = veg_var->LAI_z;
+    double *fsun_z = veg_var->fsun_z;
     double *aPAR_sun = veg_var->aPAR_sun;
     double *aPAR_sha = veg_var->aPAR_sha;
     double *AbsSubDir = energy->AbsSubDir;
     double *AbsSubDfs = energy->AbsSubDfs;
+    double *LAIsun_z = veg_var->LAIsun_z;
+    double *LAIsha_z = veg_var->LAIsha_z;
     double *AbsSnowLyr = energy->AbsSnowLyr;
     double *ShortDir2Dir = energy->ShortDir2Dir;
     double *ShortDfs2Dir = energy->ShortDfs2Dir;
@@ -123,8 +127,10 @@ surface_radiation(double            *shortwave_dir,
         double LAI_sun = 0.0;
         double LAI_sha = 0.0;
         for (i = 0; i < cell->Ncanopy; i++) {
-            LAI_sun += veg_var->LAIsun_z[i];
-            LAI_sha += veg_var->LAIsha_z[i];
+            LAIsun_z[i] = LAI_z[i] * fsun_z[i];
+            LAIsha_z[i] = LAI_z[i] * (1.0 - fsun_z[i]);
+            LAI_sun += LAIsun_z[i];
+            LAI_sha += LAIsha_z[i];
         }
         veg_var->LAI_sun = LAI_sun;
         veg_var->LAI_sha = LAI_sha;

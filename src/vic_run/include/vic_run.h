@@ -14,7 +14,7 @@ void AdvectedEnergy(double, double, double, energy_bal_struct *,
                     cell_data_struct *, veg_var_struct *);
 bool assert_close_double(double x, double y, double rtol, double abs_tol);
 bool assert_close_float(float x, float y, float rtol, float abs_tol);
-void brent_PHS(double, double, double, double, double, double, double, double, 
+void brent_PHS(size_t, double, double, double, double, double, double, double, double, 
                double, double *, double, double, double, double, double, double,
                double, double, double, double, double, double, double, double, double,
                double, double, double, double, double, double, double, double, double,
@@ -51,7 +51,7 @@ int calc_transp_sink(cell_data_struct *, soil_con_struct *, veg_var_struct *);
 int compute_coszen(double, double, double, unsigned short int, unsigned int, double *, double *);
 void compute_soil_resis(double, cell_data_struct *, soil_con_struct *);
 void correct_precip(double *, double, double, double, double);
-void ci_func_PHS(bool, double, double, double *, double *, double *, double *,
+void ci_func_PHS(bool, size_t, double, double, double *, double *, double *, double *,
                  double *, double *, double *, double, double, double, double,
                  double, double, double, double, double, double, double, double,
                  double, double, double, double, double, double, double,
@@ -80,7 +80,7 @@ void get_qflx(bool, double, double, double, double, double, double,
 void getvegwp(double *, double, double *, double *, double, double, 
               double *, double, double, double, cell_data_struct *, 
               soil_con_struct *, veg_var_struct *, veg_lib_struct *);
-void hybrid_PHS(double *, double *, double *, double *, double *,
+void hybrid_PHS(size_t, double *, double *, double *, double *, double *,
                 double, double, double, double, double, double,
                 double, double, double, double, double, double, double,
                 double, double, double, double, double, double, double,
