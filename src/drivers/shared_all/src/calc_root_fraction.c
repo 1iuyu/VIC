@@ -14,22 +14,23 @@
 void
 calc_root_fractions(size_t            veg_class,
                     cell_data_struct *cell,
+                    veg_var_struct   *veg_var,
                     soil_con_struct  *soil_con,
                     veg_lib_struct   *veg_lib)
 {
     /* initialization */
-    int                  layer;
-    size_t               i;
-    double               a;          // Empirical parameter a in eqa(2)
-    double               b;          // Empirical parameter b in eqa(2)
-    double               d;          // Maximum root depth (m)
-    double               Y;
-    double               sum_fract;
-    double               Zsum;
-    double               dum;
+    int    layer;
+    size_t i;
+    double a;          // Empirical parameter a in eqa(2)
+    double b;          // Empirical parameter b in eqa(2)
+    double d;          // Maximum root depth (m)
+    double Y;
+    double sum_fract;
+    double Zsum;
+    double dum;
 
      /* Set number of vegetation tiles */
-    if (cell->IS_VEG == true) {
+    if (cell->IS_VEG) {
 
         // Check that root fractions sum to 1.0
         sum_fract = 0.0;
@@ -49,7 +50,7 @@ calc_root_fractions(size_t            veg_class,
         if (last_node == -1) {
             last_node = soil_con->Nbedrock - 1;
         }
-        cell->Nroot = last_node + 1;
+        veg_var->Nroot = last_node + 1;
         // Reset for actual root fraction calculation
         Zsum = 0.0;
         // Calculate root fraction for each soil layer
@@ -93,6 +94,6 @@ calc_root_fractions(size_t            veg_class,
         }
     }
     else {
-        cell->Nroot = 0;
+        veg_var->Nroot = 0;
     }
 }

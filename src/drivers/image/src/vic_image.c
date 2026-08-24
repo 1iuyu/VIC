@@ -41,15 +41,14 @@ soil_con_struct    *soil_con = NULL;
 veg_con_struct    **veg_con = NULL;
 veg_hist_struct   **veg_hist = NULL;
 veg_lib_struct     *veg_lib = NULL;
-metadata_struct     state_metadata[N_STATE_VARS + N_STATE_VARS_EXT];
+metadata_struct     state_metadata[N_STATE_VARS];
 metadata_struct     out_metadata[N_OUTVAR_TYPES];
-save_data_struct   *save_data;  // [ncells]
 double           ***out_data = NULL;  // [ncells, nvars, nelem]
 stream_struct      *output_streams = NULL;  // [nstreams]
 nc_file_struct     *nc_hist_files = NULL;  // [nstreams]
 
 // Extensions
-rout_struct         rout; // Routing routine (extension)
+rout_struct        *rout = NULL; // Routing routine (extension)
 
 /******************************************************************************
  * @brief   Stand-alone image mode driver of the VIC model
@@ -106,7 +105,7 @@ main(int    argc,
 
     // initialize routing parameters from parameter files
     if (options.ROUT) {
-        rout_init();    // Routing routine (extension)
+        rout_init();
     }
 
     // initialize output structures
@@ -158,10 +157,8 @@ main(int    argc,
     timer_start(&(global_timers[TIMER_VIC_FINAL]));
     // clean up
     vic_image_finalize();
-
-    // clean up routing
     if (options.ROUT) {
-        rout_finalize();    // Routing routine (extension)
+        free(rout);
     }
     // finalize MPI
     status = MPI_Finalize();

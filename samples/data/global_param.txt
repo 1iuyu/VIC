@@ -5,7 +5,6 @@
 #######################################################################
 # Simulation Parameters
 #######################################################################
-NLAYER                 6      # number of soil layers
 MODEL_STEPS_PER_DAY    8      # number of model time steps per day
 STARTYEAR              1951   # year model simulation starts
 STARTMONTH             1      # month model simulation starts
@@ -90,11 +89,13 @@ OUTVAR	      OUT_DISCHARGE
 OUTVAR	      OUT_INFLOW
 OUTVAR	      OUT_ZWT
 OUTVAR	      OUT_SNOW_DEPTH
-OUTVAR      OUT_FROST_SNOW
 OUTVAR	      OUT_SWE_BAND
 OUTVAR	      OUT_RECHARGE
 OUTVAR	      OUT_SNOW_COVER_BAND
-
-
-
-
+OUTVAR	      OUT_TRANSP_VEG
+OUTVAR        OUT_SOIL_FROST
+OUTVAR        OUT_INT_SNOW
+OUTVAR        OUT_SNOW_DRIP
+OUTVAR        OUT_SNOW_FROST
+OUTVAR        OUT_SNOW_FRZE
+OUTVAR        OUT_SNOW_OUTFLOW

@@ -27,21 +27,43 @@ set_nc_var_info(unsigned int       varid,
 
     // Set the number of dimensions and the count sizes
     switch (varid) {
-    case OUT_FDEPTH:
-    case OUT_TDEPTH:
+    case OUT_RA_OVER:
+    case OUT_RA_SUB:
+    case OUT_RA_GRND:
         nc_var->nc_dims = 4;
-        nc_var->nc_counts[1] = nc_hist_file->front_size;
+        nc_var->nc_counts[1] = 3;
         nc_var->nc_counts[2] = nc_hist_file->nj_size;
         nc_var->nc_counts[3] = nc_hist_file->ni_size;
         break;
+    case OUT_VEG_MATRIC:
+        nc_var->nc_dims = 4;
+        nc_var->nc_counts[1] = 4;
+        nc_var->nc_counts[2] = nc_hist_file->nj_size;
+        nc_var->nc_counts[3] = nc_hist_file->ni_size;
+        break;
+    case OUT_MATRIC:
     case OUT_SOIL_ICE:
     case OUT_SOIL_LIQ:
-    case OUT_SOIL_ICE_FRAC:
-    case OUT_SOIL_LIQ_FRAC:
     case OUT_SOIL_MOIST:
     case OUT_SOIL_TEMP:
         nc_var->nc_dims = 4;
-        nc_var->nc_counts[1] = nc_hist_file->node_size;
+        nc_var->nc_counts[1] = nc_hist_file->soil_size;
+        nc_var->nc_counts[2] = nc_hist_file->nj_size;
+        nc_var->nc_counts[3] = nc_hist_file->ni_size;
+        break;
+    case OUT_SNOW_DENSITY:
+    case OUT_SNOW_PACK_ICE:
+    case OUT_SNOW_PACK_LIQ:
+    case OUT_SNOW_ICEFRAC:
+    case OUT_SNOW_LIQFRAC:
+    case OUT_SNOW_POROSITY:
+    case OUT_SNOW_RADIUS:
+    case OUT_PACK_OUTFLOW:
+    case OUT_SNOW_MELT:
+    case OUT_SNOW_FRZE:
+    case OUT_SNOW_PACK_TEMP:
+        nc_var->nc_dims = 4;
+        nc_var->nc_counts[1] = nc_hist_file->snow_size;
         nc_var->nc_counts[2] = nc_hist_file->nj_size;
         nc_var->nc_counts[3] = nc_hist_file->ni_size;
         break;
@@ -86,24 +108,40 @@ set_nc_var_dimids(unsigned int    varid,
 
     // Set the non-default ones
     switch (varid) {
-    case OUT_FDEPTH:
-    case OUT_TDEPTH:
+    case OUT_RA_OVER:
+    case OUT_RA_SUB:
+    case OUT_RA_GRND:
         nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
-        nc_var->nc_dimids[1] = nc_hist_file->front_dimid;
+        nc_var->nc_dimids[1] = 3;
         nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
         nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
         break;
+    case OUT_MATRIC:
     case OUT_SOIL_ICE:
     case OUT_SOIL_LIQ:
-    case OUT_SOIL_ICE_FRAC:
-    case OUT_SOIL_LIQ_FRAC:
     case OUT_SOIL_MOIST:
     case OUT_SOIL_TEMP:
         nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
-        nc_var->nc_dimids[1] = nc_hist_file->node_dimid;
+        nc_var->nc_dimids[1] = nc_hist_file->soil_dimid;
         nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
         nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
         break;
+    case OUT_SNOW_DENSITY:
+    case OUT_SNOW_PACK_ICE:
+    case OUT_SNOW_PACK_LIQ:
+    case OUT_SNOW_ICEFRAC:
+    case OUT_SNOW_LIQFRAC:
+    case OUT_SNOW_POROSITY:
+    case OUT_SNOW_RADIUS:
+    case OUT_PACK_OUTFLOW:
+    case OUT_SNOW_MELT:
+    case OUT_SNOW_FRZE:
+    case OUT_SNOW_PACK_TEMP:
+        nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
+        nc_var->nc_dimids[1] = nc_hist_file->snow_dimid;
+        nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
+        nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
+        break;   
     case OUT_ADVECTION_BAND:
     case OUT_LATENT_BAND:
     case OUT_LATENT_SUB_BAND:

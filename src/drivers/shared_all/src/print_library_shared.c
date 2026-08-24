@@ -34,10 +34,10 @@ print_cell_data(cell_data_struct *cell)
     fprintf(LOG_DEST, "\tbaseflow    : %f\n", cell->baseflow);
     fprintf(LOG_DEST, "\tevap        : %f\n", cell->evap);
     fprintf(LOG_DEST, "\ttransp      : %f\n", cell->transp);
-    fprintf(LOG_DEST, "\tdewsoil     : %f\n", cell->dewsoil);
+    fprintf(LOG_DEST, "\tdewsoil     : %f\n", cell->soil_dew);
     fprintf(LOG_DEST, "\tcanopyevap  : %f\n", cell->canopyevap);
-    fprintf(LOG_DEST, "\tsnowfrost   : %f\n", cell->snowfrost);
-    fprintf(LOG_DEST, "\tsnow_sublim : %f\n", cell->snow_sublim);
+    fprintf(LOG_DEST, "\tsoil_frost  : %f\n", cell->soil_frost);
+    fprintf(LOG_DEST, "\tsoil_sublim : %f\n", cell->soil_sublim);
     fprintf(LOG_DEST, "\tsoil_inflow : %f\n", cell->soil_inflow);
     fprintf(LOG_DEST, "\trunoff      : %f\n", cell->runoff);
 }
@@ -379,21 +379,6 @@ print_parameters(parameters_struct *param)
     fprintf(LOG_DEST, "\tSNOW_NEW_SNOW_DENS_MAX: %.4f\n",
             param->SNOW_NEW_SNOW_DENS_MAX);
     fprintf(LOG_DEST, "\tSNOW_CONDUCT: %.4f\n", param->SNOW_CONDUCT);
-}
-
-/******************************************************************************
- * @brief    Print save data structure.
- *****************************************************************************/
-void
-print_save_data(save_data_struct *save)
-{
-    fprintf(LOG_DEST, "save_data:\n");
-    fprintf(LOG_DEST, "\ttotal_moist_storage: %.4f\n",
-            save->total_moist_storage);
-    fprintf(LOG_DEST, "\ttotal_soil_moist: %.4f\n", save->total_soil_moist);
-    fprintf(LOG_DEST, "\tsurfstor: %.4f\n", save->surfstor);
-    fprintf(LOG_DEST, "\tswe: %.4f\n", save->swe);
-    fprintf(LOG_DEST, "\twdew: %.4f\n", save->wdew);
 }
 
 /******************************************************************************

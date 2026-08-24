@@ -135,9 +135,9 @@ calc_vapor_flux(double             pressure,
 
             // Calculate relative humidity
             rel_humid[i] = exp(CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * matric[i]);
-            
+            double e_actual = esaT * rel_humid[i];
             // 计算土层空气密度
-            air_density = pressure / (CONST_RDAIR * soil_T[i]);
+            air_density = (pressure - 0.378 * e_actual) / (CONST_RDAIR * soil_T[i]);
 
             // 饱和水汽密度（kg/m³）
             double sat_vap_dens = qsaT * air_density;

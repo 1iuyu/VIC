@@ -25,9 +25,6 @@
 // Default snow band setting
 #define SNOW_BAND_TRUE_BUT_UNSET 99999
 
-// Max counter for root distribution iteration
-#define MAX_ROOT_ITER 9999
-
 /******************************************************************************
  * @brief   File formats
  *****************************************************************************/
@@ -98,122 +95,126 @@ enum
 {
     // Water Balance Terms - state variables
     OUT_ASAT,             /**< Saturated Area Fraction */
-    OUT_DELDEPTH,         /**< snow depth increasing rate */
-    OUT_GLAC_EXCESS,      /**< glacier snow excess flow */
+    OUT_CANOPY_SWQ,       /**< precipitation interception storage in canopy */
     OUT_ROOTMOIST,        /**< root zone soil moisture  [mm] */
-    OUT_NEW_DENSITY,
-    OUT_SOIL_ICE_FRAC,       /**< fraction of soil moisture (by mass) that is ice, for each soil layer */
-    OUT_SOIL_LIQ_FRAC,        /**< fraction of soil moisture (by mass) that is liquid, for each soil layer */
-    OUT_SNOW_AGE,
-    OUT_CANOPY_SWE,      /**< precipitation interception storage in canopy  [mm] */
+    OUT_H2OSFC,           /**< surface water or glacier (mm) */
+    OUT_H2O_FRAC,         /**< fraction of ground covered by surface water or glacier */
+    OUT_H2OSFC_LIQ,       /**< surface water or glacier liquid content (mm) */
+    OUT_H2OSFC_ICE,       /**< surface water or glacier ice content (mm) */
+    OUT_MATRIC,           /**< soil matric potential [m] */
+    OUT_NEW_DENSITY,      /**< bulk density of snowfall [kg/m3] */
+    OUT_SNOW_AGE,         /**< snow age (s) */
     OUT_SNOW_COVER,       /**< fractional area of snow cover [fraction] */
-    OUT_SNOW_COMB,
-    OUT_SNOW_DEPTH,       /**< depth of snow pack [cm] */
-    OUT_SNOW_DENSITY,
-    OUT_SNOW_PACK_ICE,
-    OUT_SNOW_PACK_LIQ,
-    OUT_SNOW_ICEFRAC,
-    OUT_SNOW_LIQFRAC,
-    OUT_SNOW_POROSITY,
-    OUT_SOIL_ICE,         /**< soil ice content  [mm] for each soil layer */
-    OUT_SOIL_LIQ,         /**< soil liquid content  [mm] for each soil layer */
+    OUT_SNOW_COMB,        /**< excess liquid water when snow layers combine (mm) */
+    OUT_SNOW_DEPTH,       /**< depth of snow pack [m] */
+    OUT_SNOW_DENSITY,     /**< snow density (kg/m^3) */
+    OUT_SNOW_PACK_ICE,    /**< ice content of the snow pack (mm) */
+    OUT_SNOW_PACK_LIQ,    /**< liquid water content of the snow pack (mm) */
+    OUT_SNOW_ICEFRAC,     /**< partial volume of snow ice [m3/m3] */
+    OUT_SNOW_LIQFRAC,     /**< partial volume of snow liquid water [m3/m3] */
+    OUT_SNOW_POROSITY,    /**< partial volume of snow liquid water [m3/m3] */
+    OUT_SNOW_RADIUS,      /**< effective grain radius [m-6] */
+    OUT_SOIL_ICE,         /**< soil ice content [m3/m3] for each soil layer */
+    OUT_SOIL_LIQ,         /**< soil liquid content [m3/m3] for each soil layer */
     OUT_SOIL_MOIST,       /**< soil total moisture content  [mm] for each soil layer */
-    OUT_SURFSTOR,         /**< storage of liquid water and ice (not snow) on surface (ponding) [mm] */
-    OUT_SURF_FROST_FRAC,  /**< fraction of soil surface that is frozen [fraction] */
+    OUT_SOIL_POROSITY,    /**< porosity of each soil layer (fraction) */
     OUT_SWE,              /**< snow water equivalent in snow pack (including vegetation-intercepted snow)  [mm] */
-    OUT_SNOW_TRANSP,
+    OUT_STORAGE_AQF,      /**< water storage in aquifer [m] */
+    OUT_INT_SNOW,         /**< snow intercepted on canopy (mm) */
+    OUT_INT_RAIN,         /**< rain intercepted on canopy (mm) */
+    OUT_VEG_MATRIC,       /**< vegetation water matric potential (m) [sun, shade, xylem, root] */
     OUT_WDEW,             /**< total moisture interception storage in canopy [mm] */
     OUT_ZWT,              /**< water table position [cm] (zwt within lowest unsaturated layer) */
-    OUT_RECHARGE,         /**< recharge to groundwater storage [mm] */
     // Water Balance Terms - fluxes
     OUT_BASEFLOW,         /**< baseflow out of the bottom layer [m/s] */
     OUT_DISCHARGE,        /**< river discharge [m3 s-1]) */
     OUT_DEW_CANOP,
-    OUT_DEW_SOIL,
-    OUT_DELSOILMOIST,     /**< change in soil water content  [mm] */
+    OUT_DELDEPTH,         /**< snow depth increasing rate */
     OUT_EVAP,             /**< total net evaporation [mm] */
     OUT_EVAP_BARE,        /**< net evaporation from bare soil [mm] */
     OUT_EVAP_CANOP,       /**< net evaporation from canopy interception [mm] */
-    OUT_INFLOW,           /**< moisture that reaches top of soil column [mm] */
     OUT_FROST_CANOP,
-    OUT_FROST_SNOW,
-    OUT_NET_EVAP,
+    OUT_GLAC_EXCESS,      /**< glacier snow excess flow */
+    OUT_GLAC_MBAL,        /**< glacier mass balance [mm] */
+    OUT_GLAC_ACCUM,       /**< glacier ice accumulation from conversion of firn to ice [mm] */
+    OUT_GLAC_MELT,        /**< glacier ice melt [mm] */
+    OUT_GLAC_INFLOW,      /**< glacier water inflow from snow melt, ice melt and rainfall [mm] */
+    OUT_GLAC_OUTFLOW,     /**< glacier water outflow [mm] */
+    OUT_RECHARGE,         /**< recharge to groundwater storage [mm] */
+    OUT_NET_EVAP,         /**< surf evaporation [mm/s] */
     OUT_PREC,             /**< incoming precipitation [mm] */
-    OUT_PACK_OUTFLOW,
+    OUT_PACK_OUTFLOW,     /**< outflow of liq water from each snow pack (m/s) */
+    OUT_INFLOW,           /**< moisture that reaches top of soil column [mm] */
     OUT_RAINF,            /**< rainfall  [mm] */
+    OUT_RAIN_DRIP,        /**< rainwater dripping from canopy (mm/s) */
+    OUT_RAINTHROUGHFALL,  /**< rain that reaches the ground through the canopy (mm/s) */
     OUT_RUNOFF,           /**< surface runoff [mm] */
+    OUT_SNOW_OUTFLOW,     /**< outflow of liquid water from the snowpack bottom (m/s) */
     OUT_SNOW_MELT,        /**< snow melt  [mm] */
+    OUT_SNOW_FROST,       /**< snow surface frost rate [mm/s] */
+    OUT_SNOW_DEW,         /**< snow surface dew rate [mm/s] */
+    OUT_SNOW_EVAP,        /**< snow surface evaporation rate [mm/s] */
+    OUT_SNOW_SUBLIM,      /**< snow surface sublimation rate [mm/s] */
+    OUT_SNOW_FRZE,
     OUT_SNOWF,            /**< snowfall  [mm] */
+    OUT_SNOW_DRIP,        /**< snowmelt dripping from canopy (mm/s) */
+    OUT_SNOWTHROUGHFALL,  /**< snow that reaches the ground through the canopy (mm/s) */
     OUT_SUB_CANOP,        /**< net sublimation from snow stored in canopy [mm] */
-    OUT_SUB_BLOWING,      /**< net sublimation of blowing snow [mm] */
-    OUT_SUB_SNOW,         /**< total net sublimation from snow pack (surface and blowing) [mm] */
+    OUT_SOIL_DEW,         /**< soil surface dew rate [mm/s] */
+    OUT_SOIL_FROST,       /**< soil surface frost rate [mm/s] */
+    OUT_SOIL_EVAP,        /**< soil evaporation from soil layer (mm/s) */
+    OUT_SOIL_SUBLIM,      /**< soil surface sublimation rate [mm/s] */
     OUT_TRANSP_VEG,       /**< net transpiration from vegetation [mm] */
+    OUT_TRANSP_SINK,      /**< transpiration sink term [m/s] */
     OUT_VAPOR_CANOP,
     OUT_WATER_ERROR,      /**< water budget error [mm] */
-    OUT_DELINTERCEPT,     /**< change in canopy interception storage  [mm] */
-    
-    OUT_DELSURFSTOR,      /**< change in surface liquid water storage  [mm] */
-    OUT_DELSWE,           /**< change in snow water equivalent  [mm] */
-    OUT_REFREEZE,         /**< refreezing of water in the snow  [mm] */
-    OUT_SUB_SURFACE,      /**< net sublimation from snow pack surface [mm] */
-
     // Energy Balance Terms - state variables
     OUT_ALBEDO,           /**< average surface albedo [fraction] */
-    OUT_BARESOILT,        /**< bare soil surface temperature [C] */
-    OUT_FDEPTH,           /**< depth of freezing fronts [cm] */
+    OUT_BARESOILT,        /**< bare soil surface temperature [k] */
+    OUT_FDEPTH,           /**< depth of freezing fronts [m] */
+    OUT_H2OSFC_T,         /**< surface water temperature or glacier [K] */
     OUT_RAD_TEMP,         /**< average radiative surface temperature [K] */
     OUT_SALBEDO,          /**< snow pack albedo [fraction] */
-    OUT_SNOW_PACK_TEMP,   /**< snow pack temperature [C] */
-    OUT_SNOW_SURF_TEMP,   /**< snow surface temperature [C] */
-    OUT_SOIL_TEMP,        /**< soil temperature [C] */
-    OUT_SURF_TEMP,
-    OUT_TRND_FBFLAG,      /**< surface temperature flag */
-    OUT_TCAN_FBFLAG,      /**< Tcanopy flag */
-    OUT_TDEPTH,           /**< depth of thawing fronts [cm] */
-    OUT_VEGT,             /**< average vegetation canopy temperature [C] */
-    OUT_VEGTAIR,
+    OUT_SNOW_PACK_TEMP,   /**< snow pack temperature [k] */
+    OUT_SOIL_TEMP,        /**< soil temperature [k] */
+    OUT_SURF_TEMP,        /**< surface temperature [k] */
+    OUT_TRND_FBFLAG,      /**< frozen soil present flag */
+    OUT_TCAN_FBFLAG,      /**< frozen canopy present flag */
+    OUT_TDEPTH,           /**< depth of thawing fronts [m] */
+    OUT_VEGT,             /**< average vegetation canopy temperature [K] */
+    OUT_VEGTAIR,          /**< temperature of the canopy [K] */
+    OUT_VEGTSTEM,         /**< temperature of the stem [K] */
     // Energy Balance Terms - fluxes
     OUT_ADVECTION,        /**< advected energy [W/m2] */
-    OUT_ADVECTSUB,
-    OUT_ADVECTGRND,
-    OUT_ADVECTOVER,
-    OUT_DELTACC,          /**< rate of change in cold content in snow pack [W/m2] */
-    OUT_DELTAH,           /**< rate of change in heat storage [W/m2] */
+    OUT_ADVECTSUB,        /**< advective flux from understory vegetation (Wm-2) */
+    OUT_ADVECTGRND,       /**< advective flux from bare ground (Wm-2) */
+    OUT_ADVECTOVER,       /**< advective flux from overstory vegetation (Wm-2) */
     OUT_ENERGY_ERROR,     /**< energy budget error [W/m2] */
-    OUT_FUSION,           /**< net energy used to melt/freeze soil moisture [W/m2] */
     OUT_GRND_FLUX,        /**< net heat flux into ground [W/m2] */
-    OUT_GRND_SUB,
-    OUT_GRND_GRND,
-    OUT_IN_LONG,          /**< incoming longwave at ground surface (under veg) [W/m2] */
     OUT_LATENT,           /**< net upward latent heat flux [W/m2] */
-    OUT_LATENT_SUB,       /**< net upward latent heat flux from sublimation [W/m2] */
-    OUT_LATENT_GRND,
-    OUT_LATENT_CANOP,
-    OUT_LATENT_TRANSP,
-    OUT_MELT_ENERGY,      /**< energy of fusion (melting) in snowpack [W/m2] */
     OUT_LWNET,            /**< net downward longwave flux [W/m2] */
-    OUT_LWSUB,
-    OUT_LWGRND,
-    OUT_LWOVER,
     OUT_SWNET,            /**< net downward shortwave flux [W/m2] */
-    OUT_SWSUB,
-    OUT_SWGRND,
     OUT_SENSIBLE,         /**< net upward sensible heat flux [W/m2] */
-    OUT_SENSIBLE_SUB,
-    OUT_SENSIBLE_GRND,
-    OUT_SENSIBLE_OVER,
+    OUT_SW_SNOW,          /**< total absorbed solar radiation by snow for each layer [W/m2] */
+    OUT_EMISS_LWGRND,     /**< emitted longwave flux from ground (Wm-2) */
+    OUT_EMISS_LWSUB,      /**< emitted longwave flux from understory (Wm-2) */
+    OUT_EMISS_LWSURF,     /**< emitted longwave flux from surface (Wm-2) */
+    OUT_REFL_SWGRND,      /**< reflected shortwave flux from ground (Wm-2) */
+    OUT_REFL_SWSUB,       /**< reflected shortwave flux from understory (Wm-2) */
+    OUT_REFL_SWSURF,      /**< reflected shortwave flux from surface (Wm-2) */
     // Miscellaneous Terms
-    OUT_RA_EVAP,          /**< surface aerodynamic conductance [m/s] */
-    OUT_RA_GRND,          /**< overstory aerodynamic conductance [m/s] */
-    OUT_RA_LEAF,          /**< "scene"canopy aerodynamic resistance [s/m]*/
-    OUT_RA_OVER,          /**< surface aerodynamic resistance [s/m] */
-    OUT_RA_SUB,           /**< overstory aerodynamic resistance [s/m] */
-    OUT_AIR_TEMP,         /**< air temperature [C] */
+    OUT_RA_EVAP,          /**< ground surface resistance to evaporation [m/s] */
+    OUT_RA_GRND,          /**< bare ground surface resistance [m/s] */
+    OUT_RA_LEAF,          /**< canopy leaf resistance to transpiration [s/m]*/
+    OUT_RA_OVER,          /**< canopy aerodynamic resistance [s/m] */
+    OUT_RA_SUB,           /**< canopy ground surface resistance [s/m] */
+    OUT_RA_STEM,          /**< veg stem aerodynamic resistance [s/m] */
+    OUT_AIR_TEMP,         /**< air temperature [k] */
     OUT_CATM,             /**< atmospheric CO2 concentrtaion [ppm]*/
     OUT_DENSITY,          /**< near-surface atmospheric density [kg/m3]*/
     OUT_FCANOPY,          /**< fractional area covered by plant canopy [fraction] */
     OUT_FDIR,             /**< fraction of incoming shortwave that is direct [fraction]*/
-    OUT_COSZEN,
+    OUT_COSZEN,           /**< cosine solar zenith angle */
     OUT_LAI,              /**< leaf area index [m2/m2] */
     OUT_LWDOWN,           /**< incoming longwave [W/m2] */
     OUT_PAR,              /**< incoming photosynthetically active radiation [W/m2] */
@@ -221,7 +222,6 @@ enum
     OUT_QAIR,             /**< specific humidity [kg/kg] */
     OUT_REL_HUMID,        /**< relative humidity [%] */
     OUT_SWDOWN,           /**< incoming shortwave [W/m2] */
-    OUT_SURF_COND,        /**< surface conductance [m/s] */
     OUT_VP,               /**< near surface vapor pressure [kPa] */
     OUT_VPD,              /**< near surface vapor pressure deficit [kPa] */
     OUT_WIND,             /**< near surface wind speed [m/s] */
@@ -240,34 +240,9 @@ enum
     OUT_SNOW_MELT_BAND,   /**< snow melt [mm] */
     OUT_SNOW_PACKT_BAND,  /**< snow pack temperature [C] */
     OUT_SWE_BAND,         /**< snow water equivalent in snow pack [mm] */
-    // Carbon-Cycling Terms
-    OUT_APAR,             /**< absorbed PAR [W/m2] */
-    OUT_GPP,              /**< gross primary productivity [g C/m2d] */
-    OUT_RAUT,             /**< autotrophic respiration [g C/m2d] */
-    OUT_NPP,              /**< net primary productivity [g C/m2d] */
-    OUT_LITTERFALL,       /**< flux of carbon from living biomass into soil [g C/m2d] */
-    OUT_RHET,             /**< soil respiration (heterotrophic respiration) [g C/m2d] */
-    OUT_NEE,              /**< net ecosystem exchange (=NPP-RHET) [g C/m2d] */
-    OUT_CLITTER,          /**< Carbon density in litter pool [g C/m2] */
-    OUT_CINTER,           /**< Carbon density in intermediate pool [g C/m2] */
-    OUT_CSLOW,            /**< Carbon density in slow pool [g C/m2] */
     // Timing and Profiling Terms
     OUT_TIME_VICRUN_WALL, /**< Wall time spent inside vic_run [seconds] */
     OUT_TIME_VICRUN_CPU,  /**< Wall time spent inside vic_run [seconds] */
-    
-    //Glacier Water Balance Terms - state variables
-    OUT_GLAC_WAT_STOR,     /* glacier water storage [mm] */
-    OUT_GLAC_AREA,         /* glacier surface area fraction */
-
-    //Glacier Water Balance Terms - fluxes
-    OUT_GLAC_MBAL,         /* glacier mass balance [mm] */
-    OUT_GLAC_IMBAL,        /* glacier ice mass balance [mm] */
-    OUT_GLAC_ACCUM,        /* glacier ice accumulation from conversion of firn to ice [mm] */
-    OUT_GLAC_MELT,         /* glacier ice melt [mm] */
-    OUT_GLAC_INFLOW,       /* glacier water inflow from snow melt, ice melt and rainfall [mm] */
-    OUT_GLAC_OUTFLOW,      /* glacier water outflow [mm] */
-    //Glacier Energy Balance Terms - state variables
-    OUT_GLAC_SURF_TEMP,   /* glacier surface temperature [C] */
 
     // Last value of enum - DO NOT ADD ANYTHING BELOW THIS LINE!!
     // used as a loop counter and must be >= the largest value in this enum
@@ -279,30 +254,57 @@ enum
  *****************************************************************************/
 enum
 {
-    STATE_SOIL_MOISTURE,               /**<  total soil moisture */
-    STATE_SOIL_ICE,                    /**<  ice content */
-    STATE_TCANOPY,                     /**<  Tcanopy */
-    STATE_CANOPY_WATER,                /**<  dew storage: tmpval = veg_var[veg].Wdew; */
-    STATE_ANNUALNPP,                   /**<  cumulative NPP: tmpval = veg_var[veg].AnnualNPP; */
-    STATE_ANNUALNPPPREV,               /**<  previous NPP: tmpval = veg_var[veg].AnnualNPPPrev; */
-    STATE_CLITTER,                     /**<  litter carbon: tmpval = cell[veg].CLitter; */
-    STATE_CINTER,                      /**<  intermediate carbon: tmpval = cell[veg].CInter; */
-    STATE_CSLOW,                       /**<  slow carbon: tmpval = cell[veg].CSlow; */
-    STATE_SNOW_AGE,                    /**<  snow age: snow[veg].SnowAge */
-    STATE_SNOW_OLDSWQ,                 /**<  last step swq: snow[veg].old_swq */
-    STATE_SNOW_COVERAGE,               /**<  snow covered fraction: snow[veg].coverage */
-    STATE_SNOW_WATER_EQUIVALENT,       /**<  snow water equivalent: snow[veg].swq */
-    STATE_SNOW_POROSITY,               /**<  snow porosity: snow[veg].porosity */
-    STATE_SNOW_PACK_LIQ,               /**<  snow pack water: snow[veg].pack_liq */
-    STATE_SNOW_PACK_TEMP,              /**<  snow pack temperature: snow[veg].pack_temp */
-    STATE_SNOW_PACK_ICE,               /**<  snow pack ice: snow[veg].pack_ice */
-    STATE_SNOW_DENSITY,                /**<  snow density: snow[veg].density */
-    STATE_SNOW_THETA_ICE,
-    STATE_SNOW_THETA_LIQ,
-    STATE_SNOW_NSNOW,
-    STATE_SNOW_CANOPY,                 /**<  snow canopy storage: snow[veg].snow_canopy */
-    STATE_NODE_TEMP,                   /**<  soil node temperatures: energy[veg].T[nidx] */
-    STATE_FOLIAGE_TEMPERATURE,         /**<  Foliage temperature: energy[veg].Tfoliage */
+    STATE_SOIL_MOISTURE,               /**< total soil moisture [m3/m3] */
+    STATE_SOIL_ICE,                    /**< soil ice content [m3/m3] */
+    STATE_SOIL_LIQ,                    /**< soil liq content [m3/m3] */
+    STATE_SNOW_AGE,                    /**< snow age */
+    STATE_SNOW_LASTSWQ,                /**< snow water equivalent at previous time step [mm] */
+    STATE_SNOW_COVERAGE,               /**< snow covered fraction */
+    STATE_SNOW_WATER_EQUIVALENT,       /**< snow water equivalent (mm) */
+    STATE_SNOW_RADIUS,                 /**< effective grain radius [m-6] */
+    STATE_SNOW_DZNODE,                 /**< each snow pack depth (m) */
+    STATE_SNOW_PACK_LIQ,               /**< snow layer liquid water [mm] */
+    STATE_SNOW_PACK_ICE,               /**< snow layer ice [mm] */
+    STATE_SNOW_DENSITY,                /**< snow density [kg m-3] */
+    STATE_SNOW_LASTICE,                /**< partial volume of snow ice from previous time step */
+    STATE_SNOW_LASTLIQ,                /**< partial volume of snow liquid water from previous time step */
+    STATE_INT_SNOW,                    /**< rain intercepted on canopy (mm) */
+    STATE_INT_RAIN,                    /**< snow intercepted on canopy (mm) */
+    STATE_VEG_MATRIC,                  /**< vegetation water matric potential (m) [sun, shade, xylem, root] */
+    STATE_NODE_TEMP,                   /**< soil node temperatures [k] */
+    STATE_LAST_TEMP,                   /**< last step soil temperature [k] */
+    STATE_MATRIC,                      /**< soil matric potential [m] */
+    STATE_ZWT,                         /**< water table depth [m] */
+    STATE_AQF_STORAGE,                 /**< water storage in aquifer [m] */
+    STATE_NSNOW,                       /**< Number of snow layers in the model */
+    STATE_NSOIL,                       /**< Number of soil layers */
+    STATE_NNODE,                       /**< Number of thermal nodes */
+    STATE_NCANOPY,                     /**< Number of canopy layers */
+    STATE_NROOT,                       /**< Number of root layers */
+    STATE_SOIL_LASTICE,                /**< last step ice content of the soil sublayer [m3/m3] */
+    STATE_SOIL_LASTLIQ,                /**< last step liq content of the soil sublayer [m3/m3] */
+    STATE_LAST_MATRIC,                 /**< last step matric potential [m] */
+    STATE_H2OSFC,                      /**< surface water or glacier (mm) */
+    STATE_H2O_FRAC,                    /**< fraction of ground covered by surface water or glacier */
+    STATE_H2OSFC_ICE,                  /**< surface water or glacier ice content (mm) */
+    STATE_H2OSFC_LIQ,                  /**< surface water or glacier liquid content (mm) */
+    // rout state
+    STATE_MAIN_CHANNEL_STORAGE,
+    STATE_MAIN_CROSS_SECTION_AREA,
+    STATE_MAIN_CHANNEL_DEPTH,
+    STATE_MAIN_CHANNEL_MANNING_N,
+    STATE_MAIN_WETTED_PERIMETER,
+    STATE_MAIN_HYDRAULIC_RADIUS,
+    STATE_SUB_CHANNEL_STORAGE,
+    STATE_SUB_CHANNEL_MANNING_N,
+    STATE_SUB_CROSS_SECTION_AREA,
+    STATE_SUB_CHANNEL_DEPTH,
+    STATE_SUB_WETTED_PERIMETER,
+    STATE_SUB_HYDRAULIC_RADIUS,
+    STATE_HILLSLOPE_DEPTH,
+    STATE_HILLSLOPE_MANNING_N,
+    STATE_HILLSLOPE_STORAGE,
+    STATE_STORAGE_PREV,
     // Last value of enum - DO NOT ADD ANYTHING BELOW THIS LINE!!
     // used as a loop counter and must be >= the largest value in this enum
     N_STATE_VARS                       /**< used as a loop counter*/
@@ -475,18 +477,6 @@ typedef struct {
 } stream_struct;
 
 /******************************************************************************
- * @brief   This structure stores moisture state information for differencing
- *          with next time step.
- *****************************************************************************/
-typedef struct {
-    double total_moist_storage;   /**< total moisture storage [mm] */
-    double total_soil_moist;      /**< total column soil moisture [mm] */
-    double surfstor;              /**< surface water storage [mm] */
-    double swe;                   /**< snow water equivalent [mm] */
-    double wdew;                  /**< canopy interception [mm] */
-} save_data_struct;
-
-/******************************************************************************
  * @brief   This structure stores metadata for individual variables
  *****************************************************************************/
 typedef struct {
@@ -536,8 +526,8 @@ void alloc_aggdata(stream_struct *stream);
 void alloc_out_data(size_t ngridcells, double ***out_data);
 double average(double *ar, size_t n);
 double calc_energy_balance_error(double, double, double, double, double);
-void calc_root_fractions(size_t, cell_data_struct *cell, soil_con_struct *soil_con,
-                         veg_lib_struct *veg_lib);
+void calc_root_fractions(size_t, cell_data_struct *cell, veg_var_struct *vag_var, 
+                         soil_con_struct *soil_con, veg_lib_struct *veg_lib);
 double calc_water_balance_error(double, double, double, double);
 double calc_max_daylength(double);
 bool cell_method_from_agg_type(unsigned short int aggtype, char cell_method[]);
@@ -588,7 +578,7 @@ void initialize_options(void);
 void initialize_parameters(void);
 void initialize_save_data(all_vars_struct *all_vars, force_data_struct *force,
                           veg_con_struct *veg_con,double **out_data, 
-                          save_data_struct *save_data, timer_struct *timer);
+                          timer_struct *timer);
 void initialize_snow(snow_data_struct *snow, size_t veg_num);
 void initialize_soil(cell_data_struct *cell, size_t veg_num);
 void initialize_time(void);
@@ -612,7 +602,7 @@ void parse_nc_time_units(char *nc_unit_chars, unsigned short int *units,
                          dmy_struct *dmy);
 void put_data(all_vars_struct *, force_data_struct *,
               veg_con_struct *, double **out_data, 
-              save_data_struct *, timer_struct *timer);
+              timer_struct *timer);
 void print_alarm(alarm_struct *alarm);
 void print_cell_data(cell_data_struct *cell);
 void print_dmy(dmy_struct *dmy);
@@ -626,7 +616,6 @@ void print_out_metadata(metadata_struct *metadata, size_t nvars);
 void print_output_streams(stream_struct *outf);
 void print_param_set(param_set_struct *param_set);
 void print_parameters(parameters_struct *param);
-void print_save_data(save_data_struct *save);
 void print_snow_data(snow_data_struct *snow);
 void print_soil_con(soil_con_struct *scon, size_t nlayers, size_t nnodes,
                     size_t nbands);

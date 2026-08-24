@@ -26,7 +26,7 @@ photosynth_hydrostress(double            thm,
                        veg_lib_struct   *veg_lib)
 {   
     extern parameters_struct param;
-    size_t i, Ncanopy = cell->Ncanopy;
+    size_t i, Ncanopy = veg_var->Ncanopy;
     double *aPAR_sun = veg_var->aPAR_sun;
     double *aPAR_sha = veg_var->aPAR_sha;
     double *dz_soil = soil_con->dz_soil;
@@ -66,7 +66,7 @@ photosynth_hydrostress(double            thm,
     // 计算常数：根横截面积 (m2)
     double xsec_root = CONST_PI * pow(param.SOIL_RROOT, 2.0);
     
-    for (i = 0; i < cell->Nroot; i++) {
+    for (i = 0; i < veg_var->Nroot; i++) {
         // 根生物量密度：g biomass/m3 soil
         rho_root = 2.0 * param.PHOTO_CROOT * root[i] / dz_soil[i];
         rho_root = max(2.0, rho_root);

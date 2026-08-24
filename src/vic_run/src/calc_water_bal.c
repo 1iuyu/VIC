@@ -24,11 +24,11 @@ calc_water_bal(double             step_dt,
     size_t lidx, nidx;
     size_t IFLAG = 0;
     size_t Nsoil = cell->Nsoil;
-    double fact[MAX_SOILS];
-    double mat_A[MAX_SOILS];
-    double mat_B[MAX_SOILS];
-    double mat_C[MAX_SOILS];
-    double mat_RHS[MAX_SOILS];
+    double fact[MAX_SOILS] = {0};
+    double mat_A[MAX_SOILS] = {0};
+    double mat_B[MAX_SOILS] = {0};
+    double mat_C[MAX_SOILS] = {0};
+    double mat_RHS[MAX_SOILS] = {0};
     // 指针赋值
     double *dz_soil = soil_con->dz_soil;
     double *ice = cell->ice;
@@ -47,15 +47,7 @@ calc_water_bal(double             step_dt,
     double *conduct_int = cell->conduct_int;
     // 计算地表水分通量限制
     double Qmax = 0.0;
-    int ISAT[MAX_SOILS];
-    for (i = 0; i < MAX_SOILS; i++) {
-        ISAT[i] = 0;
-        fact[i] = 0.0;
-        mat_A[i] = 0.0;
-        mat_B[i] = 0.0;
-        mat_C[i] = 0.0;
-        mat_RHS[i] = 0.0;
-    }
+    int ISAT[MAX_SOILS] = {0};
 
     // Compute the vapor flux between nodes
     calc_vapor_flux(pressure, cell, snow, soil_con);

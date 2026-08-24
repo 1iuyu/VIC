@@ -18,7 +18,7 @@ generate_default_state(force_data_struct *force,
                        veg_con_struct    *veg_con,
                        veg_lib_struct    *veg_lib)
 {
-    extern option_struct     options;
+    extern option_struct       options;
     extern global_param_struct global_param;
     int         ErrorFlag;
     size_t      Nveg;
@@ -38,50 +38,11 @@ generate_default_state(force_data_struct *force,
     veg_var = all_vars->veg_var;
     energy = all_vars->energy;
     Nveg = veg_con[0].vegetat_type_num;
-    double *gravel_node = soil_con->gravel_node;
-    double *mpar_node = soil_con->mpar_node;
-    double *expt_node = soil_con->expt_node;
     double *zc_soil = soil_con->zc_soil;
-    double *bulk_dens_node = soil_con->bulk_dens_node;
     double step_dt = global_param.step_dt;
     double wind = force->wind[NR];
     double air_temp = force->air_temp[NR];
     double pressure = force->pressure[NR];
-
-    /******************************************************
-      Initialize landunit types based on vegetation class
-    ******************************************************/
-    for (veg = 0; veg <= Nveg; veg++) {
-        if (veg_con[veg].Cv > 0) {
-            veg_class = veg_con[veg].veg_class;
-            if (veg_lib[veg_class].landtype == 0) {
-                cell[veg].IS_VEG = true;
-            }
-            else if (veg_lib[veg_class].landtype == 1) {
-                cell[veg].IS_GLAC = true;
-            }
-            else if (veg_lib[veg_class].landtype == 2) {
-                cell[veg].IS_WET = true;
-            }
-            else if (veg_lib[veg_class].landtype == 3) {
-                cell[veg].IS_URBAN = true;
-            }
-            else {
-                log_err("Unknown Landtype option");
-            }
-        }
-    }
-
-    /************************************
-      Initialize layer roots fraction
-    ************************************/
-    for (veg = 0; veg <= Nveg; veg++) {
-        if (veg_con[veg].Cv > 0) {
-            veg_class = veg_con[veg].veg_class;
-            calc_root_fractions(veg_class, &cell[veg],
-                                soil_con, veg_lib);
-        }
-    }
 
     /************************************
       Initialize snowpack properties
@@ -210,20 +171,7 @@ generate_default_state(force_data_struct *force,
        Initialize soil moistures 
     ******************************/
     for (veg = 0; veg <= Nveg; veg++) {
-        if (veg_con[veg].Cv > 0) {
-            // 初始化土壤水力学参数
-            if (options.PARAM_FROM_SOIL) {
-                for (lidx = 0; lidx < Nsoil; lidx++) {
-                    bulk_dens_node[lidx] = (bulk_dens_node[lidx] * 
-                        (1.0 - gravel_node[lidx]) + gravel_node[lidx] * 2650);
-                    mpar_node[lidx] = 1.0 - 1.0 / expt_node[lidx];
-                }
-            }
-            else {
-                // 土壤参数从PedoTransfer函数中计算得到
-                PedoTransfer(soil_con); // not used in current version.
-            }
-            
+        if (veg_con[veg].Cv > 0) {            
             /* Initialize soil moistures */
             for (lidx = 0; lidx < Nsoil; lidx++) {
                 // 温度大于0，地下水位以上设为田间持水量，地下水位以下设为饱和含水量
@@ -274,24 +222,12 @@ generate_default_state(force_data_struct *force,
             prepare_full_energy(pressure, &cell[veg], 
                                 &energy[veg],
                                 &snow[veg], soil_con);
-            // initialize last step Cs_node
-            for (i = 0; i < cell[veg].Nnode; i++) {
-                energy[veg].last_Cs[i] = energy[veg].Cs_node[i];
-            }
             for (i = 0; i <= snow[veg].Nsnow; i++) {
                 snow[veg].last_enthalpy[i] = snow[veg].enthalpy[i];
             }
         }
     }
-    /******************************************
-       Compute maximum daylight duration
-    ******************************************/
-    double max_daylen = calc_max_daylength(soil_con->lat);
-    for (veg = 0; veg <= Nveg; veg++) {
-        if (veg_con[veg].Cv > 0.0) {
-            cell[veg].max_daylen = max_daylen;
-        }
-    }
+
     /******************************************
        initialize vegetation potential and actual water stress
     ******************************************/
@@ -302,7 +238,7 @@ generate_default_state(force_data_struct *force,
             veg_class = veg_con[veg].veg_class;
             Canopy_Upper = veg_lib[veg_class].Canopy_Upper;
             
-            for (i = 0; i < cell[veg].Nroot; i++) {
+            for (i = 0; i < veg_var[veg].Nroot; i++) {
                 root_psi += cell[veg].root[i] * (cell[veg].matric[i] - soil_con->zc_soil[i]);
                 total_root += cell[veg].root[i];
             }

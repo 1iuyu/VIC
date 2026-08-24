@@ -226,6 +226,7 @@ volumetric_heat_capacity(double Wsat_node,
     double Cs = 0.0;
     double esat_T = 0.0;
     double qsdT = 0.0;
+    double qsaT = 0.0;
     double mineral = 1.0 - organic_node;
     double air = Wsat_node - ice - liq;
     if (air < 0.0) {
@@ -241,12 +242,14 @@ volumetric_heat_capacity(double Wsat_node,
         double rel_humid = exp(CONST_MWWV * CONST_G / CONST_RGAS / soil_T * matric);
         // 潜热贡献
         svp_flags(soil_T, pressure,
-                  &esat_T, NULL, 
+                  &esat_T, &qsaT, 
                   NULL, &qsdT, 
-                  ESAT | QSDT);
+                  ESAT | QSAT | QSDT);
         double e_actual = esat_T * rel_humid;
         double air_density = (pressure - 0.378 * e_actual) / (CONST_RDAIR * soil_T);
-        Cs += air * CONST_LATVAP * rel_humid * qsdT * air_density;
+        double dair_dT = -air_density / soil_T;  // 理想气体近似
+        double sat_vap_dens_dT = qsdT * air_density + qsaT * dair_dT;
+        Cs += air * CONST_LATVAP * rel_humid * sat_vap_dens_dT;
     }
 
     return (Cs);

@@ -13,7 +13,7 @@
 void SearchCatchment(int *direction)
 {
     extern domain_struct global_domain;
-    extern rout_struct rout;
+    extern rout_struct  *rout;
     size_t i, j;
     size_t n_nx;
     n_nx = global_domain.n_nx;
@@ -25,40 +25,40 @@ void SearchCatchment(int *direction)
         if (direction[i] != 0 && global_domain.locations[i].run) {
             switch (direction[i]) {
             case 1:
-                rout.rout_param.source_torow[j] = y_index - 1;
-                rout.rout_param.source_tocol[j] = x_index;
+                rout[j].rout_param.source_torow = y_index - 1;
+                rout[j].rout_param.source_tocol = x_index;
             break;
             case 2:
-                rout.rout_param.source_torow[j] = y_index + 1;
-                rout.rout_param.source_tocol[j] = x_index + 1;
+                rout[j].rout_param.source_torow = y_index + 1;
+                rout[j].rout_param.source_tocol = x_index + 1;
             break;
             case 3:
-                rout.rout_param.source_torow[j] = y_index;
-                rout.rout_param.source_tocol[j] = x_index + 1;
+                rout[j].rout_param.source_torow = y_index;
+                rout[j].rout_param.source_tocol = x_index + 1;
             break;
             case 4:
-                rout.rout_param.source_torow[j] = y_index + 1;
-                rout.rout_param.source_tocol[j] = x_index + 1;
+                rout[j].rout_param.source_torow = y_index + 1;
+                rout[j].rout_param.source_tocol = x_index + 1;
             break;
             case 5:
-                rout.rout_param.source_torow[j] = y_index + 1;
-                rout.rout_param.source_tocol[j] = x_index;
+                rout[j].rout_param.source_torow = y_index + 1;
+                rout[j].rout_param.source_tocol = x_index;
             break;
             case 6:
-                rout.rout_param.source_torow[j] = y_index + 1;
-                rout.rout_param.source_tocol[j] = x_index - 1;
+                rout[j].rout_param.source_torow = y_index + 1;
+                rout[j].rout_param.source_tocol = x_index - 1;
             break;
             case 7:
-                rout.rout_param.source_torow[j] = y_index;
-                rout.rout_param.source_tocol[j] = x_index - 1;
+                rout[j].rout_param.source_torow = y_index;
+                rout[j].rout_param.source_tocol = x_index - 1;
             break;
             case 8:
-                rout.rout_param.source_torow[j] = y_index - 1;
-                rout.rout_param.source_tocol[j] = x_index - 1;
+                rout[j].rout_param.source_torow = y_index - 1;
+                rout[j].rout_param.source_tocol = x_index - 1;
             break;
             default:
-                rout.rout_param.source_torow[j] = 0;
-                rout.rout_param.source_tocol[j] = 0;
+                rout[j].rout_param.source_torow = 0;
+                rout[j].rout_param.source_tocol = 0;
             }
             j++;
         }

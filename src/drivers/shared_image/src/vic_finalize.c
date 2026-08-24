@@ -26,7 +26,6 @@ vic_finalize(void)
     extern option_struct       options;
     extern double           ***out_data;
     extern stream_struct      *output_streams;
-    extern save_data_struct   *save_data;
     extern soil_con_struct    *soil_con;
     extern veg_con_struct    **veg_con;
     extern veg_hist_struct   **veg_hist;
@@ -78,7 +77,6 @@ vic_finalize(void)
     free(veg_hist);
     free(veg_lib);
     free(all_vars);
-    free(save_data);
     free(local_domain.locations);
     if (mpi_rank == VIC_MPI_ROOT) {
         free(filter_active_cells);

@@ -215,16 +215,24 @@ get_default_outvar_aggtype(unsigned int varid)
     // AGG_TYPE_END
     case OUT_ASAT:
     case OUT_ROOTMOIST:
-    case OUT_SOIL_ICE_FRAC:
-    case OUT_SOIL_LIQ_FRAC:
-    case OUT_CANOPY_SWE:
+    case OUT_COSZEN:
+    case OUT_ENERGY_ERROR:
+    case OUT_INT_SNOW:
+    case OUT_INT_RAIN:
+    case OUT_NEW_DENSITY:
     case OUT_SNOW_COVER:
     case OUT_SNOW_DEPTH:
     case OUT_SOIL_ICE:
     case OUT_SOIL_LIQ:
     case OUT_SOIL_MOIST:
-    case OUT_SURFSTOR:
-    case OUT_SURF_FROST_FRAC:
+    case OUT_SNOW_ICEFRAC:
+    case OUT_SNOW_LIQFRAC:
+    case OUT_SNOW_POROSITY:
+    case OUT_SNOW_PACK_ICE:
+    case OUT_SNOW_PACK_LIQ:
+    case OUT_SNOW_AGE:
+    case OUT_SNOW_RADIUS:
+    case OUT_SNOW_DENSITY:
     case OUT_SWE:
     case OUT_WDEW:
     case OUT_ZWT:
@@ -236,25 +244,43 @@ get_default_outvar_aggtype(unsigned int varid)
         break;
     // AGG_TYPE_SUM
     case OUT_BASEFLOW:
-    case OUT_DELINTERCEPT:
-    case OUT_DELSOILMOIST:
-    case OUT_DELSWE:
-    case OUT_DELSURFSTOR:
+    case OUT_DEW_CANOP:
     case OUT_EVAP:
     case OUT_EVAP_BARE:
     case OUT_EVAP_CANOP:
+    case OUT_FROST_CANOP:
+    case OUT_GLAC_MBAL:
+    case OUT_GLAC_ACCUM:
+    case OUT_GLAC_MELT:
+    case OUT_GLAC_INFLOW:
+    case OUT_GLAC_OUTFLOW:
+    case OUT_GLAC_EXCESS:
     case OUT_INFLOW:
     case OUT_PREC:
+    case OUT_PACK_OUTFLOW:
     case OUT_RAINF:
-    case OUT_REFREEZE:
     case OUT_RUNOFF:
+    case OUT_RECHARGE:
+    case OUT_RAIN_DRIP:
+    case OUT_RAINTHROUGHFALL:
     case OUT_SNOWF:
-    case OUT_SUB_BLOWING:
     case OUT_SUB_CANOP:
-    case OUT_SUB_SNOW:
-    case OUT_SUB_SURFACE:
+    case OUT_SNOW_DEW:
+    case OUT_SNOW_SUBLIM:
+    case OUT_SNOW_EVAP:
+    case OUT_SNOW_FROST:
+    case OUT_SOIL_EVAP:
+    case OUT_SOIL_DEW:
+    case OUT_SOIL_FROST:
+    case OUT_SOIL_SUBLIM:
+    case OUT_SNOWTHROUGHFALL:
+    case OUT_SNOW_OUTFLOW:
+    case OUT_SNOW_DRIP:
+    case OUT_SNOW_FRZE:
+    case OUT_SNOW_COMB:
     case OUT_TRANSP_VEG:
     case OUT_SNOW_MELT:
+    case OUT_VAPOR_CANOP:
     case OUT_TCAN_FBFLAG:
     case OUT_TRND_FBFLAG:
         agg_type = AGG_TYPE_SUM;

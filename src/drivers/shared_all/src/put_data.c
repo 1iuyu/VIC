@@ -16,14 +16,12 @@ put_data(all_vars_struct   *all_vars,
          force_data_struct *force,
          veg_con_struct    *veg_con,
          double           **out_data,
-         save_data_struct  *save_data,
          timer_struct      *timer)
 {
     extern global_param_struct global_param;
     extern option_struct       options;
 
     size_t             veg;
-    size_t             lidx;
     size_t             band;
     bool               HasVeg;
     bool               HasGlac;
@@ -32,9 +30,6 @@ put_data(all_vars_struct   *all_vars,
     double             cv_veg;
     double             cv_snow;
     double             cv_glac;
-    double             inflow;
-    double             outflow;
-    double             storage;
     double             dt_sec;
 
     cell_data_struct  *cell;
@@ -155,80 +150,12 @@ put_data(all_vars_struct   *all_vars,
         out_data[OUT_SNOW_PACK_TEMP][0] /= cv_snow;
     }
     if (cv_glac > 0.0) {
-        out_data[OUT_GLAC_SURF_TEMP][0] /= cv_glac;
         out_data[OUT_GLAC_INFLOW][0] /= cv_glac;
         out_data[OUT_GLAC_OUTFLOW][0] /= cv_glac;
     }
 
     // Radiative temperature
     out_data[OUT_RAD_TEMP][0] = pow(out_data[OUT_RAD_TEMP][0], 0.25);
-
-    /*****************************************
-       Compute derived variables
-    *****************************************/
-    // Water balance terms
-    out_data[OUT_DELSOILMOIST][0] = 0;
-    for (lidx = 0; lidx < cell->Nsoil; lidx++) {
-        out_data[OUT_SOIL_MOIST][lidx] =
-            out_data[OUT_SOIL_LIQ][lidx] +
-            out_data[OUT_SOIL_ICE][lidx];
-        out_data[OUT_DELSOILMOIST][0] +=
-            out_data[OUT_SOIL_MOIST][lidx];
-
-        out_data[OUT_SOIL_LIQ_FRAC][lidx] = out_data[OUT_SOIL_LIQ][lidx] /
-                                         out_data[OUT_SOIL_MOIST][lidx];
-        out_data[OUT_SOIL_ICE_FRAC][lidx] = 1 - out_data[OUT_SOIL_LIQ_FRAC][lidx];
-    }
-    out_data[OUT_DELSOILMOIST][0] -= save_data->total_soil_moist;
-    out_data[OUT_DELSWE][0] = out_data[OUT_SWE][0] +
-                              out_data[OUT_CANOPY_SWE][0] -
-                              save_data->swe;
-    out_data[OUT_DELINTERCEPT][0] = out_data[OUT_WDEW][0] - save_data->wdew;
-
-    // Save current moisture state for use in next time step
-    save_data->total_soil_moist = 0;
-    for (lidx = 0; lidx < cell->Nsoil; lidx++) {
-        save_data->total_soil_moist += out_data[OUT_SOIL_MOIST][lidx];
-    }
-    save_data->swe = out_data[OUT_SWE][0] + out_data[OUT_CANOPY_SWE][0];
-    save_data->wdew = out_data[OUT_WDEW][0];
-
-    // Carbon Terms
-    if (options.CARBON) {
-        out_data[OUT_RHET][0] *= dt_sec / SEC_PER_DAY;  // convert to gC/m2d
-        out_data[OUT_NEE][0] = out_data[OUT_NPP][0] - out_data[OUT_RHET][0];
-    }
-
-    /********************
-     Check Water Balance
-    ********************/
-    inflow = out_data[OUT_PREC][0];  // mm over grid cell
-    outflow = out_data[OUT_EVAP][0] + out_data[OUT_RUNOFF][0] +
-              out_data[OUT_BASEFLOW][0];  // mm over grid cell
-
-    storage = 0.;
-    for (lidx = 0; lidx < cell->Nsoil; lidx++) {
-        storage += out_data[OUT_SOIL_LIQ][lidx] +
-                   out_data[OUT_SOIL_ICE][lidx];
-    }
-    storage += out_data[OUT_SWE][0] + out_data[OUT_CANOPY_SWE][0] +
-               out_data[OUT_WDEW][0];
-
-    out_data[OUT_WATER_ERROR][0] = \
-        calc_water_balance_error(inflow,
-                                 outflow,
-                                 storage,
-                                 save_data->
-                                 total_moist_storage);
-
-    // Store total storage for next timestep
-    save_data->total_moist_storage = storage;
-
-    /********************
-       Check Energy Balance
-    ********************/
-    out_data[OUT_ENERGY_ERROR][0] = MISSING;
-
 
     // vic_run run time
     out_data[OUT_TIME_VICRUN_WALL][0] = timer->delta_wall;
@@ -250,8 +177,7 @@ collect_wb_terms(cell_data_struct cell,
 {
     extern option_struct     options;
 
-    size_t      lidx;
-    size_t      Nsnow;
+    size_t i, Nsnow;
     /*********************************
       record evaporation components
     *********************************/
@@ -260,9 +186,6 @@ collect_wb_terms(cell_data_struct cell,
     double tmp_evap = 0.0;
     tmp_evap += cell.evap;
     out_data[OUT_NET_EVAP][0] += cell.evap * Cv * dt_sec;
-    out_data[OUT_DEW_SOIL][0] += cell.soil_dew * Cv * dt_sec;
-    out_data[OUT_FROST_SNOW][0] += cell.snow_frost * Cv * dt_sec;
-    out_data[OUT_SUB_SNOW][0] += cell.snow_sublim * Cv * dt_sec;
 
     // Canopy evaporation
     if (HasVeg) {
@@ -290,12 +213,31 @@ collect_wb_terms(cell_data_struct cell,
     /** record recharge to groundwater storage */
     out_data[OUT_RECHARGE][0] += cell.recharge * Cv;
 
+    /** record soil surface dew rate [mm/s] */
+    out_data[OUT_SOIL_DEW][0] += cell.soil_dew * Cv * dt_sec;
+
+    /** record soil surface frost rate [mm/s] */
+    out_data[OUT_SOIL_FROST][0] += cell.soil_frost * Cv * dt_sec;
+
+    /** record soil evaporation from soil layer [mm/s] */
+    out_data[OUT_SOIL_EVAP][0] += cell.soil_evap * Cv * dt_sec;
+
+    /** record soil surface sublimation rate [mm/s] */
+    out_data[OUT_SOIL_SUBLIM][0] += cell.soil_sublim * Cv * dt_sec;
+
     /** record soil_inflow[mm] **/
     out_data[OUT_INFLOW][0] += cell.soil_inflow * Cv * dt_sec * MM_PER_M;
 
     /** record canopy interception **/
     if (HasVeg) {
         out_data[OUT_WDEW][0] += veg_var.Wdew * Cv;
+        out_data[OUT_INT_SNOW][0] += veg_var.int_snow * Cv;
+        out_data[OUT_INT_RAIN][0] += veg_var.int_rain * Cv;
+        out_data[OUT_CANOPY_SWQ][0] += veg_var.canopy_swq * Cv;
+        out_data[OUT_SNOW_DRIP][0] += veg_var.SnowDrip * Cv;
+        out_data[OUT_RAIN_DRIP][0] += veg_var.RainDrip * Cv;
+        out_data[OUT_SNOWTHROUGHFALL][0] += veg_var.SnowThroughFall * Cv;
+        out_data[OUT_RAINTHROUGHFALL][0] += veg_var.RainThroughFall * Cv;
     }
 
     /** record LAI **/
@@ -305,62 +247,65 @@ collect_wb_terms(cell_data_struct cell,
     out_data[OUT_FCANOPY][0] += veg_var.fcanopy * Cv;
 
     /** record aerodynamic conductance and resistance **/
-    for (lidx = 0; lidx < 3; lidx++) {
-        out_data[OUT_RA_OVER][0] += cell.Ra_over[lidx];
-        out_data[OUT_RA_GRND][0] += cell.Ra_grnd[lidx];
-        out_data[OUT_RA_SUB][0] += cell.Ra_sub[lidx];
+    for (i = 0; i < 3; i++) {
+        out_data[OUT_RA_OVER][0] += cell.Ra_over[i];
+        out_data[OUT_RA_GRND][0] += cell.Ra_grnd[i];
+        out_data[OUT_RA_SUB][0] += cell.Ra_sub[i];
     }
     out_data[OUT_RA_EVAP][0] += cell.Ra_evap;
     if (HasVeg) {    
         out_data[OUT_RA_LEAF][0] += cell.Ra_leaf;
+        out_data[OUT_RA_STEM][0] += cell.Ra_stem;
     }
 
     /** record nodes moistures **/
-    for (lidx = 0; lidx < cell.Nsoil; lidx++) {
-        out_data[OUT_SOIL_LIQ][lidx] += cell.liq[lidx] * Cv;
-        out_data[OUT_SOIL_ICE][lidx] += cell.ice[lidx] * Cv;
+    for (i = 0; i < cell.Nsoil; i++) {
+        out_data[OUT_SOIL_LIQ][i] += cell.liq[i] * Cv;
+        out_data[OUT_SOIL_ICE][i] += cell.ice[i] * Cv;
+        out_data[OUT_SOIL_MOIST][i] += cell.moist[i] * Cv;
+        out_data[OUT_MATRIC][i] += cell.matric[i] * Cv;
+
     }
     out_data[OUT_ROOTMOIST][0] += cell.rootmoist * Cv;
 
     /** record water table position **/
-    if (HasVeg) {
-        out_data[OUT_ZWT][0] += cell.zwt * Cv;
-    }
+    out_data[OUT_ZWT][0] += cell.zwt * Cv;
 
     /*****************************
        Record Snow Pack Variables
     *****************************/
-
     /** record snow water equivalence **/
     out_data[OUT_SWE][0] += snow.swq * Cv;
-
     /** record snowpack depth **/
     out_data[OUT_SNOW_DEPTH][0] += snow.snow_depth * Cv;
-
     /** record snowpack temperature water and ice content **/
     Nsnow = snow.Nsnow;
-    for (lidx = 0; lidx < Nsnow; lidx++) {
-        out_data[OUT_SNOW_PACK_TEMP][lidx] += snow.pack_T[lidx] * Cv;
-        out_data[OUT_SNOW_PACK_ICE][lidx] += snow.pack_ice[lidx] * Cv;
-        out_data[OUT_SNOW_PACK_LIQ][lidx] += snow.pack_liq[lidx] * Cv;
-        out_data[OUT_PACK_OUTFLOW][lidx] += snow.pack_outflow[lidx] * Cv;
-        out_data[OUT_SNOW_ICEFRAC][lidx] += snow.theta_ice[lidx] * Cv;
-        out_data[OUT_SNOW_LIQFRAC][lidx] += snow.theta_liq[lidx] * Cv;
-        out_data[OUT_SNOW_POROSITY][lidx] += snow.porosity[lidx] * Cv;
+    for (i = 0; i < Nsnow; i++) {
+        out_data[OUT_SNOW_PACK_TEMP][i] += snow.pack_T[i] * Cv;
+        out_data[OUT_SNOW_PACK_ICE][i] += snow.pack_ice[i] * Cv;
+        out_data[OUT_SNOW_PACK_LIQ][i] += snow.pack_liq[i] * Cv;
+        out_data[OUT_PACK_OUTFLOW][i] += snow.pack_outflow[i] * Cv;
+        out_data[OUT_SNOW_ICEFRAC][i] += snow.theta_ice[i] * Cv;
+        out_data[OUT_SNOW_LIQFRAC][i] += snow.theta_liq[i] * Cv;
+        out_data[OUT_SNOW_POROSITY][i] += snow.porosity[i] * Cv;
         /** record snow density **/
-        out_data[OUT_SNOW_DENSITY][lidx] += snow.density[lidx] * Cv;
+        out_data[OUT_SNOW_DENSITY][i] += snow.density[i] * Cv;
         /** record snowpack melt **/
-        out_data[OUT_SNOW_MELT][lidx] += snow.pack_melt[lidx] * Cv;
+        out_data[OUT_SNOW_MELT][i] += snow.pack_melt[i] * Cv;
+        /** record snow surface freezing rate [mm/s] */
+        out_data[OUT_SNOW_FRZE][i] += snow.pack_frze[i] * Cv;
     }
-    /** record canopy intercepted snow **/
-    if (HasVeg) {
-        out_data[OUT_CANOPY_SWE][0] += (veg_var.canopy_swq) * Cv *
-                                        MM_PER_M;
-    }
-    /** record snowpack transp **/
-    out_data[OUT_SNOW_TRANSP][0] += snow.pack_transp * Cv;
+
+    /** record snow surface evaporation **/
+    out_data[OUT_SNOW_EVAP][0] += snow.snow_evap * Cv * dt_sec;
     /** record snowpack combination **/
     out_data[OUT_SNOW_COMB][0] += snow.pack_comb * Cv;
+    /** record snow surface frost [mm] */
+    out_data[OUT_SNOW_FROST][0] += snow.snow_frost * Cv * dt_sec;
+    /** record snow surface dew [mm] */
+    out_data[OUT_SNOW_DEW][0] += snow.snow_dew * Cv * dt_sec;
+    /** record snow surface sublimation [mm] */
+    out_data[OUT_SNOW_SUBLIM][0] += snow.snow_sublim * Cv * dt_sec;
     /** record glacier snow excess flow **/
     out_data[OUT_GLAC_EXCESS][0] += snow.glac_excess * Cv;
     /** record snow cover fraction **/
@@ -371,13 +316,13 @@ collect_wb_terms(cell_data_struct cell,
     out_data[OUT_NEW_DENSITY][0] += snow.new_snow_density * Cv;
     /** record SnowAge **/
     out_data[OUT_SNOW_AGE][0] += snow.snowage * Cv;
+    /** outflow of liquid water from the snowpack bottom (m/s) */
+    out_data[OUT_SNOW_OUTFLOW][0] += snow.snow_outflow * Cv;
 
     // Glacier Water Balance Terms
     if (HasGlac) {
         out_data[OUT_GLAC_INFLOW][0] += cell.soil_inflow * Cv;
         out_data[OUT_GLAC_OUTFLOW][0] += (cell.runoff + cell.baseflow) * Cv;
-        out_data[OUT_GLAC_AREA][0] += Cv;
-        out_data[OUT_GLAC_WAT_STOR][0] += snow.swq * Cv;
     }
 }
 
@@ -395,7 +340,7 @@ collect_eb_terms(energy_bal_struct energy,
                  double          **out_data)
 {
     extern option_struct options;
-    size_t               lidx;
+    size_t i;
 
     /**************************************
        Record Frozen Grnd and Canopy flag
@@ -420,8 +365,8 @@ collect_eb_terms(energy_bal_struct energy,
     out_data[OUT_SURF_TEMP][0] += energy.Tsurf * Cv;
 
     /** record NODES temperatures **/
-    for (lidx = 0; lidx < cell.Nsoil; lidx++) {
-        out_data[OUT_SOIL_TEMP][lidx] += cell.soil_T[lidx] * Cv;
+    for (i = 0; i < cell.Nsoil; i++) {
+        out_data[OUT_SOIL_TEMP][i] += cell.soil_T[i] * Cv;
     }
     /** record advective flux from prec **/
     out_data[OUT_ADVECTION][0] += energy.advection * Cv;
@@ -432,20 +377,10 @@ collect_eb_terms(energy_bal_struct energy,
     }
     /** record net shortwave radiation **/
     out_data[OUT_SWNET][0] += energy.shortwave * Cv;
-    out_data[OUT_SWGRND][0] += energy.NetShortGrnd * Cv;
-    if (HasVeg) {
-        out_data[OUT_SWSUB][0] += energy.NetShortSub * Cv;
-    }
     /** record longwave radiation flux **/
     out_data[OUT_LWNET][0] += energy.longwave * Cv;
-    if (HasVeg) {
-        out_data[OUT_LWOVER][0] += energy.NetLongOver * Cv;
-    }
     /** record latent heat flux **/
     out_data[OUT_LATENT][0] += energy.latent * Cv;
-    if (HasVeg) {
-        out_data[OUT_LATENT_CANOP][0] += energy.LatentLeaf * Cv;
-    }
     /** record sensible heat flux **/
     out_data[OUT_SENSIBLE][0] += energy.sensible * Cv;
     /** record ground heat flux **/
@@ -453,7 +388,7 @@ collect_eb_terms(energy_bal_struct energy,
     //out_data[OUT_GRND_GRND][0] += energy.GroundGrnd * Cv;
     // 冰川变量
     if (HasGlac) {
-        out_data[OUT_GLAC_SURF_TEMP][0] += energy.Tgrnd * Cv;
+        out_data[OUT_H2OSFC_T][0] += energy.Tgrnd * Cv;
     }
     /**********************************
        Record hru-Specific Variables
@@ -493,46 +428,11 @@ initialize_save_data(all_vars_struct   *all_vars,
                      force_data_struct *force,
                      veg_con_struct    *veg_con,
                      double           **out_data,
-                     save_data_struct  *save_data,
                      timer_struct      *timer)
 {
     // Calling put data will populate the save data storage terms
     put_data(all_vars, force, veg_con,
-             out_data, save_data, timer);
+             out_data, timer);
 
     zero_output_list(out_data);
-}
-
-/******************************************************************************
- * @brief    This subroutine computes the overall model water balance, and
- *           warns the model user if large errors are found.
- *****************************************************************************/
-double
-calc_water_balance_error(double inflow,
-                         double outflow,
-                         double storage,
-                         double last_storage)
-{
-    double error;
-
-    error = inflow - outflow - (storage - last_storage);
-
-    return(error);
-}
-
-/******************************************************************************
- * @brief    This subroutine computes the overall model energy balance.
- *****************************************************************************/
-double
-calc_energy_balance_error(double net_rad,
-                          double latent,
-                          double sensible,
-                          double grnd_flux,
-                          double advection)
-{
-    double error;
-
-    error = net_rad - latent - sensible - grnd_flux + advection;
-
-    return(error);
 }

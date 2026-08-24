@@ -4,7 +4,7 @@
  * Get netCDF dimension.
  *****************************************************************************/
 
-#include <vic_driver_shared_image.h>
+#include "vic_driver_shared_image.h"
 
 /******************************************************************************
  * @brief    Get netCDF dimension.

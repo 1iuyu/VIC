@@ -14,142 +14,142 @@
 *               snow code for both the full_energy and water_balance models.
 ******************************************************************************/
 int
-Euler_Routing(size_t igrid,
+Euler_Routing(size_t i,
               double step_dt)
 {
     extern parameters_struct param;
-    extern rout_struct       rout;
+    extern rout_struct      *rout;
     extern domain_struct local_domain;
 
-    size_t i, j, k;
-    size_t river_steps = rout.river_steps[igrid];
-    size_t sub_steps = rout.sub_steps[igrid];
+    size_t j, k, m;
+    size_t river_steps = rout[i].river_steps;
+    size_t sub_steps = rout[i].sub_steps;
     double localDeltaT;
 
     /********************************
       Hillslope routing
     ********************************/
-    rout.hillslope.ehout[igrid] = -CREHT_nosqrt(rout.hillslope.hslpsqrt[igrid], rout.hillslope.nh[igrid], 
-                            rout.drainage_density[igrid], rout.hillslope.yh[igrid]);
-    if (rout.hillslope.ehout[igrid] < 0. &&
-        rout.hillslope.wh[igrid] + (rout.runoff[igrid] + rout.hillslope.ehout[igrid]) * step_dt < TOL_VALUE) {
-        rout.hillslope.ehout[igrid] = -(rout.runoff[igrid] + rout.hillslope.wh[igrid] / step_dt);
+    rout[i].hillslope.ehout = -CREHT_nosqrt(rout[i].hillslope.hslpsqrt, rout[i].hillslope.nh, 
+                            rout[i].drainage_density, rout[i].hillslope.yh);
+    if (rout[i].hillslope.ehout < 0. &&
+        rout[i].hillslope.wh + (rout[i].runoff + rout[i].hillslope.ehout) * step_dt < TOL_VALUE) {
+        rout[i].hillslope.ehout = -(rout[i].runoff + rout[i].hillslope.wh / step_dt);
     }
-    rout.hillslope.dwh[igrid] = (rout.runoff[igrid] + rout.hillslope.ehout[igrid]);
-    rout.hillslope.wh[igrid] += rout.hillslope.dwh[igrid] * step_dt;
+    rout[i].hillslope.dwh = (rout[i].runoff + rout[i].hillslope.ehout);
+    rout[i].hillslope.wh += rout[i].hillslope.dwh * step_dt;
 
-    rout.sub_channel.etin[igrid] = (-rout.hillslope.ehout[igrid] + rout.baseflow[igrid]) * 
-                    local_domain.locations[igrid].area * local_domain.locations[igrid].frac;
+    rout[i].sub_channel.etin = (-rout[i].hillslope.ehout + rout[i].baseflow) * 
+                    local_domain.locations[i].area * local_domain.locations[i].frac;
     // Update hydraulic properties of the hillslope
-    rout.hillslope.yh[igrid] = rout.hillslope.wh[igrid];
+    rout[i].hillslope.yh = rout[i].hillslope.wh;
 
     /********************************
       Sub network routing
     ********************************/ 
-    rout.main_channel.erlateral[igrid] = 0.0;
+    rout[i].main_channel.erlateral = 0.0;
     double discharge_volume = 0.0;
-    for (i = 0; i < DLevelH2R; i++) {
+    for (j = 0; j < DLevelH2R; j++) {
         double erlateral_sum = 0.0;   // 用于累计侧向入流体积
         localDeltaT = step_dt / DLevelH2R / sub_steps;
-        for (j = 0; j < sub_steps; j++) {
-            if (rout.sub_channel.tlen[igrid] <= rout.hillslope.hlen[igrid]) {
-                rout.sub_channel.etout[igrid] = -rout.sub_channel.etin[igrid];
+        for (k = 0; k < sub_steps; k++) {
+            if (rout[i].sub_channel.tlen <= rout[i].hillslope.hlen) {
+                rout[i].sub_channel.etout = -rout[i].sub_channel.etin;
             }
             else {
-                rout.sub_channel.vt[igrid] = CRVRMAN_nosqrt(rout.sub_channel.tslpsqrt[igrid],
-                            rout.sub_channel.nt[igrid], rout.sub_channel.rt[igrid]);
-                rout.sub_channel.etout[igrid] = -rout.sub_channel.vt[igrid] * rout.sub_channel.mt[igrid];
-                if (rout.sub_channel.wt[igrid] + (rout.sub_channel.etin[igrid] + 
-                                        rout.sub_channel.etout[igrid]) * localDeltaT < TOL_VALUE) {
-                    rout.sub_channel.etout[igrid] = -(rout.sub_channel.etin[igrid] +
-                                                rout.sub_channel.wt[igrid] / localDeltaT);
-                    if (rout.sub_channel.mt[igrid] > 0.0) {
-                        rout.sub_channel.vt[igrid] = -rout.sub_channel.etout[igrid]/rout.sub_channel.mt[igrid];
+                rout[i].sub_channel.vt = CRVRMAN_nosqrt(rout[i].sub_channel.tslpsqrt,
+                            rout[i].sub_channel.nt, rout[i].sub_channel.rt);
+                rout[i].sub_channel.etout = -rout[i].sub_channel.vt * rout[i].sub_channel.mt;
+                if (rout[i].sub_channel.wt + (rout[i].sub_channel.etin + 
+                                        rout[i].sub_channel.etout) * localDeltaT < TOL_VALUE) {
+                    rout[i].sub_channel.etout = -(rout[i].sub_channel.etin +
+                                                rout[i].sub_channel.wt / localDeltaT);
+                    if (rout[i].sub_channel.mt > 0.0) {
+                        rout[i].sub_channel.vt = -rout[i].sub_channel.etout/rout[i].sub_channel.mt;
                     }
                 }
             }
-            rout.sub_channel.dwt[igrid] = rout.sub_channel.etout[igrid] + rout.sub_channel.etin[igrid];
-            rout.sub_channel.wt[igrid] += rout.sub_channel.dwt[igrid] * localDeltaT;
+            rout[i].sub_channel.dwt = rout[i].sub_channel.etout + rout[i].sub_channel.etin;
+            rout[i].sub_channel.wt += rout[i].sub_channel.dwt * localDeltaT;
             // Update hydraulic properties of the channel
-            if (rout.sub_channel.tlen[igrid] > 0.0 && rout.sub_channel.wt[igrid] > 0.0) {
-                rout.sub_channel.mt[igrid] = GRMR(rout.sub_channel.wt[igrid], rout.sub_channel.tlen[igrid]);    // 过水断面面积
-                rout.sub_channel.yt[igrid] = GRHT(rout.sub_channel.mt[igrid], rout.sub_channel.twidth[igrid]);  // 水深
-                rout.sub_channel.pt[igrid] = GRPT(rout.sub_channel.yt[igrid], rout.sub_channel.twidth[igrid]);  // 湿周
-                rout.sub_channel.rt[igrid] = GRRR(rout.sub_channel.mt[igrid], rout.sub_channel.pt[igrid]);      // 水力半径
+            if (rout[i].sub_channel.tlen > 0.0 && rout[i].sub_channel.wt > 0.0) {
+                rout[i].sub_channel.mt = GRMR(rout[i].sub_channel.wt, rout[i].sub_channel.tlen);    // 过水断面面积
+                rout[i].sub_channel.yt = GRHT(rout[i].sub_channel.mt, rout[i].sub_channel.twidth);  // 水深
+                rout[i].sub_channel.pt = GRPT(rout[i].sub_channel.yt, rout[i].sub_channel.twidth);  // 湿周
+                rout[i].sub_channel.rt = GRRR(rout[i].sub_channel.mt, rout[i].sub_channel.pt);      // 水力半径
             }
             else {
-                rout.sub_channel.mt[igrid] = 0.0;
-                rout.sub_channel.yt[igrid] = 0.0;
-                rout.sub_channel.pt[igrid] = 0.0;
-                rout.sub_channel.rt[igrid] = 0.0;
+                rout[i].sub_channel.mt = 0.0;
+                rout[i].sub_channel.yt = 0.0;
+                rout[i].sub_channel.pt = 0.0;
+                rout[i].sub_channel.rt = 0.0;
             }
-            erlateral_sum += (-rout.sub_channel.etout[igrid]) * localDeltaT;
+            erlateral_sum += (-rout[i].sub_channel.etout) * localDeltaT;
         }
-        rout.main_channel.erlateral[igrid] = erlateral_sum / (step_dt / DLevelH2R);   // m³/s
+        rout[i].main_channel.erlateral = erlateral_sum / (step_dt / DLevelH2R);   // m³/s
 
         /********************************
              Main network routing
         ********************************/
         localDeltaT = step_dt / DLevelH2R / river_steps;
-        for (k = 0; k < river_steps; k++) {
+        for (m = 0; m < river_steps; m++) {
             // 上游来水
-            rout.main_channel.erin[igrid] = rout.upstream[igrid];
+            rout[i].main_channel.erin = rout[i].upstream;
             // 无长度河道：所有水立即出流
-            if (rout.main_channel.rlen[igrid] <= 0.0) {
-                rout.main_channel.vr[igrid] = 0.0;
-                rout.main_channel.erout[igrid] = -(rout.main_channel.erin[igrid] + 
-                                rout.main_channel.erlateral[igrid]); // 上游来水 + 侧向入流
+            if (rout[i].main_channel.rlen <= 0.0) {
+                rout[i].main_channel.vr = 0.0;
+                rout[i].main_channel.erout = -(rout[i].main_channel.erin + 
+                                rout[i].main_channel.erlateral); // 上游来水 + 侧向入流
             }
             else {
-                if (rout.acc_area[igrid] / rout.main_channel.rwidth[igrid] / rout.main_channel.rlen[igrid] > param.MAX_LIMIT) {
-                    rout.main_channel.erout[igrid] = -rout.main_channel.erin[igrid] - rout.main_channel.erlateral[igrid];
+                if (rout[i].acc_area / rout[i].main_channel.rwidth / rout[i].main_channel.rlen > param.MAX_LIMIT) {
+                    rout[i].main_channel.erout = -rout[i].main_channel.erin - rout[i].main_channel.erlateral;
                 }
                 else {
-                    rout.main_channel.vr[igrid] = CRVRMAN_nosqrt(rout.main_channel.rslpsqrt[igrid],
-                                rout.main_channel.nr[igrid], rout.main_channel.rr[igrid]);
-                    rout.main_channel.erout[igrid] = -rout.main_channel.vr[igrid] * rout.main_channel.mr[igrid];
-                    if (rout.main_channel.erout[igrid] < 0.0 && rout.main_channel.wr[igrid] +
-                        (rout.main_channel.erin[igrid] + rout.main_channel.erlateral[igrid] + 
-                            rout.main_channel.erout[igrid]) * localDeltaT < TOL_VALUE) {
-                        rout.main_channel.erout[igrid] = -(rout.main_channel.erin[igrid] + rout.main_channel.wr[igrid] +
-                            rout.main_channel.erlateral[igrid] / localDeltaT);
-                        if (rout.main_channel.mr[igrid] > 0.0) {
-                            rout.main_channel.vr[igrid] = -rout.main_channel.erout[igrid]/rout.main_channel.mr[igrid];
+                    rout[i].main_channel.vr = CRVRMAN_nosqrt(rout[i].main_channel.rslpsqrt,
+                                rout[i].main_channel.nr, rout[i].main_channel.rr);
+                    rout[i].main_channel.erout = -rout[i].main_channel.vr * rout[i].main_channel.mr;
+                    if (rout[i].main_channel.erout < 0.0 && rout[i].main_channel.wr +
+                        (rout[i].main_channel.erin + rout[i].main_channel.erlateral + 
+                            rout[i].main_channel.erout) * localDeltaT < TOL_VALUE) {
+                        rout[i].main_channel.erout = -(rout[i].main_channel.erin + rout[i].main_channel.wr +
+                            rout[i].main_channel.erlateral / localDeltaT);
+                        if (rout[i].main_channel.mr > 0.0) {
+                            rout[i].main_channel.vr = -rout[i].main_channel.erout/rout[i].main_channel.mr;
                         }
                     }
                 }
             }
-            rout.main_channel.dwr[igrid] = rout.main_channel.erin[igrid] + rout.main_channel.erout[igrid] + 
-                    rout.main_channel.erlateral[igrid];
-            if (rout.main_channel.wr[igrid] / localDeltaT + rout.main_channel.dwr[igrid] < -TOL_VALUE) {
+            rout[i].main_channel.dwr = rout[i].main_channel.erin + rout[i].main_channel.erout + 
+                    rout[i].main_channel.erlateral;
+            if (rout[i].main_channel.wr / localDeltaT + rout[i].main_channel.dwr < -TOL_VALUE) {
                 log_warn("Negative storage in main channel, setting outflow to zero");
-                rout.main_channel.erout[igrid] = 0.0;
-                rout.main_channel.vr[igrid] = 0.0;
-                rout.main_channel.dwr[igrid] = rout.main_channel.erin[igrid] + rout.main_channel.erlateral[igrid];
+                rout[i].main_channel.erout = 0.0;
+                rout[i].main_channel.vr = 0.0;
+                rout[i].main_channel.dwr = rout[i].main_channel.erin + rout[i].main_channel.erlateral;
             }
-            rout.main_channel.wr[igrid] += rout.main_channel.dwr[igrid] * localDeltaT;
+            rout[i].main_channel.wr += rout[i].main_channel.dwr * localDeltaT;
 
             // Update hydraulic properties of the channel
-            if (rout.main_channel.rlen[igrid] > 0.0 && rout.main_channel.wr[igrid] > 0.0) {
-                rout.main_channel.mr[igrid] = GRMR(rout.main_channel.wr[igrid], rout.main_channel.rlen[igrid]);
-                rout.main_channel.yr[igrid] = GRHR(rout.main_channel.mr[igrid], rout.main_channel.rwidth[igrid], 
-                                        rout.main_channel.rwidth0[igrid], rout.main_channel.rdepth[igrid]);
-                rout.main_channel.pr[igrid] = GRPR(rout.main_channel.yr[igrid], rout.main_channel.rwidth[igrid],
-                                        rout.main_channel.rwidth0[igrid], rout.main_channel.rdepth[igrid]);
-                rout.main_channel.rr[igrid] = GRRR(rout.main_channel.mr[igrid], rout.main_channel.pr[igrid]);
+            if (rout[i].main_channel.rlen > 0.0 && rout[i].main_channel.wr > 0.0) {
+                rout[i].main_channel.mr = GRMR(rout[i].main_channel.wr, rout[i].main_channel.rlen);
+                rout[i].main_channel.yr = GRHR(rout[i].main_channel.mr, rout[i].main_channel.rwidth, 
+                                        rout[i].main_channel.rwidth0, rout[i].main_channel.rdepth);
+                rout[i].main_channel.pr = GRPR(rout[i].main_channel.yr, rout[i].main_channel.rwidth,
+                                        rout[i].main_channel.rwidth0, rout[i].main_channel.rdepth);
+                rout[i].main_channel.rr = GRRR(rout[i].main_channel.mr, rout[i].main_channel.pr);
             }
             else {
-                rout.main_channel.mr[igrid] = 0.0;
-                rout.main_channel.yr[igrid] = 0.0;
-                rout.main_channel.pr[igrid] = 0.0;
-                rout.main_channel.rr[igrid] = 0.0;
+                rout[i].main_channel.mr = 0.0;
+                rout[i].main_channel.yr = 0.0;
+                rout[i].main_channel.pr = 0.0;
+                rout[i].main_channel.rr = 0.0;
             }
             //temp_erout += rout.main_channel.erout[igrid];
-            discharge_volume += -rout.main_channel.erout[igrid] * localDeltaT;
+            discharge_volume += -rout[i].main_channel.erout * localDeltaT;
         }   
     }
     // 更新时段内平均discharge
-    rout.discharge[igrid] = discharge_volume / step_dt;
+    rout[i].discharge = discharge_volume / step_dt;
 
     return (0);
 }

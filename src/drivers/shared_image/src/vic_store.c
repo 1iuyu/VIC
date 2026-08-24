@@ -16,6 +16,7 @@ vic_store(dmy_struct *dmy_state,
 {
     extern filenames_struct    filenames;
     extern all_vars_struct    *all_vars;
+    extern rout_struct        *rout;
     extern domain_struct       local_domain;
     extern option_struct       options;
     extern int                 mpi_rank;
@@ -51,10 +52,8 @@ vic_store(dmy_struct *dmy_state,
     ivar = malloc(local_domain.ncells_active * sizeof(*ivar));
     check_alloc_status(ivar, "Memory allocation error");
 
-
     dvar = malloc(local_domain.ncells_active * sizeof(*dvar));
     check_alloc_status(dvar, "Memory allocation error");
-
 
     // initialize starts and counts
     d3start[0] = 0;
@@ -123,14 +122,39 @@ vic_store(dmy_struct *dmy_state,
         }
     }
 
+    // liq content
+    nc_var = &(nc_state_file.nc_vars[STATE_SOIL_LIQ]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d4start[0] = m;
+        for (j = 0; j < MAX_SOILS; j++) {
+            d4start[1] = j;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] =
+                        (double) all_vars[i].cell[m].liq[j];
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d4start, nc_var->nc_counts,
+                                       dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+    }
 
-    // dew storage: tmpval = veg_var[veg].Wdew;
-    nc_var = &(nc_state_file.nc_vars[STATE_CANOPY_WATER]);
+    // snow age: snow[veg].snowage
+    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_AGE]);
     for (m = 0; m < options.MAX_HRU; m++) {
         d3start[0] = m;
         for (i = 0; i < local_domain.ncells_active; i++) {
             if (m < local_domain.locations[i].nveg) {
-                dvar[i] = (double) all_vars[i].veg_var[m].Wdew;
+                dvar[i] = (double) all_vars[i].snow[m].snowage;
             }
             else {
                 dvar[i] = nc_state_file.d_fillvalue;
@@ -145,24 +169,45 @@ vic_store(dmy_struct *dmy_state,
         }
     }
 
-    // snow age: snow[veg].SnowAge
-    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_AGE]);
+    // int_snow: snow[veg].int_snow
+    nc_var = &(nc_state_file.nc_vars[STATE_INT_SNOW]);
     for (m = 0; m < options.MAX_HRU; m++) {
         d3start[0] = m;
         for (i = 0; i < local_domain.ncells_active; i++) {
             if (m < local_domain.locations[i].nveg) {
-                ivar[i] = (int) all_vars[i].snow[m].snowage;
+                dvar[i] = (double) all_vars[i].veg_var[m].int_snow;
             }
             else {
-                ivar[i] = nc_state_file.i_fillvalue;
+                dvar[i] = nc_state_file.d_fillvalue;
             }
         }
-        gather_put_nc_field_int(nc_state_file.nc_id,
-                                nc_var->nc_varid,
-                                nc_state_file.i_fillvalue,
-                                d3start, nc_var->nc_counts, ivar);
+        gather_put_nc_field_double(nc_state_file.nc_id,
+                                   nc_var->nc_varid,
+                                   nc_state_file.d_fillvalue,
+                                   d3start, nc_var->nc_counts, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
-            ivar[i] = nc_state_file.i_fillvalue;
+            dvar[i] = nc_state_file.d_fillvalue;
+        }
+    }
+
+    // int_rain: snow[veg].int_rain
+    nc_var = &(nc_state_file.nc_vars[STATE_INT_RAIN]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                dvar[i] = (double) all_vars[i].veg_var[m].int_rain;
+            }
+            else {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+        gather_put_nc_field_double(nc_state_file.nc_id,
+                                   nc_var->nc_varid,
+                                   nc_state_file.d_fillvalue,
+                                   d3start, nc_var->nc_counts, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            dvar[i] = nc_state_file.d_fillvalue;
         }
     }
 
@@ -187,7 +232,6 @@ vic_store(dmy_struct *dmy_state,
         }
     }
 
-
     // snow water equivalent: snow[veg].swq
     nc_var = &(nc_state_file.nc_vars[STATE_SNOW_WATER_EQUIVALENT]);
     for (m = 0; m < options.MAX_HRU; m++) {
@@ -209,9 +253,8 @@ vic_store(dmy_struct *dmy_state,
         }
     }
 
-
-    // snow theta_ice: snow[veg].theta_ice
-    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_THETA_ICE]);
+    // snow radius: snow[veg].radius
+    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_RADIUS]);
     for (m = 0; m < options.MAX_HRU; m++) {
         d4start[0] = m;
         for (k = 0; k < MAX_SNOWS; k++) {
@@ -219,7 +262,7 @@ vic_store(dmy_struct *dmy_state,
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg && 
                                 k < all_vars[i].snow[m].Nsnow) {
-                    dvar[i] = (double) all_vars[i].snow[m].theta_ice[k];
+                    dvar[i] = (double) all_vars[i].snow[m].radius[k];
                 }
                 else {
                     dvar[i] = nc_state_file.d_fillvalue;
@@ -235,9 +278,8 @@ vic_store(dmy_struct *dmy_state,
         }
     }
 
-
-    // snow surface water: snow[veg].theta_liq
-    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_THETA_LIQ]);
+    // snow dz_snow: snow[veg].dz_snow
+    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_DZNODE]);
     for (m = 0; m < options.MAX_HRU; m++) {
         d4start[0] = m;
         for (k = 0; k < MAX_SNOWS; k++) {
@@ -245,7 +287,7 @@ vic_store(dmy_struct *dmy_state,
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                             k < all_vars[i].snow[m].Nsnow) {
-                    dvar[i] = (double) all_vars[i].snow[m].theta_liq[k];
+                    dvar[i] = (double) all_vars[i].snow[m].dz_snow[k];
                 }
                 else {
                     dvar[i] = nc_state_file.d_fillvalue;
@@ -260,33 +302,6 @@ vic_store(dmy_struct *dmy_state,
             }
         }
     }
-
-
-    // snow pack temperature: snow[veg].pack_temp
-    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_PACK_TEMP]);
-    for (m = 0; m < options.MAX_HRU; m++) {
-        d4start[0] = m;
-        for (k = 0; k < MAX_SNOWS; k++) {
-            d4start[1] = k;
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                if (m < local_domain.locations[i].nveg &&
-                            k < all_vars[i].snow[m].Nsnow) {
-                    dvar[i] = (double) all_vars[i].snow[m].pack_T[k];
-                }
-                else {
-                    dvar[i] = nc_state_file.d_fillvalue;
-                }
-            }
-            gather_put_nc_field_double(nc_state_file.nc_id,
-                                       nc_var->nc_varid,
-                                       nc_state_file.d_fillvalue,
-                                       d4start, nc_var->nc_counts, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                dvar[i] = nc_state_file.d_fillvalue;
-            }
-        }
-    }
-
 
     // snow pack water: snow[veg].pack_liq
     nc_var = &(nc_state_file.nc_vars[STATE_SNOW_PACK_LIQ]);
@@ -313,8 +328,8 @@ vic_store(dmy_struct *dmy_state,
         }
     }
 
-    // snow pack porosity: snow[veg].porosity
-    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_POROSITY]);
+    // snow pack_ice: snow[veg].pack_ice
+    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_PACK_ICE]);
     for (m = 0; m < options.MAX_HRU; m++) {
         d4start[0] = m;
         for (k = 0; k < MAX_SNOWS; k++) {
@@ -322,7 +337,57 @@ vic_store(dmy_struct *dmy_state,
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 k < all_vars[i].snow[m].Nsnow) {
-                    dvar[i] = (double) all_vars[i].snow[m].porosity[k];
+                    dvar[i] = (double) all_vars[i].snow[m].pack_ice[k];
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d4start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+    }
+
+    // snow last_thice: snow[veg].last_thice
+    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_LASTICE]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d4start[0] = m;
+        for (k = 0; k < MAX_SNOWS; k++) {
+            d4start[1] = k;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                k < all_vars[i].snow[m].Nsnow) {
+                    dvar[i] = (double) all_vars[i].snow[m].last_thice[k];
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d4start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+    }
+
+    // snow last_thliq: snow[veg].last_thliq
+    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_LASTLIQ]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d4start[0] = m;
+        for (k = 0; k < MAX_SNOWS; k++) {
+            d4start[1] = k;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                k < all_vars[i].snow[m].Nsnow) {
+                    dvar[i] = (double) all_vars[i].snow[m].last_thliq[k];
                 }
                 else {
                     dvar[i] = nc_state_file.d_fillvalue;
@@ -363,9 +428,8 @@ vic_store(dmy_struct *dmy_state,
         }
     }
 
-
     // last_swq: snow[veg].last_swq
-    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_OLDSWQ]);
+    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_LASTSWQ]);
     for (m = 0; m < options.MAX_HRU; m++) {
         d3start[0] = m;
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -384,29 +448,6 @@ vic_store(dmy_struct *dmy_state,
             dvar[i] = nc_state_file.d_fillvalue;
         }
     }
-
-
-    // canopy swe storage: veg_var[veg].canopy_swe
-    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_CANOPY]);
-    for (m = 0; m < options.MAX_HRU; m++) {
-        d3start[0] = m;
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            if (m < local_domain.locations[i].nveg) {
-                dvar[i] = (double) all_vars[i].veg_var[m].canopy_swq;
-            }
-            else {
-                dvar[i] = nc_state_file.d_fillvalue;
-            }
-        }
-        gather_put_nc_field_double(nc_state_file.nc_id,
-                                   nc_var->nc_varid,
-                                   nc_state_file.d_fillvalue,
-                                   d3start, nc_var->nc_counts, dvar);
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            dvar[i] = nc_state_file.d_fillvalue;
-        }
-    }
-
 
     // soil node temperatures: energy[veg].T[nidx]
     nc_var = &(nc_state_file.nc_vars[STATE_NODE_TEMP]);
@@ -433,14 +474,330 @@ vic_store(dmy_struct *dmy_state,
         }
     }
 
+    // last step soil node temperatures: energy[veg].last_T[nidx]
+    nc_var = &(nc_state_file.nc_vars[STATE_LAST_TEMP]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d4start[0] = m;
+        for (k = 0; k < MAX_NODES; k++) {
+            d4start[1] = k;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                k < all_vars[i].cell[m].Nnode) {
+                    dvar[i] = (double) all_vars[i].energy[m].last_T[k];
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d4start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+    }
 
-    // Foliage temperature: energy[veg].Tfoliage
-    nc_var = &(nc_state_file.nc_vars[STATE_FOLIAGE_TEMPERATURE]);
+    // zwt: water table depth
+    nc_var = &(nc_state_file.nc_vars[STATE_ZWT]);
     for (m = 0; m < options.MAX_HRU; m++) {
         d3start[0] = m;
         for (i = 0; i < local_domain.ncells_active; i++) {
             if (m < local_domain.locations[i].nveg) {
-                dvar[i] = (double) all_vars[i].energy[m].Tfoliage;
+                dvar[i] = (double) all_vars[i].cell[m].zwt;
+            }
+            else {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+        gather_put_nc_field_double(nc_state_file.nc_id,
+                                nc_var->nc_varid,
+                                nc_state_file.d_fillvalue,
+                                d3start, nc_var->nc_counts, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            dvar[i] = nc_state_file.d_fillvalue;
+        }
+    }
+
+    // aqf storage: aquifer storage
+    nc_var = &(nc_state_file.nc_vars[STATE_AQF_STORAGE]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                dvar[i] = (double) all_vars[i].cell[m].storage_aqf;
+            }
+            else {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+        gather_put_nc_field_double(nc_state_file.nc_id,
+                                nc_var->nc_varid,
+                                nc_state_file.d_fillvalue,
+                                d3start, nc_var->nc_counts, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            dvar[i] = nc_state_file.d_fillvalue;
+        }
+    }
+
+    // number of snow layers
+    nc_var = &(nc_state_file.nc_vars[STATE_NSNOW]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                ivar[i] = (int) all_vars[i].snow[m].Nsnow;
+            }
+            else {
+                ivar[i] = nc_state_file.i_fillvalue;
+            }
+        }
+        gather_put_nc_field_int(nc_state_file.nc_id,
+                                nc_var->nc_varid,
+                                nc_state_file.i_fillvalue,
+                                d3start, nc_var->nc_counts, ivar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            ivar[i] = nc_state_file.i_fillvalue;
+        }
+    }
+
+    // number of soil layers
+    nc_var = &(nc_state_file.nc_vars[STATE_NSOIL]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                ivar[i] = (int) all_vars[i].cell[m].Nsoil;
+            }
+            else {
+                ivar[i] = nc_state_file.i_fillvalue;
+            }
+        }
+        gather_put_nc_field_int(nc_state_file.nc_id,
+                                nc_var->nc_varid,
+                                nc_state_file.i_fillvalue,
+                                d3start, nc_var->nc_counts, ivar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            ivar[i] = nc_state_file.i_fillvalue;
+        }
+    }
+
+    // number of nodes (soil + snow layers)
+    nc_var = &(nc_state_file.nc_vars[STATE_NNODE]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                ivar[i] = (int) all_vars[i].cell[m].Nnode;
+            }
+            else {
+                ivar[i] = nc_state_file.i_fillvalue;
+            }
+        }
+        gather_put_nc_field_int(nc_state_file.nc_id,
+                                nc_var->nc_varid,
+                                nc_state_file.i_fillvalue,
+                                d3start, nc_var->nc_counts, ivar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            ivar[i] = nc_state_file.i_fillvalue;
+        }
+    }
+
+    // number of canopy layers
+    nc_var = &(nc_state_file.nc_vars[STATE_NCANOPY]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                ivar[i] = (int) all_vars[i].veg_var[m].Ncanopy;
+            }
+            else {
+                ivar[i] = nc_state_file.i_fillvalue;
+            }
+        }
+        gather_put_nc_field_int(nc_state_file.nc_id,
+                                nc_var->nc_varid,
+                                nc_state_file.i_fillvalue,
+                                d3start, nc_var->nc_counts, ivar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            ivar[i] = nc_state_file.i_fillvalue;
+        }
+    }
+
+    // number of root layers
+    nc_var = &(nc_state_file.nc_vars[STATE_NROOT]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                ivar[i] = (int) all_vars[i].veg_var[m].Nroot;
+            }
+            else {
+                ivar[i] = nc_state_file.i_fillvalue;
+            }
+        }
+        gather_put_nc_field_int(nc_state_file.nc_id,
+                                nc_var->nc_varid,
+                                nc_state_file.i_fillvalue,
+                                d3start, nc_var->nc_counts, ivar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            ivar[i] = nc_state_file.i_fillvalue;
+        }
+    }
+
+    // last step liquid content of the soil sublayer [m3/m3]
+    nc_var = &(nc_state_file.nc_vars[STATE_SOIL_LASTLIQ]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d4start[0] = m;
+        for (k = 0; k < MAX_SOILS; k++) {
+            d4start[1] = k;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                k < all_vars[i].cell[m].Nsoil) {
+                    dvar[i] = (double) all_vars[i].cell[m].last_liq[k];
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d4start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+    }
+
+    // last step ice content of the soil sublayer [m3/m3]
+    nc_var = &(nc_state_file.nc_vars[STATE_SOIL_LASTICE]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d4start[0] = m;
+        for (k = 0; k < MAX_SOILS; k++) {
+            d4start[1] = k;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                k < all_vars[i].cell[m].Nsoil) {
+                    dvar[i] = (double) all_vars[i].cell[m].last_ice[k];
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d4start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+    }
+
+    // matric potential
+    nc_var = &(nc_state_file.nc_vars[STATE_MATRIC]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d4start[0] = m;
+        for (k = 0; k < MAX_SOILS; k++) {
+            d4start[1] = k;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                k < all_vars[i].cell[m].Nsoil) {
+                    dvar[i] = (double) all_vars[i].cell[m].matric[k];
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d4start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+    }
+
+    // last matric potential
+    nc_var = &(nc_state_file.nc_vars[STATE_LAST_MATRIC]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d4start[0] = m;
+        for (k = 0; k < MAX_SOILS; k++) {
+            d4start[1] = k;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                k < all_vars[i].cell[m].Nsoil) {
+                    dvar[i] = (double) all_vars[i].cell[m].last_matric[k];
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d4start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+    }
+
+    // last matric potential
+    nc_var = &(nc_state_file.nc_vars[STATE_VEG_MATRIC]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d4start[0] = m;
+        for (k = 0; k < 4; k++) {
+            d4start[1] = k;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) all_vars[i].veg_var[m].mat_VEG[k];
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d4start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+    }
+
+    // surface water or glacier [mm]
+    nc_var = &(nc_state_file.nc_vars[STATE_H2OSFC]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                dvar[i] = (double) all_vars[i].cell[m].h2osfc;
+            }
+            else {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+        gather_put_nc_field_double(nc_state_file.nc_id,
+                                nc_var->nc_varid,
+                                nc_state_file.d_fillvalue,
+                                d3start, nc_var->nc_counts, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            dvar[i] = nc_state_file.d_fillvalue;
+        }
+    }
+
+    // fraction of ground covered by surface water or glacier
+    nc_var = &(nc_state_file.nc_vars[STATE_H2O_FRAC]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                dvar[i] = (double) all_vars[i].cell[m].frac_h2o;
             }
             else {
                 dvar[i] = nc_state_file.d_fillvalue;
@@ -455,9 +812,372 @@ vic_store(dmy_struct *dmy_state,
         }
     }
 
-    // store extension variables
-    vic_store_rout_extension(&nc_state_file);
+    // surface water or glacier ice content [mm]
+    nc_var = &(nc_state_file.nc_vars[STATE_H2OSFC_ICE]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                dvar[i] = (double) all_vars[i].cell[m].h2osfc_ice;
+            }
+            else {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+        gather_put_nc_field_double(nc_state_file.nc_id,
+                                   nc_var->nc_varid,
+                                   nc_state_file.d_fillvalue,
+                                   d3start, nc_var->nc_counts, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            dvar[i] = nc_state_file.d_fillvalue;
+        }
+    }
 
+    // surface water or glacier liquid content [mm]
+    nc_var = &(nc_state_file.nc_vars[STATE_H2OSFC_LIQ]);
+    for (m = 0; m < options.MAX_HRU; m++) {
+        d3start[0] = m;
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                dvar[i] = (double) all_vars[i].cell[m].h2osfc_liq;
+            }
+            else {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+        gather_put_nc_field_double(nc_state_file.nc_id,
+                                nc_var->nc_varid,
+                                nc_state_file.d_fillvalue,
+                                d3start, nc_var->nc_counts, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            dvar[i] = nc_state_file.d_fillvalue;
+        }
+    }
+    // 
+    if (options.ROUT) {
+        // routing states: main channel
+        nc_var = &(nc_state_file.nc_vars[STATE_MAIN_CHANNEL_STORAGE]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].main_channel.wr;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_MAIN_CROSS_SECTION_AREA]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].main_channel.mr; // 过水断面面积
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_MAIN_CHANNEL_DEPTH]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].main_channel.yr; // 水深
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_MAIN_CHANNEL_MANNING_N]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].main_channel.nr;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_MAIN_WETTED_PERIMETER]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].main_channel.pr; // 湿周
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_MAIN_HYDRAULIC_RADIUS]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].main_channel.rr;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        // routing states: sub-channel
+        nc_var = &(nc_state_file.nc_vars[STATE_SUB_CHANNEL_STORAGE]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].sub_channel.wt;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_SUB_CHANNEL_MANNING_N]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].sub_channel.nt;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_SUB_CROSS_SECTION_AREA]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].sub_channel.mt;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_SUB_CHANNEL_DEPTH]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].sub_channel.yt;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_SUB_WETTED_PERIMETER]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].sub_channel.pt;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_SUB_HYDRAULIC_RADIUS]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].sub_channel.rt;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        // routing states: hillslope
+        nc_var = &(nc_state_file.nc_vars[STATE_HILLSLOPE_DEPTH]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].hillslope.yh;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_HILLSLOPE_MANNING_N]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].hillslope.nh;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_HILLSLOPE_STORAGE]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].hillslope.wh;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+
+        nc_var = &(nc_state_file.nc_vars[STATE_STORAGE_PREV]);
+        for (m = 0; m < options.MAX_HRU; m++) {
+            d3start[0] = m;
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    dvar[i] = (double) rout[i].total_storage_prev;
+                }
+                else {
+                    dvar[i] = nc_state_file.d_fillvalue;
+                }
+            }
+            gather_put_nc_field_double(nc_state_file.nc_id,
+                                       nc_var->nc_varid,
+                                       nc_state_file.d_fillvalue,
+                                       d3start, nc_var->nc_counts, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                dvar[i] = nc_state_file.d_fillvalue;
+            }
+        }
+    }
 
     // close the netcdf file if it is still open
     if (mpi_rank == VIC_MPI_ROOT) {
@@ -491,7 +1211,10 @@ set_nc_state_file_info(nc_file_struct *nc_state_file)
     // set ids to MISSING
     nc_state_file->nc_id = MISSING;
     nc_state_file->band_dimid = MISSING;
-    nc_state_file->front_dimid = MISSING;
+    nc_state_file->soil_dimid = MISSING;
+    nc_state_file->snow_dimid = MISSING;
+    nc_state_file->wave_dimid = MISSING;
+    nc_state_file->canopy_dimid = MISSING;
     nc_state_file->layer_dimid = MISSING;
     nc_state_file->ni_dimid = MISSING;
     nc_state_file->nj_dimid = MISSING;
@@ -501,21 +1224,20 @@ set_nc_state_file_info(nc_file_struct *nc_state_file)
 
     // set dimension sizes
     nc_state_file->band_size = options.SNOW_BAND;
-    nc_state_file->front_size = MAX_FRONTS;
+    nc_state_file->soil_size = MAX_SOILS;
+    nc_state_file->snow_size = MAX_SNOWS;
+    nc_state_file->wave_size = MAX_SWBANDS;
+    nc_state_file->canopy_size = MAX_CANOPYS;
     nc_state_file->layer_size = options.Nlayer;
     nc_state_file->ni_size = global_domain.n_nx;
     nc_state_file->nj_size = global_domain.n_ny;
-    nc_state_file->node_size = MAX_SOILS;
+    nc_state_file->node_size = MAX_NODES;
     nc_state_file->time_size = NC_UNLIMITED;
     nc_state_file->veg_size = options.MAX_HRU;
 
-    // set ids and dimension sizes of the extension variables
-    set_nc_state_file_info_rout_extension(nc_state_file);
-
     // allocate memory for nc_vars
     nc_state_file->nc_vars =
-        calloc(N_STATE_VARS + N_STATE_VARS_EXT,
-               sizeof(*(nc_state_file->nc_vars)));
+        calloc(N_STATE_VARS, sizeof(*(nc_state_file->nc_vars)));
     check_alloc_status(nc_state_file->nc_vars, "Memory allocation error");
 }
 
@@ -536,7 +1258,11 @@ set_nc_state_var_info(nc_file_struct *nc)
         nc->nc_vars[i].nc_dims = 0;
 
         switch (i) {
-        case STATE_SNOW_NSNOW:
+        case STATE_NSNOW:
+        case STATE_NSOIL:
+        case STATE_NNODE:
+        case STATE_NCANOPY:
+        case STATE_NROOT:
             nc->nc_vars[i].nc_type = NC_INT;
             break;
         default:
@@ -547,16 +1273,15 @@ set_nc_state_var_info(nc_file_struct *nc)
         switch (i) {
         case STATE_SOIL_MOISTURE:
         case STATE_SOIL_ICE:
-        case STATE_SNOW_PACK_ICE:
-        case STATE_SNOW_THETA_ICE:
-        case STATE_SNOW_THETA_LIQ:
-        case STATE_SNOW_PACK_TEMP:
-        case STATE_SNOW_PACK_LIQ:
-        case STATE_SNOW_POROSITY:
-            // 4d vars [veg, layer, j, i]
+        case STATE_SOIL_LIQ:
+        case STATE_MATRIC:
+        case STATE_SOIL_LASTICE:
+        case STATE_SOIL_LASTLIQ:
+        case STATE_LAST_MATRIC:
+            // 4d vars [nveg, soil, j, i]
             nc->nc_vars[i].nc_dims = 4;
             nc->nc_vars[i].nc_dimids[0] = nc->veg_dimid;
-            nc->nc_vars[i].nc_dimids[1] = nc->layer_dimid;
+            nc->nc_vars[i].nc_dimids[1] = nc->soil_dimid;
             nc->nc_vars[i].nc_dimids[2] = nc->nj_dimid;
             nc->nc_vars[i].nc_dimids[3] = nc->ni_dimid;
             nc->nc_vars[i].nc_counts[0] = 1;
@@ -564,21 +1289,54 @@ set_nc_state_var_info(nc_file_struct *nc)
             nc->nc_vars[i].nc_counts[2] = nc->nj_size;
             nc->nc_vars[i].nc_counts[3] = nc->ni_size;
             break;
-        case STATE_CANOPY_WATER:
-        case STATE_TCANOPY:
-        case STATE_ANNUALNPP:
-        case STATE_ANNUALNPPPREV:
-        case STATE_CLITTER:
-        case STATE_CINTER:
-        case STATE_CSLOW:
+        case STATE_SNOW_PACK_ICE:
+        case STATE_SNOW_PACK_LIQ:
+        case STATE_SNOW_LASTICE:
+        case STATE_SNOW_LASTLIQ:
+        case STATE_SNOW_DENSITY:
+        case STATE_SNOW_RADIUS:
+        case STATE_SNOW_DZNODE:
+            // 4d vars [nveg, snow, j, i]
+            nc->nc_vars[i].nc_dims = 4;
+            nc->nc_vars[i].nc_dimids[0] = nc->veg_dimid;
+            nc->nc_vars[i].nc_dimids[1] = nc->snow_dimid;
+            nc->nc_vars[i].nc_dimids[2] = nc->nj_dimid;
+            nc->nc_vars[i].nc_dimids[3] = nc->ni_dimid;
+            nc->nc_vars[i].nc_counts[0] = 1;
+            nc->nc_vars[i].nc_counts[1] = 1;
+            nc->nc_vars[i].nc_counts[2] = nc->nj_size;
+            nc->nc_vars[i].nc_counts[3] = nc->ni_size;
+            break;
         case STATE_SNOW_AGE:
         case STATE_SNOW_COVERAGE:
         case STATE_SNOW_WATER_EQUIVALENT:
-        case STATE_SNOW_DENSITY:
-        case STATE_SNOW_OLDSWQ:
-        case STATE_SNOW_CANOPY:
-        case STATE_FOLIAGE_TEMPERATURE:
-            // 3d vars [veg, j, i]
+        case STATE_SNOW_LASTSWQ:
+        case STATE_INT_SNOW:
+        case STATE_INT_RAIN:
+        case STATE_ZWT:
+        case STATE_AQF_STORAGE:
+        case STATE_H2OSFC:
+        case STATE_H2OSFC_ICE:
+        case STATE_H2OSFC_LIQ:
+        case STATE_H2O_FRAC:
+        // rout state
+        case STATE_MAIN_CHANNEL_STORAGE:
+        case STATE_MAIN_CROSS_SECTION_AREA:
+        case STATE_MAIN_CHANNEL_DEPTH:
+        case STATE_MAIN_CHANNEL_MANNING_N:
+        case STATE_MAIN_WETTED_PERIMETER:
+        case STATE_MAIN_HYDRAULIC_RADIUS:
+        case STATE_SUB_CHANNEL_STORAGE:
+        case STATE_SUB_CHANNEL_MANNING_N:
+        case STATE_SUB_CROSS_SECTION_AREA:
+        case STATE_SUB_CHANNEL_DEPTH:
+        case STATE_SUB_WETTED_PERIMETER:
+        case STATE_SUB_HYDRAULIC_RADIUS:
+        case STATE_HILLSLOPE_DEPTH:
+        case STATE_HILLSLOPE_MANNING_N:
+        case STATE_HILLSLOPE_STORAGE:
+        case STATE_STORAGE_PREV:
+            // 3d vars [nveg, j, i]
             nc->nc_vars[i].nc_dims = 3;
             nc->nc_vars[i].nc_dimids[0] = nc->veg_dimid;
             nc->nc_vars[i].nc_dimids[1] = nc->nj_dimid;
@@ -588,10 +1346,23 @@ set_nc_state_var_info(nc_file_struct *nc)
             nc->nc_vars[i].nc_counts[2] = nc->ni_size;
             break;
         case STATE_NODE_TEMP:
-            // 4d vars [veg, node, j, i]
+        case STATE_LAST_TEMP:
+            // 4d vars [nveg, node, j, i]
             nc->nc_vars[i].nc_dims = 4;
             nc->nc_vars[i].nc_dimids[0] = nc->veg_dimid;
             nc->nc_vars[i].nc_dimids[1] = nc->node_dimid;
+            nc->nc_vars[i].nc_dimids[2] = nc->nj_dimid;
+            nc->nc_vars[i].nc_dimids[3] = nc->ni_dimid;
+            nc->nc_vars[i].nc_counts[0] = 1;
+            nc->nc_vars[i].nc_counts[1] = 1;
+            nc->nc_vars[i].nc_counts[2] = nc->nj_size;
+            nc->nc_vars[i].nc_counts[3] = nc->ni_size;
+            break;
+        case STATE_VEG_MATRIC:
+            // 4d vars [nveg, 4, j, i]
+            nc->nc_vars[i].nc_dims = 4;
+            nc->nc_vars[i].nc_dimids[0] = nc->veg_dimid;
+            nc->nc_vars[i].nc_dimids[1] = 4;
             nc->nc_vars[i].nc_dimids[2] = nc->nj_dimid;
             nc->nc_vars[i].nc_dimids[3] = nc->ni_dimid;
             nc->nc_vars[i].nc_counts[0] = 1;
@@ -607,7 +1378,6 @@ set_nc_state_var_info(nc_file_struct *nc)
             log_err("Too many dimensions specified in variable %zu", i);
         }
     }
-    set_nc_state_var_info_rout_extension(nc);
 }
 
 /******************************************************************************
@@ -623,7 +1393,7 @@ initialize_state_file(char           *filename,
     extern domain_struct       global_domain;
     extern domain_struct       local_domain;
     extern global_param_struct global_param;
-    extern metadata_struct     state_metadata[N_STATE_VARS + N_STATE_VARS_EXT];
+    extern metadata_struct     state_metadata[N_STATE_VARS];
     extern soil_con_struct    *soil_con;
     extern int                 mpi_rank;
 
@@ -639,6 +1409,10 @@ initialize_state_file(char           *filename,
     int                        veg_var_id;
     int                        snow_band_var_id;
     int                        layer_var_id;
+    int                        nsoil_var_id;
+    int                        nsnow_var_id;
+    int                        ncanopy_var_id;
+    int                        nwave_var_id;
     int                        dz_node_var_id;
     int                        node_depth_var_id;
     char                       unit_str[MAXSTRING];
@@ -713,7 +1487,7 @@ initialize_state_file(char           *filename,
                         global_domain.info.y_dim,
                         filename);
 
-        status = nc_def_dim(nc_state_file->nc_id, "veg_class",
+        status = nc_def_dim(nc_state_file->nc_id, "nveg",
                             nc_state_file->veg_size,
                             &(nc_state_file->veg_dimid));
         check_nc_status(status, "Error defining veg_class in %s", filename);
@@ -728,14 +1502,25 @@ initialize_state_file(char           *filename,
                             &(nc_state_file->layer_dimid));
         check_nc_status(status, "Error defining nlayer in %s", filename);
 
-        status = nc_def_dim(nc_state_file->nc_id, "soil_node",
-                            nc_state_file->node_size,
+        status = nc_def_dim(nc_state_file->nc_id, "nsoil",
+                            nc_state_file->soil_size,
                             &(nc_state_file->node_dimid));
         check_nc_status(status, "Error defining soil_node in %s", filename);
 
-
-        // add extension dimensions
-        initialize_state_file_rout_extension(filename, nc_state_file);
+        status = nc_def_dim(nc_state_file->nc_id, "nsnow", 
+                            nc_state_file->snow_size, 
+                            &(nc_state_file->snow_dimid));
+        check_nc_status(status, "Error defining snow node in %s", filename);
+        
+        status = nc_def_dim(nc_state_file->nc_id, "nwave", 
+                            nc_state_file->wave_size, 
+                            &(nc_state_file->wave_dimid));
+        check_nc_status(status, "Error defining wave dimension in %s", filename);
+        
+        status = nc_def_dim(nc_state_file->nc_id, "ncanopy", 
+                            nc_state_file->canopy_size, 
+                            &(nc_state_file->canopy_dimid));
+        check_nc_status(status, "Error defining canopy dimension in %s", filename);
 
         set_nc_state_var_info(nc_state_file);
     }
@@ -812,19 +1597,19 @@ initialize_state_file(char           *filename,
             dcount[i] = 0;
         }
 
-        // veg_class
+        // nveg
         dimids[0] = nc_state_file->veg_dimid;
-        status = nc_def_var(nc_state_file->nc_id, "veg_class",
+        status = nc_def_var(nc_state_file->nc_id, "nveg",
                             NC_INT, 1, dimids, &(veg_var_id));
-        check_nc_status(status, "Error defining veg_class variable in %s",
+        check_nc_status(status, "Error defining nveg variable in %s",
                         filename);
         status = nc_put_att_text(nc_state_file->nc_id, veg_var_id, "long_name",
-                                 strlen("veg_class"), "veg_class");
+                                 strlen("nveg"), "nveg");
         check_nc_status(status, "Error adding attribute in %s", filename);
         status = nc_put_att_text(nc_state_file->nc_id, veg_var_id,
                                  "standard_name",
-                                 strlen("vegetation_class_number"),
-                                 "vegetation_class_number");
+                                 strlen("hydrological_response_units_number"),
+                                 "hydrological_response_units_number");
         check_nc_status(status, "Error adding attribute in %s", filename);
         dimids[0] = -1;
 
@@ -845,16 +1630,84 @@ initialize_state_file(char           *filename,
         check_nc_status(status, "Error adding attribute in %s", filename);
         dimids[0] = -1;
 
+        // nsoil
+        dimids[0] = nc_state_file->soil_dimid;
+        status = nc_def_var(nc_state_file->nc_id, "nsoil",
+                            NC_INT, 1, dimids, &(nsoil_var_id));
+        check_nc_status(status, "Error defining nsoil variable in %s",
+                        filename);
+        status = nc_put_att_text(nc_state_file->nc_id, nsoil_var_id,
+                                 "long_name",
+                                 strlen("nsoil"), "nsoil");
+        check_nc_status(status, "Error adding attribute in %s", filename);
+        status = nc_put_att_text(nc_state_file->nc_id, nsoil_var_id,
+                                 "standard_name",
+                                 strlen("soil_node_number"),
+                                 "soil_node_number");
+        check_nc_status(status, "Error adding attribute in %s", filename);
+        dimids[0] = -1;
+
+        // nsnow
+        dimids[0] = nc_state_file->snow_dimid;
+        status = nc_def_var(nc_state_file->nc_id, "nsnow",
+                            NC_INT, 1, dimids, &(nsnow_var_id));
+        check_nc_status(status, "Error defining nsnow variable in %s",
+                        filename);
+        status = nc_put_att_text(nc_state_file->nc_id, nsnow_var_id,
+                                 "long_name",
+                                 strlen("nsnow"), "nsnow");
+        check_nc_status(status, "Error adding attribute in %s", filename);
+        status = nc_put_att_text(nc_state_file->nc_id, nsnow_var_id,
+                                 "standard_name",
+                                 strlen("snow_node_number"),
+                                 "snow_node_number");
+        check_nc_status(status, "Error adding attribute in %s", filename);
+        dimids[0] = -1;
+
+        // ncanopy
+        dimids[0] = nc_state_file->canopy_dimid;
+        status = nc_def_var(nc_state_file->nc_id, "nsnow",
+                            NC_INT, 1, dimids, &(ncanopy_var_id));
+        check_nc_status(status, "Error defining ncanopy variable in %s",
+                        filename);
+        status = nc_put_att_text(nc_state_file->nc_id, ncanopy_var_id,
+                                 "long_name",
+                                 strlen("ncanopy"), "ncanopy");
+        check_nc_status(status, "Error adding attribute in %s", filename);
+        status = nc_put_att_text(nc_state_file->nc_id, ncanopy_var_id,
+                                 "standard_name",
+                                 strlen("canopy_layer_number"),
+                                 "canopy_layer_number");
+        check_nc_status(status, "Error adding attribute in %s", filename);
+        dimids[0] = -1;
+
+        // nwave
+        dimids[0] = nc_state_file->wave_dimid;
+        status = nc_def_var(nc_state_file->nc_id, "nwave",
+                            NC_INT, 1, dimids, &(nwave_var_id));
+        check_nc_status(status, "Error defining nwave variable in %s",
+                        filename);
+        status = nc_put_att_text(nc_state_file->nc_id, nwave_var_id,
+                                 "long_name",
+                                 strlen("nwave"), "nwave");
+        check_nc_status(status, "Error adding attribute in %s", filename);
+        status = nc_put_att_text(nc_state_file->nc_id, nwave_var_id,
+                                 "standard_name",
+                                 strlen("solar_wave_number"),
+                                 "solar_wave_number");
+        check_nc_status(status, "Error adding attribute in %s", filename);
+        dimids[0] = -1;
+
         // layer
         dimids[0] = nc_state_file->layer_dimid;
         status =
-            nc_def_var(nc_state_file->nc_id, "layer", NC_INT, 1, dimids,
+            nc_def_var(nc_state_file->nc_id, "nlayer", NC_INT, 1, dimids,
                        &(layer_var_id));
         check_nc_status(status, "Error defining layer variable in %s",
                         filename);
         status = nc_put_att_text(nc_state_file->nc_id, layer_var_id,
                                  "long_name",
-                                 strlen("layer"), "layer");
+                                 strlen("nlayer"), "nlayer");
         check_nc_status(status, "Error adding attribute in %s", filename);
         status = nc_put_att_text(nc_state_file->nc_id, layer_var_id,
                                  "standard_name", strlen("soil_layer_number"),
@@ -910,7 +1763,7 @@ initialize_state_file(char           *filename,
 
     // Define state variables
     if (mpi_rank == VIC_MPI_ROOT) {
-        for (i = 0; i < (N_STATE_VARS + N_STATE_VARS_EXT); i++) {
+        for (i = 0; i < (N_STATE_VARS); i++) {
             if (strcasecmp(state_metadata[i].varname, MISSING_S) == 0) {
                 // skip variables not set in set_state_meta_data_info
                 continue;
@@ -1104,7 +1957,7 @@ initialize_state_file(char           *filename,
         free(ivar);
     }
 
-    // initialize dvar for soil thermal node deltas and depths
+    // initialize dvar for thermal node deltas and depths
     dvar = malloc(local_domain.ncells_active * sizeof(*dvar));
     check_alloc_status(dvar, "Memory allocation error");
     // set missing values
@@ -1157,6 +2010,6 @@ initialize_state_file(char           *filename,
         dimids[i] = -1;
         dcount[i] = 0;
     }
-    free(dvar);
 
+    free(dvar);
 }

@@ -28,7 +28,6 @@ update_nodes(double             pressure,
     double *last_T = energy->last_T;
     double *soil_T = cell->soil_T;
     double *Cs_node = energy->Cs_node;
-    double *last_Cs = energy->last_Cs;
     double *pack_T = snow->pack_T;
     double *radius = snow->radius;
     double *dz_snow = snow->dz_snow; 
@@ -105,7 +104,6 @@ update_nodes(double             pressure,
     snow->last_swq = snow->swq;
     for (i = 0; i < tmp_Nnode; i++) {
         last_T[i] = T[i];
-        last_Cs[i] = Cs_node[i];
     }
     // Update snow states
     for (i = 0; i < Nsnow; i++) {
@@ -141,7 +139,6 @@ update_nodes(double             pressure,
         for (i = tmp_Nnode; i < lidx; i++) {
             T[i] = 0.0;
             last_T[i] = 0.0;
-            last_Cs[i] = 0.0;
             Cs_node[i] = 0.0;
             kappa_int[i] = 0.0;
             kappa_node[i] = 0.0;

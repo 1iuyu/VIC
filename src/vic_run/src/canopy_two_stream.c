@@ -58,7 +58,7 @@ canopy_two_stream(double             coszen,
 	double H1, H2, H3, H4, H5;
 	double H6, H7, H8, H9, H10;
     double LAIcanopy;
-    size_t i, j, Ncanopy;
+    size_t i, j;
     double A1, A2;
     double fabd_sun, fabd_sha;
     double fabi_sun, fabi_sha;
@@ -104,7 +104,7 @@ canopy_two_stream(double             coszen,
     double Canopy_Lower = veg_lib->Canopy_Lower;
     double Canopy_Radius = veg_lib->Canopy_Radius;
     double NetVEG = NetLAI + NetSAI;
-    Ncanopy = cell->Ncanopy;
+    size_t Ncanopy = veg_var->Ncanopy;
 	/* compute within and between gaps */
     if (NetVEG == 0.0) {
         gap_fracdir = 1.0;

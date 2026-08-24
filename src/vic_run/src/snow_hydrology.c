@@ -79,10 +79,10 @@ snow_hydrology(double             step_dt,
         }
         else {
             if (energy->Tgrnd >= CONST_TKFRZ) {
-                snowfrost = fabs(vapor_grnd); // mm/s
+                snow_dew = fabs(vapor_grnd); // mm/s
             }
             else {
-                snow_dew = fabs(vapor_grnd); // mm/s
+                snowfrost = fabs(vapor_grnd); // mm/s
             }
         }
         snow_limit = (pack_liq[0] + pack_ice[0]) / (coverage * step_dt);
@@ -105,10 +105,10 @@ snow_hydrology(double             step_dt,
         }
         else {
             if (energy->Tgrnd >= CONST_TKFRZ) {
-                soilfrost = fabs(vapor_grnd); // mm/s
+                soil_dew = fabs(vapor_grnd); // mm/s
             }
             else {
-                soil_dew = fabs(vapor_grnd); // mm/s
+                soilfrost = fabs(vapor_grnd); // mm/s
             }
         }
         double soil_water = liq[0] * dz_soil[0] * CONST_RHOFW + ice[0] * dz_soil[0] * CONST_RHOICE;
@@ -276,23 +276,42 @@ snow_hydrology(double             step_dt,
             pack_liq[i] += snow_inflow;
             theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * coverage * CONST_RHOICE));
             porosity[i] = 1.0 - theta_ice[i];
-            theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW));
-            /* excess liquid water snow-area basis */
-            double outflow = max(0.0, (theta_liq[i] - liquid_capacity * 
-                                porosity[i]) * dz_snow[i] * CONST_RHOFW);
-            pack_outflow[i] = outflow * coverage;
-            if (i == 0) {
-                pack_outflow[i] = max((theta_liq[i] - porosity[i]) * dz_snow[i] * CONST_RHOFW * 
-                                    coverage, param.SNOW_RELEASE_FAC * step_dt * pack_outflow[i]);
+            theta_liq[i] = pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW);
+            // 超孔隙水立即排出
+            double outflow_snow = 0.0;
+            if (theta_liq[i] > porosity[i]) {
+                double over_sat =
+                    (theta_liq[i] - porosity[i]) * dz_snow[i] * CONST_RHOFW;
+                outflow_snow += over_sat;
+                pack_liq[i] -= over_sat * coverage;
+                theta_liq[i] = porosity[i];
             }
-            pack_liq[i] -= pack_outflow[i];
-            if (pack_liq[i] / (pack_ice[i] + pack_liq[i]) > param.SNOW_MAX_LIQUID_FRAC) {
-                double excess_liq = param.SNOW_MAX_LIQUID_FRAC / (1.0 - param.SNOW_MAX_LIQUID_FRAC) * pack_ice[i];
+            
+            /* excess liquid water snow-area basis */
+            double drainage = max(0.0, (theta_liq[i] - liquid_capacity * 
+                                porosity[i]) * dz_snow[i] * CONST_RHOFW);
+            if (i == 0) {
+                // 表层重力排水可被释放系数限制；超孔隙水已经立即排出
+                double release_frac =
+                    max(0.0, min(1.0, param.SNOW_RELEASE_FAC * step_dt));
+                double limited_drainage = drainage * release_frac;
+                pack_liq[i] -= limited_drainage * coverage;
+                outflow_snow += limited_drainage;
+            } else {
+                pack_liq[i] -= drainage * coverage;
+                outflow_snow += drainage;
+            }
+
+            pack_outflow[i] = outflow_snow * coverage;
+            if (pack_liq[i] / (pack_ice[i] + pack_liq[i]) > param.SNOW_MAX_LIQUID_FRAC &&
+                (pack_ice[i] + pack_liq[i]) > 0.0) {
+                double excess_liq = param.SNOW_MAX_LIQUID_FRAC / 
+                                    (1.0 - param.SNOW_MAX_LIQUID_FRAC) * pack_ice[i];
                 pack_outflow[i] += pack_liq[i] - excess_liq;
                 pack_liq[i] = excess_liq;
             }
             snow_inflow = pack_outflow[i];
-            theta_liq[i] = pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW);
+            theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW));
         }
     }
     /* Liquid water from snow bottom to soil [mm/s] */
@@ -362,17 +381,17 @@ snow_hydrology(double             step_dt,
     // === 损失项（正值） ===
     cell->soil_evap = soil_evap * (1.0 - coverage);       // 裸土蒸发
     cell->soil_sublim = soil_sublim * (1.0 - coverage);   // 裸土升华
-    cell->snow_evap = snow_evap * coverage;               // 雪面蒸发
-    cell->snow_sublim = snow_sublim * coverage;           // 雪面升华
+    snow->snow_evap = snow_evap * coverage;               // 雪面蒸发
+    snow->snow_sublim = snow_sublim * coverage;           // 雪面升华
 
     // === 收入项（负值） ===
     cell->soil_dew = soil_dew * (1.0 - coverage);         // 裸土露水
     cell->soil_frost = soilfrost * (1.0 - coverage);      // 裸土霜凝华
-    cell->snow_dew = snow_dew * coverage;                 // 雪面露水
-    cell->snow_frost = snowfrost * coverage;              // 雪面霜凝华
+    snow->snow_dew = snow_dew * coverage;                 // 雪面露水
+    snow->snow_frost = snowfrost * coverage;              // 雪面霜凝华
 
-    cell->evap = (cell->soil_evap + cell->soil_sublim + cell->snow_evap + cell->snow_sublim)
-               - (cell->soil_dew + cell->soil_frost + cell->snow_dew + cell->snow_frost);
+    cell->evap = (cell->soil_evap + cell->soil_sublim + snow->snow_evap + snow->snow_sublim)
+               - (cell->soil_dew + cell->soil_frost + snow->snow_dew + snow->snow_frost);
 
     return (0);
 }

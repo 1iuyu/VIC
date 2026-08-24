@@ -56,14 +56,6 @@ surface_albedo(double             step_dt,
         energy->ReflSubDfs[i] = 0.0;
         energy->ReflectVeg[i] = 0.0;
         energy->TransmitVeg[i] = 0.0;
-        energy->AlbGrndfsBC[i] = 0.0;
-        energy->AlbGrndirBC[i] = 0.0;
-        energy->AlbGrndfsDST[i] = 0.0;
-        energy->AlbGrndirDST[i] = 0.0;
-        energy->AlbGrndfsOC[i] = 0.0;
-        energy->AlbGrndirOC[i] = 0.0;
-        energy->AlbGrndfsPure[i] = 0.0;
-        energy->AlbGrndirPure[i] = 0.0;
     }
     for (i = 0; i < MAX_CANOPYS; i++) {
         veg_var->aPAR_sun[i] = 0.0;
@@ -135,7 +127,7 @@ surface_albedo(double             step_dt,
                 log_err("Error in diagnosing canopy layers: sum of LAI_z or SAI_z does not equal NetLAI or NetSAI");
             }
         }
-        cell->Ncanopy = nrad;
+        veg_var->Ncanopy = nrad;
     }
     // 植被的反射率和透射率
     if (cell->IS_VEG || cell->IS_URBAN) {

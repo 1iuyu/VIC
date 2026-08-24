@@ -21,7 +21,6 @@ vic_init_output(dmy_struct *dmy_current)
     extern int                mpi_rank;
     extern nc_file_struct    *nc_hist_files;
     extern double          ***out_data;
-    extern save_data_struct  *save_data;
     extern veg_con_struct   **veg_con;
     extern option_struct      options;
     extern MPI_Datatype       mpi_alarm_struct_type;
@@ -43,8 +42,7 @@ vic_init_output(dmy_struct *dmy_current)
     // initialize the save data structures
     for (i = 0; i < local_domain.ncells_active; i++) {
         initialize_save_data(&(all_vars[i]), &(force[i]),
-                             veg_con[i], out_data[i],
-                             &(save_data[i]), &timer);
+                             veg_con[i], out_data[i], &timer);
     }
 
     if (mpi_rank == VIC_MPI_ROOT) {
@@ -231,6 +229,21 @@ initialize_history_file(nc_file_struct *nc,
                 stream->time_bounds[0].dayseconds);
     }
 
+    // 关键检查点
+    printf("DEBUG: About to call nc_create\n");
+    printf("DEBUG: stream->filename = '%s'\n", stream->filename);
+    printf("DEBUG: stream->file_format = %d\n", stream->file_format);
+    
+    int nc_mode = get_nc_mode(stream->file_format);
+    printf("DEBUG: nc_mode = %d\n", nc_mode);
+    
+    printf("DEBUG: nc = %p\n", (void*)nc);
+    printf("DEBUG: &(nc->nc_id) = %p\n", (void*)&(nc->nc_id));
+    
+    // 尝试写入 nc->nc_id（测试内存是否可写）
+    nc->nc_id = 0;
+    printf("DEBUG: Write test passed\n");
+
     // open the netcdf file
     status = nc_create(stream->filename,
                        get_nc_mode(stream->file_format),
@@ -251,19 +264,24 @@ initialize_history_file(nc_file_struct *nc,
     check_nc_status(status, "Error defining snow_band dimension in %s",
                     stream->filename);
 
-    status = nc_def_dim(nc->nc_id, "front", nc->front_size,
-                        &(nc->front_dimid));
-    check_nc_status(status, "Error defining front dimension in %s",
+    status = nc_def_dim(nc->nc_id, "soil_size", nc->soil_size,
+                        &(nc->soil_dimid));
+    check_nc_status(status, "Error defining soil dimension in %s",
                     stream->filename);
 
-    status = nc_def_dim(nc->nc_id, "frost_area", nc->frost_size,
-                        &(nc->frost_dimid));
-    check_nc_status(status, "Error defining frost_area dimension in %s",
+    status = nc_def_dim(nc->nc_id, "snow_size", nc->snow_size,
+                        &(nc->snow_dimid));
+    check_nc_status(status, "Error defining snow dimension in %s",
                     stream->filename);
 
     status = nc_def_dim(nc->nc_id, "nlayer", nc->layer_size,
                         &(nc->layer_dimid));
     check_nc_status(status, "Error defining nlayer dimension in %s",
+                    stream->filename);
+
+    status = nc_def_dim(nc->nc_id, "wave_size", nc->wave_size,
+                        &(nc->wave_dimid));
+    check_nc_status(status, "Error defining solar wave dimension in %s",
                     stream->filename);
 
     status = nc_def_dim(nc->nc_id, global_domain.info.x_dim, nc->ni_size,
@@ -281,9 +299,9 @@ initialize_history_file(nc_file_struct *nc,
     check_nc_status(status, "Error defining node dimension in %s",
                     stream->filename);
 
-    status = nc_def_dim(nc->nc_id, "root_zone", nc->root_zone_size,
-                        &(nc->root_zone_dimid));
-    check_nc_status(status, "Error defining root_zone dimension in %s",
+    status = nc_def_dim(nc->nc_id, "canopy_size", nc->canopy_size,
+                        &(nc->canopy_dimid));
+    check_nc_status(status, "Error defining canopy dimension in %s",
                     stream->filename);
 
     status = nc_def_dim(nc->nc_id, "veg_class", nc->veg_size,
@@ -655,23 +673,27 @@ initialize_nc_file(nc_file_struct     *nc_file,
     // set ids to MISSING
     nc_file->nc_id = MISSING;
     nc_file->band_dimid = MISSING;
-    nc_file->front_dimid = MISSING;
-    nc_file->frost_dimid = MISSING;
+    nc_file->snow_dimid = MISSING;
+    nc_file->soil_dimid = MISSING;
+    nc_file->wave_dimid = MISSING;
+    nc_file->canopy_dimid = MISSING;
     nc_file->layer_dimid = MISSING;
     nc_file->ni_dimid = MISSING;
     nc_file->nj_dimid = MISSING;
     nc_file->node_dimid = MISSING;
-    nc_file->root_zone_dimid = MISSING;
     nc_file->time_dimid = MISSING;
     nc_file->veg_dimid = MISSING;
 
     // Set dimension sizes
     nc_file->band_size = options.SNOW_BAND;
-    nc_file->front_size = MAX_FRONTS;
     nc_file->layer_size = options.Nlayer;
     nc_file->ni_size = global_domain.n_nx;
     nc_file->nj_size = global_domain.n_ny;
     nc_file->node_size = MAX_NODES;
+    nc_file->soil_size = MAX_SOILS;
+    nc_file->snow_size = MAX_SNOWS;
+    nc_file->canopy_size = MAX_CANOPYS;
+    nc_file->wave_size = MAX_SWBANDS;
     nc_file->time_size = NC_UNLIMITED;
     nc_file->veg_size = options.MAX_HRU;
 

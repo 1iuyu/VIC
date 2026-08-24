@@ -20,9 +20,7 @@ update_last_state(energy_bal_struct *energy,
     size_t Nsoil = cell->Nsoil;
     size_t Nsnow = snow->Nsnow;
     double *T = energy->T;
-    double *Cs_node = energy->Cs_node;
     double *last_T = energy->last_T;
-    double *last_Cs = energy->last_Cs;
     double *ice = cell->ice;
     double *liq = cell->liq;
     double *matric = cell->matric;
@@ -48,7 +46,6 @@ update_last_state(energy_bal_struct *energy,
     // Update thermal states
     for (i = 0; i < Nnode; i++) {
         last_T[i] = T[i];
-        last_Cs[i] = Cs_node[i];
     }
 
     // Update soil water states

@@ -126,7 +126,7 @@ surface_radiation(double            *shortwave_dir,
     if (cell->IS_VEG) {
         double LAI_sun = 0.0;
         double LAI_sha = 0.0;
-        for (i = 0; i < cell->Ncanopy; i++) {
+        for (i = 0; i < veg_var->Ncanopy; i++) {
             LAIsun_z[i] = LAI_z[i] * fsun_z[i];
             LAIsha_z[i] = LAI_z[i] * (1.0 - fsun_z[i]);
             LAI_sun += LAIsun_z[i];
@@ -135,7 +135,7 @@ surface_radiation(double            *shortwave_dir,
         veg_var->LAI_sun = LAI_sun;
         veg_var->LAI_sha = LAI_sha;
         // Absorbed PAR profile through canopy
-        for (i = 0; i < cell->Ncanopy; i++) {
+        for (i = 0; i < veg_var->Ncanopy; i++) {
             aPAR_sun[i] = shortwave_dir[0] * energy->AbsDirSun[i] + 
                                         shortwave_dfs[0] * energy->AbsDfsSun[i];
             aPAR_sha[i] = shortwave_dir[0] * energy->AbsDirSha[i] + 

@@ -12,17 +12,16 @@
 void
 vic_alloc(void)
 {
-    extern all_vars_struct    *all_vars;
-    extern force_data_struct  *force;
-    extern domain_struct       local_domain;
-    extern option_struct       options;
-    extern double           ***out_data;
-    extern save_data_struct   *save_data;
-    extern soil_con_struct    *soil_con;
-    extern veg_con_struct    **veg_con;
-    extern veg_lib_struct     *veg_lib;
-    extern veg_hist_struct   **veg_hist;
-    size_t                     i, j;
+    extern all_vars_struct   *all_vars;
+    extern force_data_struct *force;
+    extern domain_struct      local_domain;
+    extern option_struct      options;
+    extern double          ***out_data;
+    extern soil_con_struct   *soil_con;
+    extern veg_con_struct   **veg_con;
+    extern veg_lib_struct    *veg_lib;
+    extern veg_hist_struct  **veg_hist;
+    size_t                    i, j;
 
     // allocate memory for force structure
     force = malloc(local_domain.ncells_active * sizeof(*force));
@@ -51,10 +50,6 @@ vic_alloc(void)
     // out_data allocation
     out_data = malloc(local_domain.ncells_active * sizeof(*out_data));
     check_alloc_status(out_data, "Memory allocation error.");
-
-    // save_data allocation
-    save_data = calloc(local_domain.ncells_active, sizeof(*save_data));
-    check_alloc_status(save_data, "Memory allocation error.");
 
     // allocate memory for individual grid cells
     for (i = 0; i < local_domain.ncells_active; i++) {

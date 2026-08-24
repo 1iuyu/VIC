@@ -57,7 +57,10 @@ initialize_snow(snow_data_struct *snow,
         }
         snow[i].glac_excess = 0.0;
         snow[i].pack_comb = 0.0;
-        snow[i].pack_transp = 0.0;
+        snow[i].snow_dew = 0.0;
+        snow[i].snow_evap = 0.0;
+        snow[i].snow_frost = 0.0;
+        snow[i].snow_sublim = 0.0;
         snow[i].delta_depth = 0.0;
         snow[i].swq = 0.0;
     }

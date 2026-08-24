@@ -422,7 +422,7 @@ spacF(double           *mat_VEG,
     double LAI_sun = veg_var->LAI_sun;
     double LAI_sha = veg_var->LAI_sha;
     size_t i, j;
-    size_t Nroot = cell->Nroot;
+    size_t Nroot = veg_var->Nroot;
     double grav2[MAX_SOILS] = {0};
 
     // 计算重力势
@@ -518,7 +518,7 @@ getvegwp(double           *mat_VEG,
 {
     /* 局部变量 */
     size_t i, j;
-    size_t Nroot = cell->Nroot;
+    size_t Nroot = veg_var->Nroot;
     double qflx_sun, qflx_sha;     /* 蒸腾通量 [m/s] */
     double fx;                     /* 木质部到叶的最大导度比例 [-] */
     double fr;                     /* 根到木质部的最大导度比例 [-] */

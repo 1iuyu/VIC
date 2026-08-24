@@ -26,6 +26,8 @@ initialize_veg(veg_var_struct *veg_var,
         veg_var[i].canopy_swq = 0.0;
         veg_var[i].iter_intrain = 0.0;
         veg_var[i].iter_intsnow = 0.0;
+        veg_var[i].Ncanopy = 0;
+        veg_var[i].Nroot = 0;
         veg_var[i].wetFrac = 0.0;
         veg_var[i].dryFrac = 0.0;
         veg_var[i].LAI_sun = 0.0;

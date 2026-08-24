@@ -29,7 +29,7 @@ vic_init(void)
     char                       locstr[MAXSTRING];
     double                     mean;
     double                     sum;
-    double                    *tmp_array = NULL;
+    double                    *array = NULL;
     double                    *Cv_sum = NULL;
     double                    *dvar = NULL;
     int                       *ivar = NULL;
@@ -54,8 +54,8 @@ vic_init(void)
     ivar = malloc(local_domain.ncells_active * sizeof(*ivar));
     check_alloc_status(ivar, "Memory allocation error.");
     int total_size = local_domain.ncells_active * options.Nlayer;
-    tmp_array = (double*) malloc(total_size * sizeof(*tmp_array));
-    check_alloc_status(tmp_array, "Memory allocation error.");
+    array = (double*) malloc(total_size * sizeof(*array));
+    check_alloc_status(array, "Memory allocation error.");
     
     // The method used to convert the NetCDF fields to VIC structures for
     // individual grid cells is to read a 2D slice and then loop over the
@@ -266,7 +266,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            tmp_array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -274,7 +274,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].clay_node[0],
-                            &tmp_array[i * Nlayer]);
+                            &array[i * Nlayer]);
     }
 
     // sand: sand content for each soil layer
@@ -284,7 +284,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            tmp_array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -292,7 +292,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].sand_node[0],
-                            &tmp_array[i * Nlayer]);
+                            &array[i * Nlayer]);
     }
 
     // silt: silt content for each soil layer
@@ -302,7 +302,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            tmp_array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -310,7 +310,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].silt_node[0],
-                            &tmp_array[i * Nlayer]);
+                            &array[i * Nlayer]);
     }
 
     // gravel: gravel content for each soil layer
@@ -320,7 +320,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            tmp_array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -328,7 +328,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].gravel_node[0],
-                            &tmp_array[i * Nlayer]);
+                            &array[i * Nlayer]);
     }
 
     // Wsat: saturated point for each layer
@@ -338,7 +338,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            tmp_array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -346,7 +346,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].organic_node[0],
-                            &tmp_array[i * Nlayer]);
+                            &array[i * Nlayer]);
     }
 
     for (j = 0; j < Nlayer; j++) {
@@ -355,7 +355,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            tmp_array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i];
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -363,7 +363,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].bulk_dens_node[0],
-                            &tmp_array[i * Nlayer]);
+                            &array[i * Nlayer]);
     }
     
     /*  bulk density and soil density (particle density) read from 
@@ -378,7 +378,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                tmp_array[lidx] = (double) dvar[i];
+                array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -386,7 +386,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].alpha_node[0],
-                                &tmp_array[i * Nlayer]);
+                                &array[i * Nlayer]);
         }
         // expt: layer-specific exponent n in van Genuchten eqn
         for (j = 0; j < Nlayer; j++) {
@@ -395,7 +395,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                tmp_array[lidx] = (double) dvar[i];
+                array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -403,7 +403,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].expt_node[0],
-                                &tmp_array[i * Nlayer]);
+                                &array[i * Nlayer]);
         }
         // Ksat: saturated hydraulic conductivity [m/s]
         for (j = 0; j < Nlayer; j++) {
@@ -412,7 +412,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                tmp_array[lidx] = (double) dvar[i];
+                array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -420,7 +420,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].Ksat_node[0],
-                                &tmp_array[i * Nlayer]);
+                                &array[i * Nlayer]);
         }
         // Wpwp: soil moisture content at permanent wilting point [m3/m3]
         for (j = 0; j < Nlayer; j++) {
@@ -429,7 +429,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                tmp_array[lidx] = (double) dvar[i];
+                array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -437,7 +437,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].Wpwp_node[0],
-                                &tmp_array[i * Nlayer]);
+                                &array[i * Nlayer]);
         }
         // Wsat: soil moisture content at saturation [m3/m3]
         for (j = 0; j < Nlayer; j++) {
@@ -446,7 +446,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                tmp_array[lidx] = (double) dvar[i];
+                array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -454,7 +454,7 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].Wsat_node[0],
-                                &tmp_array[i * Nlayer]);
+                                &array[i * Nlayer]);
         }
         // lpar: unsaturated hydraulic conductivity exponent.
         for (j = 0; j < Nlayer; j++) {
@@ -463,7 +463,7 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 lidx = i * Nlayer + j;
-                tmp_array[lidx] = (double) dvar[i];
+                array[lidx] = (double) dvar[i];
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
@@ -471,8 +471,20 @@ vic_init(void)
                                 soil_con[i].depth,
                                 soil_con[i].Zsum_soil,
                                 &soil_con[i].lpar_node[0],
-                                &tmp_array[i * Nlayer]);
+                                &array[i * Nlayer]);
         }
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            for (j = 0; j < soil_con[i].Nbedrock - 1; j++) {
+                soil_con[i].mpar_node[j] = 1.0 - 1.0 / soil_con[i].expt_node[i];
+                soil_con[i].bulk_dens_node[j] = (soil_con[i].bulk_dens_node[j] * 
+                    (1.0 - soil_con[i].gravel_node[j]) + soil_con[i].gravel_node[j] * 2650);
+            }
+        }     
+
+    }
+    else {
+        // 土壤参数从PedoTransfer函数中计算得到
+        PedoTransfer(soil_con); // not used in current version.       
     }
 
     /******************************************
@@ -983,7 +995,7 @@ vic_init(void)
     for (j = 0; j < options.MAX_HRU; j++) {
         d3start[0] = j;
         get_scatter_nc_field_double(&(filenames.params), "Cv",
-                                d3start, d3count, dvar);
+                                    d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             if (j < local_domain.locations[i].nveg) {
                 veg_con[i][j].Cv = (double) dvar[i];
@@ -1387,7 +1399,7 @@ vic_init(void)
         free(local_d2);
         free(local_d3);
     }
-
+    
     // initialize state variables with default values
     for (i = 0; i < local_domain.ncells_active; i++) {
         nveg = veg_con[i][0].vegetat_type_num;
@@ -1395,6 +1407,44 @@ vic_init(void)
         initialize_soil(all_vars[i].cell, nveg);
         initialize_veg(all_vars[i].veg_var, nveg);
         initialize_energy(all_vars[i].energy, nveg);
+    }
+
+    size_t veg, veg_class;
+    // Initialize landunit types based on vegetation class
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        for (j = 0; j <= local_domain.locations[i].nveg; j++) {
+            if (veg_con[i][j].Cv > 0) {
+                veg_class = veg_con[i][j].veg_class;
+                if (veg_lib[veg_class].landtype == 0) {
+                    all_vars[i].cell[j].IS_VEG = true;
+                }
+                else if (veg_lib[veg_class].landtype == 1) {
+                    all_vars[i].cell[j].IS_GLAC = true;
+                }
+                else if (veg_lib[veg_class].landtype == 2) {
+                    all_vars[i].cell[j].IS_WET = true;
+                }
+                else if (veg_lib[veg_class].landtype == 3) {
+                    all_vars[i].cell[j].IS_URBAN = true;
+                }
+                else {
+                    log_err("Unknown Landtype option");
+                }
+            }
+        }
+    }
+
+    // Initialize layer roots fraction
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        for (j = 0; j <= local_domain.locations[i].nveg; j++) {
+            if (veg_con[i][j].Cv > 0) {
+                veg_class = veg_con[i][j].veg_class;
+                calc_root_fractions(veg_class, 
+                                    &all_vars[i].cell[j],
+                                    &all_vars[i].veg_var[j],
+                                    soil_con, veg_lib);
+            }
+        }
     }
 
     // set state metadata structure
@@ -1411,5 +1461,5 @@ vic_init(void)
     free(dvar);
     free(ivar);
     free(Cv_sum);
-    free(tmp_array);
+    free(array);
 }

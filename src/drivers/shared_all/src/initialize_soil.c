@@ -28,7 +28,6 @@ initialize_soil(cell_data_struct *cell,
         cell[veg].IS_WET = false;
         cell[veg].IS_URBAN = false;
         cell[veg].Nsoil = 0;
-        cell[veg].Nroot = 0;
         cell[veg].Nnode = 0;
         cell[veg].Ra_evap = 0.0;
         cell[veg].Ra_leaf = 0.0;
@@ -83,14 +82,14 @@ initialize_soil(cell_data_struct *cell,
         cell[veg].recharge = 0.0;
         cell[veg].storage_aqf = 5.0; // m
         cell[veg].evap = 0.0;
-        cell[veg].snowfrost = 0.0;
-        cell[veg].snow_sublim = 0.0;
         cell[veg].Nthaw = 0;
         cell[veg].Nfrost = 0;
         cell[veg].fdepth = 0.0;
         cell[veg].tdepth = 0.0;
-        cell[veg].esoil = 0.0;
-        cell[veg].dewsoil = 0.0;
+        cell[veg].soil_evap = 0.0;
+        cell[veg].soil_dew = 0.0;
+        cell[veg].soil_frost = 0.0;
+        cell[veg].soil_sublim = 0.0;
         cell[veg].soil_excess = 0.0;
         cell[veg].transp_fact = 0.0;
         // Canopy terms

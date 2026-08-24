@@ -21,7 +21,6 @@ vic_image_run(dmy_struct *dmy_current)
     extern global_param_struct global_param;
     extern double           ***out_data;
     extern stream_struct      *output_streams;
-    extern save_data_struct   *save_data;
     extern soil_con_struct    *soil_con;
     extern veg_con_struct    **veg_con;
     extern veg_hist_struct   **veg_hist;
@@ -50,7 +49,7 @@ vic_image_run(dmy_struct *dmy_current)
         timer_stop(&timer);
 
         put_data(&(all_vars[i]), &(force[i]), veg_con[i],
-                   out_data[i], &(save_data[i]), &timer);
+                   out_data[i], &timer);
     }
 
     // run routing over the domain

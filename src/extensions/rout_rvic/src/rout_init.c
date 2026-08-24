@@ -13,7 +13,7 @@ void
 rout_init(void)
 {
     extern int              mpi_rank;
-    extern rout_struct      rout;
+    extern rout_struct     *rout;
     extern domain_struct    global_domain;
     extern domain_struct    local_domain;
     extern filenames_struct filenames;
@@ -69,46 +69,46 @@ rout_init(void)
         // 下游索引
         for (i = 0; i < local_domain.ncells_active; i++) {
             // 格点的全局索引
-            ii = rout.rout_param.source_torow[i];
-            jj = rout.rout_param.source_tocol[i];
+            ii = rout[i].rout_param.source_torow;
+            jj = rout[i].rout_param.source_tocol;
             idx = ii * n_nx + jj;
             if (ii>=0 && ii<n_ny && jj>=0 && jj<n_nx) {
-                rout.rout_param.downstream[i] = global_domain.locations[idx].global_idx;  // 下游索引
+                rout[i].rout_param.downstream = global_domain.locations[idx].global_idx;  // 下游索引
             }
             else {
-                rout.rout_param.downstream[i] = 99999;   // 出口或边界
+                rout[i].rout_param.downstream = 99999;   // 出口或边界
             }
         }
         // 计算入度
         for (i = 0; i < local_domain.ncells_active; i++) {
-            rout.rout_param.indegree[i] = 0;  // 初始化入度为0
+            rout[i].rout_param.indegree = 0;  // 初始化入度为0
         }
         for (j = 0; j < local_domain.ncells_active; j++) {
-            d = rout.rout_param.downstream[j];  // 当前单元格的下游索引
+            d = rout[j].rout_param.downstream;  // 当前单元格的下游索引
             if (d < local_domain.ncells_active) {
-                rout.rout_param.indegree[d]++;  // 下游单元格的入度增加
+                rout[d].rout_param.indegree++;  // 下游单元格的入度增加
             }
         }
 
         // 初始化队列（入度为0的节点）
         int queue_front = 0, queue_rear = 0;
         for (j = 0; j < local_domain.ncells_active; j++) {
-            if (rout.rout_param.indegree[j] == 0) {
-                rout.rout_param.queue[queue_rear++] = j;  // 入度为0的单元格加入队列
+            if (rout[j].rout_param.indegree == 0) {
+                rout[queue_rear++].rout_param.queue = j;  // 入度为0的单元格加入队列
             }
         }
 
         // 拓扑排序
         size_t count = 0;
         while (queue_front < queue_rear) {
-            j = rout.rout_param.queue[queue_front++];  // 出队
-            rout.rout_param.routing_order[count++] = j;  // 记录排序结果
+            j = rout[queue_front++].rout_param.queue;  // 出队
+            rout[count++].rout_param.routing_order = j;  // 记录排序结果
             
-            d = rout.rout_param.downstream[j];
+            d = rout[j].rout_param.downstream;
             if (d < local_domain.ncells_active) {
-                rout.rout_param.indegree[d]--;  // 减少下游的入度
-                if (rout.rout_param.indegree[d] == 0) {
-                    rout.rout_param.queue[queue_rear++] = d;  // 如果入度变为0，加入队列
+                rout[d].rout_param.indegree--;  // 减少下游的入度
+                if (rout[d].rout_param.indegree == 0) {
+                    rout[queue_rear++].rout_param.queue = d;  // 如果入度变为0，加入队列
                 }
             }
         }
@@ -118,22 +118,22 @@ rout_init(void)
 
         // 初始化：每个格点的汇水面积 = 自身面积
         for (i = 0; i < local_domain.ncells_active; i++) {
-            rout.acc_area[i] = local_domain.locations[i].area;
+            rout[i].acc_area = local_domain.locations[i].area;
         }
 
         // 按拓扑序计算（从上游到下游）
         for (j = 0; j < local_domain.ncells_active; j++) {
-            i = rout.rout_param.routing_order[j];   // 当前格点
-            d = rout.rout_param.downstream[i];      // 下游格点
+            i = rout[j].rout_param.routing_order;   // 当前格点
+            d = rout[i].rout_param.downstream;      // 下游格点
 
             if (d < local_domain.ncells_active) {
-                rout.acc_area[d] += rout.acc_area[i];  // 把自己的汇水面积加到下游
+                rout[d].acc_area += rout[i].acc_area;  // 把自己的汇水面积加到下游
             }
         }
         for (i = 0; i < local_domain.ncells_active; i++) {
-            rout.main_channel.rwidth[i] = 0.001 * pow(rout.acc_area[i], 0.5);
-            rout.main_channel.rwidth0[i] = 5.0 * rout.main_channel.rwidth[i];
-            rout.main_channel.rdepth[i] = pow(rout.main_channel.rwidth[i], 0.3333);
+            rout[i].main_channel.rwidth = 0.001 * pow(rout[i].acc_area, 0.5);
+            rout[i].main_channel.rwidth0 = 5.0 * rout[i].main_channel.rwidth;
+            rout[i].main_channel.rdepth = pow(rout[i].main_channel.rwidth, 0.3333);
         }
 
         // channel length: river length (m)
@@ -141,7 +141,7 @@ rout_init(void)
                             "rlen", d2start, d2count, dvar);
         for (i = 0, j = 0; i < global_domain.ncells_total; i++) {
             if (global_domain.locations[i].run) {
-                rout.main_channel.rlen[j] = (double) dvar[i];
+                rout[j].main_channel.rlen = (double) dvar[i];
                 j++;
             }
         }
@@ -150,21 +150,21 @@ rout_init(void)
                             "tlen", d2start, d2count, dvar);
         for (i = 0, j = 0; i < global_domain.ncells_total; i++) {
             if (global_domain.locations[i].run) {
-                rout.sub_channel.tlen[j] = (double) dvar[i];
+                rout[j].sub_channel.tlen = (double) dvar[i];
                 j++;
             }
         }
         // drainage density: rainage density within the cell, [1/m]
         for (i = 0; i < local_domain.ncells_active; i++) {
-            rout.total_length[i] = rout.main_channel.rlen[i] + rout.sub_channel.tlen[i];
-            rout.drainage_density[i] = rout.total_length[i] / local_domain.locations[i].area;
+            rout[i].total_length = rout[i].main_channel.rlen + rout[i].sub_channel.tlen;
+            rout[i].drainage_density = rout[i].total_length / local_domain.locations[i].area;
         }
         // rslpsqrt: sqrt channel slope
         get_nc_field_double(&(filenames.rout_params),
                             "rslpsqrt", d2start, d2count, dvar);
         for (i = 0, j = 0; i < global_domain.ncells_total; i++) {
             if (global_domain.locations[i].run) {
-                rout.main_channel.rslpsqrt[j] = (double) dvar[i];
+                rout[j].main_channel.rslpsqrt = (double) dvar[i];
                 j++;
             }
         }
@@ -173,7 +173,7 @@ rout_init(void)
                             "tslpsqrt", d2start, d2count, dvar);
         for (i = 0, j = 0; i < global_domain.ncells_total; i++) {
             if (global_domain.locations[i].run) {
-                rout.sub_channel.tslpsqrt[j] = (double) dvar[i];
+                rout[j].sub_channel.tslpsqrt = (double) dvar[i];
                 j++;
             }
         }
@@ -182,7 +182,7 @@ rout_init(void)
                             "hslpsqrt", d2start, d2count, dvar);
         for (i = 0, j = 0; i < global_domain.ncells_total; i++) {
             if (global_domain.locations[i].run) {
-                rout.hillslope.hslpsqrt[j] = (double) dvar[i];
+                rout[j].hillslope.hslpsqrt = (double) dvar[i];
                 j++;
             }
         }
@@ -194,71 +194,71 @@ rout_init(void)
         double hydrR = 0.0;
         double velocity = 0.0;
         for (i = 0; i < local_domain.ncells_active; i++) {
-            if (rout.main_channel.rlen[i] > 0.0) {
-                rout.hillslope.hlen[i] = local_domain.locations[i].area /
-                                                    rout.total_length[i] / 2.0;
+            if (rout[i].main_channel.rlen > 0.0) {
+                rout[i].hillslope.hlen = local_domain.locations[i].area /
+                                                    rout[i].total_length / 2.0;
                 hlen_max = max(1000.0, sqrt(local_domain.locations[i].area));
-                if (rout.hillslope.hlen[i] > hlen_max) {
-                    rout.hillslope.hlen[i] = hlen_max;
+                if (rout[i].hillslope.hlen > hlen_max) {
+                    rout[i].hillslope.hlen = hlen_max;
                 }
                 rlen_min = sqrt(local_domain.locations[i].area);
-                if (rout.main_channel.rlen[i] < rlen_min) {
-                    rout.main_channel.rlen[i] = rlen_min;
+                if (rout[i].main_channel.rlen < rlen_min) {
+                    rout[i].main_channel.rlen = rlen_min;
                 }
-                if (rout.sub_channel.twidth[i] < 0.0) {
-                    rout.sub_channel.twidth[i] = 0.0;
+                if (rout[i].sub_channel.twidth < 0.0) {
+                    rout[i].sub_channel.twidth = 0.0;
                 }
-                if (rout.sub_channel.tlen[i] > 0.0) {
-                    rout.sub_channel.twidth[i] = 0.001 * pow(local_domain.locations[i].area, 0.5) * 0.6;
-                    if (rout.sub_channel.twidth[i] < 0.0) {
-                        rout.sub_channel.twidth[i] = 0.0;
+                if (rout[i].sub_channel.tlen > 0.0) {
+                    rout[i].sub_channel.twidth = 0.001 * pow(local_domain.locations[i].area, 0.5) * 0.6;
+                    if (rout[i].sub_channel.twidth < 0.0) {
+                        rout[i].sub_channel.twidth = 0.0;
                     }
                 }
             }
             else {
-                rout.hillslope.hlen[i] = 0.0;
-                rout.sub_channel.tlen[i] = 0.0;
-                rout.sub_channel.twidth[i] = 0.0;
+                rout[i].hillslope.hlen = 0.0;
+                rout[i].sub_channel.tlen = 0.0;
+                rout[i].sub_channel.twidth = 0.0;
             }
-            rout.hillslope.nh[i] = 0.4;
-            rout.hillslope.yh[i] = 0.0; // 坡面水深初始化为0.001m
-            rout.hillslope.wh[i] = 0.0; // 坡面水量初始化为0.001m
-            rout.sub_channel.nt[i] = 0.05;
-            rout.sub_channel.wt[i] = rout.sub_channel.tlen[i] * rout.sub_channel.twidth[i] * 0.5;  // 初始化子河道水量
-            if (rout.sub_channel.tlen[i] > 0.0 && rout.sub_channel.wt[i] > 0.0) {
-                rout.sub_channel.mt[i] = GRMR(rout.sub_channel.wt[i], rout.sub_channel.tlen[i]);   // 过水面积（单位长度）
-                rout.sub_channel.yt[i] = GRHT(rout.sub_channel.mt[i], rout.sub_channel.twidth[i]); // 水深
-                rout.sub_channel.pt[i] = GRPT(rout.sub_channel.yt[i], rout.sub_channel.twidth[i]); // 湿周
-                rout.sub_channel.rt[i] = GRRR(rout.sub_channel.mt[i], rout.sub_channel.pt[i]);     // 水力半径
+            rout[i].hillslope.nh = 0.4;
+            rout[i].hillslope.yh = 0.0; // 坡面水深初始化为0.001m
+            rout[i].hillslope.wh = 0.0; // 坡面水量初始化为0.001m
+            rout[i].sub_channel.nt = 0.05;
+            rout[i].sub_channel.wt = rout[i].sub_channel.tlen * rout[i].sub_channel.twidth * 0.5;  // 初始化子河道水量
+            if (rout[i].sub_channel.tlen > 0.0 && rout[i].sub_channel.wt > 0.0) {
+                rout[i].sub_channel.mt = GRMR(rout[i].sub_channel.wt, rout[i].sub_channel.tlen);   // 过水面积（单位长度）
+                rout[i].sub_channel.yt = GRHT(rout[i].sub_channel.mt, rout[i].sub_channel.twidth); // 水深
+                rout[i].sub_channel.pt = GRPT(rout[i].sub_channel.yt, rout[i].sub_channel.twidth); // 湿周
+                rout[i].sub_channel.rt = GRRR(rout[i].sub_channel.mt, rout[i].sub_channel.pt);     // 水力半径
             }
             else {
-                rout.sub_channel.mt[i] = 0.0;
-                rout.sub_channel.yt[i] = 0.0;
-                rout.sub_channel.pt[i] = 0.0;
-                rout.sub_channel.rt[i] = 0.0;
+                rout[i].sub_channel.mt = 0.0;
+                rout[i].sub_channel.yt = 0.0;
+                rout[i].sub_channel.pt = 0.0;
+                rout[i].sub_channel.rt = 0.0;
             }
-            rout.main_channel.nr[i] = 0.05;
-            river_depth = rout.main_channel.rdepth[i] * 0.5;
-            rout.main_channel.wr[i] = rout.main_channel.rlen[i] * rout.main_channel.rwidth[i] * river_depth; // 初始化主河道水量
-            hydrR = rout.main_channel.rwidth[i] * river_depth / (rout.main_channel.rwidth[i] + 2.0 * river_depth);
-            velocity = CRVRMAN_nosqrt(rout.main_channel.rslpsqrt[i], rout.main_channel.nr[i], hydrR);
-            rout.main_channel.erout[i] = -velocity * rout.main_channel.rwidth[i] * river_depth; // 计算主河道出流量
-            rout.total_storage_prev += rout.hillslope.wh[i] * local_domain.locations[i].area * 
-                                        local_domain.locations[i].frac + rout.sub_channel.wt[i] + rout.main_channel.wr[i];
+            rout[i].main_channel.nr = 0.05;
+            river_depth = rout[i].main_channel.rdepth * 0.5;
+            rout[i].main_channel.wr = rout[i].main_channel.rlen * rout[i].main_channel.rwidth * river_depth; // 初始化主河道水量
+            hydrR = rout[i].main_channel.rwidth * river_depth / (rout[i].main_channel.rwidth + 2.0 * river_depth);
+            velocity = CRVRMAN_nosqrt(rout[i].main_channel.rslpsqrt, rout[i].main_channel.nr, hydrR);
+            rout[i].main_channel.erout = -velocity * rout[i].main_channel.rwidth * river_depth; // 计算主河道出流量
+            rout[i].total_storage_prev += rout[i].hillslope.wh * local_domain.locations[i].area * 
+                                        local_domain.locations[i].frac + rout[i].sub_channel.wt + rout[i].main_channel.wr;
             // 更新主河道水力参数
-            if(rout.main_channel.rlen[i] > 0.0 && rout.main_channel.wr[i] > 0.0) {
-                rout.main_channel.mr[i] = GRMR(rout.main_channel.wr[i], rout.main_channel.rlen[i]);
-                rout.main_channel.yr[i] = GRHR(rout.main_channel.mr[i], rout.main_channel.rwidth[i], 
-                                        rout.main_channel.rwidth0[i], rout.main_channel.rdepth[i]);
-                rout.main_channel.pr[i] = GRPR(rout.main_channel.yr[i], rout.main_channel.rwidth[i],
-                                        rout.main_channel.rwidth0[i], rout.main_channel.rdepth[i]);
-                rout.main_channel.rr[i] = GRRR(rout.main_channel.mr[i], rout.main_channel.pr[i]);
+            if(rout[i].main_channel.rlen > 0.0 && rout[i].main_channel.wr > 0.0) {
+                rout[i].main_channel.mr = GRMR(rout[i].main_channel.wr, rout[i].main_channel.rlen);
+                rout[i].main_channel.yr = GRHR(rout[i].main_channel.mr, rout[i].main_channel.rwidth, 
+                                        rout[i].main_channel.rwidth0, rout[i].main_channel.rdepth);
+                rout[i].main_channel.pr = GRPR(rout[i].main_channel.yr, rout[i].main_channel.rwidth,
+                                        rout[i].main_channel.rwidth0, rout[i].main_channel.rdepth);
+                rout[i].main_channel.rr = GRRR(rout[i].main_channel.mr, rout[i].main_channel.pr);
             }
             else {
-                rout.main_channel.mr[i] = 0.0;
-                rout.main_channel.yr[i] = 0.0;
-                rout.main_channel.pr[i] = 0.0;
-                rout.main_channel.rr[i] = 0.0;
+                rout[i].main_channel.mr = 0.0;
+                rout[i].main_channel.yr = 0.0;
+                rout[i].main_channel.pr = 0.0;
+                rout[i].main_channel.rr = 0.0;
             }
         }
 
@@ -266,31 +266,31 @@ rout_init(void)
         double river_T = 0.0;
         double sub_T = 0.0;
         for (i = 0; i < local_domain.ncells_active; i++) {
-            if (rout.main_channel.rlen[i] > 0.0) {
-                river_T = rout.acc_area[i] * rout.main_channel.rslpsqrt[i] / 
-                                    (rout.main_channel.rlen[i] * rout.main_channel.rwidth[i]);
+            if (rout[i].main_channel.rlen > 0.0) {
+                river_T = rout[i].acc_area * rout[i].main_channel.rslpsqrt / 
+                                    (rout[i].main_channel.rlen * rout[i].main_channel.rwidth);
                 if (river_T >= 10.0) {
-                    rout.river_steps[i] = log10(river_T) * DLevelH2R + 1;
+                    rout[i].river_steps = log10(river_T) * DLevelH2R + 1;
                 }
                 else {
-                    rout.river_steps[i] = DLevelH2R + 1;
+                    rout[i].river_steps = DLevelH2R + 1;
                 }
             }
-            if (rout.river_steps[i] < 1) {
-                rout.river_steps[i] = 1;
+            if (rout[i].river_steps < 1) {
+                rout[i].river_steps = 1;
             }
-            if (rout.sub_channel.tlen[i] > 0.0) {
-                sub_T = local_domain.locations[i].area * rout.sub_channel.tslpsqrt[i] / 
-                                    (rout.sub_channel.tlen[i] * rout.sub_channel.twidth[i]);
+            if (rout[i].sub_channel.tlen > 0.0) {
+                sub_T = local_domain.locations[i].area * rout[i].sub_channel.tslpsqrt / 
+                                    (rout[i].sub_channel.tlen * rout[i].sub_channel.twidth);
                 if (sub_T >= 10.0) {
-                    rout.sub_steps[i] = log10(sub_T) * DLevelH2R + 1;
+                    rout[i].sub_steps = log10(sub_T) * DLevelH2R + 1;
                 }
                 else {
-                    rout.sub_steps[i] = DLevelH2R + 1;
+                    rout[i].sub_steps = DLevelH2R + 1;
                 }
             }
-            if (rout.sub_steps[i] < 1) {
-                rout.sub_steps[i] = 1;
+            if (rout[i].sub_steps < 1) {
+                rout[i].sub_steps = 1;
             }
         }
 

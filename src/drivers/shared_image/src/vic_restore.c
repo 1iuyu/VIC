@@ -15,12 +15,14 @@ vic_restore(void)
 {
     extern int                 mpi_rank;
     extern all_vars_struct    *all_vars;
+    extern rout_struct        *rout;
     extern domain_struct       global_domain;
     extern domain_struct       local_domain;
+    extern option_struct       options;
     extern filenames_struct    filenames;
-    extern metadata_struct     state_metadata[N_STATE_VARS + N_STATE_VARS_EXT];
+    extern metadata_struct     state_metadata[N_STATE_VARS];
 
-    size_t                     i,j,k,m;
+    size_t                     i, j, m;
     int                       *ivar = NULL;
     int                        status;
     double                    *dvar = NULL;
@@ -74,7 +76,8 @@ vic_restore(void)
                                         state_metadata[STATE_SOIL_MOISTURE].varname,
                                         d4start, d4count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
-                if (m < local_domain.locations[i].nveg) {
+                if (m < local_domain.locations[i].nveg &&
+                            j < all_vars[i].cell[m].Nsoil) {
                     all_vars[i].cell[m].moist[j] = dvar[i];
                 }
             }
@@ -90,74 +93,113 @@ vic_restore(void)
                                         state_metadata[STATE_SOIL_ICE].varname,
                                         d4start, d4count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
-                if (m < local_domain.locations[i].nveg) {
+                if (m < local_domain.locations[i].nveg &&
+                            j < all_vars[i].cell[m].Nsoil) {
                     all_vars[i].cell[m].ice[j] = dvar[i];
                 }
             }
         }
     }
 
-    // dew storage: tmpval = veg_var[veg].Wdew;
+    // liq content
     for (m = 0; m < MAX_HRUS; m++) {
-        d3start[0] = m;
-        get_scatter_nc_field_double(&(filenames.init_state),
-                                    state_metadata[STATE_CANOPY_WATER].varname,
-                                    d3start, d3count, dvar);
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            if (m < local_domain.locations[i].nveg) {
-                all_vars[i].veg_var[m].Wdew = dvar[i];
+        d4start[0] = m;
+        for (j = 0; j < MAX_SOILS; j++) {
+            d4start[1] = j;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_SOIL_LIQ].varname,
+                                        d4start, d4count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                            j < all_vars[i].cell[m].Nsoil) {
+                    all_vars[i].cell[m].liq[j] = dvar[i];
+                }
             }
         }
     }
 
-    // Tcanopy: tmpval = cell[veg].Tcanopy;
+    // last step ice content
     for (m = 0; m < MAX_HRUS; m++) {
-        d3start[0] = m;
-        get_scatter_nc_field_double(&(filenames.init_state),
-                                    state_metadata[STATE_TCANOPY].varname,
-                                    d3start, d3count, dvar);
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            if (m < local_domain.locations[i].nveg) {
-                all_vars[i].energy[m].Tcanopy = dvar[i];
+        d4start[0] = m;
+        for (j = 0; j < MAX_SOILS; j++) {
+            d4start[1] = j;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_SOIL_LASTICE].varname,
+                                        d4start, d4count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                            j < all_vars[i].cell[m].Nsoil) {
+                    all_vars[i].cell[m].last_ice[j] = dvar[i];
+                }
             }
         }
     }
 
-    // Tfoliage: tmpval = cell[veg].Tfoliage;
+    // last step water content
     for (m = 0; m < MAX_HRUS; m++) {
-        d3start[0] = m;
-        get_scatter_nc_field_double(&(filenames.init_state),
-                                    state_metadata[STATE_TCANOPY].varname,
-                                    d3start, d3count, dvar);
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            if (m < local_domain.locations[i].nveg) {
-                all_vars[i].energy[m].Tfoliage = dvar[i];
+        d4start[0] = m;
+        for (j = 0; j < MAX_SOILS; j++) {
+            d4start[1] = j;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_SOIL_LASTLIQ].varname,
+                                        d4start, d4count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                            j < all_vars[i].cell[m].Nsoil) {
+                    all_vars[i].cell[m].last_liq[j] = dvar[i];
+                }
             }
         }
     }
 
-    // Tgrnd: tmpval = cell[veg].Tgrnd;
+    // lastswq: tmpval = snow[veg].lastswq;
     for (m = 0; m < MAX_HRUS; m++) {
         d3start[0] = m;
         get_scatter_nc_field_double(&(filenames.init_state),
-                                    state_metadata[STATE_TCANOPY].varname,
+                                    state_metadata[STATE_SNOW_LASTSWQ].varname,
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             if (m < local_domain.locations[i].nveg) {
-                all_vars[i].energy[m].Tgrnd = dvar[i];
+                all_vars[i].snow[m].last_swq = dvar[i];
             }
         }
     }
 
-    // snow age: snow[veg].SnowAge
+    // int_snow: tmpval = veg_var[veg].int_snow;
     for (m = 0; m < MAX_HRUS; m++) {
         d3start[0] = m;
-        get_scatter_nc_field_int(&(filenames.init_state),
-                                 state_metadata[STATE_SNOW_AGE].varname,
-                                 d3start, d3count, ivar);
+        get_scatter_nc_field_double(&(filenames.init_state),
+                                    state_metadata[STATE_INT_SNOW].varname,
+                                    d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             if (m < local_domain.locations[i].nveg) {
-                all_vars[i].snow[m].snowage = ivar[i];
+                all_vars[i].veg_var[m].int_snow = dvar[i];
+            }
+        }
+    }
+
+    // int_rain: tmpval = veg_var[veg].int_rain;
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_double(&(filenames.init_state),
+                                    state_metadata[STATE_INT_RAIN].varname,
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].veg_var[m].int_rain = dvar[i];
+            }
+        }
+    }
+
+    // snow age: snow[veg].snowage
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_double(&(filenames.init_state),
+                                    state_metadata[STATE_SNOW_AGE].varname,
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].snow[m].snowage = dvar[i];
             }
         }
     }
@@ -165,12 +207,12 @@ vic_restore(void)
     // snow covered fraction: snow[veg].coverage
     for (m = 0; m < MAX_HRUS; m++) {
         d3start[0] = m;
-        get_scatter_nc_field_int(&(filenames.init_state),
-                                 state_metadata[STATE_SNOW_COVERAGE].varname,
-                                 d3start, d3count, ivar);
+        get_scatter_nc_field_double(&(filenames.init_state),
+                                    state_metadata[STATE_SNOW_COVERAGE].varname,
+                                    d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             if (m < local_domain.locations[i].nveg) {
-                all_vars[i].snow[m].coverage = ivar[i];
+                all_vars[i].snow[m].coverage = dvar[i];
             }
         }
     }
@@ -178,15 +220,15 @@ vic_restore(void)
     // pack_ice: snow[veg].pack_ice
     for (m = 0; m < MAX_HRUS; m++) {
         d4start[0] = m;
-        for (k = 0; k < MAX_SNOWS; k++) {
-            d4start[1] = k;
+        for (j = 0; j < MAX_SNOWS; j++) {
+            d4start[1] = j;
             get_scatter_nc_field_double(&(filenames.init_state),
                                         state_metadata[STATE_SNOW_PACK_ICE].varname,
                                         d4start, d4count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg && 
                                 all_vars[i].snow[m].Nsnow > 0) {
-                    all_vars[i].snow[m].pack_ice[k] = dvar[i];
+                    all_vars[i].snow[m].pack_ice[j] = dvar[i];
                 }
             }
         }
@@ -206,52 +248,69 @@ vic_restore(void)
         }
     }
 
-    // snow theta_ice: snow[veg].theta_ice
+    // snow last_thice: snow[veg].last_thice
     for (m = 0; m < MAX_HRUS; m++) {
         d4start[0] = m;
-        for (k = 0; k < MAX_SNOWS; k++) {
-            d4start[1] = k;
+        for (j = 0; j < MAX_SNOWS; j++) {
+            d4start[1] = j;
             get_scatter_nc_field_double(&(filenames.init_state),
-                                        state_metadata[STATE_SNOW_THETA_ICE].varname,
+                                        state_metadata[STATE_SNOW_LASTICE].varname,
                                         d4start, d4count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 all_vars[i].snow[m].Nsnow > 0) {
-                    all_vars[i].snow[m].theta_ice[k] = dvar[i];
+                    all_vars[i].snow[m].last_thice[j] = dvar[i];
                 }
             }
         }
     }
 
-    // snow surface water: snow[veg].theta_liq
+    // snow last theta liq: snow[veg].last_thliq
     for (m = 0; m < MAX_HRUS; m++) {
         d4start[0] = m;
-        for (k = 0; k < MAX_SNOWS; k++) {
-            d4start[1] = k;
+        for (j = 0; j < MAX_SNOWS; j++) {
+            d4start[1] = j;
             get_scatter_nc_field_double(&(filenames.init_state),
-                                        state_metadata[STATE_SNOW_THETA_LIQ].varname,
+                                        state_metadata[STATE_SNOW_LASTLIQ].varname,
                                         d4start, d4count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 all_vars[i].snow[m].Nsnow > 0) {
-                    all_vars[i].snow[m].theta_liq[k] = dvar[i];
+                    all_vars[i].snow[m].last_thliq[j] = dvar[i];
                 }
             }
         }
     }
 
-    // snow pack temperature: snow[veg].pack_temp
+    // snow radius: snow[veg].radius
     for (m = 0; m < MAX_HRUS; m++) {
         d4start[0] = m;
-        for (k = 0; k < MAX_SNOWS; k++) {
-            d4start[1] = k;
+        for (j = 0; j < MAX_SNOWS; j++) {
+            d4start[1] = j;
             get_scatter_nc_field_double(&(filenames.init_state),
-                                        state_metadata[STATE_SNOW_PACK_TEMP].varname,
+                                        state_metadata[STATE_SNOW_RADIUS].varname,
                                         d4start, d4count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 all_vars[i].snow[m].Nsnow > 0) {
-                    all_vars[i].snow[m].pack_T[k] = dvar[i];
+                    all_vars[i].snow[m].radius[j] = dvar[i];
+                }
+            }
+        }
+    }
+
+    // snow dz_snow snow[veg].dz_snow
+    for (m = 0; m < MAX_HRUS; m++) {
+        d4start[0] = m;
+        for (j = 0; j < MAX_SNOWS; j++) {
+            d4start[1] = j;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_SNOW_DZNODE].varname,
+                                        d4start, d4count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                all_vars[i].snow[m].Nsnow > 0) {
+                    all_vars[i].snow[m].dz_snow[j] = dvar[i];
                 }
             }
         }
@@ -260,32 +319,15 @@ vic_restore(void)
     // snow pack water: snow[veg].pack_liq
     for (m = 0; m < MAX_HRUS; m++) {
         d4start[0] = m;
-        for (k = 0; k < MAX_SNOWS; k++) {
-            d4start[1] = k;
+        for (j = 0; j < MAX_SNOWS; j++) {
+            d4start[1] = j;
             get_scatter_nc_field_double(&(filenames.init_state),
                                         state_metadata[STATE_SNOW_PACK_LIQ].varname,
                                         d4start, d4count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 all_vars[i].snow[m].Nsnow > 0) {
-                    all_vars[i].snow[m].pack_liq[k] = dvar[i];
-                }
-            }
-        }
-    }
-
-    // snow pack porosity: snow[veg].porosity
-    for (m = 0; m < MAX_HRUS; m++) {
-        d4start[0] = m;
-        for (k = 0; k < MAX_SNOWS; k++) {
-            d4start[1] = k;
-            get_scatter_nc_field_double(&(filenames.init_state),
-                                        state_metadata[STATE_SNOW_POROSITY].varname,
-                                        d4start, d4count, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                if (m < local_domain.locations[i].nveg &&
-                                all_vars[i].snow[m].Nsnow > 0) {
-                    all_vars[i].snow[m].porosity[k] = dvar[i];
+                    all_vars[i].snow[m].pack_liq[j] = dvar[i];
                 }
             }
         }
@@ -294,42 +336,16 @@ vic_restore(void)
     // snow density: snow[veg].density
     for (m = 0; m < MAX_HRUS; m++) {
         d4start[0] = m;
-        for (k = 0; k < MAX_SNOWS; k++) {
-            d4start[1] = k;
+        for (j = 0; j < MAX_SNOWS; j++) {
+            d4start[1] = j;
             get_scatter_nc_field_double(&(filenames.init_state),
                                         state_metadata[STATE_SNOW_DENSITY].varname,
                                         d4start, d4count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 all_vars[i].snow[m].Nsnow > 0) {
-                    all_vars[i].snow[m].density[k] = dvar[i];
+                    all_vars[i].snow[m].density[j] = dvar[i];
                 }
-            }
-        }
-    }
-
-    // last_swq: snow[veg].last_swq
-    for (m = 0; m < MAX_HRUS; m++) {
-        d3start[0] = m;
-        get_scatter_nc_field_double(&(filenames.init_state),
-                                    state_metadata[STATE_SNOW_OLDSWQ].varname,
-                                    d3start, d3count, dvar);
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            if (m < local_domain.locations[i].nveg) {
-                all_vars[i].snow[m].last_swq = dvar[i];
-            }
-        }
-    }
-
-    // canopy swe storage: veg_var[veg].canopy_swe
-    for (m = 0; m < MAX_HRUS; m++) {
-        d3start[0] = m;
-        get_scatter_nc_field_double(&(filenames.init_state),
-                                    state_metadata[STATE_SNOW_CANOPY].varname,
-                                    d3start, d3count, dvar);
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            if (m < local_domain.locations[i].nveg) {
-                all_vars[i].veg_var[m].canopy_swq = dvar[i];
             }
         }
     }
@@ -344,28 +360,433 @@ vic_restore(void)
                                         d4start, d4count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
-                                k < all_vars[i].cell[m].Nnode) {
+                                j < all_vars[i].cell[m].Nnode) {
                     all_vars[i].energy[m].T[j] = dvar[i];
                 }
             }
         }
     }
 
-    // Foliage temperature: energy[veg].Tfoliage
+    // thermal node temperatures: energy[veg].last_T[nidx]
     for (m = 0; m < MAX_HRUS; m++) {
-        d3start[0] = m;
-        get_scatter_nc_field_double(&(filenames.init_state),
-                                    state_metadata[STATE_FOLIAGE_TEMPERATURE].varname,
-                                    d3start, d3count, dvar);
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            if (m < local_domain.locations[i].nveg) {
-                all_vars[i].energy[m].Tfoliage = dvar[i];
+        d4start[0] = m;
+        for (j = 0; j < MAX_NODES; j++) {
+            d4start[1] = j;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_LAST_TEMP].varname,
+                                        d4start, d4count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                j < all_vars[i].cell[m].Nnode) {
+                    all_vars[i].energy[m].last_T[j] = dvar[i];
+                }
             }
         }
     }
 
-    // routing ring
-    vic_restore_rout_extension(&(filenames.init_state), state_metadata);
+    // cell[veg].matric[nidx]
+    for (m = 0; m < MAX_HRUS; m++) {
+        d4start[0] = m;
+        for (j = 0; j < MAX_SOILS; j++) {
+            d4start[1] = j;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_MATRIC].varname,
+                                        d4start, d4count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                j < all_vars[i].cell[m].Nsoil) {
+                    all_vars[i].cell[m].matric[j] = dvar[i];
+                }
+            }
+        }
+    }
+
+    // cell[veg].last_matric[nidx]
+    for (m = 0; m < MAX_HRUS; m++) {
+        d4start[0] = m;
+        for (j = 0; j < MAX_SOILS; j++) {
+            d4start[1] = j;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_LAST_MATRIC].varname,
+                                        d4start, d4count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg &&
+                                j < all_vars[i].cell[m].Nsoil) {
+                    all_vars[i].cell[m].last_matric[j] = dvar[i];
+                }
+            }
+        }
+    }
+
+    // veg_var[veg].mat_VEG[nidx]
+    for (m = 0; m < MAX_HRUS; m++) {
+        d4start[0] = m;
+        for (j = 0; j < 4; j++) {
+            d4start[1] = j;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_VEG_MATRIC].varname,
+                                        d4start, d4count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    all_vars[i].veg_var[m].mat_VEG[j] = dvar[i];
+                }
+            }
+        }
+    }
+
+    // zwt
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_double(&(filenames.init_state),
+                                    state_metadata[STATE_ZWT].varname,
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].cell[m].zwt = dvar[i];
+            }
+        }
+    }
+
+    // aqf_storage
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_double(&(filenames.init_state),
+                                    state_metadata[STATE_AQF_STORAGE].varname,
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].cell[m].storage_aqf = dvar[i];
+            }
+        }
+    }
+
+    // nsnow
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_int(&(filenames.init_state),
+                                state_metadata[STATE_NSNOW].varname,
+                                d3start, d3count, ivar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].snow[m].Nsnow = ivar[i];
+            }
+        }
+    }
+
+    // nsoil
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_int(&(filenames.init_state),
+                                state_metadata[STATE_NSOIL].varname,
+                                d3start, d3count, ivar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].cell[m].Nsoil = ivar[i];
+            }
+        }
+    }
+
+    // nnode
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_int(&(filenames.init_state),
+                                state_metadata[STATE_NNODE].varname,
+                                d3start, d3count, ivar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].cell[m].Nnode = ivar[i];
+            }
+        }
+    }
+
+    // ncanopy
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_int(&(filenames.init_state),
+                                state_metadata[STATE_NCANOPY].varname,
+                                d3start, d3count, ivar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].veg_var[m].Ncanopy = ivar[i];
+            }
+        }
+    }
+
+    // nroot
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_int(&(filenames.init_state),
+                                state_metadata[STATE_NROOT].varname,
+                                d3start, d3count, ivar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].veg_var[m].Nroot = ivar[i];
+            }
+        }
+    }
+
+    // h2osfc
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_double(&(filenames.init_state),
+                                    state_metadata[STATE_H2OSFC].varname,
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].cell[m].h2osfc = dvar[i];
+            }
+        }
+    }
+
+    // h2o_frac
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_double(&(filenames.init_state),
+                                    state_metadata[STATE_H2O_FRAC].varname,
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].cell[m].frac_h2o = dvar[i];
+            }
+        }
+    }
+
+    // h2osfc_ice
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_double(&(filenames.init_state),
+                                    state_metadata[STATE_H2OSFC_ICE].varname,
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].cell[m].h2osfc_ice = dvar[i];
+            }
+        }
+    }
+
+    // h2osfc_liq
+    for (m = 0; m < MAX_HRUS; m++) {
+        d3start[0] = m;
+        get_scatter_nc_field_double(&(filenames.init_state),
+                                    state_metadata[STATE_H2OSFC_LIQ].varname,
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            if (m < local_domain.locations[i].nveg) {
+                all_vars[i].cell[m].h2osfc_liq = dvar[i];
+            }
+        }
+    }
+
+    // rout state
+    if (options.ROUT) {
+        // main_channel_storage
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_MAIN_CHANNEL_STORAGE].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].main_channel.wr = dvar[i];
+                }
+            }
+        }
+
+        // main_cross_section_area
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_MAIN_CROSS_SECTION_AREA].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].main_channel.mr = dvar[i];
+                }
+            }
+        }
+
+        // main_channel_depth
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_MAIN_CHANNEL_DEPTH].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].main_channel.yr = dvar[i];
+                }
+            }
+        }
+
+        // main_channel_manning_n
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_MAIN_CHANNEL_MANNING_N].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].main_channel.nr = dvar[i];
+                }
+            }
+        }
+
+        // main_wetted_perimeter
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_MAIN_WETTED_PERIMETER].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].main_channel.pr = dvar[i];
+                }
+            }
+        }
+
+        // main_hydraulic_radius
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_MAIN_HYDRAULIC_RADIUS].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].main_channel.rr = dvar[i];
+                }
+            }
+        }
+
+        // sub_channel_storage
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_SUB_CHANNEL_STORAGE].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].sub_channel.wt = dvar[i];
+                }
+            }
+        }
+
+        // sub_channel_manning_n
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_SUB_CHANNEL_MANNING_N].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].sub_channel.nt = dvar[i];
+                }
+            }
+        }
+
+        // sub_cross_section_area
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_SUB_CROSS_SECTION_AREA].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].sub_channel.mt = dvar[i];
+                }
+            }
+        }
+
+        // sub_channel_depth
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_SUB_CHANNEL_DEPTH].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].sub_channel.yt = dvar[i];
+                }
+            }
+        }
+
+        // sub_wetted_perimeter
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_SUB_WETTED_PERIMETER].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].sub_channel.pt = dvar[i];
+                }
+            }
+        }
+
+        // sub_hydraulic_radius
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_SUB_HYDRAULIC_RADIUS].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].sub_channel.rt = dvar[i];
+                }
+            }
+        }
+
+        // hillslope_depth
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_HILLSLOPE_DEPTH].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].hillslope.yh = dvar[i];
+                }
+            }
+        }
+
+        // hillslope_manning_n
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_HILLSLOPE_MANNING_N].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].hillslope.nh = dvar[i];
+                }
+            }
+        }
+
+        // hillslope_storage
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_HILLSLOPE_STORAGE].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].hillslope.wh = dvar[i];
+                }
+            }
+        }
+
+        // storage_prev
+        for (m = 0; m < MAX_HRUS; m++) {
+            d3start[0] = m;
+            get_scatter_nc_field_double(&(filenames.init_state),
+                                        state_metadata[STATE_STORAGE_PREV].varname,
+                                        d3start, d3count, dvar);
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                if (m < local_domain.locations[i].nveg) {
+                    rout[i].total_storage_prev = dvar[i];
+                }
+            }
+        }
+    }
 
     free(ivar);
     free(dvar);
@@ -422,7 +843,7 @@ check_init_state_file(void)
             log_err("Number of grid rows in state file does not "
                     "match parameter file");
         }
-        dimlen = get_nc_dimension(&(filenames.init_state), "veg_class");
+        dimlen = get_nc_dimension(&(filenames.init_state), "nveg");
         if (dimlen != options.NVEGTYPES) {
             log_err("Number of veg classes in state file does not "
                     "match parameter file");
@@ -437,14 +858,24 @@ check_init_state_file(void)
             log_err("Number of soil layers in state file does not "
                     "match parameter file");
         }
-        dimlen = get_nc_dimension(&(filenames.init_state), "frost_area");
-        if (dimlen != options.Nfrost) {
-            log_err("Number of frost areas in state file does not "
+        dimlen = get_nc_dimension(&(filenames.init_state), "nsoil");
+        if (dimlen != MAX_SOILS) {
+            log_err("Number of soil layer in state file does not "
                     "match parameter file");
         }
-        dimlen = get_nc_dimension(&(filenames.init_state), "soil_node");
-        if (dimlen != MAX_SOILS) {
-            log_err("Number of soil nodes in state file does not "
+        dimlen = get_nc_dimension(&(filenames.init_state), "nsnow");
+        if (dimlen != MAX_SNOWS) {
+            log_err("Number of snow layer in state file does not "
+                    "match parameter file");
+        }
+        dimlen = get_nc_dimension(&(filenames.init_state), "nwave");
+        if (dimlen != MAX_SWBANDS) {
+            log_err("Number of solar wave in state file does not "
+                    "match parameter file");
+        }
+        dimlen = get_nc_dimension(&(filenames.init_state), "ncanopy");
+        if (dimlen != MAX_CANOPYS) {
+            log_err("Number of canopy layer in state file does not "
                     "match parameter file");
         }
     }
@@ -591,5 +1022,6 @@ check_init_state_file(void)
             }
         }
     }
+
     free(dvar);
 }

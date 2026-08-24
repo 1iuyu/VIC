@@ -215,7 +215,7 @@ typedef struct {
     size_t Nfrost;       /**< Number of frost layer in model */
     size_t MAX_HRU;      /**< maximum number of hydrological response units */
     bool NOFLUX;         /**< TRUE = Use no flux lower bondary when computing
-                            soil thermal fluxes */
+                              soil thermal fluxes */
     size_t NVEGTYPES;    /**< number of vegetation types in veg_param file */
     unsigned short int SNOW_DENSITY;   /**< DENS_BRAS: Use algorithm of Bras, 1990; DENS_SNTHRM: Use algorithm of SNTHRM89 adapted for 1-layer pack */
     size_t SNOW_BAND;    /**< Number of elevation bands over which to solve the
@@ -682,9 +682,7 @@ typedef struct {
     bool   IS_WET;                      /**< TRUE = landunit is wetland */
     bool   IS_URBAN;                    /**< TRUE = landunit is urban */
     size_t Nsoil;                       /**< Number of soil nodes in the model */
-    size_t Nroot;                       /**< Number of root nodes in the model */
     size_t Nnode;                       /**< Number of thermal nodes in the model */
-    size_t Ncanopy;                     /**< Number of canopy layer in model */
     double Ra_over[3];                  /**< The aerodynamic resistance (s/m) that was actually used
                                           in flux calculations. [0] = wind speed at reference height, 
                                           [1] = sensible heat flux, [2] = latent heat flux */
@@ -715,8 +713,8 @@ typedef struct {
     double QsdT_snow;                  /**< temperature derivative of "Qair_snow" */
     double ice[MAX_SOILS];             /**< ice content of the soil sublayer [m3/m3] */
     double liq[MAX_SOILS];             /**< liq content of the soil sublayer [m3/m3] */
-    double last_ice[MAX_SOILS];
-    double last_liq[MAX_SOILS];
+    double last_ice[MAX_SOILS];        /**< last step ice content of the soil sublayer [m3/m3] */
+    double last_liq[MAX_SOILS];        /**< last step liq content of the soil sublayer [m3/m3] */
     double moist[MAX_SOILS];           /**< moisture content of the unfrozen sublayer [m3/m3] */
     double porosity[MAX_SOILS];
     double soil_T[MAX_SOILS];
@@ -726,12 +724,9 @@ typedef struct {
     double soil_inflow;                /**< moisture that reaches the top of
                                             the soil column (mm) */
     double recharge;                   /**< aquifer recharge rate (mm/s) */
-    double storage_aqf;
+    double storage_aqf;                /**< water storage in aquifer [m] */
+    double esoil;
     double evap;                       /**< total net evaporation [mm/s] */
-    double snow_frost;
-    double snow_sublim;
-    double snow_dew;
-    double snow_evap;
     double lateral_flow[MAX_SOILS];    /**< lateral flow through the soil column (mm/s) */
     double drhodT[MAX_SNOWS+1];        /**< density derivative of snowpack (kg/m^3/K) */
     double dQvdSMP[MAX_SOILS];         /**< derivative of vapor density with respect to soil matric potential (m3/m3/m) */
@@ -748,10 +743,10 @@ typedef struct {
     size_t Nfrost;
     double fdepth;
     double tdepth;
-    double soil_evap;                      /**< soil evaporation from soil layer (mm) */
-    double soil_sublim;
-    double soil_frost;
-    double soil_dew;                    /**< evapotranspiration from soil layer (mm) */
+    double soil_evap;                   /**< soil evaporation from soil layer (mm/s) */
+    double soil_sublim;                 /**< soil surface sublimation rate [mm/s] */
+    double soil_frost;                  /**< soil surface frost rate [mm/s] */
+    double soil_dew;                    /**< soil surface dew rate [mm/s] */
     double esoil_sub;
     double esoil_grnd;
     double transp_fact;                   /**< soil water transpiration factor (0 to 1) */
@@ -764,7 +759,7 @@ typedef struct {
     double transp_sink[MAX_SOILS];     /**< transpiration sink term [m/s] */
     double conductivity[MAX_SOILS];    /**< soil hydraulic conductivity [m/s] */
     double conduct_int[MAX_SOILS];     /**< soil hydraulic conductivity for interface between layers */
-    double matric[MAX_SOILS];          /**< soil matric potential [mm] */
+    double matric[MAX_SOILS];          /**< soil matric potential [m] */
     double last_matric[MAX_SOILS];
 } cell_data_struct;
 
@@ -781,13 +776,12 @@ typedef struct {
     size_t Esignchg_count;
     size_t Msignchg_count;
     double kappa_node[MAX_NODES];      /**< thermal conductivity of the soil thermal nodes (W/m/K) */
-    double Cs_node[MAX_NODES];         /**< heat capacity of the soil thermal nodes (J/m^3/K) */   
-    double last_Cs[MAX_NODES]; 
+    double Cs_node[MAX_NODES];         /**< volumetric heat capacity of the snow and soil thermal nodes (J/m^3/K) */
     double T[MAX_NODES];               /**< thermal node temperatures (k) */
     double last_T[MAX_NODES];
     double kappa_int[MAX_NODES];       /**< thermal conductivity used for interface between nodes (W/m/K) */
     double Tcanopy;                    /**< temperature of the canopy [K] */
-    double Tsurf;                      /**< temperature of the understory [K] */
+    double Tsurf;                      /**< surface temperature [K] */
     double Tgrnd;                      /**< temperature of the bare ground [K] */
     double Tfoliage;                   /**< temperature of the foliage [K] */
     double Tstem;                      /**< temperature of the stem [K] */
@@ -796,49 +790,43 @@ typedef struct {
     double deriv_terms;                /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
     double deriv_evap;                 /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
     double error;                      /**< energy balance error (W/m^2) */
-    double energy_error;
+    double energy_error;               
     double moist_error;
     // Fluxes
     double advection;                  /**< advective flux (Wm-2) */
     double AdvectSub;                  /**< advective flux from understory vegetation (Wm-2) */
     double AdvectGrnd;                 /**< advective flux from bare ground (Wm-2) */
     double AdvectOver;                 /**< advective flux from overstory vegetation (Wm-2) */
-    // 地表热通量
     double grnd_flux;                  /**< ground heat flux (Wm-2) */
     double grnd_snow;                  /**< ground heat flux to snow (Wm-2) */
     double grnd_soil;                  /**< ground heat flux to soil (Wm-2) */
-    // 感热通量
     double sensible;                   /**< sensible heat flux (Wm-2) */
     double SensibleSoil;               /**< sensible heat flux to soil (Wm-2) */
     double SensibleSnow;               /**< sensible heat flux to snow (Wm-2) */
     double SensibleStem;               /**< sensible heat flux to stem (Wm-2) */
     double SensibleLeaf;               /**< sensible heat flux to leaf (Wm-2) */
-    // 潜热通量
-    double latent;
-    double LatentSoil;
-    double LatentSnow;
-    double LatentLeaf;
-    double LatentVapOver;
-    double LatentVapGrnd;
-    // 辐射通量
-    double ReflShortSurf;
-    double ReflShortGrnd;
-    double ReflShortSub;
-    double EmissLongSub;
-    double EmissLongGrnd;
-    double EmissLongSurf;
-    // 长波辐射项
-    double longwave;             /**< net longwave flux (Wm-2) */
+    double latent;                     /**< net latent heat flux (Wm-2) */
+    double LatentSoil;                 /**< latent heat flux from soil (Wm-2) */
+    double LatentSnow;                 /**< latent heat flux from snow (Wm-2) */
+    double LatentLeaf;                 /**< latent heat flux from leaf (Wm-2) */
+    double LatentVapOver;              /**< latent heat flux from overstory vapor (Wm-2) */
+    double LatentVapGrnd;              /**< latent heat flux from ground vapor (Wm-2) */
+    double ReflShortSurf;              /**< reflected shortwave flux from surface (Wm-2) */
+    double ReflShortGrnd;              /**< reflected shortwave flux from ground (Wm-2) */
+    double ReflShortSub;               /**< reflected shortwave flux from understory (Wm-2) */
+    double EmissLongSub;               /**< emitted longwave flux from understory (Wm-2) */
+    double EmissLongGrnd;              /**< emitted longwave flux from ground (Wm-2) */
+    double EmissLongSurf;              /**< emitted longwave flux from surface (Wm-2) */
+    double longwave;                   /**< net longwave flux (Wm-2) */
     double NetLongSoil;
     double NetLongSnow;
-    double NetLongOver;          /**< net longwave radiation from the overstory (W/m^2) */
-    // 短波辐射项
+    double NetLongOver;                /**< net longwave radiation from the overstory (W/m^2) */
     double shortwave;
     double NetShortOver;
-    double NetShortGrnd;         /**< net shortwave penetrating snowpack */
-    double NetShortSub;        /**< net shortwave radiation from the understory (W/m^2) */
-    double NetShortSoil;      /**< net shortwave radiation to the soil (W/m^2) */
-    double NetShortSnow;      /**< net shortwave radiation to the snow (W/m^2) */
+    double NetShortGrnd;               /**< net shortwave penetrating snowpack */
+    double NetShortSub;                /**< net shortwave radiation from the understory (W/m^2) */
+    double NetShortSoil;               /**< net shortwave radiation to the soil (W/m^2) */
+    double NetShortSnow;               /**< net shortwave radiation to the snow (W/m^2) */
     double AbsShortDir[MAX_SNOWS+1][MAX_SWBANDS]; /**< direct solar flux factor absorbed by snow [frc] */
     double AbsShortDfs[MAX_SNOWS+1][MAX_SWBANDS]; /**< diffuse solar flux factor absorbed by snow [frc] */
     double AbsSnowLyr[MAX_SNOWS+1];               /**< total absorbed solar radiation by snow for each layer [W/m2] */
@@ -867,15 +855,6 @@ typedef struct {
     double ReflSubDfs[MAX_SWBANDS];
     double ReflectVeg[MAX_SWBANDS];
     double TransmitVeg[MAX_SWBANDS];
-    // not used
-    double AlbGrndirPure[MAX_SWBANDS];
-    double AlbGrndfsPure[MAX_SWBANDS];
-    double AlbGrndirBC[MAX_SWBANDS];
-    double AlbGrndfsBC[MAX_SWBANDS];
-    double AlbGrndirOC[MAX_SWBANDS];
-    double AlbGrndfsOC[MAX_SWBANDS];
-    double AlbGrndirDST[MAX_SWBANDS];
-    double AlbGrndfsDST[MAX_SWBANDS];
 } energy_bal_struct;
 
 /******************************************************************************
@@ -884,6 +863,8 @@ typedef struct {
  *****************************************************************************/
 typedef struct {
     // State variables
+    size_t Ncanopy;             /**< Number of canopy layer in model */
+    size_t Nroot;               /**< Number of root nodes in the model */
     double fcanopy;             /**< current fractional area of plant canopy (fraction) */
     double LAI;                 /**< current leaf area index (m2/m2) */
     double SAI;                 /**< current stem area index (m2/m2) */
@@ -905,9 +886,9 @@ typedef struct {
     // Fluxes
     double RainThroughFall;     /**< rain that reaches the ground through the canopy (mm/s) */
     double SnowThroughFall;     /**< snow that reaches the ground through the canopy (mm/s) */
-    double SnowUnload;
-    double RainDrip;
-    double SnowDrip;
+    double SnowUnload;          /**< snow unloading from canopy (mm/s) */
+    double RainDrip;            /**< rainwater dripping from canopy (mm/s) */
+    double SnowDrip;            /**< snowmelt dripping from canopy (mm/s) */
     double int_rain;            /**< rain intercepted on canopy (mm) */
     double int_snow;            /**< snow intercepted on canopy (mm) */
     double canopy_swq;          /**< snow water equivalent of the canopy (mm) */
@@ -951,7 +932,7 @@ typedef struct {
     double Zsum_snow[MAX_SNOWS];    /**< snow interface layer depth (m) */
     double zc_snow[MAX_SNOWS];      /**< depth of snow thermal nodes (m) */
     double snow_thresholds[MAX_SNOWS]; /**< snow depth thresholds for layer remobilization (m) */
-    double glac_excess;
+    double glac_excess;             /**< accumulated glacier excess flow [mm] */
     double snow_depth;              /**< snow depth (m) */
     double snowage;                 /**< snow age (s) */
     double radius[MAX_SNOWS];       /**< effective grain radius [m-6] */
@@ -972,8 +953,11 @@ typedef struct {
     double pack_frze[MAX_SNOWS];
     double enthalpy[MAX_SNOWS+1];
     double last_enthalpy[MAX_SNOWS+1];
-    double pack_transp;             /**< transpiration from each snow pack (m/s) */
-    double pack_comb;               /**< combined heat and moisture of each snow pack (J/m^3) */
+    double snow_frost;              /**< snow surface frost rate [mm/s] */
+    double snow_sublim;             /**< snow surface sublimation rate [mm/s] */
+    double snow_dew;                /**< snow surface dew rate [mm/s] */
+    double snow_evap;               /**< snow surface evaporation rate [mm/s] */
+    double pack_comb;               /**< excess liquid water when snow layers combine (mm) */
     double swq;                     /**< snow water equivalent of the entire pack (mm) */
     double last_swq;                /**< snow water equivalent of the entire pack from previous time step (mm) */
 } snow_data_struct;
