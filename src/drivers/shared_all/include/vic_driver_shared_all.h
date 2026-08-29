@@ -12,7 +12,7 @@
 
 // Define maximum array sizes for driver level objects
 #define MAX_FORCE_FILES 2
-#define MAX_OUTPUT_STREAMS 20
+#define MAX_OUTPUT_STREAMS 2
 
 // Output compression setting
 #define COMPRESSION_LVL_UNSET -1
@@ -57,6 +57,15 @@ enum
     FROM_VEGLIB,
     FROM_VEGPARAM,
     FROM_VEGHIST
+};
+
+/******************************************************************************
+ * @brief   spatial output domain [shape=(nvars, )]
+ *****************************************************************************/
+enum 
+{
+    OUT_DOMAIN_DEFAULT, /**< cell-average output */
+    OUT_DOMAIN_HRU      /**< HRU/subgrid output */
 };
 
 /******************************************************************************
@@ -150,7 +159,7 @@ enum
     OUT_RAINTHROUGHFALL,  /**< rain that reaches the ground through the canopy (mm/s) */
     OUT_RUNOFF,           /**< surface runoff [mm] */
     OUT_SNOW_OUTFLOW,     /**< outflow of liquid water from the snowpack bottom (m/s) */
-    OUT_SNOW_MELT,        /**< snow melt  [mm] */
+    OUT_SNOW_MELT,        /**< snow melt [mm] */
     OUT_SNOW_FROST,       /**< snow surface frost rate [mm/s] */
     OUT_SNOW_DEW,         /**< snow surface dew rate [mm/s] */
     OUT_SNOW_EVAP,        /**< snow surface evaporation rate [mm/s] */
@@ -225,21 +234,6 @@ enum
     OUT_VP,               /**< near surface vapor pressure [kPa] */
     OUT_VPD,              /**< near surface vapor pressure deficit [kPa] */
     OUT_WIND,             /**< near surface wind speed [m/s] */
-    // Band-specific quantities
-    OUT_ADVECTION_BAND,   /**< advected energy [W/m2] */
-    OUT_GRND_FLUX_BAND,   /**< net heat flux into ground [W/m2] */
-    OUT_LATENT_BAND,      /**< net upward latent heat flux [W/m2] */
-    OUT_LATENT_SUB_BAND,  /**< net upward latent heat flux due to sublimation [W/m2] */
-    OUT_LWNET_BAND,       /**< net downward longwave flux [W/m2] */
-    OUT_SWNET_BAND,       /**< net downward shortwave flux [W/m2] */
-    OUT_SENSIBLE_BAND,    /**< net upward sensible heat flux [W/m2] */
-    OUT_SNOW_CANOPY_BAND, /**< snow interception storage in canopy [mm] */
-    OUT_SNOW_COVER_BAND,  /**< fractional area of snow cover [fraction] */
-    OUT_SNOW_DEPTH_BAND,  /**< depth of snow pack [cm] */
-    OUT_SNOW_FLUX_BAND,   /**< energy flux through snow pack [W/m2] */
-    OUT_SNOW_MELT_BAND,   /**< snow melt [mm] */
-    OUT_SNOW_PACKT_BAND,  /**< snow pack temperature [C] */
-    OUT_SWE_BAND,         /**< snow water equivalent in snow pack [mm] */
     // Timing and Profiling Terms
     OUT_TIME_VICRUN_WALL, /**< Wall time spent inside vic_run [seconds] */
     OUT_TIME_VICRUN_CPU,  /**< Wall time spent inside vic_run [seconds] */
@@ -265,7 +259,6 @@ enum
     STATE_SNOW_DZNODE,                 /**< each snow pack depth (m) */
     STATE_SNOW_PACK_LIQ,               /**< snow layer liquid water [mm] */
     STATE_SNOW_PACK_ICE,               /**< snow layer ice [mm] */
-    STATE_SNOW_DENSITY,                /**< snow density [kg m-3] */
     STATE_SNOW_LASTICE,                /**< partial volume of snow ice from previous time step */
     STATE_SNOW_LASTLIQ,                /**< partial volume of snow liquid water from previous time step */
     STATE_INT_SNOW,                    /**< rain intercepted on canopy (mm) */
@@ -411,7 +404,7 @@ enum timers
  * @brief    Stores forcing file input information.
  *****************************************************************************/
 typedef struct {
-    size_t N_ELEM; /**< number of elements per record; for LAI and ALBEDO,
+    size_t N_ELEM; /**< number of elements per record; for LAI and SAI,
                         1 element per veg tile; for others N_ELEM = 1; */
     bool SIGNED;
     bool SUPPLIED;
@@ -464,6 +457,7 @@ typedef struct {
                                           OUT_TYPE_SINT   = short int
                                           OUT_TYPE_FLOAT  = single precision floating point
                                           OUT_TYPE_DOUBLE = double precision floating point */
+    unsigned short int *domain;      /**< spatial output domain [shape=(nvars, )] */
     double *mult;                    /**< multiplier, when written to a binary file [shape=(nvars, )] */
     char **format;                    /**< format, when written to disk [shape=(nvars, )] */
     unsigned int *varid;             /**< id numbers of the variables to store in the file
@@ -471,7 +465,8 @@ typedef struct {
                                           The order of the id numbers in the varid array
                                           is the order in which the variables will be written. */
     unsigned short int *aggtype;     /**< type of aggregation to use [shape=(nvars, )] */
-    double ****aggdata;              /**< array of aggregated data values [shape=(ngridcells, nvars, nelem, nbins)] */
+    double *****aggdata;             /**< array of aggregated data values [shape=(ngridcells, nvars, nhru, nelem, nbins)] */
+    size_t *nveg;                    /**< number of HRUs for each grid cell */
     alarm_struct agg_alarm;          /**< alaram for stream aggregation */
     alarm_struct write_alarm;        /**< alaram for controlling stream write */
 } stream_struct;
@@ -523,7 +518,7 @@ void agg_stream_data(stream_struct *stream, dmy_struct *dmy_current,
 double all_30_day_from_dmy(dmy_struct *dmy);
 double all_leap_from_dmy(dmy_struct *dmy);
 void alloc_aggdata(stream_struct *stream);
-void alloc_out_data(size_t ngridcells, double ***out_data);
+void alloc_out_data(size_t ngridcells, double ****out_data, size_t nvars, size_t *nveg);
 double average(double *ar, size_t n);
 double calc_energy_balance_error(double, double, double, double, double);
 void calc_root_fractions(size_t, cell_data_struct *cell, veg_var_struct *vag_var, 
@@ -542,7 +537,6 @@ void compute_derived_state_vars(all_vars_struct *, soil_con_struct *,
 double compute_theta(double t, double p);
 double compute_theta_v(double q, double theta);
 size_t count_force_vars(FILE *gp);
-void count_nstreams_nvars(FILE *gp, size_t *nstreams, size_t nvars[]);
 void cmd_proc(int argc, char **argv, char *globalfilename);
 void compress_files(char string[], short int level);
 stream_struct create_outstream(stream_struct *output_streams);
@@ -563,12 +557,11 @@ void display_current_settings(int);
 double fractional_day_from_dmy(dmy_struct *dmy);
 void free_all_vars(all_vars_struct *all_vars);
 void free_dmy(dmy_struct **dmy);
-void free_out_data(size_t ngridcells, double ***out_data);
+void free_out_data(stream_struct *streams, double ****out_data);
 void free_streams(stream_struct **streams);
 void generate_default_state(force_data_struct *force, all_vars_struct *all_vars, 
                             soil_con_struct *soil_con, veg_con_struct *veg_con,
                             veg_lib_struct *veg_lib);
-void get_default_nstreams_nvars(size_t *nstreams, size_t nvars[]);
 void get_parameters(FILE *paramfile);
 void init_output_list(double **out_data, int write, char *format, int type,
                       double mult);
@@ -576,9 +569,6 @@ void initialize_energy(energy_bal_struct *energy, size_t nveg);
 void initialize_global(void);
 void initialize_options(void);
 void initialize_parameters(void);
-void initialize_save_data(all_vars_struct *all_vars, force_data_struct *force,
-                          veg_con_struct *veg_con,double **out_data, 
-                          timer_struct *timer);
 void initialize_snow(snow_data_struct *snow, size_t veg_num);
 void initialize_soil(cell_data_struct *cell, size_t veg_num);
 void initialize_time(void);
@@ -632,7 +622,7 @@ void reset_alarm(alarm_struct *alarm, dmy_struct *dmy_current);
 void reset_stream(stream_struct *stream, dmy_struct *dmy_current);
 void set_output_var(stream_struct *stream, char *varname, size_t varnum,
                     char *format, unsigned short int type, double mult,
-                    unsigned short int aggtype);
+                    unsigned short int aggtype, unsigned short int domain);
 unsigned int get_default_outvar_aggtype(unsigned int varid);
 void set_alarm(dmy_struct *dmy_current, unsigned int freq, void *value,
                alarm_struct *alarm);
@@ -640,11 +630,12 @@ void set_output_defaults(stream_struct **output_streams,
                          dmy_struct     *dmy_current,
                          unsigned short  default_file_format);
 void set_output_met_data_info();
-void setup_stream(stream_struct *stream, size_t nvars, size_t ngridcells);
+void setup_stream(stream_struct *stream, size_t nvars, size_t ngridcells, size_t *nveg);
 void sprint_dmy(char *str, dmy_struct *dmy);
 void str_from_calendar(unsigned short int calendar, char *calendar_str);
 void str_from_time_units(unsigned short int time_units, char *unit_str);
 unsigned short int str_to_agg_type(char aggstr[]);
+unsigned short int str_to_out_domain(char domain[]);
 void str_to_ascii_format(char *format);
 bool str_to_bool(char str[]);
 unsigned short int str_to_calendar(char *cal_chars);

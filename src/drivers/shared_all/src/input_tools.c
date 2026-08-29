@@ -24,63 +24,6 @@ str_to_bool(char str[])
 }
 
 /******************************************************************************
- * @brief    This routine determines the counts the number of output variables
-             in each output file specified in the global parameter file.
- *****************************************************************************/
-void
-count_nstreams_nvars(FILE   *gp,
-                     size_t *nstreams,
-                     size_t  nvars[])
-{
-    unsigned long start_position;
-    char          cmdstr[MAXSTRING];
-    char          optstr[MAXSTRING];
-    size_t        i;
-
-    // Figure out where we are in the input file
-    fflush(gp);
-    start_position = ftell(gp);
-
-    // Move the position to the begining of the file
-    rewind(gp);
-
-    // read the first line
-    fgets(cmdstr, MAXSTRING, gp);
-
-    // initialize nstreams and nvars
-    *nstreams = 0;
-    for (i = 0; i < MAX_OUTPUT_STREAMS; i++) {
-        nvars[i] = 0;
-    }
-
-    // Loop through the lines
-    while (!feof(gp)) {
-        if (cmdstr[0] != '#' && cmdstr[0] != '\n' && cmdstr[0] != '\0') {
-            // line is not blank or a comment
-            sscanf(cmdstr, "%s", optstr);
-
-            // if the line starts with OUTFILE, increment nstreams
-            if (strcasecmp("OUTFILE", optstr) == 0) {
-                (*nstreams)++;
-            }
-
-            // if the line starts with OUTVAR, add another variable to nvars
-            if (strcasecmp("OUTVAR", optstr) == 0) {
-                nvars[*nstreams - 1]++;
-            }
-        }
-        fgets(cmdstr, MAXSTRING, gp);
-    }
-
-    if (*nstreams > MAX_OUTPUT_STREAMS) {
-        log_err("Too many output streams specified.");
-    }
-
-    // put the position in the file back to where we started
-    fseek(gp, start_position, SEEK_SET);
-}
-
-/******************************************************************************
  * @brief    Convert string version of AGG_TYPE_* to enum value
  *****************************************************************************/
 unsigned short int
@@ -379,4 +322,29 @@ cell_method_from_agg_type(unsigned short int aggtype,
     else {
         return false;
     }
+}
+
+/******************************************************************************
+ * @brief    Convert string version of OUT_DOMAIN_* to enum value
+ *****************************************************************************/
+unsigned short int
+str_to_out_domain(char domain[])
+{
+    if ((strcasecmp("", domain) == 0) ||
+        (strcasecmp("*", domain) == 0)) {
+        return OUT_DOMAIN_DEFAULT;
+    }
+    else {
+        if (strcasecmp("OUT_DOMAIN_DEFAULT", domain) == 0) {
+            return OUT_DOMAIN_DEFAULT;
+        }
+        else if (strcasecmp("OUT_DOMAIN_HRU", domain) == 0) {
+            return OUT_DOMAIN_HRU;
+        }
+        else {
+            log_err("Unknown output domain found: %s", domain);
+        }
+    }
+
+    return OUT_DOMAIN_DEFAULT;
 }

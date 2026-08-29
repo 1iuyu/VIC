@@ -333,23 +333,6 @@ vic_restore(void)
         }
     }
 
-    // snow density: snow[veg].density
-    for (m = 0; m < MAX_HRUS; m++) {
-        d4start[0] = m;
-        for (j = 0; j < MAX_SNOWS; j++) {
-            d4start[1] = j;
-            get_scatter_nc_field_double(&(filenames.init_state),
-                                        state_metadata[STATE_SNOW_DENSITY].varname,
-                                        d4start, d4count, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                if (m < local_domain.locations[i].nveg &&
-                                all_vars[i].snow[m].Nsnow > 0) {
-                    all_vars[i].snow[m].density[j] = dvar[i];
-                }
-            }
-        }
-    }
-
     // thermal node temperatures: energy[veg].T[nidx]
     for (m = 0; m < MAX_HRUS; m++) {
         d4start[0] = m;

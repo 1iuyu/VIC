@@ -178,8 +178,7 @@ surface_albedo(double             step_dt,
         if (cell->IS_VEG) {
             /* Compute canopy radiative transfer 
             using two-stream approximation */
-            canopy_two_stream(coszen, energy, 
-                              cell,
+            canopy_two_stream(coszen, energy,
                               veg_var, 
                               veg_lib);
         }

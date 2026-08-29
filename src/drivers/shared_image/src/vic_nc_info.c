@@ -31,13 +31,13 @@ set_nc_var_info(unsigned int       varid,
     case OUT_RA_SUB:
     case OUT_RA_GRND:
         nc_var->nc_dims = 4;
-        nc_var->nc_counts[1] = 3;
+        nc_var->nc_counts[1] = nc_hist_file->turbul_size;
         nc_var->nc_counts[2] = nc_hist_file->nj_size;
         nc_var->nc_counts[3] = nc_hist_file->ni_size;
         break;
     case OUT_VEG_MATRIC:
         nc_var->nc_dims = 4;
-        nc_var->nc_counts[1] = 4;
+        nc_var->nc_counts[1] = nc_hist_file->vegmat_size;
         nc_var->nc_counts[2] = nc_hist_file->nj_size;
         nc_var->nc_counts[3] = nc_hist_file->ni_size;
         break;
@@ -64,24 +64,6 @@ set_nc_var_info(unsigned int       varid,
     case OUT_SNOW_PACK_TEMP:
         nc_var->nc_dims = 4;
         nc_var->nc_counts[1] = nc_hist_file->snow_size;
-        nc_var->nc_counts[2] = nc_hist_file->nj_size;
-        nc_var->nc_counts[3] = nc_hist_file->ni_size;
-        break;
-    case OUT_ADVECTION_BAND:
-    case OUT_LATENT_BAND:
-    case OUT_LATENT_SUB_BAND:
-    case OUT_LWNET_BAND:
-    case OUT_SWNET_BAND:
-    case OUT_SENSIBLE_BAND:
-    case OUT_SNOW_CANOPY_BAND:
-    case OUT_SNOW_COVER_BAND:
-    case OUT_SNOW_DEPTH_BAND:
-    case OUT_SNOW_FLUX_BAND:
-    case OUT_SNOW_MELT_BAND:
-    case OUT_SNOW_PACKT_BAND:
-    case OUT_SWE_BAND:
-        nc_var->nc_dims = 4;
-        nc_var->nc_counts[1] = nc_hist_file->band_size;
         nc_var->nc_counts[2] = nc_hist_file->nj_size;
         nc_var->nc_counts[3] = nc_hist_file->ni_size;
         break;
@@ -112,7 +94,13 @@ set_nc_var_dimids(unsigned int    varid,
     case OUT_RA_SUB:
     case OUT_RA_GRND:
         nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
-        nc_var->nc_dimids[1] = 3;
+        nc_var->nc_dimids[1] = nc_hist_file->turbul_dimid;
+        nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
+        nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
+        break;
+    case OUT_VEG_MATRIC:
+        nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
+        nc_var->nc_dimids[1] = nc_hist_file->vegmat_dimid;
         nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
         nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
         break;
@@ -139,24 +127,6 @@ set_nc_var_dimids(unsigned int    varid,
     case OUT_SNOW_PACK_TEMP:
         nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
         nc_var->nc_dimids[1] = nc_hist_file->snow_dimid;
-        nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
-        nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
-        break;   
-    case OUT_ADVECTION_BAND:
-    case OUT_LATENT_BAND:
-    case OUT_LATENT_SUB_BAND:
-    case OUT_LWNET_BAND:
-    case OUT_SWNET_BAND:
-    case OUT_SENSIBLE_BAND:
-    case OUT_SNOW_CANOPY_BAND:
-    case OUT_SNOW_COVER_BAND:
-    case OUT_SNOW_DEPTH_BAND:
-    case OUT_SNOW_FLUX_BAND:
-    case OUT_SNOW_MELT_BAND:
-    case OUT_SNOW_PACKT_BAND:
-    case OUT_SWE_BAND:
-        nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
-        nc_var->nc_dimids[1] = nc_hist_file->band_dimid;
         nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
         nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
         break;

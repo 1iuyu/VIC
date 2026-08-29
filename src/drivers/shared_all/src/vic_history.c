@@ -10,22 +10,28 @@
  * @brief    This routine creates the list of output data.
  *****************************************************************************/
 void
-alloc_out_data(size_t    ngridcells,
-               double ***out_data)
+alloc_out_data(size_t     ngridcells,
+               double ****out_data,
+               size_t     nvars,
+               size_t    *nveg)
 {
     extern metadata_struct out_metadata[N_OUTVAR_TYPES];
-
-    size_t                 i;
-    size_t                 j;
+    size_t i, j, k;
 
     for (i = 0; i < ngridcells; i++) {
         out_data[i] = calloc(N_OUTVAR_TYPES, sizeof(*(out_data[i])));
         check_alloc_status(out_data[i], "Memory allocation error.");
         // Allocate space for data
-        for (j = 0; j < N_OUTVAR_TYPES; j++) {
+        for (j = 0; j < nvars; j++) {
             out_data[i][j] =
-                calloc(out_metadata[j].nelem, sizeof(*(out_data[i][j])));
+                calloc(nveg[i], sizeof(*(out_data[i][j])));
             check_alloc_status(out_data[i][j], "Memory allocation error.");
+            for (k = 0; k < nveg[i]; k++) {
+                out_data[i][j][k] =
+                    calloc(out_metadata[j].nelem, sizeof(*(out_data[i][j][k])));
+                check_alloc_status(out_data[i][j][k],
+                                   "Memory allocation error.");
+            }
         }
     }
 }
@@ -36,7 +42,8 @@ alloc_out_data(size_t    ngridcells,
 void
 setup_stream(stream_struct *stream,
              size_t         nvars,
-             size_t         ngridcells)
+             size_t         ngridcells,
+             size_t        *nveg)
 {
     size_t     i;
     int        default_n = 1;
@@ -80,6 +87,16 @@ setup_stream(stream_struct *stream,
     stream->format = calloc(nvars, sizeof(*(stream->format)));
     check_alloc_status(stream->format, "Memory allocation error.");
 
+    stream->domain = calloc(nvars, sizeof(*(stream->domain)));
+    check_alloc_status(stream->domain, "Memory allocation error.");
+
+    stream->nveg = calloc(ngridcells, sizeof(*(stream->nveg)));
+    check_alloc_status(stream->nveg, "Memory allocation error.");
+
+    for (i = 0; i < ngridcells; i++) {
+        stream->nveg[i] = nveg[i];
+    }
+
     for (i = 0; i < nvars; i++) {
         stream->format[i] = calloc(MAXSTRING, sizeof(*(stream->format[i])));
         check_alloc_status(stream->format[i], "Memory allocation error.");
@@ -90,6 +107,7 @@ setup_stream(stream_struct *stream,
         stream->type[i] = OUT_TYPE_DEFAULT;
         stream->mult[i] = OUT_MULT_DEFAULT;
         stream->aggtype[i] = AGG_TYPE_DEFAULT;
+        stream->domain[i] = OUT_DOMAIN_DEFAULT;
     }
 }
 
@@ -132,6 +150,12 @@ validate_streams(stream_struct **streams)
         if ((*streams)[streamnum].aggdata == NULL) {
             log_err("Stream agg_data array not allocated");
         }
+        if ((*streams)[streamnum].domain == NULL) {
+            log_err("Stream domain array not allocated");
+        }
+        if ((*streams)[streamnum].nveg == NULL) {
+            log_err("Stream nveg array not allocated");
+        }
     }
 }
 
@@ -146,6 +170,7 @@ alloc_aggdata(stream_struct *stream)
 
     size_t                 i;
     size_t                 j;
+    size_t                 h;
     size_t                 k;
     size_t                 nelem;
 
@@ -159,16 +184,21 @@ alloc_aggdata(stream_struct *stream)
         for (j = 0; j < stream->nvars; j++) {
             nelem = out_metadata[stream->varid[j]].nelem;
             stream->aggdata[i][j] =
-                calloc(nelem, sizeof(*(stream->aggdata[i][j])));
+                calloc(stream->nveg[i], sizeof(*(stream->aggdata[i][j])));
             check_alloc_status(stream->aggdata[i][j],
                                "Memory allocation error.");
-
-            for (k = 0; k < nelem; k++) {
-                // TODO: Also allocate for nbins, for now just setting to size 1
-                stream->aggdata[i][j][k] =
-                    calloc(1, sizeof(*(stream->aggdata[i][j][k])));
-                check_alloc_status(stream->aggdata[i][j][k],
+            for (h = 0; h < stream->nveg[i]; h++) {
+                stream->aggdata[i][j][h] = 
+                    calloc(nelem, sizeof(*(stream->aggdata[i][j][h])));
+                check_alloc_status(stream->aggdata[i][j][h], 
                                    "Memory allocation error.");
+                for (k = 0; k < nelem; k++) {
+                    // TODO: Also allocate for nbins, for now just setting to size 1
+                    stream->aggdata[i][j][h][k] =
+                        calloc(1, sizeof(*(stream->aggdata[i][j][h][k])));
+                    check_alloc_status(stream->aggdata[i][j][h][k],
+                                       "Memory allocation error.");
+                }
             }
         }
     }
@@ -185,6 +215,7 @@ reset_stream(stream_struct *stream,
 
     size_t                 i;
     size_t                 j;
+    size_t                 h;
     size_t                 k;
     size_t                 varid;
 
@@ -195,8 +226,10 @@ reset_stream(stream_struct *stream,
     for (i = 0; i < stream->ngridcells; i++) {
         for (j = 0; j < stream->nvars; j++) {
             varid = stream->varid[j];
-            for (k = 0; k < out_metadata[varid].nelem; k++) {
-                stream->aggdata[i][j][k][0] = 0.;
+            for (h = 0; h < stream->nveg[i]; h++) {
+                for (k = 0; k < out_metadata[varid].nelem; k++) {
+                    stream->aggdata[i][j][h][k][0] = 0.0;
+                }
             }
         }
     }
@@ -236,10 +269,6 @@ get_default_outvar_aggtype(unsigned int varid)
     case OUT_SWE:
     case OUT_WDEW:
     case OUT_ZWT:
-    case OUT_SNOW_CANOPY_BAND:
-    case OUT_SNOW_COVER_BAND:
-    case OUT_SNOW_DEPTH_BAND:
-    case OUT_SWE_BAND:
         agg_type = AGG_TYPE_END;
         break;
     // AGG_TYPE_SUM
@@ -296,13 +325,14 @@ get_default_outvar_aggtype(unsigned int varid)
  *           variable.
  *****************************************************************************/
 void
-set_output_var(stream_struct     *stream,
-               char              *varname,
-               size_t             varnum,
-               char              *format,
-               unsigned short int type,
-               double             mult,
-               unsigned short int aggtype)
+set_output_var(stream_struct      *stream,
+               char               *varname,
+               size_t              varnum,
+               char               *format,
+               unsigned short int  type,
+               double              mult,
+               unsigned short int  aggtype,
+               unsigned short int  domain)
 {
     extern metadata_struct out_metadata[N_OUTVAR_TYPES];
 
@@ -355,6 +385,9 @@ set_output_var(stream_struct     *stream,
     else {
         stream->aggtype[varnum] = get_default_outvar_aggtype(varid);
     }
+    if (domain != OUT_DOMAIN_DEFAULT) {
+        stream->domain[varnum] = domain;
+    }
 }
 
 /******************************************************************************
@@ -369,6 +402,7 @@ free_streams(stream_struct **streams)
     size_t                 streamnum;
     size_t                 i;
     size_t                 j;
+    size_t                 h;
     size_t                 k;
     size_t                 varid;
 
@@ -378,12 +412,16 @@ free_streams(stream_struct **streams)
         for (i = 0; i < (*streams)[streamnum].ngridcells; i++) {
             for (j = 0; j < (*streams)[streamnum].nvars; j++) {
                 varid = (*streams)[streamnum].varid[j];
-                for (k = 0; k < out_metadata[varid].nelem; k++) {
-                    free((*streams)[streamnum].aggdata[i][j][k]);
+                for (h = 0; h < (*streams)[streamnum].nveg[i]; h++) {
+                    for (k = 0; k < out_metadata[varid].nelem; k++) {
+                        free((*streams)[streamnum].aggdata[i][j][h][k]);
+                    }
+                    free((*streams)[streamnum].aggdata[i][j][h]);
                 }
                 free((*streams)[streamnum].aggdata[i][j]);
             }
             free((*streams)[streamnum].aggdata[i]);
+            free((*streams)[streamnum].nveg[i]);
         }
         for (j = 0; j < (*streams)[streamnum].nvars; j++) {
             free((*streams)[streamnum].format[j]);
@@ -395,6 +433,7 @@ free_streams(stream_struct **streams)
         free((*streams)[streamnum].format);
         free((*streams)[streamnum].varid);
         free((*streams)[streamnum].aggtype);
+        free((*streams)[streamnum].domain);
     }
     free(*streams);
 }
@@ -403,19 +442,23 @@ free_streams(stream_struct **streams)
  * @brief    This routine frees the memory in the out_data array.
  *****************************************************************************/
 void
-free_out_data(size_t    ngridcells,
-              double ***out_data)
+free_out_data(stream_struct *stream,
+              double     ****out_data)
 {
     size_t i;
     size_t j;
+    size_t k;
 
 
     if (out_data == NULL) {
         return;
     }
 
-    for (i = 0; i < ngridcells; i++) {
-        for (j = 0; j < N_OUTVAR_TYPES; j++) {
+    for (i = 0; i < stream->ngridcells; i++) {
+        for (j = 0; j < stream->nvars; j++) {
+            for (k = 0; k < stream->nveg[i]; k++) {
+                free(out_data[i][j][k]);
+            }
             free(out_data[i][j]);
         }
         free(out_data[i]);

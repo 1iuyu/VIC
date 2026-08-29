@@ -32,8 +32,6 @@ set_output_met_data_info()
 
     // Water Balance Terms - state variables
     /* saturated area fraction */
-    // Water Balance Terms - state variables
-    /* saturated area fraction */
     strcpy(out_metadata[OUT_ASAT].varname, "OUT_ASAT");
     strcpy(out_metadata[OUT_ASAT].long_name, "asat");
     strcpy(out_metadata[OUT_ASAT].standard_name, "saturated_area_fraction");
@@ -985,115 +983,7 @@ set_output_met_data_info()
     strcpy(out_metadata[OUT_WIND].long_name, "wind");
     strcpy(out_metadata[OUT_WIND].standard_name, "wind_speed");
     strcpy(out_metadata[OUT_WIND].units, "m s-1");
-    strcpy(out_metadata[OUT_WIND].description, "near surface wind speed");
-
-    // Band-specific quantities
-
-    /* advected energy [W m-2] */
-    strcpy(out_metadata[OUT_ADVECTION_BAND].varname, "OUT_ADVECTION_BAND");
-    strcpy(out_metadata[OUT_ADVECTION_BAND].long_name, "advection_band");
-    strcpy(out_metadata[OUT_ADVECTION_BAND].standard_name,
-           out_metadata[OUT_ADVECTION].standard_name);
-    strcpy(out_metadata[OUT_ADVECTION_BAND].units,
-           out_metadata[OUT_ADVECTION].units);
-    strcpy(out_metadata[OUT_ADVECTION_BAND].description,
-           out_metadata[OUT_ADVECTION].description);
-
-    /* net heat flux into ground [W m-2] */
-    strcpy(out_metadata[OUT_GRND_FLUX_BAND].varname, "OUT_GRND_FLUX_BAND");
-    strcpy(out_metadata[OUT_GRND_FLUX_BAND].long_name, "grnd_flux_band");
-    strcpy(out_metadata[OUT_GRND_FLUX_BAND].standard_name,
-           out_metadata[OUT_GRND_FLUX].standard_name);
-    strcpy(out_metadata[OUT_GRND_FLUX_BAND].units,
-           out_metadata[OUT_GRND_FLUX].units);
-    strcpy(out_metadata[OUT_GRND_FLUX_BAND].description,
-           out_metadata[OUT_GRND_FLUX].description);
-
-    /* net upward latent heat flux [W m-2] */
-    strcpy(out_metadata[OUT_LATENT_BAND].varname, "OUT_LATENT_BAND");
-    strcpy(out_metadata[OUT_LATENT_BAND].long_name, "latent_band");
-    strcpy(out_metadata[OUT_LATENT_BAND].standard_name,
-           out_metadata[OUT_LATENT].standard_name);
-    strcpy(out_metadata[OUT_LATENT_BAND].units, out_metadata[OUT_LATENT].units);
-    strcpy(out_metadata[OUT_LATENT_BAND].description,
-           out_metadata[OUT_LATENT].description);
-
-    /* net downward longwave flux [W m-2] */
-    strcpy(out_metadata[OUT_LWNET_BAND].varname, "OUT_LWNET_BAND");
-    strcpy(out_metadata[OUT_LWNET_BAND].long_name, "lwnet_band");
-    strcpy(out_metadata[OUT_LWNET_BAND].standard_name,
-           out_metadata[OUT_LWNET].standard_name);
-    strcpy(out_metadata[OUT_LWNET_BAND].units, out_metadata[OUT_LWNET].units);
-    strcpy(out_metadata[OUT_LWNET_BAND].description,
-           out_metadata[OUT_LWNET].description);
-
-    /* net downward shortwave flux [W m-2] */
-    strcpy(out_metadata[OUT_SWNET_BAND].varname, "OUT_SWNET_BAND");
-    strcpy(out_metadata[OUT_SWNET_BAND].long_name, "swnet_band");
-    strcpy(out_metadata[OUT_SWNET_BAND].standard_name,
-           out_metadata[OUT_SWNET].standard_name);
-    strcpy(out_metadata[OUT_SWNET_BAND].units, out_metadata[OUT_SWNET].units);
-    strcpy(out_metadata[OUT_SWNET_BAND].description,
-           out_metadata[OUT_SWNET].description);
-
-    /* net upward sensible heat flux [W m-2] */
-    strcpy(out_metadata[OUT_SENSIBLE_BAND].varname, "OUT_SENSIBLE_BAND");
-    strcpy(out_metadata[OUT_SENSIBLE_BAND].long_name, "sensible_band");
-    strcpy(out_metadata[OUT_SENSIBLE_BAND].standard_name,
-           out_metadata[OUT_SENSIBLE].standard_name);
-    strcpy(out_metadata[OUT_SENSIBLE_BAND].units,
-           out_metadata[OUT_SENSIBLE].units);
-    strcpy(out_metadata[OUT_SENSIBLE_BAND].description,
-           out_metadata[OUT_SENSIBLE].description);
-
-    /* fractional area of snow cover [fraction] */
-    strcpy(out_metadata[OUT_SNOW_COVER_BAND].varname, "OUT_SNOW_COVER_BAND");
-    strcpy(out_metadata[OUT_SNOW_COVER_BAND].long_name, "snow_cover_band");
-    strcpy(out_metadata[OUT_SNOW_COVER_BAND].standard_name,
-           out_metadata[OUT_SNOW_COVER].standard_name);
-    strcpy(out_metadata[OUT_SNOW_COVER_BAND].units,
-           out_metadata[OUT_SNOW_COVER].units);
-    strcpy(out_metadata[OUT_SNOW_COVER_BAND].description,
-           out_metadata[OUT_SNOW_COVER].description);
-
-    /* depth of snow pack [cm] */
-    strcpy(out_metadata[OUT_SNOW_DEPTH_BAND].varname, "OUT_SNOW_DEPTH_BAND");
-    strcpy(out_metadata[OUT_SNOW_DEPTH_BAND].long_name, "snow_depth_band");
-    strcpy(out_metadata[OUT_SNOW_DEPTH_BAND].standard_name,
-           out_metadata[OUT_SNOW_DEPTH].standard_name);
-    strcpy(out_metadata[OUT_SNOW_DEPTH_BAND].units,
-           out_metadata[OUT_SNOW_DEPTH].units);
-    strcpy(out_metadata[OUT_SNOW_DEPTH_BAND].description,
-           out_metadata[OUT_SNOW_DEPTH].description);
-
-    /* snow melt [mm] */
-    strcpy(out_metadata[OUT_SNOW_MELT_BAND].varname, "OUT_SNOW_MELT_BAND");
-    strcpy(out_metadata[OUT_SNOW_MELT_BAND].long_name, "snow_melt_band");
-    strcpy(out_metadata[OUT_SNOW_MELT_BAND].standard_name,
-           out_metadata[OUT_SNOW_MELT].standard_name);
-    strcpy(out_metadata[OUT_SNOW_MELT_BAND].units,
-           out_metadata[OUT_SNOW_MELT].units);
-    strcpy(out_metadata[OUT_SNOW_MELT_BAND].description,
-           out_metadata[OUT_SNOW_MELT].description);
-
-    /* snow pack temperature [C] */
-    strcpy(out_metadata[OUT_SNOW_PACKT_BAND].varname, "OUT_SNOW_PACKT_BAND");
-    strcpy(out_metadata[OUT_SNOW_PACKT_BAND].long_name, "snow_packt_band");
-    strcpy(out_metadata[OUT_SNOW_PACKT_BAND].standard_name,
-           out_metadata[OUT_SNOW_PACK_TEMP].standard_name);
-    strcpy(out_metadata[OUT_SNOW_PACKT_BAND].units,
-           out_metadata[OUT_SNOW_PACK_TEMP].units);
-    strcpy(out_metadata[OUT_SNOW_PACKT_BAND].description,
-           out_metadata[OUT_SNOW_PACK_TEMP].description);
-
-    /* snow water equivalent in snow pack [mm] */
-    strcpy(out_metadata[OUT_SWE_BAND].varname, "OUT_SWE_BAND");
-    strcpy(out_metadata[OUT_SWE_BAND].long_name, "swe_band");
-    strcpy(out_metadata[OUT_SWE_BAND].standard_name,
-           out_metadata[OUT_SWE].standard_name);
-    strcpy(out_metadata[OUT_SWE_BAND].units, out_metadata[OUT_SWE].units);
-    strcpy(out_metadata[OUT_SWE_BAND].description,
-           out_metadata[OUT_SWE].description);                                                                                                           
+    strcpy(out_metadata[OUT_WIND].description, "near surface wind speed");                                                                                             
 
     /* Wall time spent inside vic_run [seconds] */
     strcpy(out_metadata[OUT_TIME_VICRUN_WALL].varname, "OUT_TIME_VICRUN_WALL");
@@ -1116,18 +1006,22 @@ set_output_met_data_info()
     out_metadata[OUT_SOIL_LIQ].nelem = MAX_SOILS;
     out_metadata[OUT_SOIL_MOIST].nelem = MAX_SOILS;
     out_metadata[OUT_SOIL_TEMP].nelem = MAX_SOILS;
-    out_metadata[OUT_ADVECTION_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_GRND_FLUX_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_LATENT_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_LATENT_SUB_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_LWNET_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_SWNET_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_SENSIBLE_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_SNOW_CANOPY_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_SNOW_COVER_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_SNOW_DEPTH_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_SNOW_FLUX_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_SNOW_MELT_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_SNOW_PACKT_BAND].nelem = options.SNOW_BAND;
-    out_metadata[OUT_SWE_BAND].nelem = options.SNOW_BAND;
+    out_metadata[OUT_SOIL_POROSITY].nelem = MAX_SOILS;
+    out_metadata[OUT_TRANSP_SINK].nelem = MAX_SOILS;
+    out_metadata[OUT_MATRIC].nelem = MAX_SOILS;
+    out_metadata[OUT_SNOW_PACK_ICE].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_PACK_LIQ].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_PACK_TEMP].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_ICEFRAC].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_LIQFRAC].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_POROSITY].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_RADIUS].nelem = MAX_SNOWS;
+    out_metadata[OUT_PACK_OUTFLOW].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_MELT].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_FRZE].nelem = MAX_SNOWS;
+    out_metadata[OUT_VEG_MATRIC].nelem = 4;
+    out_metadata[OUT_RA_OVER].nelem = 3;
+    out_metadata[OUT_RA_SUB].nelem = 3;
+    out_metadata[OUT_RA_GRND].nelem = 3;
+
 }

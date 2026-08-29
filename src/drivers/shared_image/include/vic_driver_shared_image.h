@@ -39,6 +39,7 @@ typedef struct {
     double area; /**< area of grid cell */
     double frac; /**< fraction of grid cell that is active */
     size_t nveg; /**< number of vegetation type according to parameter file */
+    size_t band; /**< Number of elevation bands */
     size_t global_idx; /**< index of grid cell in global list of grid cells */
     size_t io_idx; /**< index of cell in 1-D I/O arrays */
     size_t local_idx; /**< index of grid cell in local list of grid cells */
@@ -99,12 +100,14 @@ typedef struct {
     int wave_dimid;
     int canopy_dimid;
     int layer_dimid;
+    int turbul_dimid;
     int ni_dimid;
     int nj_dimid;
     int node_dimid;
     int time_dimid;
     int time_bounds_dimid;
-    int veg_dimid;
+    int hru_dimid;
+    int vegmat_dimid;
     int time_varid;
     int time_bounds_varid;
     size_t band_size;
@@ -114,10 +117,12 @@ typedef struct {
     size_t node_size;
     size_t soil_size;
     size_t snow_size;
+    size_t turbul_size;
     size_t canopy_size;
     size_t wave_size;
     size_t time_size;
-    size_t veg_size;
+    size_t hru_size;
+    size_t vegmat_size;
     bool open;
     nc_var_struct *nc_vars;
 } nc_file_struct;
@@ -158,7 +163,6 @@ double average(double *ar, size_t n);
 void check_init_state_file(void);
 void compare_ncdomain_with_global_domain(nameid_struct *nc_nameid);
 void free_force(force_data_struct *force);
-void free_veglib(veg_lib_struct **);
 void free_veg_hist(veg_hist_struct *veg_hist);
 void get_domain_type(char *cmdstr);
 size_t get_global_domain(nameid_struct *domain_nc_nameid,
@@ -196,7 +200,7 @@ void initialize_nc_file(nc_file_struct *nc_file, size_t nvars,
 void initialize_soil_con(soil_con_struct *soil_con);
 void initialize_veg_con(veg_con_struct *veg_con);
 void parse_output_info(FILE *gp, stream_struct **output_streams,
-                       dmy_struct *dmy_current);
+                       size_t *nstreams, dmy_struct *dmy_current);
 void print_force_data(force_data_struct *force);
 void print_domain(domain_struct *domain, bool print_loc);
 void print_location(location_struct *location);

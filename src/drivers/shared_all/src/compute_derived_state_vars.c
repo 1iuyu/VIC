@@ -16,25 +16,21 @@
 void
 compute_derived_state_vars(all_vars_struct *all_vars,
                            soil_con_struct *soil_con,
-                           veg_con_struct  *veg_con,
-                           veg_lib_struct  *veg_lib)
+                           veg_con_struct  *veg_con)
 {
     extern global_param_struct global_param;
     extern parameters_struct   param;
     extern option_struct       options;
     size_t veg, Nveg;
-    size_t veg_class;
     size_t Nsnow;
-    size_t i, lidx, band;
+    size_t i, lidx;
     double Cv;
     double dt_thresh;
     cell_data_struct *cell;
     snow_data_struct *snow;
-    veg_var_struct *veg_var;
     energy_bal_struct *energy;
     cell = all_vars->cell;
     snow = all_vars->snow;
-    veg_var = all_vars->veg_var;
     energy = all_vars->energy;
     Nveg = veg_con[0].vegetat_type_num;
 
@@ -42,7 +38,6 @@ compute_derived_state_vars(all_vars_struct *all_vars,
         // compute snow, soil and h2osfc_T temperatures
         for (veg = 0; veg <= Nveg; veg++) {
             if (veg_con[veg].Cv > 0) {
-                band = veg_con[veg].BandIndex;
                 Nsnow = snow[veg].Nsnow;
                 // Initialize snow node temperatures
                 for (i = 0; i < Nsnow; i++) {
@@ -50,12 +45,36 @@ compute_derived_state_vars(all_vars_struct *all_vars,
                 }
                 if (cell[veg].h2osfc > param.TOL_A) {
                     cell[veg].h2osfc_T = energy[veg].T[Nsnow];
+                    Nsnow++;
                 }
                 /* Initialize soil node temperatures */
                 for (i = Nsnow; i < cell[veg].Nnode; i++) {
                     lidx = i - Nsnow;
                     cell[veg].soil_T[lidx] = energy[veg].T[i];
                 }
+            }
+        }
+        // 计算累计厚度和中心位置
+        for (veg = 0; veg <= Nveg; veg++) {
+            double cum_depth = 0.0;
+            for (i = 0; i < snow[veg].Nsnow; i++) {
+                cum_depth += snow[veg].dz_snow[i];
+                snow[veg].Zsum_snow[i] = cum_depth;
+                snow[veg].zc_snow[i] = cum_depth - snow[veg].dz_snow[i] / 2.0;
+                snow[veg].theta_ice[i] = min(1.0, snow[veg].pack_ice[i] / 
+                            (snow[veg].dz_snow[i] * snow[veg].coverage * CONST_RHOICE));
+                snow[veg].porosity[i] = 1.0 - snow[veg].theta_ice[i];
+                snow[veg].theta_liq[i] = min(snow[veg].porosity[i], snow[veg].pack_liq[i] / 
+                                (snow[veg].dz_snow[i] * snow[veg].coverage * CONST_RHOFW));
+                double SnowMass = snow[veg].pack_ice[i] + snow[veg].pack_liq[i];
+                snow[veg].snow_frac[i] = snow[veg].pack_ice[i] / SnowMass;
+                snow[veg].density[i] = snow[veg].pack_ice[i] / 
+                                      (snow[veg].dz_snow[i] * snow[veg].coverage);
+                double CP_snow = 92.96 + 7.37 * snow[veg].pack_T[i];
+                snow[veg].enthalpy[i] = (snow[veg].pack_ice[i] * CP_snow + 
+                                snow[veg].pack_liq[i] * CONST_CPFWICE) * (snow[veg].pack_T[i] - 
+                                CONST_TKFRZ) - snow[veg].pack_ice[i] * CONST_LATICE;
+                snow[veg].enthalpy[i] /= snow[veg].coverage;
             }
         }
     }

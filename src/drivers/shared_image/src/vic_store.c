@@ -403,31 +403,6 @@ vic_store(dmy_struct *dmy_state,
         }
     }
 
-    // snow density: snow[veg].density
-    nc_var = &(nc_state_file.nc_vars[STATE_SNOW_DENSITY]);
-    for (m = 0; m < options.MAX_HRU; m++) {
-        d4start[0] = m;
-        for (k = 0; k < MAX_SNOWS; k++) {
-            d4start[1] = k;
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                if (m < local_domain.locations[i].nveg &&
-                                    k < all_vars[i].snow[m].Nsnow) {
-                    dvar[i] = (double) all_vars[i].snow[m].density[k];
-                }
-                else {
-                    dvar[i] = nc_state_file.d_fillvalue;
-                }
-            }
-            gather_put_nc_field_double(nc_state_file.nc_id,
-                                    nc_var->nc_varid,
-                                    nc_state_file.d_fillvalue,
-                                    d3start, nc_var->nc_counts, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                dvar[i] = nc_state_file.d_fillvalue;
-            }
-        }
-    }
-
     // last_swq: snow[veg].last_swq
     nc_var = &(nc_state_file.nc_vars[STATE_SNOW_LASTSWQ]);
     for (m = 0; m < options.MAX_HRU; m++) {
@@ -1218,9 +1193,11 @@ set_nc_state_file_info(nc_file_struct *nc_state_file)
     nc_state_file->layer_dimid = MISSING;
     nc_state_file->ni_dimid = MISSING;
     nc_state_file->nj_dimid = MISSING;
+    nc_state_file->turbul_dimid = MISSING;
     nc_state_file->node_dimid = MISSING;
     nc_state_file->time_dimid = MISSING;
-    nc_state_file->veg_dimid = MISSING;
+    nc_state_file->hru_dimid = MISSING;
+    nc_state_file->vegmat_dimid = MISSING;
 
     // set dimension sizes
     nc_state_file->band_size = options.SNOW_BAND;
@@ -1233,7 +1210,7 @@ set_nc_state_file_info(nc_file_struct *nc_state_file)
     nc_state_file->nj_size = global_domain.n_ny;
     nc_state_file->node_size = MAX_NODES;
     nc_state_file->time_size = NC_UNLIMITED;
-    nc_state_file->veg_size = options.MAX_HRU;
+    nc_state_file->hru_size = options.MAX_HRU;
 
     // allocate memory for nc_vars
     nc_state_file->nc_vars =
@@ -1280,7 +1257,7 @@ set_nc_state_var_info(nc_file_struct *nc)
         case STATE_LAST_MATRIC:
             // 4d vars [nveg, soil, j, i]
             nc->nc_vars[i].nc_dims = 4;
-            nc->nc_vars[i].nc_dimids[0] = nc->veg_dimid;
+            nc->nc_vars[i].nc_dimids[0] = nc->hru_dimid;
             nc->nc_vars[i].nc_dimids[1] = nc->soil_dimid;
             nc->nc_vars[i].nc_dimids[2] = nc->nj_dimid;
             nc->nc_vars[i].nc_dimids[3] = nc->ni_dimid;
@@ -1293,12 +1270,11 @@ set_nc_state_var_info(nc_file_struct *nc)
         case STATE_SNOW_PACK_LIQ:
         case STATE_SNOW_LASTICE:
         case STATE_SNOW_LASTLIQ:
-        case STATE_SNOW_DENSITY:
         case STATE_SNOW_RADIUS:
         case STATE_SNOW_DZNODE:
             // 4d vars [nveg, snow, j, i]
             nc->nc_vars[i].nc_dims = 4;
-            nc->nc_vars[i].nc_dimids[0] = nc->veg_dimid;
+            nc->nc_vars[i].nc_dimids[0] = nc->hru_dimid;
             nc->nc_vars[i].nc_dimids[1] = nc->snow_dimid;
             nc->nc_vars[i].nc_dimids[2] = nc->nj_dimid;
             nc->nc_vars[i].nc_dimids[3] = nc->ni_dimid;
@@ -1338,7 +1314,7 @@ set_nc_state_var_info(nc_file_struct *nc)
         case STATE_STORAGE_PREV:
             // 3d vars [nveg, j, i]
             nc->nc_vars[i].nc_dims = 3;
-            nc->nc_vars[i].nc_dimids[0] = nc->veg_dimid;
+            nc->nc_vars[i].nc_dimids[0] = nc->hru_dimid;
             nc->nc_vars[i].nc_dimids[1] = nc->nj_dimid;
             nc->nc_vars[i].nc_dimids[2] = nc->ni_dimid;
             nc->nc_vars[i].nc_counts[0] = 1;
@@ -1349,7 +1325,7 @@ set_nc_state_var_info(nc_file_struct *nc)
         case STATE_LAST_TEMP:
             // 4d vars [nveg, node, j, i]
             nc->nc_vars[i].nc_dims = 4;
-            nc->nc_vars[i].nc_dimids[0] = nc->veg_dimid;
+            nc->nc_vars[i].nc_dimids[0] = nc->hru_dimid;
             nc->nc_vars[i].nc_dimids[1] = nc->node_dimid;
             nc->nc_vars[i].nc_dimids[2] = nc->nj_dimid;
             nc->nc_vars[i].nc_dimids[3] = nc->ni_dimid;
@@ -1361,7 +1337,7 @@ set_nc_state_var_info(nc_file_struct *nc)
         case STATE_VEG_MATRIC:
             // 4d vars [nveg, 4, j, i]
             nc->nc_vars[i].nc_dims = 4;
-            nc->nc_vars[i].nc_dimids[0] = nc->veg_dimid;
+            nc->nc_vars[i].nc_dimids[0] = nc->hru_dimid;
             nc->nc_vars[i].nc_dimids[1] = 4;
             nc->nc_vars[i].nc_dimids[2] = nc->nj_dimid;
             nc->nc_vars[i].nc_dimids[3] = nc->ni_dimid;
@@ -1488,9 +1464,9 @@ initialize_state_file(char           *filename,
                         filename);
 
         status = nc_def_dim(nc_state_file->nc_id, "nveg",
-                            nc_state_file->veg_size,
-                            &(nc_state_file->veg_dimid));
-        check_nc_status(status, "Error defining veg_class in %s", filename);
+                            nc_state_file->hru_size,
+                            &(nc_state_file->hru_dimid));
+        check_nc_status(status, "Error defining nveg in %s", filename);
 
         status = nc_def_dim(nc_state_file->nc_id, "snow_band",
                             nc_state_file->band_size,
@@ -1598,7 +1574,7 @@ initialize_state_file(char           *filename,
         }
 
         // nveg
-        dimids[0] = nc_state_file->veg_dimid;
+        dimids[0] = nc_state_file->hru_dimid;
         status = nc_def_var(nc_state_file->nc_id, "nveg",
                             NC_INT, 1, dimids, &(veg_var_id));
         check_nc_status(status, "Error defining nveg variable in %s",
@@ -1901,12 +1877,12 @@ initialize_state_file(char           *filename,
         ndims = 1;
 
         // vegetation classes
-        dimids[0] = nc_state_file->veg_dimid;
-        dcount[0] = nc_state_file->veg_size;
-        ivar = malloc(nc_state_file->veg_size * sizeof(*ivar));
+        dimids[0] = nc_state_file->hru_dimid;
+        dcount[0] = nc_state_file->hru_size;
+        ivar = malloc(nc_state_file->hru_size * sizeof(*ivar));
         check_alloc_status(ivar, "Memory allocation error");
 
-        for (j = 0; j < nc_state_file->veg_size; j++) {
+        for (j = 0; j < nc_state_file->hru_size; j++) {
             ivar[j] = (int) j + 1;
         }
         status = nc_put_vara_int(nc_state_file->nc_id, veg_var_id, dstart,

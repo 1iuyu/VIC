@@ -196,14 +196,6 @@ set_state_meta_data_info()
     strcpy(state_metadata[STATE_SNOW_PACK_LIQ].description,
            "snow pack liquid water content expressed as equivalent water depth");
 
-    // STATE_SNOW_DENSITY
-    strcpy(state_metadata[STATE_SNOW_DENSITY].varname, "STATE_SNOW_DENSITY");
-    strcpy(state_metadata[STATE_SNOW_DENSITY].long_name, "snow_density");
-    strcpy(state_metadata[STATE_SNOW_DENSITY].standard_name,
-           "snowpack_density");
-    strcpy(state_metadata[STATE_SNOW_DENSITY].units, "kg m-3");
-    strcpy(state_metadata[STATE_SNOW_DENSITY].description, "snowpack density");
-
     // STATE_SNOW_NSNOW
     strcpy(state_metadata[STATE_NSNOW].varname,
            "STATE_NSNOW");

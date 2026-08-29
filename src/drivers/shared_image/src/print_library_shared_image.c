@@ -122,7 +122,7 @@ print_nc_file(nc_file_struct *nc)
     fprintf(LOG_DEST, "\twave_dimid.    : %d\n", nc->wave_dimid);
     fprintf(LOG_DEST, "\tcanopy_dimid   : %d\n", nc->canopy_dimid);
     fprintf(LOG_DEST, "\ttime_dimid     : %d\n", nc->time_dimid);
-    fprintf(LOG_DEST, "\tveg_dimid      : %d\n", nc->veg_dimid);
+    fprintf(LOG_DEST, "\tveg_dimid      : %d\n", nc->hru_dimid);
     fprintf(LOG_DEST, "\tband_size      : %zd\n", nc->band_size);
     fprintf(LOG_DEST, "\tsoil_size      : %zd\n", nc->soil_size);
     fprintf(LOG_DEST, "\tsnow_size      : %zd\n", nc->snow_size);
@@ -133,7 +133,7 @@ print_nc_file(nc_file_struct *nc)
     fprintf(LOG_DEST, "\tcanopy_size    : %zd\n", nc->canopy_size);
     fprintf(LOG_DEST, "\twave_size      : %zd\n", nc->wave_size);
     fprintf(LOG_DEST, "\ttime_size      : %zd\n", nc->time_size);
-    fprintf(LOG_DEST, "\tveg_size       : %zd\n", nc->veg_size);
+    fprintf(LOG_DEST, "\tveg_size       : %zd\n", nc->hru_size);
     fprintf(LOG_DEST, "\topen           : %d\n",  nc->open);
 }
 

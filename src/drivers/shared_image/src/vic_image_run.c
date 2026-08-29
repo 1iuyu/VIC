@@ -19,7 +19,7 @@ vic_image_run(dmy_struct *dmy_current)
     extern domain_struct       local_domain;
     extern option_struct       options;
     extern global_param_struct global_param;
-    extern double           ***out_data;
+    extern double          ****out_data;
     extern stream_struct      *output_streams;
     extern soil_con_struct    *soil_con;
     extern veg_con_struct    **veg_con;

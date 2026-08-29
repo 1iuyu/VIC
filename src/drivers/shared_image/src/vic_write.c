@@ -43,7 +43,7 @@ vic_write(stream_struct  *stream,
     extern int                 mpi_rank;
     extern metadata_struct     out_metadata[N_OUTVAR_TYPES];
 
-    size_t                     i, j, k;
+    size_t                     i, j, h, k;
     size_t                     ndims;
     double                     dtime;
     double                    *dvar = NULL;

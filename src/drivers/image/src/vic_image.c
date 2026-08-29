@@ -43,7 +43,7 @@ veg_hist_struct   **veg_hist = NULL;
 veg_lib_struct     *veg_lib = NULL;
 metadata_struct     state_metadata[N_STATE_VARS];
 metadata_struct     out_metadata[N_OUTVAR_TYPES];
-double           ***out_data = NULL;  // [ncells, nvars, nelem]
+double          ****out_data = NULL;  // [ncells, nvars, nhru, nelem]
 stream_struct      *output_streams = NULL;  // [nstreams]
 nc_file_struct     *nc_hist_files = NULL;  // [nstreams]
 

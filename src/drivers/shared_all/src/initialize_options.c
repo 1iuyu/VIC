@@ -20,7 +20,6 @@ initialize_options()
 
     // simulation modes
     options.ACTIVE_LAYER = true;
-    options.CARBON = false;
     options.CONTINUEONERROR = true;
     options.CORRPREC = false;
     options.NOFLUX = false;

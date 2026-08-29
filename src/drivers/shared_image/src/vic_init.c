@@ -922,11 +922,11 @@ vic_init(void)
         for (i = 0; i < options.NVEGTYPES; i++) {
             for (m = 0; m < MONTHS_PER_YEAR; m++) {
                 veg_lib[i].fcanopy[m] = local_d2[i * MONTHS_PER_YEAR + m];
-                if (veg_lib[i].fcanopy[j] < 0 ||
-                    veg_lib[i].fcanopy[j] > 1) {
+                if (veg_lib[i].fcanopy[m] < 0 ||
+                    veg_lib[i].fcanopy[m] > 1) {
                     log_err(
                         "Veg cover fraction must be between 0 and 1 " "(%f)",
-                        veg_lib[i].fcanopy[j]);
+                        veg_lib[i].fcanopy[m]);
                 }
             }
         }
@@ -1409,7 +1409,7 @@ vic_init(void)
         initialize_energy(all_vars[i].energy, nveg);
     }
 
-    size_t veg, veg_class;
+    size_t veg_class = 0;
     // Initialize landunit types based on vegetation class
     for (i = 0; i < local_domain.ncells_active; i++) {
         for (j = 0; j <= local_domain.locations[i].nveg; j++) {

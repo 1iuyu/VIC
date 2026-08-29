@@ -16,7 +16,6 @@
 void
 canopy_two_stream(double             coszen,
                   energy_bal_struct *energy,
-                  cell_data_struct  *cell,
                   veg_var_struct    *veg_var,
                   veg_lib_struct    *veg_lib)
 {

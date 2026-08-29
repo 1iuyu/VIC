@@ -13,9 +13,11 @@
 void
 parse_output_info(FILE           *gp,
                   stream_struct **streams,
+                  size_t         *nstreams,
                   dmy_struct     *dmy_current)
 {
     extern option_struct options;
+    extern domain_struct local_domain;
 
     char                 cmdstr[MAXSTRING];
     char                 optstr[MAXSTRING];
@@ -30,14 +32,32 @@ parse_output_info(FILE           *gp,
     int                  type;
     char                 multstr[MAXSTRING];
     char                 aggstr[MAXSTRING];
+    char                 domainstr[MAXSTRING];
+    char                 nvarsstr[MAXSTRING];
     double               mult;
     unsigned short int   freq;
     int                  freq_n;
     dmy_struct           freq_dmy;
     unsigned short int   agg_type;
+    unsigned short int   domain;
     int                  found;
+    size_t              *ivar = NULL;
 
+    // Initialize
     streamnum = -1;
+    *nstreams = 0;
+
+    // Allocate maximum number of output streams.
+    *streams = calloc(MAX_OUTPUT_STREAMS, sizeof(**streams));
+    check_alloc_status(*streams, "Memory allocation error.");
+
+    ivar = malloc(local_domain.ncells_active * sizeof(*ivar));
+    check_alloc_status(ivar, "Memory allocation error.");
+
+    // 构造一个hru数组，因为alloc_out_data定义在shared_all.h下，无法传递local_domain.locations
+    for (size_t i = 0; i < local_domain.ncells_active; i++) {
+        ivar[i] = local_domain.locations[i].nveg;
+    }
 
     // rewind the global parameter file to the begining and parse only the
     // output file info.
@@ -45,27 +65,45 @@ parse_output_info(FILE           *gp,
     fgets(cmdstr, MAXSTRING, gp);
 
     /** Read through global control file to find output info **/
-    while (!feof(gp)) {
+    while (fgets(cmdstr, MAXSTRING, gp) != NULL) {
         if (cmdstr[0] != '#' && cmdstr[0] != '\n' && cmdstr[0] != '\0') {
             sscanf(cmdstr, "%s", optstr);
 
             if (strcasecmp("OUTFILE", optstr) == 0) {
+                if (streamnum >= 0 &&
+                    outvarnum != (int)(*streams)[streamnum].nvars) {
+                    log_err("Output stream %s specifies %zu variables, but %d OUTVAR entries were found.", 
+                            (*streams)[streamnum].prefix, (*streams)[streamnum].nvars, outvarnum);
+                }
                 streamnum++;
-                if (streamnum >= (short int) options.Noutstreams) {
+                if (streamnum >= MAX_OUTPUT_STREAMS) {
                     log_err("Found too many output files, was expecting "
-                            "%zu but found %hu", options.Noutstreams,
+                            "%zu but found %hu", MAX_OUTPUT_STREAMS,
                             streamnum);
                 }
 
-                if (sscanf(cmdstr, "%*s %s",
-                           (*streams)[streamnum].prefix) != 1) {
-                    log_err("Invalid specification for OUTFILE");
+                found = sscanf(cmdstr, "%*s %s %s", (*streams)[streamnum].prefix, nvarsstr);
+
+                if (found != 2) { 
+                    log_err("Invalid specification for OUTFILE. " 
+                            "Expected: OUTFILE <prefix> <nvars>"); 
                 }
+
+                size_t nvars = (size_t) atoi(nvarsstr);
+
+                if (nvars == 0) { 
+                    log_err("Number of output variables for OUTFILE %s " 
+                            "must be greater than zero.", (*streams)[streamnum].prefix); 
+                }
+
+                setup_stream(&(*streams)[streamnum], nvars, local_domain.ncells_active, ivar);
 
                 // set default file format
                 (*streams)[streamnum].file_format = NETCDF4_CLASSIC;
 
                 outvarnum = 0;
+                (*nstreams)++;
+
             }
             else if (strcasecmp("AGGFREQ", optstr) == 0) {
                 if (streamnum < 0) {
@@ -193,14 +231,20 @@ parse_output_info(FILE           *gp,
                     log_err("Error in global param file: \"OUTFILE\" must be "
                             "specified before you can specify \"OUTVAR\".");
                 }
+
+                if (outvarnum >= (int)(*streams)[streamnum].nvars) { 
+                    log_err("Too many OUTVAR entries for output stream %s. Expected %zu variables.", 
+                            (*streams)[streamnum].prefix, (*streams)[streamnum].nvars); 
+                }
                 // parse outvar options
                 strcpy(varname, "");
                 strcpy(format, "");
                 strcpy(typestr, "");
                 strcpy(multstr, "");
                 strcpy(aggstr, "");
-                found = sscanf(cmdstr, "%*s %s %s %s %s %s", varname,
-                               format, typestr, multstr, aggstr);
+                strcpy(domainstr, "");
+                found = sscanf(cmdstr, "%*s %s %s %s %s %s %s", varname,
+                               format, typestr, multstr, aggstr, domainstr);
                 if (!found) {
                     log_err("OUTVAR specified but no variable was listed");
                 }
@@ -209,13 +253,20 @@ parse_output_info(FILE           *gp,
                 agg_type = str_to_agg_type(aggstr);
                 type = str_to_out_type(typestr);
                 mult = str_to_out_mult(multstr);
+                domain = str_to_out_domain(domainstr);
 
                 // Add OUTVAR to stream
                 set_output_var(&((*streams)[streamnum]), varname, outvarnum,
-                               format, type, mult, agg_type);
+                               format, type, mult, agg_type, domain);
                 outvarnum++;
             }
         }
-        fgets(cmdstr, MAXSTRING, gp);
+        // Check that the number of OUTVAR entries matches the number specified in OUTFILE.
+        if (streamnum >= 0 && outvarnum != (int)(*streams)[streamnum].nvars) { 
+            log_err("Output stream %s specifies %zu variables, but %d OUTVAR entries were found.", 
+                   (*streams)[streamnum].prefix, (*streams)[streamnum].nvars, outvarnum); 
+        }        
     }
+
+    free(ivar);
 }

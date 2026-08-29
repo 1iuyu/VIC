@@ -390,49 +390,4 @@ collect_eb_terms(energy_bal_struct energy,
     if (HasGlac) {
         out_data[OUT_H2OSFC_T][0] += energy.Tgrnd * Cv;
     }
-    /**********************************
-       Record hru-Specific Variables
-    **********************************/
-
-    /** record hru snow water equivalent **/
-    out_data[OUT_SWE_BAND][band] += snow.swq * Cv; // (mm/H2O)
-
-    /** record band snowpack depth **/
-    out_data[OUT_SNOW_DEPTH_BAND][band] += snow.snow_depth * Cv; // (M)
-
-    /** record band snow coverage **/
-    out_data[OUT_SNOW_COVER_BAND][band] += snow.coverage * Cv;
-
-    /** record band advection **/
-    out_data[OUT_ADVECTION_BAND][band] += energy.advection * Cv;
-
-    /** record pack layer temperature **/
-    /** record band net downwards longwave radiation **/
-    out_data[OUT_LWNET_BAND][band] += energy.longwave * Cv;
-
-    /** record band net latent heat flux **/
-    out_data[OUT_LATENT_BAND][band] -= energy.latent * Cv;
-
-    /** record band net sensible heat flux **/
-    out_data[OUT_SENSIBLE_BAND][band] -= energy.sensible * Cv;
-
-    /** record band net ground heat flux **/
-    out_data[OUT_GRND_FLUX_BAND][band] -= energy.grnd_flux * Cv;
-}
-
-/******************************************************************************
- * @brief    Initialize the save data structure.
- *****************************************************************************/
-void
-initialize_save_data(all_vars_struct   *all_vars,
-                     force_data_struct *force,
-                     veg_con_struct    *veg_con,
-                     double           **out_data,
-                     timer_struct      *timer)
-{
-    // Calling put data will populate the save data storage terms
-    put_data(all_vars, force, veg_con,
-             out_data, timer);
-
-    zero_output_list(out_data);
 }

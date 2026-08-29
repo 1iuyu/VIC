@@ -20,40 +20,34 @@ vic_init_output(dmy_struct *dmy_current)
     extern MPI_Comm           MPI_COMM_VIC;
     extern int                mpi_rank;
     extern nc_file_struct    *nc_hist_files;
-    extern double          ***out_data;
+    extern double         ****out_data;
     extern veg_con_struct   **veg_con;
     extern option_struct      options;
     extern MPI_Datatype       mpi_alarm_struct_type;
     extern stream_struct     *output_streams;
 
     int                       status;
+    size_t                   *ivar = NULL;
     size_t                    i;
     size_t                    streamnum;
-    size_t                    nstream_vars[MAX_OUTPUT_STREAMS];
     bool                      default_outputs = false;
     timer_struct              timer;
+    ivar = malloc(local_domain.ncells_active * sizeof(*ivar));
+    check_alloc_status(ivar, "Memory allocation error.");
 
     // initialize the output data structures
     set_output_met_data_info();
 
-    // allocate out_data
-    alloc_out_data(local_domain.ncells_active, out_data);
-
-    // initialize the save data structures
-    for (i = 0; i < local_domain.ncells_active; i++) {
-        initialize_save_data(&(all_vars[i]), &(force[i]),
-                             veg_con[i], out_data[i], &timer);
-    }
-
     if (mpi_rank == VIC_MPI_ROOT) {
         // count the number of streams and variables in the global parameter file
-        count_nstreams_nvars(filep.globalparam, &(options.Noutstreams),
-                             nstream_vars);
+        parse_output_info(filep.globalparam, &(options.Noutstreams), 
+                          &output_streams, dmy_current);
 
         // If there weren't any output streams specified, get the defaults
         if (options.Noutstreams == 0) {
-            default_outputs = true;
-            get_default_nstreams_nvars(&(options.Noutstreams), nstream_vars);
+            options.Noutstreams = MAX_OUTPUT_STREAMS;
+            // determine which variables will be written to the history file
+            set_output_defaults(&output_streams, dmy_current, NETCDF4_CLASSIC);
         }
     }
 
@@ -61,35 +55,18 @@ vic_init_output(dmy_struct *dmy_current)
     status = MPI_Bcast(&(options.Noutstreams), 1, MPI_AINT, VIC_MPI_ROOT,
                        MPI_COMM_VIC);
     check_mpi_status(status, "MPI Error.");
-    status = MPI_Bcast(&(nstream_vars), MAX_OUTPUT_STREAMS, MPI_AINT,
-                       VIC_MPI_ROOT,
-                       MPI_COMM_VIC);
-    check_mpi_status(status, "MPI Error.");
 
-    // allocate output streams
-    output_streams = calloc(options.Noutstreams, sizeof(*output_streams));
-    check_alloc_status(output_streams, "Memory allocation error.");
+    // 构造一个hru数组，因为alloc_out_data定义在shared_all.h下，无法传递local_domain.locations
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        ivar[i] = local_domain.locations[i].nveg;
+    }
+
+    // allocate out_data
+    alloc_out_data(local_domain.ncells_active, out_data, output_streams[0].nvars, ivar);
 
     // allocate netcdf history files array
     nc_hist_files = calloc(options.Noutstreams, sizeof(*nc_hist_files));
     check_alloc_status(nc_hist_files, "Memory allocation error.");
-
-    // allocate memory for streams, initialize to default/missing values
-    for (streamnum = 0; streamnum < options.Noutstreams; streamnum++) {
-        setup_stream(&(output_streams[streamnum]), nstream_vars[streamnum],
-                     local_domain.ncells_active);
-    }
-
-    if (mpi_rank == VIC_MPI_ROOT) {
-        if (default_outputs) {
-            // determine which variables will be written to the history file
-            set_output_defaults(&output_streams, dmy_current, NETCDF4_CLASSIC);
-        }
-        else {
-            // set output defaults
-            parse_output_info(filep.globalparam, &output_streams, dmy_current);
-        }
-    }
 
     // Now broadcast the arrays of shape nvars
     for (streamnum = 0; streamnum < options.Noutstreams; streamnum++) {
@@ -142,6 +119,12 @@ vic_init_output(dmy_struct *dmy_current)
                            VIC_MPI_ROOT, MPI_COMM_VIC);
         check_mpi_status(status, "MPI error.");
 
+        // domain
+        status = MPI_Bcast(output_streams[streamnum].domain,
+                           output_streams[streamnum].nvars, MPI_UNSIGNED_SHORT,
+                           VIC_MPI_ROOT, MPI_COMM_VIC);
+        check_mpi_status(status, "MPI error.");
+
         // skip agg data
 
         // Now brodcast the alarms
@@ -163,6 +146,8 @@ vic_init_output(dmy_struct *dmy_current)
     }
     // validate streams
     validate_streams(&output_streams);
+
+    free(ivar);
 }
 
 /******************************************************************************
@@ -229,21 +214,6 @@ initialize_history_file(nc_file_struct *nc,
                 stream->time_bounds[0].dayseconds);
     }
 
-    // 关键检查点
-    printf("DEBUG: About to call nc_create\n");
-    printf("DEBUG: stream->filename = '%s'\n", stream->filename);
-    printf("DEBUG: stream->file_format = %d\n", stream->file_format);
-    
-    int nc_mode = get_nc_mode(stream->file_format);
-    printf("DEBUG: nc_mode = %d\n", nc_mode);
-    
-    printf("DEBUG: nc = %p\n", (void*)nc);
-    printf("DEBUG: &(nc->nc_id) = %p\n", (void*)&(nc->nc_id));
-    
-    // 尝试写入 nc->nc_id（测试内存是否可写）
-    nc->nc_id = 0;
-    printf("DEBUG: Write test passed\n");
-
     // open the netcdf file
     status = nc_create(stream->filename,
                        get_nc_mode(stream->file_format),
@@ -304,9 +274,19 @@ initialize_history_file(nc_file_struct *nc,
     check_nc_status(status, "Error defining canopy dimension in %s",
                     stream->filename);
 
-    status = nc_def_dim(nc->nc_id, "veg_class", nc->veg_size,
-                        &(nc->veg_dimid));
-    check_nc_status(status, "Error defining veg_class dimension in %s",
+    status = nc_def_dim(nc->nc_id, "turbul_size", nc->turbul_size,
+                        &(nc->turbul_dimid));
+    check_nc_status(status, "Error defining turbulence dimension in %s",
+                    stream->filename);
+
+    status = nc_def_dim(nc->nc_id, "nveg", nc->hru_size,
+                        &(nc->hru_dimid));
+    check_nc_status(status, "Error defining veg dimension in %s",
+                    stream->filename);
+
+    status = nc_def_dim(nc->nc_id, "veg_mat", nc->vegmat_size,
+                        &(nc->vegmat_dimid));
+    check_nc_status(status, "Error defining veg_mat dimension in %s",
                     stream->filename);
 
     status = nc_def_dim(nc->nc_id, "time", nc->time_size,
@@ -505,6 +485,39 @@ initialize_history_file(nc_file_struct *nc,
             // NOTE: if cell_methods == variance, units should be ^2
         }
     }
+    int ndims_check;
+    int dimids_check[MAXDIMS];
+    nc_type xtype_check;
+    char name_check[NC_MAX_NAME + 1];
+
+    for (i = 0; i < stream->nvars; i++) {
+
+        status = nc_inq_var(nc->nc_id,
+                            i,
+                            name_check,
+                            &xtype_check,
+                            &ndims_check,
+                            dimids_check,
+                            NULL);
+
+        printf("DEBUG: nc_var[%d]: status=%d (%s), "
+            "name=%s, type=%d, ndims=%d\n",
+            i,
+            status,
+            nc_strerror(status),
+            name_check,
+            xtype_check,
+            ndims_check);
+
+        if (status != NC_NOERR) {
+            abort();
+        }
+
+        for (int k = 0; k < ndims_check; k++) {
+            printf("DEBUG:   dimid[%d]=%d\n",
+                k, dimids_check[k]);
+        }
+    }
 
     // leave define mode
     status = nc_enddef(nc->nc_id);
@@ -680,9 +693,11 @@ initialize_nc_file(nc_file_struct     *nc_file,
     nc_file->layer_dimid = MISSING;
     nc_file->ni_dimid = MISSING;
     nc_file->nj_dimid = MISSING;
+    nc_file->turbul_dimid = MISSING;
     nc_file->node_dimid = MISSING;
     nc_file->time_dimid = MISSING;
-    nc_file->veg_dimid = MISSING;
+    nc_file->hru_dimid = MISSING;
+    nc_file->vegmat_dimid = MISSING;
 
     // Set dimension sizes
     nc_file->band_size = options.SNOW_BAND;
@@ -692,10 +707,12 @@ initialize_nc_file(nc_file_struct     *nc_file,
     nc_file->node_size = MAX_NODES;
     nc_file->soil_size = MAX_SOILS;
     nc_file->snow_size = MAX_SNOWS;
+    nc_file->turbul_size = 3;
     nc_file->canopy_size = MAX_CANOPYS;
     nc_file->wave_size = MAX_SWBANDS;
     nc_file->time_size = NC_UNLIMITED;
-    nc_file->veg_size = options.MAX_HRU;
+    nc_file->hru_size = options.MAX_HRU;
+    nc_file->vegmat_size = 4;
 
     // allocate memory for nc_vars
     nc_file->nc_vars = calloc(nvars, sizeof(*(nc_file->nc_vars)));

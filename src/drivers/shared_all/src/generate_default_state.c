@@ -18,7 +18,6 @@ generate_default_state(force_data_struct *force,
                        veg_con_struct    *veg_con,
                        veg_lib_struct    *veg_lib)
 {
-    extern option_struct       options;
     extern global_param_struct global_param;
     int         ErrorFlag;
     size_t      Nveg;
