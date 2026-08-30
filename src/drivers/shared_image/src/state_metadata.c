@@ -30,6 +30,7 @@ set_state_meta_data_info()
         strcpy(state_metadata[v].description, MISSING_S);
         // Set default number of elements
         state_metadata[v].nelem = 1;
+        state_metadata[v].elem_type = OUT_ELEM_DEFAULT;
     }
 
     // STATE_SOIL_MOISTURE
@@ -408,4 +409,37 @@ set_state_meta_data_info()
         strcpy(state_metadata[STATE_STORAGE_PREV].units, "m3");
         strcpy(state_metadata[STATE_STORAGE_PREV].description, "previous storage");
     }
+
+    state_metadata[STATE_SOIL_MOISTURE].nelem = MAX_SOILS;
+    state_metadata[STATE_SOIL_MOISTURE].elem_type = OUT_ELEM_SOIL;
+    state_metadata[STATE_SOIL_ICE].nelem = MAX_SOILS;
+    state_metadata[STATE_SOIL_ICE].elem_type = OUT_ELEM_SOIL;
+    state_metadata[STATE_SOIL_LIQ].nelem = MAX_SOILS;
+    state_metadata[STATE_SOIL_LIQ].elem_type = OUT_ELEM_SOIL;
+    state_metadata[STATE_MATRIC].nelem = MAX_SOILS;
+    state_metadata[STATE_MATRIC].elem_type = OUT_ELEM_SOIL;
+    state_metadata[STATE_SOIL_LASTICE].nelem = MAX_SOILS;
+    state_metadata[STATE_SOIL_LASTICE].elem_type = OUT_ELEM_SOIL;
+    state_metadata[STATE_SOIL_LASTLIQ].nelem = MAX_SOILS;
+    state_metadata[STATE_SOIL_LASTLIQ].elem_type = OUT_ELEM_SOIL;
+    state_metadata[STATE_LAST_MATRIC].nelem = MAX_SOILS;
+    state_metadata[STATE_LAST_MATRIC].elem_type = OUT_ELEM_SOIL;
+    state_metadata[STATE_NODE_TEMP].nelem = MAX_NODES;
+    state_metadata[STATE_NODE_TEMP].elem_type = OUT_ELEM_NODE;
+    state_metadata[STATE_LAST_TEMP].nelem = MAX_NODES;
+    state_metadata[STATE_LAST_TEMP].elem_type = OUT_ELEM_NODE;
+    state_metadata[STATE_SNOW_PACK_ICE].nelem = MAX_SNOWS;
+    state_metadata[STATE_SNOW_PACK_ICE].elem_type = OUT_ELEM_SNOW;
+    state_metadata[STATE_SNOW_PACK_LIQ].nelem = MAX_SNOWS;
+    state_metadata[STATE_SNOW_PACK_LIQ].elem_type = OUT_ELEM_SNOW;
+    state_metadata[STATE_SNOW_RADIUS].nelem = MAX_SNOWS;
+    state_metadata[STATE_SNOW_RADIUS].elem_type = OUT_ELEM_SNOW;
+    state_metadata[STATE_SNOW_DZNODE].nelem = MAX_SNOWS;
+    state_metadata[STATE_SNOW_DZNODE].elem_type = OUT_ELEM_SNOW;
+    state_metadata[STATE_SNOW_LASTICE].nelem = MAX_SNOWS;
+    state_metadata[STATE_SNOW_LASTICE].elem_type = OUT_ELEM_SNOW;
+    state_metadata[STATE_SNOW_LASTLIQ].nelem = MAX_SNOWS;
+    state_metadata[STATE_SNOW_LASTLIQ].elem_type = OUT_ELEM_SNOW;
+    state_metadata[STATE_VEG_MATRIC].nelem = 4;
+    state_metadata[STATE_VEG_MATRIC].elem_type = OUT_ELEM_VEGMAT;
 }

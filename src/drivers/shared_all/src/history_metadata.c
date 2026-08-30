@@ -28,6 +28,7 @@ set_output_met_data_info()
        strcpy(out_metadata[v].description, MISSING_S);
        // Set default number of elements
        out_metadata[v].nelem = 1;
+       out_metadata[v].elem_type = OUT_ELEM_DEFAULT;
     }
 
     // Water Balance Terms - state variables
@@ -194,7 +195,7 @@ set_output_met_data_info()
     strcpy(out_metadata[OUT_SOIL_ICE].description,
            "soil ice content for each soil layer");
 
-    /* soil liquid moisture content [mm] for each soil layer */
+    /* soil liquid moisture content [m3/m3] for each soil layer */
     strcpy(out_metadata[OUT_SOIL_LIQ].varname, "OUT_SOIL_LIQ");
     strcpy(out_metadata[OUT_SOIL_LIQ].long_name, "soil_liq");
     strcpy(out_metadata[OUT_SOIL_LIQ].standard_name,
@@ -1003,25 +1004,45 @@ set_output_met_data_info()
            "CPU time spent inside vic_run");
 
     out_metadata[OUT_SOIL_ICE].nelem = MAX_SOILS;
+    out_metadata[OUT_SOIL_ICE].elem_type = OUT_ELEM_SOIL;
     out_metadata[OUT_SOIL_LIQ].nelem = MAX_SOILS;
+    out_metadata[OUT_SOIL_LIQ].elem_type = OUT_ELEM_SOIL;
     out_metadata[OUT_SOIL_MOIST].nelem = MAX_SOILS;
+    out_metadata[OUT_SOIL_MOIST].elem_type = OUT_ELEM_SOIL;
     out_metadata[OUT_SOIL_TEMP].nelem = MAX_SOILS;
+    out_metadata[OUT_SOIL_TEMP].elem_type = OUT_ELEM_SOIL;
     out_metadata[OUT_SOIL_POROSITY].nelem = MAX_SOILS;
+    out_metadata[OUT_SOIL_POROSITY].elem_type = OUT_ELEM_SOIL;
     out_metadata[OUT_TRANSP_SINK].nelem = MAX_SOILS;
+    out_metadata[OUT_TRANSP_SINK].elem_type = OUT_ELEM_SOIL;
     out_metadata[OUT_MATRIC].nelem = MAX_SOILS;
+    out_metadata[OUT_MATRIC].elem_type = OUT_ELEM_SOIL;
     out_metadata[OUT_SNOW_PACK_ICE].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_PACK_ICE].elem_type = OUT_ELEM_SNOW;
     out_metadata[OUT_SNOW_PACK_LIQ].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_PACK_LIQ].elem_type = OUT_ELEM_SNOW;
     out_metadata[OUT_SNOW_PACK_TEMP].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_PACK_TEMP].elem_type = OUT_ELEM_SNOW;
     out_metadata[OUT_SNOW_ICEFRAC].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_ICEFRAC].elem_type = OUT_ELEM_SNOW;
     out_metadata[OUT_SNOW_LIQFRAC].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_LIQFRAC].elem_type = OUT_ELEM_SNOW;
     out_metadata[OUT_SNOW_POROSITY].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_POROSITY].elem_type = OUT_ELEM_SNOW; 
     out_metadata[OUT_SNOW_RADIUS].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_RADIUS].elem_type = OUT_ELEM_SNOW;
     out_metadata[OUT_PACK_OUTFLOW].nelem = MAX_SNOWS;
+    out_metadata[OUT_PACK_OUTFLOW].elem_type = OUT_ELEM_SNOW;
     out_metadata[OUT_SNOW_MELT].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_MELT].elem_type = OUT_ELEM_SNOW;
     out_metadata[OUT_SNOW_FRZE].nelem = MAX_SNOWS;
+    out_metadata[OUT_SNOW_FRZE].elem_type = OUT_ELEM_SNOW;
     out_metadata[OUT_VEG_MATRIC].nelem = 4;
+    out_metadata[OUT_VEG_MATRIC].elem_type = OUT_ELEM_VEGMAT;
     out_metadata[OUT_RA_OVER].nelem = 3;
+    out_metadata[OUT_RA_OVER].elem_type = OUT_ELEM_TURBUL;
     out_metadata[OUT_RA_SUB].nelem = 3;
+    out_metadata[OUT_RA_SUB].elem_type = OUT_ELEM_TURBUL;
     out_metadata[OUT_RA_GRND].nelem = 3;
-
+    out_metadata[OUT_RA_GRND].elem_type = OUT_ELEM_TURBUL;
 }

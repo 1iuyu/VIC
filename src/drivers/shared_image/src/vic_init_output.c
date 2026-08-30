@@ -27,13 +27,7 @@ vic_init_output(dmy_struct *dmy_current)
     extern stream_struct     *output_streams;
 
     int                       status;
-    size_t                   *ivar = NULL;
-    size_t                    i;
     size_t                    streamnum;
-    bool                      default_outputs = false;
-    timer_struct              timer;
-    ivar = malloc(local_domain.ncells_active * sizeof(*ivar));
-    check_alloc_status(ivar, "Memory allocation error.");
 
     // initialize the output data structures
     set_output_met_data_info();
@@ -56,13 +50,9 @@ vic_init_output(dmy_struct *dmy_current)
                        MPI_COMM_VIC);
     check_mpi_status(status, "MPI Error.");
 
-    // 构造一个hru数组，因为alloc_out_data定义在shared_all.h下，无法传递local_domain.locations
-    for (i = 0; i < local_domain.ncells_active; i++) {
-        ivar[i] = local_domain.locations[i].nveg;
-    }
-
     // allocate out_data
-    alloc_out_data(local_domain.ncells_active, out_data, output_streams[0].nvars, ivar);
+    alloc_out_data(local_domain.ncells_active, out_data, 
+                   output_streams[0].nvars, output_streams[0].nveg);
 
     // allocate netcdf history files array
     nc_hist_files = calloc(options.Noutstreams, sizeof(*nc_hist_files));
@@ -125,6 +115,12 @@ vic_init_output(dmy_struct *dmy_current)
                            VIC_MPI_ROOT, MPI_COMM_VIC);
         check_mpi_status(status, "MPI error.");
 
+        // nveg
+        status = MPI_Bcast(output_streams[streamnum].nveg,
+                           output_streams[streamnum].ngridcells, MPI_UNSIGNED_SHORT,
+                           VIC_MPI_ROOT, MPI_COMM_VIC);
+        check_mpi_status(status, "MPI error.");
+
         // skip agg data
 
         // Now brodcast the alarms
@@ -142,12 +138,12 @@ vic_init_output(dmy_struct *dmy_current)
         initialize_nc_file(&(nc_hist_files[streamnum]),
                            output_streams[streamnum].nvars,
                            output_streams[streamnum].varid,
-                           output_streams[streamnum].type);
+                           output_streams[streamnum].type,
+                           output_streams[streamnum].domain);
     }
     // validate streams
     validate_streams(&output_streams);
 
-    free(ivar);
 }
 
 /******************************************************************************
@@ -413,7 +409,7 @@ initialize_history_file(nc_file_struct *nc,
     for (j = 0; j < stream->nvars; j++) {
         varid = stream->varid[j];
 
-        set_nc_var_dimids(varid, nc, &(nc->nc_vars[j]));
+        set_nc_var_dimids(varid, stream->domain[j], nc, &(nc->nc_vars[j]));
 
         // define the variable
         status = nc_def_var(nc->nc_id,
@@ -483,39 +479,6 @@ initialize_history_file(nc_file_struct *nc,
             put_nc_attr(nc->nc_id, nc->nc_vars[j].nc_varid, "cell_methods",
                         cell_method);
             // NOTE: if cell_methods == variance, units should be ^2
-        }
-    }
-    int ndims_check;
-    int dimids_check[MAXDIMS];
-    nc_type xtype_check;
-    char name_check[NC_MAX_NAME + 1];
-
-    for (i = 0; i < stream->nvars; i++) {
-
-        status = nc_inq_var(nc->nc_id,
-                            i,
-                            name_check,
-                            &xtype_check,
-                            &ndims_check,
-                            dimids_check,
-                            NULL);
-
-        printf("DEBUG: nc_var[%d]: status=%d (%s), "
-            "name=%s, type=%d, ndims=%d\n",
-            i,
-            status,
-            nc_strerror(status),
-            name_check,
-            xtype_check,
-            ndims_check);
-
-        if (status != NC_NOERR) {
-            abort();
-        }
-
-        for (int k = 0; k < ndims_check; k++) {
-            printf("DEBUG:   dimid[%d]=%d\n",
-                k, dimids_check[k]);
         }
     }
 
@@ -667,7 +630,8 @@ void
 initialize_nc_file(nc_file_struct     *nc_file,
                    size_t              nvars,
                    unsigned int       *varids,
-                   unsigned short int *dtypes)
+                   unsigned short int *dtypes,
+                   unsigned short int *domains)
 {
     extern option_struct options;
     extern domain_struct global_domain;
@@ -719,6 +683,7 @@ initialize_nc_file(nc_file_struct     *nc_file,
     check_alloc_status(nc_file->nc_vars, "Memory allocation error.");
 
     for (i = 0; i < nvars; i++) {
-        set_nc_var_info(varids[i], dtypes[i], nc_file, &(nc_file->nc_vars[i]));
+        set_nc_var_info(varids[i], dtypes[i], domains[i], 
+                        nc_file, &(nc_file->nc_vars[i]));
     }
 }

@@ -49,7 +49,7 @@ vic_image_run(dmy_struct *dmy_current)
         timer_stop(&timer);
 
         put_data(&(all_vars[i]), &(force[i]), veg_con[i],
-                   out_data[i], &timer);
+                   out_data[i], &timer, output_streams);
     }
 
     // run routing over the domain

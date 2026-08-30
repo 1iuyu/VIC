@@ -12,10 +12,13 @@
 void
 set_nc_var_info(unsigned int       varid,
                 unsigned short int dtype,
+                unsigned short int domain,
                 nc_file_struct    *nc_hist_file,
                 nc_var_struct     *nc_var)
 {
     size_t i;
+    size_t dim = 0;
+    extern metadata_struct out_metadata[N_OUTVAR_TYPES];
 
     // set datatype
     nc_var->nc_type = get_nc_dtype(dtype);
@@ -24,54 +27,47 @@ set_nc_var_info(unsigned int       varid,
         nc_var->nc_dimids[i] = -1;
         nc_var->nc_counts[i] = 0;
     }
+    /* Time dimension is always the first dimension */
+    nc_var->nc_counts[dim++] = 1;
+
+    /* HRU dimension, if requested */
+    if (domain == OUT_DOMAIN_HRU) {
+        nc_var->nc_counts[dim++] = nc_hist_file->hru_size;
+    }
 
     // Set the number of dimensions and the count sizes
-    switch (varid) {
-    case OUT_RA_OVER:
-    case OUT_RA_SUB:
-    case OUT_RA_GRND:
-        nc_var->nc_dims = 4;
-        nc_var->nc_counts[1] = nc_hist_file->turbul_size;
-        nc_var->nc_counts[2] = nc_hist_file->nj_size;
-        nc_var->nc_counts[3] = nc_hist_file->ni_size;
+    switch (out_metadata[varid].elem_type) {
+    case OUT_ELEM_TURBUL:
+        nc_var->nc_counts[dim++] = nc_hist_file->turbul_size;
         break;
-    case OUT_VEG_MATRIC:
-        nc_var->nc_dims = 4;
-        nc_var->nc_counts[1] = nc_hist_file->vegmat_size;
-        nc_var->nc_counts[2] = nc_hist_file->nj_size;
-        nc_var->nc_counts[3] = nc_hist_file->ni_size;
+
+    case OUT_ELEM_VEGMAT:
+        nc_var->nc_counts[dim++] = nc_hist_file->vegmat_size;
         break;
-    case OUT_MATRIC:
-    case OUT_SOIL_ICE:
-    case OUT_SOIL_LIQ:
-    case OUT_SOIL_MOIST:
-    case OUT_SOIL_TEMP:
-        nc_var->nc_dims = 4;
-        nc_var->nc_counts[1] = nc_hist_file->soil_size;
-        nc_var->nc_counts[2] = nc_hist_file->nj_size;
-        nc_var->nc_counts[3] = nc_hist_file->ni_size;
+
+    case OUT_ELEM_SOIL:
+        nc_var->nc_counts[dim++] = nc_hist_file->soil_size;
         break;
-    case OUT_SNOW_DENSITY:
-    case OUT_SNOW_PACK_ICE:
-    case OUT_SNOW_PACK_LIQ:
-    case OUT_SNOW_ICEFRAC:
-    case OUT_SNOW_LIQFRAC:
-    case OUT_SNOW_POROSITY:
-    case OUT_SNOW_RADIUS:
-    case OUT_PACK_OUTFLOW:
-    case OUT_SNOW_MELT:
-    case OUT_SNOW_FRZE:
-    case OUT_SNOW_PACK_TEMP:
-        nc_var->nc_dims = 4;
-        nc_var->nc_counts[1] = nc_hist_file->snow_size;
-        nc_var->nc_counts[2] = nc_hist_file->nj_size;
-        nc_var->nc_counts[3] = nc_hist_file->ni_size;
+
+    case OUT_ELEM_SNOW:
+        nc_var->nc_counts[dim++] = nc_hist_file->snow_size;
         break;
+    
+    case OUT_ELEM_NODE:
+        nc_var->nc_counts[dim++] = nc_hist_file->node_size;
+        break;
+
+    case OUT_ELEM_DEFAULT:
+        break;
+
     default:
-        nc_var->nc_dims = 3;
-        nc_var->nc_counts[1] = nc_hist_file->nj_size;
-        nc_var->nc_counts[2] = nc_hist_file->ni_size;
+        log_err("Unknown output element type for variable %u", varid);
     }
+    /* Spatial dimensions */
+    nc_var->nc_counts[dim++] = nc_hist_file->nj_size;
+    nc_var->nc_counts[dim++] = nc_hist_file->ni_size;
+
+    nc_var->nc_dims = dim;
 }
 
 /******************************************************************************
@@ -79,62 +75,60 @@ set_nc_var_info(unsigned int       varid,
  *****************************************************************************/
 void
 set_nc_var_dimids(unsigned int    varid,
+                  unsigned short int domain,
                   nc_file_struct *nc_hist_file,
                   nc_var_struct  *nc_var)
 {
     size_t i;
+    size_t dim = 0;
+
+    extern metadata_struct out_metadata[N_OUTVAR_TYPES];
 
     for (i = 0; i < MAXDIMS; i++) {
         nc_var->nc_dimids[i] = -1;
     }
 
-    // Set the non-default ones
-    switch (varid) {
-    case OUT_RA_OVER:
-    case OUT_RA_SUB:
-    case OUT_RA_GRND:
-        nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
-        nc_var->nc_dimids[1] = nc_hist_file->turbul_dimid;
-        nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
-        nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
-        break;
-    case OUT_VEG_MATRIC:
-        nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
-        nc_var->nc_dimids[1] = nc_hist_file->vegmat_dimid;
-        nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
-        nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
-        break;
-    case OUT_MATRIC:
-    case OUT_SOIL_ICE:
-    case OUT_SOIL_LIQ:
-    case OUT_SOIL_MOIST:
-    case OUT_SOIL_TEMP:
-        nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
-        nc_var->nc_dimids[1] = nc_hist_file->soil_dimid;
-        nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
-        nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
-        break;
-    case OUT_SNOW_DENSITY:
-    case OUT_SNOW_PACK_ICE:
-    case OUT_SNOW_PACK_LIQ:
-    case OUT_SNOW_ICEFRAC:
-    case OUT_SNOW_LIQFRAC:
-    case OUT_SNOW_POROSITY:
-    case OUT_SNOW_RADIUS:
-    case OUT_PACK_OUTFLOW:
-    case OUT_SNOW_MELT:
-    case OUT_SNOW_FRZE:
-    case OUT_SNOW_PACK_TEMP:
-        nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
-        nc_var->nc_dimids[1] = nc_hist_file->snow_dimid;
-        nc_var->nc_dimids[2] = nc_hist_file->nj_dimid;
-        nc_var->nc_dimids[3] = nc_hist_file->ni_dimid;
-        break;
-    default:
-        nc_var->nc_dimids[0] = nc_hist_file->time_dimid;
-        nc_var->nc_dimids[1] = nc_hist_file->nj_dimid;
-        nc_var->nc_dimids[2] = nc_hist_file->ni_dimid;
+    /* Time */
+    nc_var->nc_dimids[dim++] = nc_hist_file->time_dimid;
+
+    /* HRU */
+    if (domain == OUT_DOMAIN_HRU) {
+        nc_var->nc_dimids[dim++] = nc_hist_file->hru_dimid;
     }
+
+    /* Element */
+    switch (out_metadata[varid].elem_type) {
+    case OUT_ELEM_TURBUL:
+        nc_var->nc_dimids[dim++] = nc_hist_file->turbul_dimid;
+        break;
+
+    case OUT_ELEM_VEGMAT:
+        nc_var->nc_dimids[dim++] = nc_hist_file->vegmat_dimid;
+        break;
+
+    case OUT_ELEM_SOIL:
+        nc_var->nc_dimids[dim++] = nc_hist_file->soil_dimid;
+        break;
+
+    case OUT_ELEM_SNOW:
+        nc_var->nc_dimids[dim++] = nc_hist_file->snow_dimid;
+        break;
+
+    case OUT_ELEM_NODE:
+        nc_var->nc_dimids[dim++] = nc_hist_file->node_dimid;
+        break;
+
+    case OUT_ELEM_DEFAULT:
+        break;
+
+    default:
+        log_err("Unknown output element type for variable %u", varid);
+    }
+
+    /* Spatial dimensions */
+    nc_var->nc_dimids[dim++] = nc_hist_file->nj_dimid;
+    nc_var->nc_dimids[dim++] = nc_hist_file->ni_dimid;
+
 }
 
 /******************************************************************************

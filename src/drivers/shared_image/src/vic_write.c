@@ -40,11 +40,13 @@ vic_write(stream_struct  *stream,
 {
     extern global_param_struct global_param;
     extern domain_struct       local_domain;
+    extern option_struct       options;
     extern int                 mpi_rank;
     extern metadata_struct     out_metadata[N_OUTVAR_TYPES];
 
     size_t                     i, j, h, k;
     size_t                     ndims;
+    size_t                     nveg;
     double                     dtime;
     double                    *dvar = NULL;
     float                     *fvar = NULL;
@@ -74,7 +76,13 @@ vic_write(stream_struct  *stream,
 
     for (k = 0; k < stream->nvars; k++) {
         varid = stream->varid[k];
-
+        // Determine the number of HRUs to write.
+        if (stream->domain[k] == OUT_DOMAIN_HRU) {
+            nveg = options.MAX_HRU;
+        }
+        else {
+            nveg = 1;
+        }
         if (nc_hist_file->nc_vars[k].nc_type == NC_DOUBLE) {
             if (dvar == NULL) {
                 // allocate memory for variables to be stored
@@ -127,56 +135,120 @@ vic_write(stream_struct  *stream,
         }
         dstart[0] = stream->write_alarm.count;  // Position in the time dimensions
 
-        for (j = 0; j < out_metadata[varid].nelem; j++) {
-            // if there is more than one layer, then dstart needs to advance
-            dstart[1] = j;
-            if (nc_hist_file->nc_vars[k].nc_type == NC_DOUBLE) {
-                for (i = 0; i < local_domain.ncells_active; i++) {
-                    dvar[i] = (double) stream->aggdata[i][k][j][0];
-                }
-                gather_put_nc_field_double(nc_hist_file->nc_id,
-                                           nc_hist_file->nc_vars[k].nc_varid,
-                                           nc_hist_file->d_fillvalue,
-                                           dstart, dcount, dvar);
+        // Write each HRU separately. CELL: h = 0 only. HRU: h = 0 ... MAX_HRU-1
+        for (h = 0; h < nveg; h++) {
+            // For HRU output: dstart[1] = HRU index; dstart[2] = element index;
+            // For CELL output: dstart[1] = element index
+            if (stream->domain[k] == OUT_DOMAIN_HRU) {
+                dstart[1] = h;
             }
-            else if (nc_hist_file->nc_vars[k].nc_type == NC_FLOAT) {
-                for (i = 0; i < local_domain.ncells_active; i++) {
-                    fvar[i] = (float) stream->aggdata[i][k][j][0];
+            for (j = 0; j < out_metadata[varid].nelem; j++) {
+
+                if (stream->domain[k] == OUT_DOMAIN_HRU) {
+                    dstart[2] = j;
                 }
-                gather_put_nc_field_float(nc_hist_file->nc_id,
-                                          nc_hist_file->nc_vars[k].nc_varid,
-                                          nc_hist_file->f_fillvalue,
-                                          dstart, dcount, fvar);
-            }
-            else if (nc_hist_file->nc_vars[k].nc_type == NC_INT) {
-                for (i = 0; i < local_domain.ncells_active; i++) {
-                    ivar[i] = (int) stream->aggdata[i][k][j][0];
+                else {
+                    dstart[1] = j;
                 }
-                gather_put_nc_field_int(nc_hist_file->nc_id,
-                                        nc_hist_file->nc_vars[k].nc_varid,
-                                        nc_hist_file->i_fillvalue,
-                                        dstart, dcount, ivar);
-            }
-            else if (nc_hist_file->nc_vars[k].nc_type == NC_SHORT) {
-                for (i = 0; i < local_domain.ncells_active; i++) {
-                    svar[i] = (short int) stream->aggdata[i][k][j][0];
+                if (nc_hist_file->nc_vars[k].nc_type == NC_DOUBLE) {
+                    for (i = 0; i < local_domain.ncells_active; i++) {
+                        if (stream->domain[k] == OUT_DOMAIN_HRU) {
+                            if (h < stream->nveg[i]) {
+                                dvar[i] = stream->aggdata[i][k][h][j][0];
+                            }
+                            else {
+                                dvar[i] = nc_hist_file->d_fillvalue;
+                            }
+                        }
+                        else {
+                            dvar[i] = stream->aggdata[i][k][0][j][0];
+                        }
+                    }
+                    gather_put_nc_field_double(nc_hist_file->nc_id,
+                                            nc_hist_file->nc_vars[k].nc_varid,
+                                            nc_hist_file->d_fillvalue,
+                                            dstart, dcount, dvar);
                 }
-                gather_put_nc_field_short(nc_hist_file->nc_id,
-                                          nc_hist_file->nc_vars[k].nc_varid,
-                                          nc_hist_file->s_fillvalue,
-                                          dstart, dcount, svar);
-            }
-            else if (nc_hist_file->nc_vars[k].nc_type == NC_CHAR) {
-                for (i = 0; i < local_domain.ncells_active; i++) {
-                    cvar[i] = (char) stream->aggdata[i][k][j][0];
+                else if (nc_hist_file->nc_vars[k].nc_type == NC_FLOAT) {
+                    for (i = 0; i < local_domain.ncells_active; i++) {
+                        if (stream->domain[k] == OUT_DOMAIN_HRU) {
+                            if (h < stream->nveg[i]) {
+                                fvar[i] = (float) stream->aggdata[i][k][h][j][0];
+                            }
+                            else {
+                                fvar[i] = nc_hist_file->f_fillvalue;
+                            }
+                        }
+                        else {
+                            fvar[i] = (float) stream->aggdata[i][k][0][j][0];
+                        }
+                    }
+                    gather_put_nc_field_float(nc_hist_file->nc_id,
+                                            nc_hist_file->nc_vars[k].nc_varid,
+                                            nc_hist_file->f_fillvalue,
+                                            dstart, dcount, fvar);
                 }
-                gather_put_nc_field_schar(nc_hist_file->nc_id,
-                                          nc_hist_file->nc_vars[k].nc_varid,
-                                          nc_hist_file->c_fillvalue,
-                                          dstart, dcount, cvar);
-            }
-            else {
-                log_err("Unsupported nc_type encountered");
+                else if (nc_hist_file->nc_vars[k].nc_type == NC_INT) {
+                    for (i = 0; i < local_domain.ncells_active; i++) {
+                        if (stream->domain[k] == OUT_DOMAIN_HRU) {
+                            if (h < stream->nveg[i]) {
+                                ivar[i] = (int) stream->aggdata[i][k][h][j][0];
+                            }
+                            else {
+                                ivar[i] = nc_hist_file->i_fillvalue;
+                            }
+                        }
+                        else {
+                            ivar[i] = (int) stream->aggdata[i][k][0][j][0];
+                        }
+                    }
+                    gather_put_nc_field_int(nc_hist_file->nc_id,
+                                            nc_hist_file->nc_vars[k].nc_varid,
+                                            nc_hist_file->i_fillvalue,
+                                            dstart, dcount, ivar);
+                }
+                else if (nc_hist_file->nc_vars[k].nc_type == NC_SHORT) {
+                    for (i = 0; i < local_domain.ncells_active; i++) {
+                        if (stream->domain[k] == OUT_DOMAIN_HRU) {
+                            if (h < stream->nveg[i]) {
+                                svar[i] = (short int) stream->aggdata[i][k][j][0];
+                            }
+                            else {
+                                svar[i] = nc_hist_file->s_fillvalue;
+                            }
+                        }
+                        else {
+                            svar[i] = (short int)
+                                stream->aggdata[i][k][0][j][0];
+                        }
+                    }
+                    gather_put_nc_field_short(nc_hist_file->nc_id,
+                                            nc_hist_file->nc_vars[k].nc_varid,
+                                            nc_hist_file->s_fillvalue,
+                                            dstart, dcount, svar);
+                }
+                else if (nc_hist_file->nc_vars[k].nc_type == NC_CHAR) {
+                    for (i = 0; i < local_domain.ncells_active; i++) {
+                        if (stream->domain[k] == OUT_DOMAIN_HRU) {
+                            if (h < stream->nveg[i]) {
+                                cvar[i] = (char) stream->aggdata[i][k][h][j][0];
+                            }
+                            else {
+                                cvar[i] = nc_hist_file->c_fillvalue;
+                            }
+                        }
+                        else {
+                            cvar[i] = (char) stream->aggdata[i][k][0][j][0];
+                        }
+                    }
+                    gather_put_nc_field_schar(nc_hist_file->nc_id,
+                                            nc_hist_file->nc_vars[k].nc_varid,
+                                            nc_hist_file->c_fillvalue,
+                                            dstart, dcount, cvar);
+                }
+                else {
+                    log_err("Unsupported nc_type encountered");
+                }
             }
         }
 

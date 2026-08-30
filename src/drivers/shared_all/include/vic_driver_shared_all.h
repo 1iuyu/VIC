@@ -69,6 +69,19 @@ enum
 };
 
 /******************************************************************************
+ * @brief   spatial output element [shape=(nvars, )]
+ *****************************************************************************/
+enum
+{
+    OUT_ELEM_DEFAULT,
+    OUT_ELEM_SOIL,
+    OUT_ELEM_SNOW,
+    OUT_ELEM_NODE,
+    OUT_ELEM_TURBUL,
+    OUT_ELEM_VEGMAT,
+};
+
+/******************************************************************************
  * @brief   Forcing Variable Types
  *****************************************************************************/
 enum
@@ -481,6 +494,7 @@ typedef struct {
     char units[MAXSTRING];  /**< units of variable */
     char description[MAXSTRING];  /**< descripition of variable */
     size_t nelem;          /**< number of data values */
+    unsigned short int elem_type;
 } metadata_struct;
 
 /******************************************************************************
@@ -514,7 +528,7 @@ typedef struct {
 
 double air_density(double t, double p, double vp);
 void agg_stream_data(stream_struct *stream, dmy_struct *dmy_current,
-                     double ***out_data);
+                     veg_con_struct **veg_con, double ****out_data);
 double all_30_day_from_dmy(dmy_struct *dmy);
 double all_leap_from_dmy(dmy_struct *dmy);
 void alloc_aggdata(stream_struct *stream);
@@ -527,11 +541,6 @@ double calc_water_balance_error(double, double, double, double);
 double calc_max_daylength(double);
 bool cell_method_from_agg_type(unsigned short int aggtype, char cell_method[]);
 bool check_write_flag(int rec);
-void collect_eb_terms(energy_bal_struct, snow_data_struct,
-                      cell_data_struct, double, bool, bool,
-                      int, double **);
-void collect_wb_terms(cell_data_struct, veg_var_struct, snow_data_struct, 
-                        double, bool, bool, double, double **);
 void compute_derived_state_vars(all_vars_struct *, soil_con_struct *,
                                 veg_con_struct *);
 double compute_theta(double t, double p);
@@ -590,9 +599,8 @@ void num2date(double origin, double time_value, double tzoffset,
 FILE *open_file(char string[], char type[]);
 void parse_nc_time_units(char *nc_unit_chars, unsigned short int *units,
                          dmy_struct *dmy);
-void put_data(all_vars_struct *, force_data_struct *,
-              veg_con_struct *, double **out_data, 
-              timer_struct *timer);
+void put_data(all_vars_struct *, force_data_struct *, veg_con_struct *, 
+              double ***out_data, timer_struct *timer, stream_struct *stream);
 void print_alarm(alarm_struct *alarm);
 void print_cell_data(cell_data_struct *cell);
 void print_dmy(dmy_struct *dmy);

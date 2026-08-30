@@ -24,7 +24,7 @@ vic_finalize(void)
     extern int                 mpi_rank;
     extern nc_file_struct     *nc_hist_files;
     extern option_struct       options;
-    extern double           ***out_data;
+    extern double          ****out_data;
     extern stream_struct      *output_streams;
     extern soil_con_struct    *soil_con;
     extern veg_con_struct    **veg_con;
