@@ -10,15 +10,20 @@
  * @brief    This routine resets the values of all output variables to 0.
  *****************************************************************************/
 void
-zero_output_list(double **out_data)
+zero_output_list(size_t         nveg,
+                 double      ***out_data,
+                 stream_struct *streams)
 {
     extern metadata_struct out_metadata[N_OUTVAR_TYPES];
 
-    size_t                 varid, i;
+    size_t                 varid, i, j, k;
 
-    for (varid = 0; varid < N_OUTVAR_TYPES; varid++) {
-        for (i = 0; i < out_metadata[varid].nelem; i++) {
-            out_data[varid][i] = 0.;
+    for (i = 0; i < streams->nvars; i++) {
+        varid = streams->varid[i];
+        for (j = 0; j < nveg; j++) {
+            for (k = 0; k < out_metadata[varid].nelem; k++) {
+                out_data[varid][j][k] = 0.0;
+            }
         }
     }
 }

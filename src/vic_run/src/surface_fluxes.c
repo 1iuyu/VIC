@@ -189,7 +189,7 @@ surface_fluxes(size_t             hidx,
     // snow_outflow：流出雪层的水[mm/s]
     // soil_inflow: 裸土区流入的水[mm/s]
     double soil_inflow = (snow->pack_comb / step_dt + 
-                        snow->snow_outflow + cell->soil_inflow) / MM_PER_M; // 转换为m/s
+                          snow->snow_outflow + cell->soil_inflow) / MM_PER_M; // 转换为m/s
     cell->soil_inflow = soil_inflow;
 
     ErrorFlag = runoff(step_dt, soil_inflow, cell, soil_con);

@@ -38,9 +38,11 @@ snow_hydrology(double             step_dt,
     double *liq = cell->liq;
     double *ice = cell->ice;
     double *dz_snow = snow->dz_snow;
-    double *porosity = snow->porosity;
+    double *snow_porosity = snow->porosity;
     double *theta_liq = snow->theta_liq;
+    double *excess_ice = cell->excess_ice;
     double *dz_soil = soil_con->dz_soil;
+    double *Wsat_node = soil_con->Wsat_node;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
     double *pack_frze = snow->pack_frze;
@@ -156,18 +158,18 @@ snow_hydrology(double             step_dt,
         else {
             if (coverage > 0.0) {
                 if (energy->Tgrnd >= CONST_TKFRZ) {
-                    snowfrost = fabs(vapor_grnd);
+                    snow_dew = fabs(vapor_grnd);
                 }
                 else {
-                    snow_dew = fabs(vapor_grnd);
+                    snowfrost = fabs(vapor_grnd);
                 }
             }
             if (1.0 - coverage > 0.0) {
                 if (energy->Tgrnd >= CONST_TKFRZ) {
-                    soilfrost = fabs(vapor_grnd);
+                    soil_dew = fabs(vapor_grnd);
                 }
                 else {
-                    soil_dew = fabs(vapor_grnd);
+                    soilfrost = fabs(vapor_grnd);
                 }
             }
         }
@@ -225,6 +227,15 @@ snow_hydrology(double             step_dt,
             cell->soil_inflow = soil_inflow;
         }
         ice[0] += (soilfrost - soil_sublim) * step_dt * (1.0 - coverage) / (dz_soil[0] * MM_PER_M);
+        // 检查土壤总含水量是否超过饱和，多余的冰转移到 excess_ice
+        double total_water = liq[0] + ice[0];
+        if (total_water > Wsat_node[0]) {
+            double excess_water = total_water - Wsat_node[0];
+            // 优先移出冰，但不超过当前冰量
+            double ice_excess = min(ice[0], excess_water);
+            ice[0] -= ice_excess;
+            excess_ice[0] += ice_excess * dz_soil[0] * CONST_RHOICE; // 转换为 kg/m2
+        }
         if (ice[0] < 0.0) {
             liq[0] += ice[0];
             ice[0] = 0.0;
@@ -251,9 +262,25 @@ snow_hydrology(double             step_dt,
             cell->soil_inflow = 0.0;
         }
         else {
+            if (soil_inflow > 100) {
+                log_warn("Soil inflow is too large: %f mm", soil_inflow);
+            }
             cell->soil_inflow = soil_inflow;
         }
         ice[0] += (soilfrost - soil_sublim) * step_dt * (1.0 - coverage) / (dz_soil[0] * MM_PER_M);
+        if (ice[0] < 0.0) {
+            liq[0] += ice[0];
+            ice[0] = 0.0;
+        }
+        // 检查土壤总含水量是否超过饱和，多余的冰转移到 excess_ice
+        double total_water = liq[0] + ice[0];
+        if (total_water > Wsat_node[0]) {
+            double excess_water = total_water - Wsat_node[0];
+            // 优先移出冰，但不超过当前冰量
+            double ice_excess = min(ice[0], excess_water);
+            ice[0] -= ice_excess;
+            excess_ice[0] += ice_excess * dz_soil[0] * CONST_RHOICE; // 转换为 kg/m2
+        }
         if (ice[0] < 0.0) {
             liq[0] += ice[0];
             ice[0] = 0.0;
@@ -275,21 +302,21 @@ snow_hydrology(double             step_dt,
             // 更新雪层水分含量和冰分数
             pack_liq[i] += snow_inflow;
             theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * coverage * CONST_RHOICE));
-            porosity[i] = 1.0 - theta_ice[i];
+            snow_porosity[i] = 1.0 - theta_ice[i];
             theta_liq[i] = pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW);
             // 超孔隙水立即排出
             double outflow_snow = 0.0;
-            if (theta_liq[i] > porosity[i]) {
+            if (theta_liq[i] > snow_porosity[i]) {
                 double over_sat =
-                    (theta_liq[i] - porosity[i]) * dz_snow[i] * CONST_RHOFW;
+                    (theta_liq[i] - snow_porosity[i]) * dz_snow[i] * CONST_RHOFW;
                 outflow_snow += over_sat;
                 pack_liq[i] -= over_sat * coverage;
-                theta_liq[i] = porosity[i];
+                theta_liq[i] = snow_porosity[i];
             }
             
             /* excess liquid water snow-area basis */
             double drainage = max(0.0, (theta_liq[i] - liquid_capacity * 
-                                porosity[i]) * dz_snow[i] * CONST_RHOFW);
+                                snow_porosity[i]) * dz_snow[i] * CONST_RHOFW);
             if (i == 0) {
                 // 表层重力排水可被释放系数限制；超孔隙水已经立即排出
                 double release_frac =
@@ -311,7 +338,7 @@ snow_hydrology(double             step_dt,
                 pack_liq[i] = excess_liq;
             }
             snow_inflow = pack_outflow[i];
-            theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW));
+            theta_liq[i] = min(snow_porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW));
         }
     }
     /* Liquid water from snow bottom to soil [mm/s] */

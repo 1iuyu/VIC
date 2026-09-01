@@ -28,6 +28,7 @@ runoff(double             step_dt,
     double *porosity = cell->porosity;  // 有效孔隙度
     // 初始化
     Nsoil = cell->Nsoil;
+    cell->soil_excess = 0.0; // 土壤超出水分[m]
     /*************************
        Initialize Variables
     *************************/
@@ -36,7 +37,7 @@ runoff(double             step_dt,
     double baseflow = 0.0;
     // 计算土壤超出水分
     for (i = 0; i < Nsoil; i++) {
-        porosity[i] = max(1.0e-4, Wsat_node[i] - ice[i]);
+        porosity[i] = max(0.0, Wsat_node[i] - ice[i]);
         /** Set Layer Liquid Moisture Content **/
         cell->soil_excess += max(0.0, liq[i] - porosity[i]) * dz_soil[i];
         if (liq[i] > porosity[i]) {
@@ -393,22 +394,22 @@ calc_dynamicVIC(double            dt_inflow, // 平均地表入流[m/s]
 * @brief    Calculate the saturated area and runoff
 ******************************************************************************/
 void
-calc_sat_runoff(double    infil_capacity,
-                double    max_infil_capacity,
-                double    tmp_depth,
+calc_sat_runoff(double    i0,
+                double    im,
+                double    y,
                 double    b_infilt,
                 double   *runoff_sat)
 {
     double  zwt;
 
-    zwt = infil_capacity + tmp_depth;
-    if (zwt > max_infil_capacity) {
-        zwt = max_infil_capacity;
+    zwt = i0 + y;
+    if (zwt > im) {
+        zwt = im;
     }
 
-    *runoff_sat = tmp_depth - (max_infil_capacity / (b_infilt + 1.0)) * 
-                    ((pow(1.0 - (infil_capacity / max_infil_capacity), b_infilt + 1.0)) - 
-                    (pow(1.0 - (zwt / max_infil_capacity), b_infilt + 1.0)));
+    *runoff_sat = y - (im / (b_infilt + 1.0)) * 
+                    ((pow(1.0 - (i0 / im), b_infilt + 1.0)) - 
+                    (pow(1.0 - (zwt / im), b_infilt + 1.0)));
     if (*runoff_sat < 0.0) {
         *runoff_sat = 0.0;
     }

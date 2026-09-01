@@ -55,10 +55,14 @@ vic_write(stream_struct  *stream,
     char                      *cvar = NULL;
     size_t                     dcount[MAXDIMS];
     size_t                     dstart[MAXDIMS];
+    size_t                    *max_nelem = NULL;
     unsigned int               varid;
     int                        status;
     double                     offset;
     double                     bounds[2];
+
+    max_nelem = malloc(local_domain.ncells_active * sizeof(*max_nelem));
+    check_alloc_status(max_nelem, "Memory allocation error");
 
     if (mpi_rank == VIC_MPI_ROOT) {
         // If the output file is not open, initialize the history file now.
@@ -76,6 +80,17 @@ vic_write(stream_struct  *stream,
 
     for (k = 0; k < stream->nvars; k++) {
         varid = stream->varid[k];
+        // 预先计算每个网格的最大 nelem
+        if (stream->domain[k] != OUT_DOMAIN_HRU) {
+            for (i = 0; i < local_domain.ncells_active; i++) {
+                size_t max_n = 0;
+                for (h = 0; h < stream->nveg[i]; h++) {
+                    size_t n = get_output_nelem(varid, i, h);
+                    if (n > max_n) max_n = n;
+                }
+                max_nelem[i] = max_n;
+            }
+        }
         // Determine the number of HRUs to write.
         if (stream->domain[k] == OUT_DOMAIN_HRU) {
             nveg = options.MAX_HRU;
@@ -142,6 +157,7 @@ vic_write(stream_struct  *stream,
             if (stream->domain[k] == OUT_DOMAIN_HRU) {
                 dstart[1] = h;
             }
+            
             for (j = 0; j < out_metadata[varid].nelem; j++) {
 
                 if (stream->domain[k] == OUT_DOMAIN_HRU) {
@@ -153,7 +169,7 @@ vic_write(stream_struct  *stream,
                 if (nc_hist_file->nc_vars[k].nc_type == NC_DOUBLE) {
                     for (i = 0; i < local_domain.ncells_active; i++) {
                         if (stream->domain[k] == OUT_DOMAIN_HRU) {
-                            if (h < stream->nveg[i]) {
+                            if (h < stream->nveg[i] && j < get_output_nelem(varid, i, h)) {
                                 dvar[i] = stream->aggdata[i][k][h][j][0];
                             }
                             else {
@@ -161,18 +177,23 @@ vic_write(stream_struct  *stream,
                             }
                         }
                         else {
-                            dvar[i] = stream->aggdata[i][k][0][j][0];
+                            if (j < max_nelem[i]) {
+                                dvar[i] = stream->aggdata[i][k][0][j][0];
+                            }
+                            else {
+                                dvar[i] = nc_hist_file->d_fillvalue;
+                            }
                         }
                     }
                     gather_put_nc_field_double(nc_hist_file->nc_id,
-                                            nc_hist_file->nc_vars[k].nc_varid,
-                                            nc_hist_file->d_fillvalue,
-                                            dstart, dcount, dvar);
+                                               nc_hist_file->nc_vars[k].nc_varid,
+                                               nc_hist_file->d_fillvalue,
+                                               dstart, dcount, dvar);
                 }
                 else if (nc_hist_file->nc_vars[k].nc_type == NC_FLOAT) {
                     for (i = 0; i < local_domain.ncells_active; i++) {
                         if (stream->domain[k] == OUT_DOMAIN_HRU) {
-                            if (h < stream->nveg[i]) {
+                            if (h < stream->nveg[i] && j < get_output_nelem(varid, i, h)) {
                                 fvar[i] = (float) stream->aggdata[i][k][h][j][0];
                             }
                             else {
@@ -180,18 +201,23 @@ vic_write(stream_struct  *stream,
                             }
                         }
                         else {
-                            fvar[i] = (float) stream->aggdata[i][k][0][j][0];
+                            if (j < max_nelem[i]) {
+                                fvar[i] = (float) stream->aggdata[i][k][0][j][0];
+                            }
+                            else {
+                                fvar[i] = nc_hist_file->f_fillvalue;
+                            }
                         }
                     }
                     gather_put_nc_field_float(nc_hist_file->nc_id,
-                                            nc_hist_file->nc_vars[k].nc_varid,
-                                            nc_hist_file->f_fillvalue,
-                                            dstart, dcount, fvar);
+                                              nc_hist_file->nc_vars[k].nc_varid,
+                                              nc_hist_file->f_fillvalue,
+                                              dstart, dcount, fvar);
                 }
                 else if (nc_hist_file->nc_vars[k].nc_type == NC_INT) {
                     for (i = 0; i < local_domain.ncells_active; i++) {
                         if (stream->domain[k] == OUT_DOMAIN_HRU) {
-                            if (h < stream->nveg[i]) {
+                            if (h < stream->nveg[i] && j < get_output_nelem(varid, i, h)) {
                                 ivar[i] = (int) stream->aggdata[i][k][h][j][0];
                             }
                             else {
@@ -199,7 +225,12 @@ vic_write(stream_struct  *stream,
                             }
                         }
                         else {
-                            ivar[i] = (int) stream->aggdata[i][k][0][j][0];
+                            if (j < max_nelem[i]) {
+                                ivar[i] = (int) stream->aggdata[i][k][0][j][0];
+                            }
+                            else {
+                                ivar[i] = nc_hist_file->i_fillvalue;
+                            }
                         }
                     }
                     gather_put_nc_field_int(nc_hist_file->nc_id,
@@ -210,27 +241,31 @@ vic_write(stream_struct  *stream,
                 else if (nc_hist_file->nc_vars[k].nc_type == NC_SHORT) {
                     for (i = 0; i < local_domain.ncells_active; i++) {
                         if (stream->domain[k] == OUT_DOMAIN_HRU) {
-                            if (h < stream->nveg[i]) {
-                                svar[i] = (short int) stream->aggdata[i][k][j][0];
+                            if (h < stream->nveg[i] && j < get_output_nelem(varid, i, h)) {
+                                svar[i] = (short int) stream->aggdata[i][k][0][j][0];
                             }
                             else {
                                 svar[i] = nc_hist_file->s_fillvalue;
                             }
                         }
                         else {
-                            svar[i] = (short int)
-                                stream->aggdata[i][k][0][j][0];
+                            if (j < max_nelem[i]) {
+                                svar[i] = (short int) stream->aggdata[i][k][0][j][0];
+                            }
+                            else {
+                                svar[i] = nc_hist_file->s_fillvalue;
+                            }
                         }
                     }
                     gather_put_nc_field_short(nc_hist_file->nc_id,
-                                            nc_hist_file->nc_vars[k].nc_varid,
-                                            nc_hist_file->s_fillvalue,
-                                            dstart, dcount, svar);
+                                              nc_hist_file->nc_vars[k].nc_varid,
+                                              nc_hist_file->s_fillvalue,
+                                              dstart, dcount, svar);
                 }
                 else if (nc_hist_file->nc_vars[k].nc_type == NC_CHAR) {
                     for (i = 0; i < local_domain.ncells_active; i++) {
                         if (stream->domain[k] == OUT_DOMAIN_HRU) {
-                            if (h < stream->nveg[i]) {
+                            if (h < stream->nveg[i] && j < get_output_nelem(varid, i, h)) {
                                 cvar[i] = (char) stream->aggdata[i][k][h][j][0];
                             }
                             else {
@@ -238,13 +273,18 @@ vic_write(stream_struct  *stream,
                             }
                         }
                         else {
-                            cvar[i] = (char) stream->aggdata[i][k][0][j][0];
+                            if (j < max_nelem[i]) {
+                                cvar[i] = (char) stream->aggdata[i][k][0][j][0];
+                            }
+                            else {
+                                cvar[i] = nc_hist_file->c_fillvalue;
+                            }
                         }
                     }
                     gather_put_nc_field_schar(nc_hist_file->nc_id,
-                                            nc_hist_file->nc_vars[k].nc_varid,
-                                            nc_hist_file->c_fillvalue,
-                                            dstart, dcount, cvar);
+                                              nc_hist_file->nc_vars[k].nc_varid,
+                                              nc_hist_file->c_fillvalue,
+                                              dstart, dcount, cvar);
                 }
                 else {
                     log_err("Unsupported nc_type encountered");
@@ -327,5 +367,8 @@ vic_write(stream_struct  *stream,
     }
     if (cvar != NULL) {
         free(cvar);
+    }
+    if (max_nelem != NULL) {
+        free(max_nelem);
     }
 }

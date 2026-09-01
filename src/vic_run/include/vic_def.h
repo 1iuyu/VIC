@@ -716,7 +716,8 @@ typedef struct {
     double last_ice[MAX_SOILS];        /**< last step ice content of the soil sublayer [m3/m3] */
     double last_liq[MAX_SOILS];        /**< last step liq content of the soil sublayer [m3/m3] */
     double moist[MAX_SOILS];           /**< moisture content of the unfrozen sublayer [m3/m3] */
-    double porosity[MAX_SOILS];
+    double excess_ice[MAX_SOILS];      /**< soil layer excess ice (kg/m2) */
+    double porosity[MAX_SOILS];        /**< soil layer effective porosity */
     double soil_T[MAX_SOILS];
     // Fluxes
     double baseflow;                   /**< baseflow from current cell (mm/TS) */

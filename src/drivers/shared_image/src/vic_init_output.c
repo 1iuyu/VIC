@@ -13,15 +13,12 @@
 void
 vic_init_output(dmy_struct *dmy_current)
 {
-    extern all_vars_struct   *all_vars;
-    extern force_data_struct *force;
     extern domain_struct      local_domain;
     extern filep_struct       filep;
     extern MPI_Comm           MPI_COMM_VIC;
     extern int                mpi_rank;
     extern nc_file_struct    *nc_hist_files;
     extern double         ****out_data;
-    extern veg_con_struct   **veg_con;
     extern option_struct      options;
     extern MPI_Datatype       mpi_alarm_struct_type;
     extern stream_struct     *output_streams;
@@ -32,10 +29,14 @@ vic_init_output(dmy_struct *dmy_current)
     // initialize the output data structures
     set_output_met_data_info();
 
+    // Allocate maximum number of output streams.
+    output_streams = calloc(MAX_OUTPUT_STREAMS, sizeof(*output_streams));
+    check_alloc_status(output_streams, "Memory allocation error.");
+
     if (mpi_rank == VIC_MPI_ROOT) {
         // count the number of streams and variables in the global parameter file
-        parse_output_info(filep.globalparam, &(options.Noutstreams), 
-                          &output_streams, dmy_current);
+        parse_output_info(filep.globalparam, &output_streams, 
+                          &(options.Noutstreams), dmy_current);
 
         // If there weren't any output streams specified, get the defaults
         if (options.Noutstreams == 0) {
@@ -52,7 +53,7 @@ vic_init_output(dmy_struct *dmy_current)
 
     // allocate out_data
     alloc_out_data(local_domain.ncells_active, out_data, 
-                   output_streams[0].nvars, output_streams[0].nveg);
+                   &output_streams[0]);
 
     // allocate netcdf history files array
     nc_hist_files = calloc(options.Noutstreams, sizeof(*nc_hist_files));

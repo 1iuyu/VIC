@@ -313,8 +313,8 @@ initialize_location(location_struct *location)
  * @brief    Read the number of vegetation type per grid cell from file
  *****************************************************************************/
 void
-add_nveg_to_global_domain(nameid_struct *nc_nameid,
-                          domain_struct *global_domain)
+add_subgrid_to_global_domain(nameid_struct *nc_nameid,
+                             domain_struct *global_domain)
 {
     size_t d2count[2];
     size_t d2start[2];
@@ -328,11 +328,18 @@ add_nveg_to_global_domain(nameid_struct *nc_nameid,
     d2start[1] = 0;
     d2count[0] = global_domain->n_ny;
     d2count[1] = global_domain->n_nx;
-    get_nc_field_int(nc_nameid, "Nveg", d2start, d2count, ivar);
+    get_nc_field_int(nc_nameid, "nveg", d2start, d2count, ivar);
 
     for (i = 0; i < global_domain->ncells_total; i++) {
         global_domain->locations[i].nveg = (size_t) ivar[i];
     }
+
+    get_nc_field_int(nc_nameid, "band", d2start, d2count, ivar);
+
+    for (i = 0; i < global_domain->ncells_total; i++) {
+        global_domain->locations[i].band = (size_t) ivar[i];
+    }
+
 
     free(ivar);
 }

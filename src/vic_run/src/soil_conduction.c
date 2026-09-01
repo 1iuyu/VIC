@@ -81,7 +81,7 @@ soil_conductivity(double liq,
         double W_om = devries_weight(CONST_KFWICE, CONST_KORGANIC, GA_OM);
         double W_rock = devries_weight(CONST_KFWICE, CONST_KGRAVEL, GA_ROCK);
         
-        // 加权平均：分子 = Σ (权重 × 体积 × 热导率)
+        // 加权平均
         double numerator = W_quartz * V_sand * CONST_KQUARTZ
                          + W_silt * V_silt *  CONST_KSILT
                          + W_clay * V_clay * CONST_KCLAY
@@ -91,7 +91,6 @@ soil_conductivity(double liq,
                          + W_ice * ice * CONST_KICE
                          + W_air * V_air * CONST_KDAIR;
         
-        // 分母 = Σ (权重 × 体积)
         double denominator = W_quartz * V_sand
                            + W_silt * V_silt
                            + W_clay * V_clay

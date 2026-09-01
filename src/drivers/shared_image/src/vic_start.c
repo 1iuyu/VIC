@@ -72,7 +72,7 @@ vic_start(void)
 
         // add the number of vegetation type to the location info in the
         // global domain struct. This just makes life easier
-        add_nveg_to_global_domain(&(filenames.params), &global_domain);
+        add_subgrid_to_global_domain(&(filenames.params), &global_domain);
 
         // decompose the mask
         mpi_map_decomp_domain(global_domain.ncells_active, mpi_size,
@@ -94,11 +94,11 @@ vic_start(void)
 
         // get dimensions (number of vegetation types, soil zones, etc)
         options.Nlayer = get_nc_dimension(&(filenames.params), "nlayer");
-        options.MAX_HRU = get_nc_dimension(&(filenames.params), "hru_num");
+        options.MAX_HRU = get_nc_dimension(&(filenames.params), "nveg");
         options.NVEGTYPES = get_nc_dimension(&(filenames.params), "nvegtype");
         if (options.SNOW_BAND == SNOW_BAND_TRUE_BUT_UNSET) {
             options.SNOW_BAND = get_nc_dimension(&(filenames.params),
-                                                 "snow_band");
+                                                 "snowband");
         }
 
         // Check that model parameters are valid

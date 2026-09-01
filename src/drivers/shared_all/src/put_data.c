@@ -12,7 +12,8 @@
  *           an array for later output to the output files.
  *****************************************************************************/
 void
-put_data(all_vars_struct   *all_vars,
+put_data(size_t             nveg,
+         all_vars_struct   *all_vars,
          force_data_struct *force,
          veg_con_struct    *veg_con,
          double          ***out_data,
@@ -23,7 +24,7 @@ put_data(all_vars_struct   *all_vars,
     extern option_struct       options;
 
     size_t veg;
-    size_t i, j, k;
+    size_t i, j;
     bool HasVeg = false;
     bool HasGlac = false;
     bool output_var[N_OUTVAR_TYPES] = {false};
@@ -40,15 +41,13 @@ put_data(all_vars_struct   *all_vars,
 
     double dt_sec = global_param.step_dt;
 
-    for (i = 0; i < options.Noutstreams; i++) {
-        for (j = 0; j < streams->nvars; j++) {
-            size_t varid = streams->varid[j];
-            output_var[varid] = true;
-        }
+    for (j = 0; j < streams->nvars; j++) {
+        size_t varid = streams->varid[j];
+        output_var[varid] = true;
     }
 
     // Initialize output data to zero
-    zero_output_list(out_data);
+    zero_output_list(nveg, out_data, streams);
 
     // Set output versions of input forcings
     if (output_var[OUT_AIR_TEMP]) {
@@ -206,22 +205,22 @@ put_data(all_vars_struct   *all_vars,
 
             /** record soil surface dew rate [mm/s] */
             if (output_var[OUT_SOIL_DEW]) {
-                out_data[OUT_SOIL_DEW][veg][0] = cell[veg].soil_dew * dt_sec;
+                out_data[OUT_SOIL_DEW][veg][0] = cell[veg].soil_dew * dt_sec * MM_PER_M;
             }
 
             /** record soil surface frost rate [mm/s] */
             if (output_var[OUT_SOIL_FROST]) {
-                out_data[OUT_SOIL_FROST][veg][0] = cell[veg].soil_frost * dt_sec;
+                out_data[OUT_SOIL_FROST][veg][0] = cell[veg].soil_frost * dt_sec * MM_PER_M;
             }
 
             /** record soil evaporation from soil layer [mm/s] */
             if (output_var[OUT_SOIL_EVAP]) {
-                out_data[OUT_SOIL_EVAP][veg][0] = cell[veg].soil_evap * dt_sec;
+                out_data[OUT_SOIL_EVAP][veg][0] = cell[veg].soil_evap * dt_sec * MM_PER_M;
             }
 
             /** record soil surface sublimation rate [mm/s] */
             if (output_var[OUT_SOIL_SUBLIM]) {
-                out_data[OUT_SOIL_SUBLIM][veg][0] += cell[veg].soil_sublim * dt_sec;
+                out_data[OUT_SOIL_SUBLIM][veg][0] += cell[veg].soil_sublim * dt_sec * MM_PER_M;
             }
 
             /** record soil_inflow[mm] **/
@@ -377,7 +376,7 @@ put_data(all_vars_struct   *all_vars,
 
             /** record snow surface evaporation **/
             if (output_var[OUT_SNOW_EVAP]) {
-                out_data[OUT_SNOW_EVAP][veg][0] = snow[veg].snow_evap * dt_sec;
+                out_data[OUT_SNOW_EVAP][veg][0] = snow[veg].snow_evap * dt_sec * MM_PER_M;
             }
 
             /** record snowpack combination **/
@@ -387,17 +386,17 @@ put_data(all_vars_struct   *all_vars,
 
             /** record snow surface frost [mm] */
             if (output_var[OUT_SNOW_FROST]) {
-                out_data[OUT_SNOW_FROST][veg][0] = snow[veg].snow_frost * dt_sec;
+                out_data[OUT_SNOW_FROST][veg][0] = snow[veg].snow_frost * dt_sec * MM_PER_M;
             }
 
             /** record snow surface dew [mm] */
             if (output_var[OUT_SNOW_DEW]) {
-                out_data[OUT_SNOW_DEW][veg][0] = snow[veg].snow_dew * dt_sec;
+                out_data[OUT_SNOW_DEW][veg][0] = snow[veg].snow_dew * dt_sec * MM_PER_M;
             }
 
             /** record snow surface sublimation [mm] */
             if (output_var[OUT_SNOW_SUBLIM]) {
-                out_data[OUT_SNOW_SUBLIM][veg][0] = snow[veg].snow_sublim * dt_sec;
+                out_data[OUT_SNOW_SUBLIM][veg][0] = snow[veg].snow_sublim * dt_sec * MM_PER_M;
             }
 
             /** record glacier snow excess flow **/
@@ -425,9 +424,9 @@ put_data(all_vars_struct   *all_vars,
                 out_data[OUT_SNOW_AGE][veg][0] = snow[veg].snowage;
             }
 
-            /** outflow of liquid water from the snowpack bottom (m/s) */
+            /** outflow of liquid water from the snowpack bottom (mm) */
             if (output_var[OUT_SNOW_OUTFLOW]) {
-                out_data[OUT_SNOW_OUTFLOW][veg][0] = snow[veg].snow_outflow;
+                out_data[OUT_SNOW_OUTFLOW][veg][0] = snow[veg].snow_outflow * dt_sec;
             }
 
             // Glacier Water Balance Terms
@@ -533,6 +532,10 @@ put_data(all_vars_struct   *all_vars,
     } // End loop over veg
 
     // vic_run run time
-    out_data[OUT_TIME_VICRUN_WALL][0][0] = timer->delta_wall;
-    out_data[OUT_TIME_VICRUN_CPU][0][0] = timer->delta_cpu;
+    if (output_var[OUT_TIME_VICRUN_WALL]) {
+        out_data[OUT_TIME_VICRUN_WALL][0][0] = timer->delta_wall;
+    }
+    if (output_var[OUT_TIME_VICRUN_CPU]) {
+        out_data[OUT_TIME_VICRUN_CPU][0][0] = timer->delta_cpu;
+    }
 }

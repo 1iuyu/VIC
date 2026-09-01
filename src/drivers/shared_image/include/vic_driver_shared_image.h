@@ -154,8 +154,8 @@ typedef struct {
     char log_path[MAXSTRING];   /**< Location to write log file to */
 } filenames_struct;
 
-void add_nveg_to_global_domain(nameid_struct *nc_nameid,
-                               domain_struct *global_domain);
+void add_subgrid_to_global_domain(nameid_struct *nc_nameid,
+                                  domain_struct *global_domain);
 void alloc_force(force_data_struct *force);
 void alloc_veg_hist(veg_hist_struct *veg_hist);
 double air_density(double t, double p, double vp);

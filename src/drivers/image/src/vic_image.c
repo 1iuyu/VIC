@@ -122,7 +122,7 @@ main(int    argc,
     // start vic run timer
     timer_start(&(global_timers[TIMER_VIC_RUN]));
     // Initialize the flag
-    bool IS_INIT = false;
+    bool IS_INIT = true;
     // loop over all timesteps
     for (current = 0; current < global_param.nrecs; current++) {
         // read forcing data
@@ -131,9 +131,9 @@ main(int    argc,
         timer_stop(&(global_timers[TIMER_VIC_FORCE]));
 
         // populate model state, either using a cold start or from a restart file
-        if (IS_INIT == false) {
+        if (IS_INIT == true) {
             vic_populate_model_state();
-            IS_INIT = true;
+            IS_INIT = false;
         }
         
         // run vic over the domain

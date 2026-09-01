@@ -16,13 +16,12 @@ parse_output_info(FILE           *gp,
                   size_t         *nstreams,
                   dmy_struct     *dmy_current)
 {
-    extern option_struct options;
     extern domain_struct local_domain;
 
     char                 cmdstr[MAXSTRING];
     char                 optstr[MAXSTRING];
     char                 flgstr[MAXSTRING];
-    short int            streamnum;
+    int                  streamnum;
     char                 varname[MAXSTRING];
     int                  outvarnum;
     char                 freq_type_str[MAXSTRING];
@@ -46,10 +45,6 @@ parse_output_info(FILE           *gp,
     // Initialize
     streamnum = -1;
     *nstreams = 0;
-
-    // Allocate maximum number of output streams.
-    *streams = calloc(MAX_OUTPUT_STREAMS, sizeof(**streams));
-    check_alloc_status(*streams, "Memory allocation error.");
 
     ivar = malloc(local_domain.ncells_active * sizeof(*ivar));
     check_alloc_status(ivar, "Memory allocation error.");
@@ -78,7 +73,7 @@ parse_output_info(FILE           *gp,
                 streamnum++;
                 if (streamnum >= MAX_OUTPUT_STREAMS) {
                     log_err("Found too many output files, was expecting "
-                            "%zu but found %hu", MAX_OUTPUT_STREAMS,
+                            "%d but found %d", MAX_OUTPUT_STREAMS,
                             streamnum);
                 }
 
@@ -260,13 +255,13 @@ parse_output_info(FILE           *gp,
                                format, type, mult, agg_type, domain);
                 outvarnum++;
             }
-        }
-        // Check that the number of OUTVAR entries matches the number specified in OUTFILE.
-        if (streamnum >= 0 && outvarnum != (int)(*streams)[streamnum].nvars) { 
-            log_err("Output stream %s specifies %zu variables, but %d OUTVAR entries were found.", 
-                   (*streams)[streamnum].prefix, (*streams)[streamnum].nvars, outvarnum); 
-        }        
+        }      
     }
-
+    // Check that the number of OUTVAR entries matches the number specified in OUTFILE.
+    if (streamnum >= 0 && outvarnum != (int)(*streams)[streamnum].nvars) { 
+        log_err("Output stream %s specifies %zu variables, but %d OUTVAR entries were found.", 
+                (*streams)[streamnum].prefix, (*streams)[streamnum].nvars, outvarnum); 
+    }
+    
     free(ivar);
 }

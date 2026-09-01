@@ -66,10 +66,19 @@ RESOLUTION  0.1
 # Output Files and Parameters
 #######################################################################
 RESULT_DIR  ../results # Results directory path
-OUTFILE     fluxes_VIC5_image   3
+OUTFILE     fluxes_VIC5_image   12
 AGGFREQ     NSTEPS   1 
 COMPRESS    FALSE  # TRUE = compress input and output files when done
 OUT_FORMAT  NETCDF4  # NETCDF4 or ASCII
-OUTVAR      OUT_SNOW_PACK_TEMP  %.4f    OUT_TYPE_FLOAT  1   AGG_TYPE_DEFAULT    OUT_DOMAIN_DEFAULT
-OUTVAR	    OUT_SWE             %.4f    OUT_TYPE_FLOAT  1   AGG_TYPE_DEFAULT    OUT_DOMAIN_DEFAULT
-OUTVAR	    EOUT_SOIL_TEMP      %.4f    OUT_TYPE_FLOAT  1   AGG_TYPE_DEFAULT    OUT_DOMAIN_DEFAULT
+OUTVAR      OUT_SNOW_PACK_TEMP
+OUTVAR	    OUT_SWE
+OUTVAR	    OUT_SOIL_TEMP
+OUTVAR      OUT_ZWT
+OUTVAR      OUT_INT_SNOW
+OUTVAR      OUT_INT_RAIN
+OUTVAR      OUT_INFLOW
+OUTVAR      OUT_SNOW_MELT
+OUTVAR      OUT_SNOWF
+OUTVAR      OUT_SOIL_ICE
+OUTVAR      OUT_SOIL_FROST
+OUTVAR      OUT_SNOW_OUTFLOW

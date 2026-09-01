@@ -532,7 +532,7 @@ void agg_stream_data(stream_struct *stream, dmy_struct *dmy_current,
 double all_30_day_from_dmy(dmy_struct *dmy);
 double all_leap_from_dmy(dmy_struct *dmy);
 void alloc_aggdata(stream_struct *stream);
-void alloc_out_data(size_t ngridcells, double ****out_data, size_t nvars, size_t *nveg);
+void alloc_out_data(size_t ngridcells, double ****out_data, stream_struct *stream);
 double average(double *ar, size_t n);
 double calc_energy_balance_error(double, double, double, double, double);
 void calc_root_fractions(size_t, cell_data_struct *cell, veg_var_struct *vag_var, 
@@ -572,6 +572,7 @@ void generate_default_state(force_data_struct *force, all_vars_struct *all_vars,
                             soil_con_struct *soil_con, veg_con_struct *veg_con,
                             veg_lib_struct *veg_lib);
 void get_parameters(FILE *paramfile);
+size_t get_output_nelem(size_t varid, size_t icell, size_t iveg);
 void init_output_list(double **out_data, int write, char *format, int type,
                       double mult);
 void initialize_energy(energy_bal_struct *energy, size_t nveg);
@@ -599,7 +600,7 @@ void num2date(double origin, double time_value, double tzoffset,
 FILE *open_file(char string[], char type[]);
 void parse_nc_time_units(char *nc_unit_chars, unsigned short int *units,
                          dmy_struct *dmy);
-void put_data(all_vars_struct *, force_data_struct *, veg_con_struct *, 
+void put_data(size_t nveg, all_vars_struct *, force_data_struct *, veg_con_struct *, 
               double ***out_data, timer_struct *timer, stream_struct *stream);
 void print_alarm(alarm_struct *alarm);
 void print_cell_data(cell_data_struct *cell);
@@ -661,6 +662,6 @@ int update_step_vars(all_vars_struct *, veg_con_struct *, veg_hist_struct *);
 int invalid_date(unsigned short int calendar, dmy_struct *dmy);
 void validate_parameters(void);
 void validate_streams(stream_struct **stream);
-void zero_output_list(double **);
+void zero_output_list(size_t nveg, double ***out_data, stream_struct *stream);
 
 #endif

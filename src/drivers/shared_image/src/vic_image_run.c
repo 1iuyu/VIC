@@ -13,7 +13,6 @@
 void
 vic_image_run(dmy_struct *dmy_current)
 {
-    extern size_t              current;
     extern all_vars_struct    *all_vars;
     extern force_data_struct  *force;
     extern domain_struct       local_domain;
@@ -32,7 +31,6 @@ vic_image_run(dmy_struct *dmy_current)
 
     // Print the current timestep info before running vic_run
     sprint_dmy(dmy_str, dmy_current);
-    debug("Running timestep %zu: %s", current, dmy_str);
 
     // If running with OpenMP, run this for loop using multiple threads
     #pragma omp parallel for default(shared) private(i, timer, vic_run_ref_str)
@@ -48,8 +46,8 @@ vic_image_run(dmy_struct *dmy_current)
                 &(soil_con[i]), veg_con[i], veg_lib);
         timer_stop(&timer);
 
-        put_data(&(all_vars[i]), &(force[i]), veg_con[i],
-                   out_data[i], &timer, output_streams);
+        put_data(output_streams[0].nveg[i], &(all_vars[i]), &(force[i]),
+                 veg_con[i], out_data[i], &timer, &(output_streams[0]));
     }
 
     // run routing over the domain
@@ -58,6 +56,6 @@ vic_image_run(dmy_struct *dmy_current)
     }
     
     for (i = 0; i < options.Noutstreams; i++) {
-        agg_stream_data(&(output_streams[i]), dmy_current, out_data);
+        agg_stream_data(&(output_streams[i]), dmy_current, veg_con, out_data);
     }
 }

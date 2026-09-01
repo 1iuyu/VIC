@@ -10,26 +10,26 @@
  * @brief    This routine creates the list of output data.
  *****************************************************************************/
 void
-alloc_out_data(size_t     ngridcells,
-               double ****out_data,
-               size_t     nvars,
-               size_t    *nveg)
+alloc_out_data(size_t         ngridcells,
+               double     ****out_data,
+               stream_struct *streams)
 {
     extern metadata_struct out_metadata[N_OUTVAR_TYPES];
-    size_t i, j, k;
+    size_t i, j, k, varid;
 
     for (i = 0; i < ngridcells; i++) {
         out_data[i] = calloc(N_OUTVAR_TYPES, sizeof(*(out_data[i])));
         check_alloc_status(out_data[i], "Memory allocation error.");
         // Allocate space for data
-        for (j = 0; j < nvars; j++) {
-            out_data[i][j] =
-                calloc(nveg[i], sizeof(*(out_data[i][j])));
-            check_alloc_status(out_data[i][j], "Memory allocation error.");
-            for (k = 0; k < nveg[i]; k++) {
-                out_data[i][j][k] =
-                    calloc(out_metadata[j].nelem, sizeof(*(out_data[i][j][k])));
-                check_alloc_status(out_data[i][j][k],
+        for (j = 0; j < streams->nvars; j++) {
+            varid = streams->varid[j];
+            out_data[i][varid] =
+                calloc(streams->nveg[i], sizeof(*(out_data[i][varid])));
+            check_alloc_status(out_data[i][varid], "Memory allocation error.");
+            for (k = 0; k < streams->nveg[i]; k++) {
+                out_data[i][varid][k] =
+                    calloc(out_metadata[varid].nelem, sizeof(*(out_data[i][varid][k])));
+                check_alloc_status(out_data[i][varid][k],
                                    "Memory allocation error.");
             }
         }
@@ -421,7 +421,6 @@ free_streams(stream_struct **streams)
                 free((*streams)[streamnum].aggdata[i][j]);
             }
             free((*streams)[streamnum].aggdata[i]);
-            free((*streams)[streamnum].nveg[i]);
         }
         for (j = 0; j < (*streams)[streamnum].nvars; j++) {
             free((*streams)[streamnum].format[j]);
@@ -434,6 +433,7 @@ free_streams(stream_struct **streams)
         free((*streams)[streamnum].varid);
         free((*streams)[streamnum].aggtype);
         free((*streams)[streamnum].domain);
+        free((*streams)[streamnum].nveg);
     }
     free(*streams);
 }
@@ -442,27 +442,53 @@ free_streams(stream_struct **streams)
  * @brief    This routine frees the memory in the out_data array.
  *****************************************************************************/
 void
-free_out_data(stream_struct *stream,
-              double     ****out_data)
+free_out_data(stream_struct  *stream,
+              double      ****out_data)
 {
-    size_t i;
-    size_t j;
-    size_t k;
-
+    size_t i, j, k, varid;
 
     if (out_data == NULL) {
         return;
     }
 
     for (i = 0; i < stream->ngridcells; i++) {
+        if (out_data[i] == NULL) {
+            continue;
+        }
         for (j = 0; j < stream->nvars; j++) {
-            for (k = 0; k < stream->nveg[i]; k++) {
-                free(out_data[i][j][k]);
+            varid = stream->varid[j];
+            if (out_data[i][varid] == NULL) {
+                continue;
             }
-            free(out_data[i][j]);
+            for (k = 0; k < stream->nveg[i]; k++) {
+                free(out_data[i][varid][k]);
+            }
+            free(out_data[i][varid]);
         }
         free(out_data[i]);
     }
 
     free(out_data);
+}
+
+/******************************************************************************
+ * @brief    This routine return the actual number of elements in the array.
+ *****************************************************************************/
+size_t
+get_output_nelem(size_t       varid,
+                 size_t       icell,
+                 size_t       iveg)
+{
+    extern metadata_struct out_metadata[N_OUTVAR_TYPES];
+    extern all_vars_struct *all_vars;
+
+    if (out_metadata[varid].elem_type == OUT_ELEM_SOIL) {
+        return all_vars[icell].cell[iveg].Nsoil;
+    }
+    else if (out_metadata[varid].elem_type == OUT_ELEM_SNOW) {
+        return all_vars[icell].snow[iveg].Nsnow;
+    }
+    else {
+        return out_metadata[varid].nelem;
+    }
 }

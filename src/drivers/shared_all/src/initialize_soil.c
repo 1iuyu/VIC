@@ -56,6 +56,7 @@ initialize_soil(cell_data_struct *cell,
             cell[veg].lateral_flow[lidx] = 0.0;
             cell[veg].dQvdSMP[lidx] = 0.0;
             cell[veg].moist[lidx] = 0.0;
+            cell[veg].excess_ice[lidx] = 0.0;
             cell[veg].soil_T[lidx] = 0.0;
             cell[veg].porosity[lidx] = 0.0;
             cell[veg].matric[lidx] = 0.0;

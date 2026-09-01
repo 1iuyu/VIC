@@ -69,8 +69,8 @@ vic_finalize(void)
         free(veg_hist[i]);
     }
 
+    free_out_data(output_streams, out_data);
     free_streams(&output_streams);
-    free_out_data(local_domain.ncells_active, out_data);
     free(force);
     free(soil_con);
     free(veg_con);

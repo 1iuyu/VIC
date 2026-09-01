@@ -29,7 +29,8 @@ str_to_bool(char str[])
 unsigned short int
 str_to_agg_type(char aggstr[])
 {
-    if ((strcasecmp("", aggstr) == 0) || (strcasecmp("*", aggstr) == 0)) {
+    if ((strcasecmp("", aggstr) == 0) || (strcasecmp("*", aggstr) == 0) || 
+        (strcasecmp("AGG_TYPE_DEFAULT", aggstr) == 0)) {
         return AGG_TYPE_DEFAULT;
     }
     else {
@@ -63,7 +64,8 @@ str_to_agg_type(char aggstr[])
 unsigned short int
 str_to_out_type(char typestr[])
 {
-    if ((strcasecmp("", typestr) == 0) || (strcasecmp("*", typestr) == 0)) {
+    if ((strcasecmp("", typestr) == 0) || (strcasecmp("*", typestr) == 0) ||
+         (strcasecmp("OUT_TYPE_DEFAULT", typestr) == 0)) {
         return OUT_TYPE_DEFAULT;
     }
     else {
@@ -97,7 +99,8 @@ str_to_out_type(char typestr[])
 double
 str_to_out_mult(char multstr[])
 {
-    if ((strcasecmp("", multstr) == 0) || (strcasecmp("*", multstr) == 0)) {
+    if ((strcasecmp("", multstr) == 0) || (strcasecmp("*", multstr) == 0) ||
+        (strcasecmp("OUT_MULT_DEFAULT", multstr) == 0)) {
         return OUT_MULT_DEFAULT;
     }
     else {
