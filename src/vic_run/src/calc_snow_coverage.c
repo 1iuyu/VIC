@@ -12,74 +12,50 @@
  *           covered with snow.
  *****************************************************************************/
 void
-calc_snow_coverage(double            Cv,
-                   double            step_dt,
+calc_snow_coverage(double            step_dt,
                    double            air_temp,
                    double            snowfall,
                    double            rainfall,
                    cell_data_struct *cell,
-                   snow_data_struct *snow,
-                   soil_con_struct  *soil_con)
+                   snow_data_struct *snow)
 {
     extern parameters_struct param;
 
     /* initialization */
     double coverage = 0.0;
-    
+    double n_melt = 200.0;
     /* glacier snow cover fraction */
-    if (cell->IS_VEG) {
-        double temp_intsnow = 0.0;
-        double int_snow = param.TOL_A;
-        double smr = 0.0;
-        double new_snow = snowfall * step_dt;
-        if (snow->swq == 0.0) {
-            if (snowfall > 0.0) {
-                coverage = tanh(0.1 * new_snow);
-            }
-            else {
-                coverage = 0.0;
-            }
-            snow->coverage = coverage;
+    if (cell->IS_GLAC) {
+        n_melt = 10.0;
+    }
+
+    double temp_intsnow = 0.0;
+    double int_snow = param.TOL_A;
+    double smr = 0.0;
+    double new_snow = snowfall * step_dt;
+    if (snow->swq == 0.0) {
+        if (snowfall > 0.0) {
+            coverage = tanh(0.1 * new_snow);
         }
         else {
-            if (fabs(snow->swq - snow->last_swq) < 0.0) {  // 存在积雪融化
-                if (snowfall > 0.0) {
-                    temp_intsnow = (snow->swq + new_snow) /
-                        (0.5 * (cos(CONST_PI * (1.0 - pow(max(snow->coverage, param.TOL_A), 1.0 / 10.0))) + 1.0));
-                    int_snow = min(1.e8, temp_intsnow);
-                }
-                smr = min(1.0, snow->swq / min(int_snow, 2000.0));
-
-                snow->coverage = 1.0 - pow(acos(min(1.0, (2.0 * smr - 1.0))) / CONST_PI, 10.0); // n_melt = 200.0
-            }
-            if (snowfall > 0.0) {
-                snow->coverage = snow->coverage + tanh(0.1 * new_snow) * (1.0 - snow->coverage);
-            }
-        }
-    }
-    /* ground snow cover fraction */
-    else if (cell->IS_GLAC) {
-        /* initialization */
-        double MeltFac = 0.0;
-        double GridSize = 0.0;
-        double density = 0.0;
-        double SNOW_MeltFac = 0.0;
-        double SNOW_CoverFac = 0.0;
-        double gridScalePara = 0.0;  // GridSize: grid spacing (500-36000)[m].
-        double snow_depth = snow->snow_depth;   // snow depth [m]
-        if (snow->swq == 0.0) {
-            snow_depth = 0.0;
-        }
-        if (snow_depth > 0.0) {
-            GridSize = sqrt(soil_con->cell_area * Cv);
-            gridScalePara = min((max(GridSize, 500.0) / M_PER_KM), 36.0);
-            SNOW_MeltFac = 0.9713 + tanh(0.7436 * gridScalePara);
-            SNOW_CoverFac = 0.0062 * sinh(0.0555 * gridScalePara) + 0.0555;
-            density = snow->swq / (snow->coverage * snow_depth);
-            MeltFac = pow(density / 100, SNOW_MeltFac);
-            coverage = tanh(snow_depth / (SNOW_CoverFac * MeltFac));
+            coverage = 0.0;
         }
         snow->coverage = coverage;
+    }
+    else {
+        if (fabs(snow->swq - snow->last_swq) < 0.0) {  // 存在积雪融化
+            if (snowfall > 0.0) {
+                temp_intsnow = (snow->swq + new_snow) /
+                    (0.5 * (cos(CONST_PI * (1.0 - pow(max(snow->coverage, param.TOL_A), 1.0 / n_melt))) + 1.0));
+                int_snow = min(1.e8, temp_intsnow);
+            }
+            smr = min(1.0, snow->swq / min(int_snow, 2000.0));
+
+            snow->coverage = 1.0 - pow(acos(min(1.0, (2.0 * smr - 1.0))) / CONST_PI, n_melt); // n_melt = 200.0
+        }
+        if (snowfall > 0.0) {
+            snow->coverage = snow->coverage + tanh(0.1 * new_snow) * (1.0 - snow->coverage);
+        }
     }
 
     /* snowpack water processs */

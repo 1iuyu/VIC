@@ -774,12 +774,12 @@ typedef struct {
     bool FrozenOver;                   /**< TRUE = frozen canopy present */
     bool energy_flag;                  /**< temperature converge flag */
     bool moist_flag;                   /**< moisture or matric potential converge flag */
-    size_t Esignchg_count;
-    size_t Msignchg_count;
+    size_t Esignchg_count;             /**< number of times the iteration residuals change sign */
+    size_t Msignchg_count;             /**< number of times the iteration residuals change sign */
     double kappa_node[MAX_NODES];      /**< thermal conductivity of the soil thermal nodes (W/m/K) */
     double Cs_node[MAX_NODES];         /**< volumetric heat capacity of the snow and soil thermal nodes (J/m^3/K) */
     double T[MAX_NODES];               /**< thermal node temperatures (k) */
-    double last_T[MAX_NODES];
+    double last_T[MAX_NODES];          /**< last step thermal node temperatures (k) */
     double kappa_int[MAX_NODES];       /**< thermal conductivity used for interface between nodes (W/m/K) */
     double Tcanopy;                    /**< temperature of the canopy [K] */
     double Tsurf;                      /**< surface temperature [K] */
@@ -952,6 +952,7 @@ typedef struct {
     double new_snow_density;        /**< bulk density of snowfall [kg/m3] */
     double pack_melt[MAX_SNOWS];
     double pack_frze[MAX_SNOWS];
+    double phase_snow[MAX_SNOWS];   /**< last step Phase change heat source W/m2 */
     double enthalpy[MAX_SNOWS+1];
     double last_enthalpy[MAX_SNOWS+1];
     double snow_frost;              /**< snow surface frost rate [mm/s] */

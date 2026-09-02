@@ -47,6 +47,7 @@ initialize_snow(snow_data_struct *snow,
             snow[i].porosity[lidx] = 0.0;
             snow[i].snow_frac[lidx] = 0.0;
             snow[i].pack_melt[lidx] = 0.0;
+            snow[i].phase_snow[lidx] = 0.0;
             snow[i].pack_frze[lidx] = 0.0;
             snow[i].last_snowfrac[lidx] = 0.0;
             snow[i].snow_thresholds[lidx] = dz_snow_min[lidx];

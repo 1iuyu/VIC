@@ -45,8 +45,6 @@ snow_hydrology(double             step_dt,
     double *Wsat_node = soil_con->Wsat_node;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
-    double *pack_frze = snow->pack_frze;
-    double *pack_melt = snow->pack_melt;
     double *last_thice = snow->last_thice;
     double *theta_ice = snow->theta_ice;
     double *pack_outflow = snow->pack_outflow;
@@ -58,11 +56,7 @@ snow_hydrology(double             step_dt,
     double liquid_capacity = 0.0;
     double coverage = snow->coverage;
     double LatentVapGrnd = energy->LatentVapGrnd;
-    // 重制雪层融化量和冻结量
-    for (i = 0; i < MAX_SNOWS; i++) {
-        pack_frze[i] = 0.0;
-        pack_melt[i] = 0.0;
-    }
+
     /** compute soil/snow surface evap,
         dew rate based on energy flux. **/
     // positive part of ground latent heat
@@ -184,22 +178,6 @@ snow_hydrology(double             step_dt,
         }
     }
 
-    // 计算雪层冻结和融化量
-    for (i = 0; i < Nsnow; i++) {
-        double delta_ice = theta_ice[i] - last_thice[i];
-        if (delta_ice > 0.0) {
-            pack_frze[i] = delta_ice * dz_snow[i] * CONST_RHOICE * coverage;
-            pack_melt[i] = 0.0;
-        }
-        else if (delta_ice < 0.0) {
-            pack_frze[i] = 0.0;
-            pack_melt[i] = -delta_ice * dz_snow[i] * CONST_RHOICE * coverage;
-        }
-        else {
-            pack_frze[i] = 0.0;
-            pack_melt[i] = 0.0;
-        }
-    }
     /*******************************
       Snowpack hydrology processes
     *******************************/
@@ -262,7 +240,8 @@ snow_hydrology(double             step_dt,
             cell->soil_inflow = 0.0;
         }
         else {
-            if (soil_inflow > 100) {
+            if (soil_inflow > 0.0001) {
+                soil_inflow *= step_dt * MM_PER_M;
                 log_warn("Soil inflow is too large: %f mm", soil_inflow);
             }
             cell->soil_inflow = soil_inflow;
@@ -395,6 +374,7 @@ snow_hydrology(double             step_dt,
     if (snow->snow_depth < param.TOL_A || snow->swq < param.TOL_A) {
         snow->swq = 0.0;
         snow->snow_depth = 0.0;
+        snow->coverage = 0.0;
     }
 
     /* accumulate glacier excessive flow [mm] */

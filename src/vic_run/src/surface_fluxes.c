@@ -146,6 +146,9 @@ surface_fluxes(size_t             hidx,
                     iter_dt = iter_dt / 2.0;
                     iter_energy.energy_flag = false;
                     iter_energy.moist_flag = false;
+                    for (size_t i = 0; i < MAX_SNOWS; i++) {
+                        iter_snow.phase_snow[i] = 0.0;
+                    }
                     iter = 0;
                     // 回滚状态至初始值
                     iter_cell = (*cell);
@@ -168,7 +171,9 @@ surface_fluxes(size_t             hidx,
         (*energy) = iter_energy;
         (*veg_var) = iter_veg_var;
         (*snow) = iter_snow;
-        
+
+        // 应用最终相变
+        apply_phase_change(iter_dt, snow);
         time_accum += iter_dt;
         /* 保存当前子时间步结束状态 */
         update_last_state(energy, cell, snow);

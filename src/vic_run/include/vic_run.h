@@ -14,6 +14,7 @@ void AdvectedEnergy(double, double, double, energy_bal_struct *,
                     cell_data_struct *, veg_var_struct *);
 bool assert_close_double(double x, double y, double rtol, double abs_tol);
 bool assert_close_float(float x, float y, float rtol, float abs_tol);
+void apply_phase_change(double, snow_data_struct *);
 void brent_PHS(size_t, double, double, double, double, double, double, double, double, 
                double, double *, double, double, double, double, double, double,
                double, double, double, double, double, double, double, double, double,
@@ -31,8 +32,7 @@ int calc_water_bal(double, double, energy_bal_struct *,
 int CalcPhaseChange(size_t, double *, energy_bal_struct *, cell_data_struct *, soil_con_struct *);
 void calc_rainonly(double, double, double, double, double, double, double *, double *);
 double calc_veg_displacement(double, double, double);
-void calc_snow_coverage(double, double, double, double, double, 
-                        cell_data_struct *, snow_data_struct *, soil_con_struct *);
+void calc_snow_coverage(double, double, double, double, cell_data_struct *, snow_data_struct *);
 void calc_net_veg(double, double, snow_data_struct *, veg_var_struct *);
 int calc_wet_bulb(double, double, double, double, double *);
 int calc_surf_water(double, snow_data_struct *, cell_data_struct *, soil_con_struct *);
