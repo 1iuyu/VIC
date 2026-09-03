@@ -156,9 +156,8 @@ vic_run(force_data_struct   *force,
             }
             
             /* Initialize snow coverage */
-            calc_snow_coverage(step_dt, Tair,
-                               snowfall, rainfall, 
-                               cell, snow);
+            calc_snow_coverage(step_dt, snowfall, cell,
+                               snow, soil_con, SNOW_ACCU);
 
             // 初始化粗糙度
             initialize_roughness(Canopy_Upper,

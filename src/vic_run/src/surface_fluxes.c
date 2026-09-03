@@ -148,6 +148,8 @@ surface_fluxes(size_t             hidx,
                     iter_energy.moist_flag = false;
                     for (size_t i = 0; i < MAX_SNOWS; i++) {
                         iter_snow.phase_snow[i] = 0.0;
+                        iter_snow.pack_frze[i] = 0.0;
+                        iter_snow.pack_melt[i] = 0.0;
                     }
                     iter = 0;
                     // 回滚状态至初始值
@@ -173,7 +175,7 @@ surface_fluxes(size_t             hidx,
         (*snow) = iter_snow;
 
         // 应用最终相变
-        apply_phase_change(iter_dt, snow);
+        apply_phase_change(iter_dt, step_dt, snow);
         time_accum += iter_dt;
         /* 保存当前子时间步结束状态 */
         update_last_state(energy, cell, snow);
@@ -185,7 +187,7 @@ surface_fluxes(size_t             hidx,
       Compute Runoff, Baseflow, and Soil Moisture Transport
     ********************************************************/
     snow_hydrology(step_dt, air_temp,
-                   rainfall,
+                   rainfall, snowfall,
                    pressure, wind,
                    energy, cell, 
                    snow, soil_con);

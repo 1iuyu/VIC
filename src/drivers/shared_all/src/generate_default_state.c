@@ -49,6 +49,7 @@ generate_default_state(force_data_struct *force,
     for (veg = 0; veg <= Nveg; veg++) {
         if (veg_con[veg].Cv > 0) {
             snow[veg].swq = 15.0;   // [mm] or [kg/m^2]
+            snow[veg].ref_swq = 15.0;
             double snow_density = 200.0;   // [kg/m^3]
             if (snow[veg].swq > 0.0) {
                 // calculate snow coverage

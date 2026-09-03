@@ -160,6 +160,13 @@ vic_init(void)
         soil_con[i].slope = (double) dvar[i];
     }
 
+    // topo_std: topographic std of the cell []
+    get_scatter_nc_field_double(&(filenames.params), "topo_std",
+                                d2start, d2count, dvar);
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        soil_con[i].topo_std = (double) dvar[i];
+    }
+
     // init_zwt: initial water table depth [m]
     get_scatter_nc_field_double(&(filenames.params), "init_zwt",
                                 d2start, d2count, dvar);

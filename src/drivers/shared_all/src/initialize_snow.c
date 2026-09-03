@@ -64,5 +64,6 @@ initialize_snow(snow_data_struct *snow,
         snow[i].snow_sublim = 0.0;
         snow[i].delta_depth = 0.0;
         snow[i].swq = 0.0;
+        snow[i].ref_swq = 0.0;
     }
 }

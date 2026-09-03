@@ -152,6 +152,15 @@ enum
 };
 
 /******************************************************************************
+ * @brief   Snow process stages
+ *****************************************************************************/
+enum
+{
+    SNOW_ACCU,    /**< snow accumulation phase */
+    SNOW_MELT     /**< snow melting phase */
+};
+
+/******************************************************************************
  * @brief   Snow shape types
  *****************************************************************************/
 enum
@@ -542,7 +551,8 @@ typedef struct {
     double time_zone_lng;             /**< central meridian of the time zone */
     unsigned int gridcel;             /**< grid cell number */
     double off_gmt;
-    double slope;
+    double slope;                     /**< grid topographic slope */
+    double topo_std;                  /**<  */
     double init_zwt;
     double z_bedrock;                 /**< Depth to bedrock [m] */
 } soil_con_struct;
@@ -961,6 +971,7 @@ typedef struct {
     double snow_evap;               /**< snow surface evaporation rate [mm/s] */
     double pack_comb;               /**< excess liquid water when snow layers combine (mm) */
     double swq;                     /**< snow water equivalent of the entire pack (mm) */
+    double ref_swq;                 /**<  */
     double last_swq;                /**< snow water equivalent of the entire pack from previous time step (mm) */
 } snow_data_struct;
 

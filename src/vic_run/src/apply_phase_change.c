@@ -10,9 +10,11 @@
  * @brief    This routine computes phase-change heat flux for next iteration.
  *****************************************************************************/
 void
-apply_phase_change(double            step_dt,
+apply_phase_change(double            iter_dt,
+                   double            step_dt,
                    snow_data_struct *snow)
 {
+    // Initialize variables
     double phase_mass;
     double max_freeze;
     double max_melt;
@@ -29,15 +31,17 @@ apply_phase_change(double            step_dt,
 
     for (size_t i = 0; i < snow->Nsnow; i++) {
         // Initialize phase-change fluxes for this snow layer
-        pack_frze[i] = 0.0;
-        pack_melt[i] = 0.0;
+        if (assert_close_double(iter_dt, step_dt, 0, 1e-12)) {
+            pack_frze[i] = 0.0;
+            pack_melt[i] = 0.0;
+        }
         /* No phase change */
         if (fabs(phase_snow[i]) <= 1.0e-12) {
             phase_snow[i] = 0.0;
             continue;
         }
         /* Convert phase-change energy to mass */
-        phase_mass = fabs(phase_snow[i]) * step_dt * coverage / CONST_LATICE;
+        phase_mass = fabs(phase_snow[i]) * iter_dt * coverage / CONST_LATICE;
         /* Freezing: liquid water -> ice */
         if (phase_snow[i] > 0.0) {
             max_freeze = max(0.0, pack_liq[i]);

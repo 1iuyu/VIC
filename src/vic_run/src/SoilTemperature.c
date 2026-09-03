@@ -278,11 +278,11 @@ SoilTemperature(double   		   step_dt,
             else {
                 if (Nsnow == 1) {
                     mat_A[i] = 0.0;
-                    mat_B[i] = deriv_snow - coverage * (kappa_int[i] - CONST_LATSUB * conv_vapor[i] *
+                    mat_B[i] = deriv_snow - coverage * (kappa_int[i] + CONST_LATSUB * conv_vapor[i] *
                                 drhodT[i]) - fact[i] * Cs_node[i];
                     mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
                     mat_RHS[i] = grnd_snow - coverage * kappa_int[i] * (T[i] - T[i+1]) + phase_snow[i] -
-                                fact[i] * Cs_node[i] * (T[i]-last_T[i]) - CONST_LATSUB * vapor_flux[i];
+                                fact[i] * Cs_node[i] * (T[i]-last_T[i]) - coverage * CONST_LATSUB * vapor_flux[i];
                 }
                 else if (i == 0) {
                     mat_A[i] = 0.0;
@@ -304,11 +304,11 @@ SoilTemperature(double   		   step_dt,
                 else {
                     mat_A[i] = kappa_int[i-1] + CONST_LATSUB * drhodT[i-1] * conv_vapor[i-1];
                     mat_B[i] = -(kappa_int[i-1] + coverage * kappa_int[i]) - CONST_LATSUB * drhodT[i] * 
-                                (conv_vapor[i] + conv_vapor[i-1]) - fact[i] * Cs_node[i];
+                                (coverage * conv_vapor[i] + conv_vapor[i-1]) - fact[i] * Cs_node[i];
                     mat_C[i] = coverage * (kappa_int[i] + CONST_LATSUB * drhodT[i+1] * conv_vapor[i]);
                     mat_RHS[i] = kappa_int[i-1] * (T[i-1]-T[i]) - coverage * kappa_int[i] * (T[i]-T[i+1]) - 
-                                fact[i] * Cs_node[i] * (T[i] - last_T[i]) - CONST_LATSUB * (vapor_flux[i] - 
-                                vapor_flux[i-1]) + AbsSnowLyr[i] + phase_snow[i];
+                                fact[i] * Cs_node[i] * (T[i] - last_T[i]) - CONST_LATSUB * (vapor_flux[i] * 
+                                coverage - vapor_flux[i-1]) + AbsSnowLyr[i] + phase_snow[i];
                 }
             }
         }
@@ -550,7 +550,7 @@ SoilTemperature(double   		   step_dt,
                         dtheta_ice = min(theta_liq[i], dtheta_ice);
                     }
                 }
-                phase_snow[i] = dtheta_ice * CONST_RHOICE * CONST_LATICE / step_dt;
+                phase_snow[i] = dtheta_ice * CONST_RHOICE * CONST_LATICE * dz_snow[i] / step_dt;
             }
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {

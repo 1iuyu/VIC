@@ -26,6 +26,7 @@ initialize_soil_con(soil_con_struct *soil_con)
     soil_con->capil_drive = 0.0;
     soil_con->cell_area = 0.0;
     soil_con->slope = 0.0;
+    soil_con->topo_std = 0.0;
     soil_con->init_zwt = 0.0;
 
     for (i = 0; i < MAX_LAYERS; i++) {

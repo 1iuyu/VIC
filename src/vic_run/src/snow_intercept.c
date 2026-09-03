@@ -174,6 +174,10 @@ snow_intercept(double            step_dt,
     else {
         snow->delta_depth = 0.0;
     }
+
+    /* snowpack water processs */
+    update_snow(step_dt, Tcanopy,
+                *SnowFall, *RainFall, snow);
     
     return (0);
 }

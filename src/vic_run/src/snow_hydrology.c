@@ -16,6 +16,7 @@ int
 snow_hydrology(double             step_dt,
                double             air_temp,
                double             rainfall,
+               double             snowfall,
                double             pressure,
                double             wind,
                energy_bal_struct *energy,
@@ -45,7 +46,6 @@ snow_hydrology(double             step_dt,
     double *Wsat_node = soil_con->Wsat_node;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
-    double *last_thice = snow->last_thice;
     double *theta_ice = snow->theta_ice;
     double *pack_outflow = snow->pack_outflow;
 
@@ -185,6 +185,7 @@ snow_hydrology(double             step_dt,
         double old_swq = snow->swq;
         snow->swq += (snowfrost - snow_sublim) * step_dt * coverage;
         snow->swq = max(snow->swq, 0.0);
+        snow->ref_swq += (snowfrost - snow_sublim) * step_dt * coverage;
         double ratio = snow->swq / old_swq;
         snow->snow_depth = max(0.0, ratio * snow->snow_depth);
         snow->snow_depth = min(max(snow->snow_depth, snow->swq / 500.0), snow->swq / 50.0);
@@ -192,6 +193,8 @@ snow_hydrology(double             step_dt,
             ice[0] += snow->swq / (dz_soil[0] * MM_PER_M);
             snow->swq = 0.0;
             snow->snow_depth = 0.0;
+            snow->coverage = 0.0;
+            snow->ref_swq = 0.0;
         }
         // soil layer evaporation/deposition
         double snow_out = (snow_dew - snow_evap) * step_dt * coverage;
@@ -224,6 +227,7 @@ snow_hydrology(double             step_dt,
         snow->snow_depth = 0.0;
         snow->swq = 0.0;
         snow->coverage = 0.0;
+        snow->ref_swq = 0.0;
     }
 
     /* for multi-layer (>= 1) snow */
@@ -375,7 +379,12 @@ snow_hydrology(double             step_dt,
         snow->swq = 0.0;
         snow->snow_depth = 0.0;
         snow->coverage = 0.0;
+        snow->ref_swq = 0.0;
     }
+
+    // if snow melt, calculate snow coverage
+    calc_snow_coverage(step_dt, snowfall, cell,
+                       snow, soil_con, SNOW_MELT);
 
     /* accumulate glacier excessive flow [mm] */
     snow->glac_excess = excess_flux * step_dt;
