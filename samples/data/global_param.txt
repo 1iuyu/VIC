@@ -7,7 +7,7 @@
 #######################################################################
 MODEL_STEPS_PER_DAY    8      # number of model time steps per day
 STARTYEAR              1951   # year model simulation starts
-STARTMONTH             1      # month model simulation starts
+STARTMONTH             6      # month model simulation starts
 STARTDAY               1      # day model simulation starts
 STARTSEC	           0
 ENDYEAR                1951   # year model simulation ends

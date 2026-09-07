@@ -10,11 +10,13 @@
  * @brief    This routine computes phase-change heat flux for next iteration.
  *****************************************************************************/
 void
-apply_phase_change(double            iter_dt,
-                   double            step_dt,
-                   snow_data_struct *snow)
+apply_phase_change(double             iter_dt,
+                   double             step_dt,
+                   energy_bal_struct *energy,
+                   snow_data_struct  *snow)
 {
     // Initialize variables
+    size_t i;
     double phase_mass;
     double max_freeze;
     double max_melt;
@@ -22,6 +24,8 @@ apply_phase_change(double            iter_dt,
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
     double *dz_snow = snow->dz_snow;
+    double *T = energy->T;
+    double *pack_T = snow->pack_T;
     double *porosity = snow->porosity;
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
@@ -29,7 +33,7 @@ apply_phase_change(double            iter_dt,
     double *pack_melt = snow->pack_melt;
     double *phase_snow = snow->phase_snow;
 
-    for (size_t i = 0; i < snow->Nsnow; i++) {
+    for (i = 0; i < snow->Nsnow; i++) {
         // Initialize phase-change fluxes for this snow layer
         if (assert_close_double(iter_dt, step_dt, 0, 1e-12)) {
             pack_frze[i] = 0.0;
@@ -75,5 +79,11 @@ apply_phase_change(double            iter_dt,
         }
         // Clear phase-change flux after applying it.
         phase_snow[i] = 0.0;
+
+        /* Final physical temperature constraint */
+        if ((pack_ice[i] > 0.0 && pack_liq[i] > 0.0)) {
+            pack_T[i] = CONST_TKFRZ;
+            T[i] = CONST_TKFRZ;
+        }
     }
 }

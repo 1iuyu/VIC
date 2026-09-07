@@ -26,7 +26,7 @@ CalcPhaseChange(size_t             nidx,
     double tmp_matric = 0.0;
     double fusion_flux = 0.0;
     double *ice = cell->ice;
-    double *liq = cell->liq; 
+    double *liq = cell->liq;
     double *matric = cell->matric;
     double *Cs_node = energy->Cs_node;
     double *Wpwp_node = soil_con->Wpwp_node;
@@ -49,11 +49,10 @@ CalcPhaseChange(size_t             nidx,
     else {
         tmp_tkfrz = CONST_TKTRIP;
     }
-    // 计算等效热容量
-    liq_deriv = water_curve_deriv(nidx, tmp_tkfrz, 
-                                  total_liq, tmp_matric, soil_con);
-    eff_Cs = Cs_node[nidx] + CONST_RHOFW * CONST_LATICE * liq_deriv;
-
+    // 计算当前温度对应的热力学平衡液态水
+    equil_liq = frozen_soil(nidx, tmp_tkfrz, *T, liq, ice, soil_con);
+    equil_liq = max(Wpwp_node[nidx], min(equil_liq, total_liq));
+    
     // 分情况处理
     if (*T <= tmp_tkfrz) {
         equil_liq = frozen_soil(nidx, tmp_tkfrz, *T, liq, ice, soil_con);
@@ -81,7 +80,7 @@ CalcPhaseChange(size_t             nidx,
         }
     }
     else {
-        if (ice[nidx] == 0.0) {
+        if (ice[nidx] <= 0.0) {
             liq[nidx] = total_liq;
             ice[nidx] = 0.0;
         }
@@ -91,26 +90,20 @@ CalcPhaseChange(size_t             nidx,
             if (EnergyRes >= fusion_flux) {
                 liq[nidx] = total_liq;
                 ice[nidx] = 0.0;
-                (*T) = tmp_tkfrz + (EnergyRes - fusion_flux) / eff_Cs;
+                (*T) = tmp_tkfrz + (EnergyRes - fusion_flux) / Cs_node[nidx];
             }
             else {
                 double melted_ice = EnergyRes / (CONST_RHOICE * CONST_LATICE);
                 liq[nidx] = tmp_liq + melted_ice * CONST_RHOICE / CONST_RHOFW;
                 ice[nidx] = tmp_ice - melted_ice;
                 (*T) = tmp_tkfrz;
-                // 用修正后的温度确认热力学一致性
-                equil_liq = frozen_soil(nidx, tmp_tkfrz, *T, liq, ice, soil_con);
-                if (equil_liq < total_liq) {
-                    liq[nidx] = equil_liq;
-                    ice[nidx] = (total_liq - equil_liq) * CONST_RHOFW / CONST_RHOICE;
-                }
             }
         }
     }
     // 重新计算基质势
     if (liq[nidx] > Wpwp_node[nidx]) {
         matric[nidx] = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
-                                                liq[nidx], 0.0, soil_con);
+                                               liq[nidx], 0.0, soil_con);
     }
 
     return (0);

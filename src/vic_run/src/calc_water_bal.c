@@ -24,6 +24,8 @@ calc_water_bal(double             step_dt,
     size_t lidx, nidx;
     size_t IFLAG = 0;
     size_t Nsoil = cell->Nsoil;
+    size_t Nsnow = snow->Nsnow;
+    size_t Nnode = cell->Nnode;
     double fact[MAX_SOILS] = {0};
     double mat_A[MAX_SOILS] = {0};
     double mat_B[MAX_SOILS] = {0};
@@ -33,6 +35,9 @@ calc_water_bal(double             step_dt,
     double *dz_soil = soil_con->dz_soil;
     double *ice = cell->ice;
     double *liq = cell->liq;
+    double *T = energy->T;
+    double *soil_T = cell->soil_T;
+    double *pack_T = snow->pack_T;
     double *last_liq = cell->last_liq;
     double *last_ice = cell->last_ice;
 	double *matric = cell->matric;
@@ -42,7 +47,6 @@ calc_water_bal(double             step_dt,
     double *lateral_flow = cell->lateral_flow;
     double *dQvdSMP = cell->dQvdSMP;
     double *ksat_node = soil_con->Ksat_node;
-    double *Wpwp_node = soil_con->Wpwp_node;
     double *Wsat_node = soil_con->Wsat_node;
     double *conduct_int = cell->conduct_int;
     // 计算地表水分通量限制
@@ -174,140 +178,113 @@ calc_water_bal(double             step_dt,
                          transp_sink[i] / CONST_RHOFW - lateral_flow[i] - fact[i] * (liq[i] - 
                          last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
 
-            // 存在冰 - 计算冰含量的系数
-            if (ice[i] > 0.0) {
-                mat_A[i] = 0.0;
-                mat_B[i] = -fact[i] * CONST_RHOICE / CONST_RHOFW;
-                mat_C[i] = 0.0;
-                seepage = 0.0;
-            } 
-            else {
-                // 无冰存在 - 计算液态水平衡系数
-                if (matric[i] < 0.0 || mat_RHS[i] < 0.0) {
-                    // 无渗漏
-                    deric_matric = 
-                            SoilWaterRetentionCurve(DERIV_FLAG, i,
-                                                    liq[i], matric[i], 
-                                                    soil_con);
-
-                    if (matric[i] >= 0.0) {
-                        // 节点饱和 - 检查边界是否定义不良
-                        if (fabs(mat_B[i]) < conduct_int[i] * param.TOL_A || conduct_int[i] <= 0.0) {
-                            // 边界定义不良 - 将节点视为饱和
-                            ISAT[idx] = i;
-                            idx++;
-                        }
-                    }
-                    mat_A[i] = 0.0;
-                    mat_B[i] = deriv_evap - (conduct_int[i] + dQvdSMP[lidx] / 
-                                            CONST_RHOFW) - fact[i] * deric_matric;
-                    mat_C[i] = conduct_int[i] + dQvdSMP[lidx] / CONST_RHOFW;
-                    seepage = 0.0;
-                } 
-                else {
-                    // 允许表层渗漏
-                    mat_A[i] = conduct_int[i];
-                    mat_B[i] = 1.0;
-                    mat_C[i] = conduct_int[i] + dQvdSMP[lidx] / CONST_RHOFW;
-                    // 流入节点的净流量等于表层渗漏量
-                    seepage = mat_RHS[i];
-                    mat_RHS[i] = 0.0;
-                }
-            }
-        }
-        else if (i <= Nsoil - 2) {
-            if (ice[i] > 0.0) {
-                // 存在冰 - 计算冰含量的系数
-                mat_A[i] = 0.0;
-                mat_B[i] = -fact[i] * CONST_RHOICE / CONST_RHOFW;
-                mat_C[i] = 0.0;
-                lateral_flow[i] = 0.0;
-            } 
-            else {
-                // 无冰存在 - 计算液态水平衡系数
+            // 计算液态水平衡系数
+            if (matric[i] < 0.0 || mat_RHS[i] < 0.0) {
+                // 无渗漏
                 deric_matric = 
                         SoilWaterRetentionCurve(DERIV_FLAG, i,
                                                 liq[i], matric[i], 
                                                 soil_con);
-                
+
                 if (matric[i] >= 0.0) {
-                    // 节点饱和
-                    ISAT[idx] = i;
-                    idx++;
-                    
-                    // 计算侧向流出剖面
-                    lateral_flow[i] = ksat_node[i] * sin(soil_con->slope * 
-                                        (CONST_PI / 180.0)) * dz_soil[i];
-                    
-                    // 限制侧向流，使该层不会脱饱和
-                    lateral_max = liquid_flux[i-1] - liquid_flux[i] +
-                            (vapor_flux[lidx-1] - vapor_flux[lidx]) / CONST_RHOFW - transp_sink[i] / CONST_RHOFW -
-                            fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
-                    
-                    if (lateral_max < 0.0) {
-                        lateral_max = 0.0;
+                    // 节点饱和 - 检查边界是否定义不良
+                    if (fabs(mat_B[i]) < conduct_int[i] * param.TOL_A || conduct_int[i] <= 0.0) {
+                        // 边界定义不良 - 将节点视为饱和
+                        ISAT[idx] = i;
+                        idx++;
                     }
-                    if (lateral_flow[i] > lateral_max) {
-                        lateral_flow[i] = lateral_max;
-                    }
-                } 
-                else {
-                    lateral_flow[i] = 0.0;
                 }
-                mat_A[i] = conduct_int[i-1] + dQvdSMP[lidx-1] / CONST_RHOFW;
-                mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (dQvdSMP[lidx-1] + 
-                             dQvdSMP[lidx]) / CONST_RHOFW) - fact[i] * deric_matric;
+                mat_A[i] = 0.0;
+                mat_B[i] = deriv_evap - (conduct_int[i] + dQvdSMP[lidx] / 
+                                        CONST_RHOFW) - fact[i] * deric_matric;
                 mat_C[i] = conduct_int[i] + dQvdSMP[lidx] / CONST_RHOFW;
+                seepage = 0.0;
+            } 
+            else {
+                // 允许表层渗漏
+                mat_A[i] = conduct_int[i];
+                mat_B[i] = 1.0;
+                mat_C[i] = conduct_int[i] + dQvdSMP[lidx] / CONST_RHOFW;
+                // 流入节点的净流量等于表层渗漏量
+                seepage = mat_RHS[i];
+                mat_RHS[i] = 0.0;
             }
+        }
+        else if (i <= Nsoil - 2) {
+            // 计算液态水平衡系数
+            deric_matric = 
+                    SoilWaterRetentionCurve(DERIV_FLAG, i,
+                                            liq[i], matric[i], 
+                                            soil_con);
+            
+            if (matric[i] >= 0.0) {
+                // 节点饱和
+                ISAT[idx] = i;
+                idx++;
+                
+                // 计算侧向流出剖面
+                lateral_flow[i] = ksat_node[i] * sin(soil_con->slope * 
+                                    (CONST_PI / 180.0)) * dz_soil[i];
+                
+                // 限制侧向流，使该层不会脱饱和
+                lateral_max = liquid_flux[i-1] - liquid_flux[i] +
+                        (vapor_flux[lidx-1] - vapor_flux[lidx]) / CONST_RHOFW - transp_sink[i] / CONST_RHOFW -
+                        fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
+                
+                if (lateral_max < 0.0) {
+                    lateral_max = 0.0;
+                }
+                if (lateral_flow[i] > lateral_max) {
+                    lateral_flow[i] = lateral_max;
+                }
+            } 
+            else {
+                lateral_flow[i] = 0.0;
+            }
+            mat_A[i] = conduct_int[i-1] + dQvdSMP[lidx-1] / CONST_RHOFW;
+            mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (dQvdSMP[lidx-1] + 
+                            dQvdSMP[lidx]) / CONST_RHOFW) - fact[i] * deric_matric;
+            mat_C[i] = conduct_int[i] + dQvdSMP[lidx] / CONST_RHOFW;
             
             mat_RHS[i] = liquid_flux[i-1] - liquid_flux[i] + (vapor_flux[lidx-1] - vapor_flux[lidx]) / 
                          CONST_RHOFW - transp_sink[i] / CONST_RHOFW - lateral_flow[i] -
                          fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
         }
         else if (i == Nsoil - 1) {
-            if (ice[i] > 0.0) {
-                // 存在冰 - 计算冰含量的系数
-                mat_A[i] = 0.0;
-                mat_B[i] = -fact[i] * CONST_RHOICE / CONST_RHOFW;
-                mat_C[i] = 0.0;
-                lateral_flow[i] = 0.0;
+            // 计算液态水平衡系数
+            deric_matric = 
+                    SoilWaterRetentionCurve(DERIV_FLAG, i,
+                                            liq[i], matric[i], 
+                                            soil_con);
+            
+            if (matric[i] >= 0.0) {
+                // 节点饱和
+                ISAT[idx] = i;
+                idx++;
+                
+                // 计算侧向流出剖面
+                lateral_flow[i] = ksat_node[i] * sin(soil_con->slope * 
+                                    (CONST_PI / 180.0)) * dz_soil[i];
+                
+                // 限制侧向流，使该层不会脱饱和
+                lateral_max = liquid_flux[i-1] - liquid_flux[i] +
+                        (vapor_flux[lidx-1] - vapor_flux[lidx]) / CONST_RHOFW - transp_sink[i] / CONST_RHOFW -
+                        fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
+                
+                if (lateral_max < 0.0) {
+                    lateral_max = 0.0;
+                }
+                if (lateral_flow[i] > lateral_max) {
+                    lateral_flow[i] = lateral_max;
+                }
             } 
             else {
-                // 无冰存在 - 计算液态水平衡系数
-                deric_matric = 
-                        SoilWaterRetentionCurve(DERIV_FLAG, i,
-                                                liq[i], matric[i], 
-                                                soil_con);
-                
-                if (matric[i] >= 0.0) {
-                    // 节点饱和
-                    ISAT[idx] = i;
-                    idx++;
-                    
-                    // 计算侧向流出剖面
-                    lateral_flow[i] = ksat_node[i] * sin(soil_con->slope * 
-                                        (CONST_PI / 180.0)) * dz_soil[i];
-                    
-                    // 限制侧向流，使该层不会脱饱和
-                    lateral_max = liquid_flux[i-1] - liquid_flux[i] +
-                            (vapor_flux[lidx-1] - vapor_flux[lidx]) / CONST_RHOFW - transp_sink[i] / CONST_RHOFW -
-                            fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
-                    
-                    if (lateral_max < 0.0) {
-                        lateral_max = 0.0;
-                    }
-                    if (lateral_flow[i] > lateral_max) {
-                        lateral_flow[i] = lateral_max;
-                    }
-                } 
-                else {
-                    lateral_flow[i] = 0.0;
-                }
-                mat_A[i] = conduct_int[i-1] + dQvdSMP[lidx-1] / CONST_RHOFW;
-                mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (dQvdSMP[lidx-1] + 
-                            dQvdSMP[lidx]) / CONST_RHOFW) - fact[i] * deric_matric;
-                mat_C[i] = 0.0;
+                lateral_flow[i] = 0.0;
             }
+            mat_A[i] = conduct_int[i-1] + dQvdSMP[lidx-1] / CONST_RHOFW;
+            mat_B[i] = -(conduct_int[i-1] + conduct_int[i] + (dQvdSMP[lidx-1] + 
+                        dQvdSMP[lidx]) / CONST_RHOFW) - fact[i] * deric_matric;
+            mat_C[i] = 0.0;
             
             mat_RHS[i] = liquid_flux[i-1] + vapor_flux[lidx-1] / CONST_RHOFW - transp_sink[i] / 
                          CONST_RHOFW - lateral_flow[i] - fact[i] * (liq[i] - last_liq[i] + 
@@ -391,47 +368,21 @@ calc_water_bal(double             step_dt,
             }
             energy->moist_error = diff;
         }
-        if (energy->Msignchg_count > 5) {
+        if (energy->Msignchg_count > 10) {
             double relax = 0.3;
             diff = diff * relax + (1.0 - relax) * moist_error;
             energy->Msignchg_count = 0;
         }
-        if (ice[i] > 0.0) {
-            if (diff > 0.2) {
-                double energy_flux = fabs(CONST_RHOICE * CONST_LATICE * fact[i] * diff);
-                if (energy_flux > 2000.0) {
-                    mat_RHS[i] = diff / fabs(diff) * 2000.0 * step_dt / 
-                    (CONST_RHOICE * CONST_LATICE * dz_soil[i]);
-                }
-            }
-            ice[i] -= mat_RHS[i];
-            if (ice[i] < 0.0) {
-                double total_liq = liq[i] + ice[i] * CONST_RHOICE / CONST_RHOFW;
-                double tol_liq = (liq[i] + Wpwp_node[i]) / 2.0;
-                if (total_liq > tol_liq) {
-                    liq[i] = total_liq;
-                }
-                else {
-                    liq[i] = tol_liq;
-                }
-                if (liq[i] > Wpwp_node[i]) {
-                    matric[i] = SoilWaterRetentionCurve(MATRIC_FLAG, i, 
-                                                        liq[i], 0.0, soil_con);
-                }
-                ice[i] = 0.0;
-            }
+        matric[i] -= diff;
+        double tmp_mat = matric[i];
+        if (fabs(tmp_mat) < 1.0) {
+            tmp_mat = 1.0;
         }
-        else {
-            double tmp_mat = matric[i];
-            if (fabs(tmp_mat) < 1.0) {
-                tmp_mat = 1.0;
-            }
-            // 计算基质势的相对变化量
-            diff /= tmp_mat;
-            matric[i] -= diff;
-            liq[i] = SoilWaterRetentionCurve(MOIST_FLAG, i,
-                                             0.0, matric[i], soil_con);
-        }
+        // 计算基质势的相对变化量
+        diff /= tmp_mat;
+        liq[i] = SoilWaterRetentionCurve(MOIST_FLAG, i,
+                                         0.0, matric[i], soil_con);
+
         if (fabs(diff) > max_diff) {
             max_diff = fabs(diff);
         }
@@ -460,6 +411,26 @@ calc_water_bal(double             step_dt,
     else {
         energy->moist_flag = false;
     }
+    
+    // 处理相变
+    for (i = 0; i < Nsoil; i++) {
+        lidx = tmp_Nsnow + i;   // 全局节点索引
+        CalcPhaseChange(i, &T[lidx], energy, cell, soil_con);
+    }
+
+	// 将组合温度T写回各自的温度数组中
+	for (i = 0; i < Nnode; i++) {
+        if (i < Nsnow) {
+            pack_T[i] = T[i];
+        }
+        else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
+            cell->h2osfc_T = T[Nsnow];
+        }
+        else {
+            lidx = i - tmp_Nsnow;
+            soil_T[lidx] = T[i];
+        }	
+	}
     
     return (0);
 }

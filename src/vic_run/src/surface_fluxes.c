@@ -175,7 +175,7 @@ surface_fluxes(size_t             hidx,
         (*snow) = iter_snow;
 
         // 应用最终相变
-        apply_phase_change(iter_dt, step_dt, snow);
+        apply_phase_change(iter_dt, step_dt, energy, snow);
         time_accum += iter_dt;
         /* 保存当前子时间步结束状态 */
         update_last_state(energy, cell, snow);

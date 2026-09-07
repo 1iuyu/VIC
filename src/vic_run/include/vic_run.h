@@ -14,7 +14,7 @@ void AdvectedEnergy(double, double, double, energy_bal_struct *,
                     cell_data_struct *, veg_var_struct *);
 bool assert_close_double(double x, double y, double rtol, double abs_tol);
 bool assert_close_float(float x, float y, float rtol, float abs_tol);
-void apply_phase_change(double, double, snow_data_struct *);
+void apply_phase_change(double, double, energy_bal_struct *, snow_data_struct *);
 void brent_PHS(size_t, double, double, double, double, double, double, double, double, 
                double, double *, double, double, double, double, double, double,
                double, double, double, double, double, double, double, double, double,
