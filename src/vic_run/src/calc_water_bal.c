@@ -411,12 +411,6 @@ calc_water_bal(double             step_dt,
     else {
         energy->moist_flag = false;
     }
-    
-    // 处理相变
-    for (i = 0; i < Nsoil; i++) {
-        lidx = tmp_Nsnow + i;   // 全局节点索引
-        CalcPhaseChange(i, &T[lidx], energy, cell, soil_con);
-    }
 
 	// 将组合温度T写回各自的温度数组中
 	for (i = 0; i < Nnode; i++) {

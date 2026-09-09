@@ -416,14 +416,6 @@ print_soil_con(soil_con_struct *scon,
     fprintf(LOG_DEST, "\tb_infilt              : %f\n", scon->b_infilt);
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "\tbulk_dens_min         :");
-    for (i = 0; i < nlayers; i++) {
-        fprintf(LOG_DEST, "\t%f", scon->bulk_dens_min[i]);
-    }
-    fprintf(LOG_DEST, "\n");
-    fprintf(LOG_DEST, "\tbulk_dens_org       :");
-    for (i = 0; i < nlayers; i++) {
-        fprintf(LOG_DEST, "\t%f", scon->bulk_dens_org[i]);
-    }
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "\tdepth                 :");
     for (i = 0; i < nlayers; i++) {
@@ -443,16 +435,6 @@ print_soil_con(soil_con_struct *scon,
     fprintf(LOG_DEST, "\torganic               :");
     for (i = 0; i < nlayers; i++) {
         fprintf(LOG_DEST, "\t%f", scon->organic_node[i]);
-    }
-    fprintf(LOG_DEST, "\n");
-    fprintf(LOG_DEST, "\tsoil_dens_min         :");
-    for (i = 0; i < nlayers; i++) {
-        fprintf(LOG_DEST, "\t%f", scon->soil_dens_min[i]);
-    }
-    fprintf(LOG_DEST, "\n");
-    fprintf(LOG_DEST, "\tsoil_dens_org         :");
-    for (i = 0; i < nlayers; i++) {
-        fprintf(LOG_DEST, "\t%f", scon->soil_dens_org[i]);
     }
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "BandElev                :");

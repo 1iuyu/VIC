@@ -82,7 +82,7 @@
 /**< densities */
 #define CONST_RHODAIR (CONST_PSTD / (CONST_RDAIR * CONST_TKFRZ))  /**< density of dry air at STP ~ kg/m^3 */
 #define CONST_RHOFW 1.000e3  /**< density of fresh water ~ kg/m^3 */
-#define CONST_RHOICE 0.917e3  /**< density of ice   ~ kg/m^3 */
+#define CONST_RHOICE 0.917e3  /**< density of ice ~ kg/m^3 */
 /**< specific heats */
 #define CONST_CPMAIR 1.013e3  /**< specific heat capacity of moist air [J/kg/K] */
 #define CONST_CPWV 1.810e3  /**< specific heat of water vap ~ J/kg/K */
@@ -91,6 +91,7 @@
 #define CONST_CPMINE 0.9e3   /**< specific heat capacity of mineral ~ J/kg/K */
 #define CONST_CPORGANIC 1.92e3 /**< specific heat capacity of organic matter [J/kg/K] */
 #define CONST_CPDAIR 1.00464e3 /**< specific heat capacity of dry air [J/kg/K] */
+#define CONST_CPGRAVEL 0.8e3   /**< specific heat capacity of gravel [J/kg/K] */
 #define CONST_CPSOIL 2.0e6     /**< specific heat of soil ~ J/m3/K */
 /**< thermal conductivity */
 #define CONST_KFWICE 0.57      /**< thermal conductivity of water [W/m/K] */

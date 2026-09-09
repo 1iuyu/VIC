@@ -113,8 +113,9 @@ int snow_SNICAR(size_t, double, energy_bal_struct *, cell_data_struct *, snow_da
 void snow_combination(double, cell_data_struct *, snow_data_struct *);
 void snow_compaction(double, double, double, double, snow_data_struct *);
 void snow_division(snow_data_struct *);
+double snow_curve_deriv(double, double, double, double);
 double soil_conductivity(double, double, double, double, double, 
-                         double, double, double, double, double);
+                         double, double, double, double, double, double);
 int SoilTemperature(double, double, cell_data_struct *, energy_bal_struct *,
                     snow_data_struct *, soil_con_struct *);
 int soil_transp(cell_data_struct *, soil_con_struct *);
@@ -151,8 +152,8 @@ void update_last_state(energy_bal_struct *, cell_data_struct *, snow_data_struct
 int vic_run(force_data_struct *, all_vars_struct *,
             global_param_struct *, soil_con_struct *,
             veg_con_struct *, veg_lib_struct *);
-double volumetric_heat_capacity(double, double, double, double, double,
-                                double, double, double, double);
+double volumetric_heat_capacity(double, double, double, double, double, double, double,
+                                double, double, double, double, double, double);
 double water_curve_deriv(size_t, double, double, double, soil_con_struct *);
 double wrap_compute_zwt(double, cell_data_struct *, soil_con_struct *);
 

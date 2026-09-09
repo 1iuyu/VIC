@@ -483,8 +483,6 @@ vic_init(void)
         for (i = 0; i < local_domain.ncells_active; i++) {
             for (j = 0; j < soil_con[i].Nbedrock - 1; j++) {
                 soil_con[i].mpar_node[j] = 1.0 - 1.0 / soil_con[i].expt_node[i];
-                soil_con[i].bulk_dens_node[j] = (soil_con[i].bulk_dens_node[j] * 
-                    (1.0 - soil_con[i].gravel_node[j]) + soil_con[i].gravel_node[j] * 2650);
             }
         }     
 
@@ -500,10 +498,10 @@ vic_init(void)
     // read_snowband()
     if (options.SNOW_BAND == 1) {
         for (i = 0; i < local_domain.ncells_active; i++) {
-            soil_con[i].AreaFract[0] = 1.;
+            soil_con[i].AreaFract[0] = 1.0;
             soil_con[i].BandElev[0] = soil_con[i].elevation;
-            soil_con[i].Pfactor[0] = 1.;
-            soil_con[i].Tfactor[0] = 0.;
+            soil_con[i].Pfactor[0] = 1.0;
+            soil_con[i].Tfactor[0] = 0.0;
         }
     }
     else {

@@ -522,9 +522,7 @@ typedef struct {
     double b_infilt;                  /**< infiltration parameter */
     double b_dynamic;                 /**< Dynamic VIC heterogeniety parameter for infiltration */
     double expt_node[MAX_SOILS];      /**< layer-specific exponent n van Genuchten eqn */
-    double bulk_dens_min[MAX_LAYERS]; /**< bulk density of mineral soil (kg/m^3) */
     double bulk_dens_node[MAX_SOILS]; /**< soil bulk density (kg/m^3) */
-    double bulk_dens_org[MAX_LAYERS]; /**< bulk density of organic soil (kg/m^3) */
     double capil_drive;               /**< mean capilary drive (m) for dynamic VIC runoff */
     double clay_node[MAX_SOILS];      /**< clay content of soil (fraction of mineral soil volume) */
     double depth[MAX_LAYERS];         /**< thickness of each soil moisture layer (m) */
@@ -533,9 +531,6 @@ typedef struct {
     double zc_soil[MAX_SOILS];        /**< depth of thermal nodes below soil surface (m) */
     double gravel_node[MAX_SOILS];    /**< gravel content of soil (fraction of mineral soil weight) */
     double organic_node[MAX_SOILS];   /**< organic content of soil (fraction of total soil volume) */
-    double soil_dens_min[MAX_SOILS];  /**< particle density of mineral soil (kg/m^3) */
-    double soil_dens_node[MAX_SOILS]; /**< soil particle density (kg/m^3) */
-    double soil_dens_org[MAX_SOILS];  /**< particle density of organic soil [kg/m^3] */
     double sand_node[MAX_SOILS];      /**< sand content of soil (fraction of mineral soil volume) */
     double silt_node[MAX_SOILS];      /**< silt content of soil (fraction of mineral soil volume) */
     double lpar_node[MAX_SOILS];      /**< unsaturated hydraulic conductivity exponent in van Genuchten eqn. */
@@ -550,10 +545,10 @@ typedef struct {
     double cell_area;                 /**< Area of grid cell (m^2) */
     double time_zone_lng;             /**< central meridian of the time zone */
     unsigned int gridcel;             /**< grid cell number */
-    double off_gmt;
+    double off_gmt;                   /**< offset from GMT (hours) */
     double slope;                     /**< grid topographic slope */
-    double topo_std;                  /**<  */
-    double init_zwt;
+    double topo_std;                  /**< geographical elevation standard deviation */
+    double init_zwt;                  /**< initial depth to water table [m] */
     double z_bedrock;                 /**< Depth to bedrock [m] */
 } soil_con_struct;
 

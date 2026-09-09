@@ -48,9 +48,9 @@ generate_default_state(force_data_struct *force,
     ************************************/
     for (veg = 0; veg <= Nveg; veg++) {
         if (veg_con[veg].Cv > 0) {
-            snow[veg].swq = 15.0;   // [mm] or [kg/m^2]
-            snow[veg].ref_swq = 15.0;
-            double snow_density = 200.0;   // [kg/m^3]
+            snow[veg].swq = 0.0;   // [mm] or [kg/m2]
+            snow[veg].ref_swq = 0.0;
+            double snow_density = 200.0;   // [kg/m3]
             if (snow[veg].swq > 0.0) {
                 // calculate snow coverage
                 double GridSize = sqrt(soil_con->cell_area * veg_con[veg].Cv);
@@ -89,15 +89,17 @@ generate_default_state(force_data_struct *force,
       Initialize Surface Water
     *********************************/
     for (veg = 0; veg <= Nveg; veg++) {
-        if (cell[veg].IS_WET) {
-            cell[veg].h2osfc = 0.0;
-            cell[veg].frac_h2o = 0.0;
-        }
-        else if (cell[veg].IS_GLAC) {
-            cell[veg].frac_h2o = veg_con[veg].Cv;
-            double glac_volume = 0.0365 * pow(soil_con->cell_area * cell[veg].frac_h2o, 1.375);
-            cell[veg].h2osfc = glac_volume / soil_con->cell_area * 
-                                MM_PER_M * (CONST_RHOICE / CONST_RHOFW);
+        if (veg_con[veg].Cv > 0) {
+            if (cell[veg].IS_WET) {
+                cell[veg].h2osfc = 0.0;
+                cell[veg].frac_h2o = 0.0;
+            }
+            else if (cell[veg].IS_GLAC) {
+                cell[veg].frac_h2o = veg_con[veg].Cv;
+                double glac_volume = 0.0365 * pow(soil_con->cell_area * cell[veg].frac_h2o, 1.375);
+                cell[veg].h2osfc = glac_volume / soil_con->cell_area * 
+                                    MM_PER_M * (CONST_RHOICE / CONST_RHOFW);
+            }
         }
     }
 
@@ -176,12 +178,7 @@ generate_default_state(force_data_struct *force,
             for (lidx = 0; lidx < Nsoil; lidx++) {
                 // 温度大于0，地下水位以上设为田间持水量，地下水位以下设为饱和含水量
                 if (soil_con->Zsum_soil[lidx] <= cell[veg].zwt) {
-                    if (cell[veg].soil_T[lidx] >= CONST_TKFRZ) {
-                        cell[veg].moist[lidx] = soil_con->Wsat_node[lidx] * 0.7;
-                    }
-                    else {
-                        cell[veg].moist[lidx] = soil_con->Wsat_node[lidx] * 0.9;
-                    }
+                    cell[veg].moist[lidx] = soil_con->Wsat_node[lidx] * 0.7;
                 }
                 else {
                     cell[veg].moist[lidx] = soil_con->Wsat_node[lidx];
