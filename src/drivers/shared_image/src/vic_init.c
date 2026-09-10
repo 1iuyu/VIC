@@ -262,7 +262,7 @@ vic_init(void)
         soil_con[i].AlbedoDry[1] = 0.36;  // dry soil albedo at NIR band
 
         /* Central Longitude of Current Time Zone */ 
-        soil_con[i].time_zone_lng = soil_con[i].off_gmt * 360. / HOURS_PER_DAY;
+        soil_con[i].time_zone_lng = soil_con[i].off_gmt * 360.0 / HOURS_PER_DAY;
 
     }
     size_t Nlayer = options.Nlayer;
@@ -273,7 +273,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i] / 100.0;
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -291,7 +291,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i] / 100.0;
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -309,7 +309,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i] / 100.0;
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -327,7 +327,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i] / 100.0;
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -345,7 +345,7 @@ vic_init(void)
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             lidx = i * Nlayer + j;
-            array[lidx] = (double) dvar[i];
+            array[lidx] = (double) dvar[i] / 100.0;
         }
     }
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -490,6 +490,11 @@ vic_init(void)
     else {
         // 土壤参数从PedoTransfer函数中计算得到
         PedoTransfer(soil_con); // not used in current version.       
+    }
+
+    // Initialize volumetric fractions of soil solids
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        calc_solids_fractions(&soil_con[i]);
     }
 
     /******************************************
@@ -1447,7 +1452,7 @@ vic_init(void)
                 calc_root_fractions(veg_class, 
                                     &all_vars[i].cell[j],
                                     &all_vars[i].veg_var[j],
-                                    soil_con, veg_lib);
+                                    &soil_con[i], veg_lib);
             }
         }
     }

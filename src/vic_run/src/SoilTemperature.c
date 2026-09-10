@@ -575,7 +575,7 @@ SoilTemperature(double   		   step_dt,
             T[i] -= diff;
             lidx = i - tmp_Nsnow;
             // 判断是否需要处理相变
-            CalcPhaseChange(lidx, &T[i], energy, cell, soil_con);     
+            CalcPhaseChange(lidx, &T[i], energy, cell, soil_con);  
         }
         else {
             T[i] -= diff;

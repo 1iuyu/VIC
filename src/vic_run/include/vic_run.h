@@ -38,6 +38,7 @@ void calc_net_veg(double, double, snow_data_struct *, veg_var_struct *);
 int calc_wet_bulb(double, double, double, double, double *);
 int calc_surf_water(double, snow_data_struct *, cell_data_struct *, soil_con_struct *);
 void calc_soil_infil(double, double, double, double, double, double, double, double *, double *);
+int calc_solids_fractions(soil_con_struct *);
 void calc_infil_runoff(double, double, double, double, double *, double, double, double *);
 void calc_sat_runoff(double, double, double, double, double *);
 int calc_surf_humidity(double, double, double, snow_data_struct *, cell_data_struct *);
@@ -152,7 +153,7 @@ void update_last_state(energy_bal_struct *, cell_data_struct *, snow_data_struct
 int vic_run(force_data_struct *, all_vars_struct *,
             global_param_struct *, soil_con_struct *,
             veg_con_struct *, veg_lib_struct *);
-double volumetric_heat_capacity(double, double, double, double, double, double, double,
+double volumetric_heat_capacity(double, double, double, double, double, double,
                                 double, double, double, double, double, double);
 double water_curve_deriv(size_t, double, double, double, soil_con_struct *);
 double wrap_compute_zwt(double, cell_data_struct *, soil_con_struct *);

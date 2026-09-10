@@ -20,18 +20,13 @@ prepare_full_energy(double             pressure,
                     soil_con_struct   *soil_con)
 {
     extern parameters_struct param;
-    // 定义常数
-    const double V_pores_gravel = 0.24;  
-    const double BD_organic = 1.3;   // g/cm3
-    const double BD_mineral = 2.71;  // g/cm3
-    const double BD_gravel = 2.80;   // g/cm3
     size_t i, lidx;
     // 初始化
     size_t Nsnow = snow->Nsnow;
     size_t Nnode = cell->Nnode;
     size_t Nsoil = cell->Nsoil;
     double dzp, k_int;
-    double tmp_density = 0.;
+    double tmp_density = 0.0;
     double qsaT = 0.0;
     double qsdT = 0.0;
     double h2osfc = cell->h2osfc;
@@ -43,7 +38,11 @@ prepare_full_energy(double             pressure,
     double *ice = cell->ice;
     double *clay_node = soil_con->clay_node;
     double *sand_node = soil_con->sand_node;
-    double *silt_node = soil_con->silt_node;
+    double *vol_clay = soil_con->vol_clay;
+    double *vol_sand = soil_con->vol_sand;
+    double *vol_silt = soil_con->vol_silt;
+    double *vol_gravel = soil_con->vol_gravel;
+    double *vol_organic = soil_con->vol_organic;
     double *Cs_node = energy->Cs_node;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
@@ -58,13 +57,10 @@ prepare_full_energy(double             pressure,
     double *zc_soil = soil_con->zc_soil;
     double *Zsum_soil = soil_con->Zsum_soil;
     double *Zsum_snow = snow->Zsum_snow;
-    double *organic_node = soil_con->organic_node;
-    double *Wsat_node = soil_con->Wsat_node;
+    double *soil_pore = soil_con->soil_pore;
     double *kappa_node = energy->kappa_node;
     double *kappa_int = energy->kappa_int;
     double *enthalpy = snow->enthalpy;
-    double *gravel_node = soil_con->gravel_node;
-    double *bulk_dens_node = soil_con->bulk_dens_node;
     // 构造临时节点深度矩阵
     for (i = 0; i < Nsnow; i++) {
         zc_node[i] = zc_snow[i];
@@ -135,35 +131,26 @@ prepare_full_energy(double             pressure,
     }
     for (i = 0; i < Nsoil; i++) {
         lidx = tmp_Nsnow + i;
-        double w_organic = 1.724 * organic_node[i] / 100;
-        double V_organic = min(w_organic * bulk_dens_node[i] / BD_organic, 1.0);
-        double V_gravel = gravel_node[i] * (1.0 - V_pores_gravel) / 100;
-        double BD_avg = (1.0 - V_gravel / (1.0 - V_pores_gravel)) * bulk_dens_node[i] +
-                        V_gravel * BD_gravel;
-
-        double wf_gravel = V_gravel * BD_gravel / BD_avg;
-        double wf_sand = sand_node[i] / 100 * (1.0 - w_organic) * (1.0 - wf_gravel);
-        double wf_silt = silt_node[i] / 100 * (1.0 - w_organic) * (1.0 - wf_gravel);
-        double wf_clay = clay_node[i] / 100 * (1.0 - w_organic) * (1.0 - wf_gravel);
-        double wf_organ = w_organic * (1.0 - wf_gravel);
         // 土壤节点体积热容
-        Cs_node[lidx] = volumetric_heat_capacity(Wsat_node[i],
+        Cs_node[lidx] = volumetric_heat_capacity(soil_pore[i],
                                                  liq[i], ice[i], 
                                                  soil_T[i], matric[i],
-                                                 BD_avg, pressure,
+                                                 pressure,
                                                  excess_ice[i],
-                                                 wf_sand, 
-                                                 wf_silt, wf_clay, 
-                                                 wf_organ, wf_gravel);
+                                                 vol_sand[i], 
+                                                 vol_silt[i], vol_clay[i],
+                                                 vol_organic[i], 
+                                                 vol_gravel[i]);
         // 土壤节点导热率
         kappa_node[lidx] = soil_conductivity(liq[i], ice[i],
                                              clay_node[i], 
                                              sand_node[i], 
-                                             Wsat_node[i], 
+                                             soil_pore[i], 
                                              excess_ice[i],
-                                             wf_sand, 
-                                             wf_silt, wf_clay, 
-                                             wf_organ, wf_gravel);
+                                             vol_sand[i], 
+                                             vol_silt[i], vol_clay[i], 
+                                             vol_organic[i], 
+                                             vol_gravel[i]);
     }
     // 计算基岩热导率和热容量
     lidx = Nnode - 1;

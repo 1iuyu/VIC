@@ -183,9 +183,11 @@ snow_hydrology(double             step_dt,
     *******************************/
     if (Nsnow == 0 && snow->swq > 0.0) {
         double old_swq = snow->swq;
-        snow->swq += (snowfrost - snow_sublim) * step_dt * coverage;
+        double snow_accum = (snowfrost - snow_sublim) * step_dt * coverage;
+        double snow_vapor = (snow_dew - snow_evap) * step_dt * coverage;
+        snow->swq += (snow_accum - snow_vapor);
         snow->swq = max(snow->swq, 0.0);
-        snow->ref_swq += (snowfrost - snow_sublim) * step_dt * coverage;
+        snow->snowaccum = max(snow->swq, snow->snowaccum);
         double ratio = snow->swq / old_swq;
         snow->snow_depth = max(0.0, ratio * snow->snow_depth);
         snow->snow_depth = min(max(snow->snow_depth, snow->swq / 500.0), snow->swq / 50.0);
@@ -194,7 +196,7 @@ snow_hydrology(double             step_dt,
             snow->swq = 0.0;
             snow->snow_depth = 0.0;
             snow->coverage = 0.0;
-            snow->ref_swq = 0.0;
+            snow->snowaccum = 0.0;
         }
         // soil layer evaporation/deposition
         double snow_out = (snow_dew - snow_evap) * step_dt * coverage;
@@ -227,7 +229,7 @@ snow_hydrology(double             step_dt,
         snow->snow_depth = 0.0;
         snow->swq = 0.0;
         snow->coverage = 0.0;
-        snow->ref_swq = 0.0;
+        snow->snowaccum = 0.0;
     }
 
     /* for multi-layer (>= 1) snow */
@@ -379,7 +381,7 @@ snow_hydrology(double             step_dt,
         snow->swq = 0.0;
         snow->snow_depth = 0.0;
         snow->coverage = 0.0;
-        snow->ref_swq = 0.0;
+        snow->snowaccum = 0.0;
     }
 
     // if snow melt, calculate snow coverage

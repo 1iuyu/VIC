@@ -7,7 +7,7 @@
 #######################################################################
 MODEL_STEPS_PER_DAY    8      # number of model time steps per day
 STARTYEAR              1951   # year model simulation starts
-STARTMONTH             6      # month model simulation starts
+STARTMONTH             1      # month model simulation starts
 STARTDAY               1      # day model simulation starts
 STARTSEC	           0
 ENDYEAR                1951   # year model simulation ends
@@ -57,11 +57,11 @@ PARAMETERS          VIC5_image_param.nc     # Soil parameter path/file
 ORGANIC_FRACT       FALSE  # TRUE = simulate organic soils; soil param file contains 3*Nlayer extra columns, listing for each layer the organic fraction, and the bulk density and soil particle density of the organic matter in the soil layer; FALSE = soil param file does not contain any information about organic soil, and organic fraction should be assumed to be 0
 VEGLIB              veglib_IGBP.txt    # Veg library path/file
 LAI_SRC             FROM_VEGLIB  # FROM_VEGPARAM = read LAI from veg param file; FROM_VEGLIB = read LAI from veg library file
-SAI_SRC		    FROM_VEGLIB
-FCAN_SRC         FROM_VEGLIB
-SNOW_BAND    TRUE
-ROUT_PARAM     FALSE  #VIC5_image_rout.nc
-RESOLUTION  0.1
+SAI_SRC		        FROM_VEGLIB
+FCAN_SRC            FROM_VEGLIB
+SNOW_BAND           TRUE
+ROUT_PARAM          FALSE  #VIC5_image_rout.nc
+RESOLUTION          0.1
 #######################################################################
 # Output Files and Parameters
 #######################################################################

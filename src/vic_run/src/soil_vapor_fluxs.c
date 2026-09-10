@@ -44,7 +44,7 @@ calc_vapor_flux(double             pressure,
     double *soil_T = cell->soil_T;
     double *zc_snow = snow->zc_snow;
     double *Zsum_snow = snow->Zsum_snow;
-    double *Wsat_node = soil_con->Wsat_node;
+    double *soil_pore = soil_con->soil_pore;
     double *zc_soil = soil_con->zc_soil;
     double *Zsum_soil = soil_con->Zsum_soil;
     double *matric = cell->matric;
@@ -120,7 +120,7 @@ calc_vapor_flux(double             pressure,
     size_t Nsoil = cell->Nsoil;
     for (i = 0; i < Nsoil; i++) {
         lidx = i + tmp_Nsnow;
-        air = Wsat_node[i] - ice[i] - liq[i];
+        air = soil_pore[i] - ice[i] - liq[i];
         if (air > 0.0 && matric[i] < 0.0) {
             // Calculate vapor fluxes due to temperature gradient
             vapor_diff[lidx] = CONST_VAPDIFF *
@@ -148,18 +148,18 @@ calc_vapor_flux(double             pressure,
 
             // Calculate vapor fluxes due to potential gradient
             if (clay_node[i] <= 0.02) {
-                enhanc_fact = Wsat_node[i] * (1.0 + 2.6 / sqrt(0.02));
+                enhanc_fact = soil_pore[i] * (1.0 + 2.6 / sqrt(0.02));
             } else {
-                enhanc_fact = Wsat_node[i] * (1.0 + 2.6 / sqrt(clay_node[i]));
+                enhanc_fact = soil_pore[i] * (1.0 + 2.6 / sqrt(clay_node[i]));
             }
             // 计算指数项
-            double expon = -pow(enhanc_fact * liq[i] / Wsat_node[i], 4.0);
+            double expon = -pow(enhanc_fact * liq[i] / soil_pore[i], 4.0);
             if (expon <= -50.0) {
                 expon = 0.0;
             } else {
                 expon = exp(expon);
             }
-            enhance = 9.5 + 3.0 * liq[i] / Wsat_node[i] - 8.5 * expon;
+            enhance = 9.5 + 3.0 * liq[i] / soil_pore[i] - 8.5 * expon;
 
             diff_therm[i] = vapor_diff[lidx] * enhance * rel_humid[i] * sat_vap_dens_dT;
             diff_vapor[lidx] = vapor_diff[lidx] * sat_vap_dens;

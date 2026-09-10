@@ -18,13 +18,13 @@ soil_conductivity(double liq,
                   double ice,
                   double clay_node,
                   double sand_node,
-                  double Wsat_node,
+                  double soil_pore,
                   double excess_ice,
-                  double wf_sand,
-                  double wf_silt,
-                  double wf_clay,
-                  double wf_organ,
-                  double wf_gravel)
+                  double vol_sand,
+                  double vol_silt,
+                  double vol_clay,
+                  double vol_organic,
+                  double vol_gravel)
 {
     // 形状因子
     const double GA_QUARTZ = 0.144;   // 沙粒形状因子
@@ -37,7 +37,7 @@ soil_conductivity(double liq,
     if (excess_ice > 0.0) {
         air  = 0.0;
     } else {
-        air = Wsat_node - liq - ice;
+        air = soil_pore - liq - ice;
     }
     if (air < 0.0) {
         air = 0.0;
@@ -57,7 +57,7 @@ soil_conductivity(double liq,
     
     if (liq > VLMT) {
         // 空气的形状因子随含水量变化
-        double GAAIR = 0.035 + 0.298 * (liq - VLMT) / (Wsat_node - VLMT);
+        double GAAIR = 0.035 + 0.298 * (liq - VLMT) / (soil_pore - VLMT);
         double W_air = devries_weight(CONST_KFWICE, CONST_KDAIR, GAAIR);
         
         // 湿润条件下的权重因子
@@ -70,20 +70,20 @@ soil_conductivity(double liq,
         double W_rock = devries_weight(CONST_KFWICE, CONST_KGRAVEL, GA_ROCK);
         
         // 加权平均
-        double numerator = W_quartz * wf_sand * CONST_KQUARTZ
-                         + W_silt * wf_silt *  CONST_KSILT
-                         + W_clay * wf_clay * CONST_KCLAY
-                         + W_om * wf_organ * CONST_KORGANIC
-                         + W_rock * wf_gravel * CONST_KGRAVEL
+        double numerator = W_quartz * vol_sand * CONST_KQUARTZ
+                         + W_silt * vol_silt *  CONST_KSILT
+                         + W_clay * vol_clay * CONST_KCLAY
+                         + W_om * vol_organic * CONST_KORGANIC
+                         + W_rock * vol_gravel * CONST_KGRAVEL
                          + W_liq * liq * CONST_KFWICE
                          + W_ice * ice * CONST_KICE
                          + W_air * air * CONST_KDAIR;
         
-        double denominator = W_quartz * wf_sand
-                           + W_silt * wf_silt
-                           + W_clay * wf_clay
-                           + W_om * wf_organ
-                           + W_rock * wf_gravel
+        double denominator = W_quartz * vol_sand
+                           + W_silt * vol_silt
+                           + W_clay * vol_clay
+                           + W_om * vol_organic
+                           + W_rock * vol_gravel
                            + W_liq * liq
                            + W_ice * ice
                            + W_air * air;
@@ -92,7 +92,7 @@ soil_conductivity(double liq,
         
     } 
     else {     
-        // 计算干燥土壤热导率 (使用空气为连续相)
+        // 计算干燥土壤热导率
         double W_air_dry = 1.0;
         double W_quartz_dry = devries_weight(CONST_KDAIR, CONST_KQUARTZ, GA_QUARTZ);
         double W_silt_dry = devries_weight(CONST_KDAIR, CONST_KSILT, GA_SILT);
@@ -102,31 +102,31 @@ soil_conductivity(double liq,
         double W_ice_dry = 1.0;
         
         // 干燥时的空气体积 = 总孔隙度 - 冰
-        double V_air_dry = Wsat_node - ice;
+        double V_air_dry = soil_pore - ice;
         if (V_air_dry < 0.0) {
             V_air_dry = 0.0;
         }
         
-        double numerator_dry = W_quartz_dry * wf_sand * CONST_KQUARTZ
-                             + W_silt_dry * wf_silt * CONST_KSILT
-                             + W_clay_dry * wf_clay * CONST_KCLAY
-                             + W_om_dry * wf_organ * CONST_KORGANIC
-                             + W_rock_dry * wf_gravel * CONST_KGRAVEL
+        double numerator_dry = W_quartz_dry * vol_sand * CONST_KQUARTZ
+                             + W_silt_dry * vol_silt * CONST_KSILT
+                             + W_clay_dry * vol_clay * CONST_KCLAY
+                             + W_om_dry * vol_organic * CONST_KORGANIC
+                             + W_rock_dry * vol_gravel * CONST_KGRAVEL
                              + W_ice_dry * ice * CONST_KICE
                              + W_air_dry * V_air_dry * CONST_KDAIR;
         
-        double denominator_dry = W_quartz_dry * wf_sand
-                               + W_silt_dry * wf_silt
-                               + W_clay_dry * wf_clay
-                               + W_om_dry * wf_organ
-                               + W_rock_dry * wf_gravel
+        double denominator_dry = W_quartz_dry * vol_sand
+                               + W_silt_dry * vol_silt
+                               + W_clay_dry * vol_clay
+                               + W_om_dry * vol_organic
+                               + W_rock_dry * vol_gravel
                                + W_ice_dry * ice
                                + W_air_dry * V_air_dry;
         
         double TK_dry = numerator_dry / denominator_dry;
         
         // 计算湿润下限热导率 (含水量 = VLMT)
-        double V_air_wet = Wsat_node - ice - VLMT;
+        double V_air_wet = soil_pore - ice - VLMT;
         if (V_air_wet < 0.0) {
             V_air_wet = 0.0;
         }
@@ -142,20 +142,20 @@ soil_conductivity(double liq,
         double W_om_wet = devries_weight(CONST_KFWICE, CONST_KORGANIC, GA_OM);
         double W_rock_wet = devries_weight(CONST_KFWICE, CONST_KGRAVEL, GA_ROCK);
         
-        double numerator_wet = W_quartz_wet * wf_sand * CONST_KQUARTZ
-                             + W_silt_wet * wf_silt * CONST_KSILT
-                             + W_clay_wet * wf_clay * CONST_KCLAY
-                             + W_om_wet * wf_organ * CONST_KORGANIC
-                             + W_rock_wet * wf_gravel * CONST_KGRAVEL
+        double numerator_wet = W_quartz_wet * vol_sand * CONST_KQUARTZ
+                             + W_silt_wet * vol_silt * CONST_KSILT
+                             + W_clay_wet * vol_clay * CONST_KCLAY
+                             + W_om_wet * vol_organic * CONST_KORGANIC
+                             + W_rock_wet * vol_gravel * CONST_KGRAVEL
                              + W_water_wet * VLMT * CONST_KFWICE
                              + W_ice_wet * ice * CONST_KICE
                              + W_air_wet * V_air_wet * CONST_KDAIR;
         
-        double denominator_wet = W_quartz_wet * wf_sand
-                               + W_silt_wet * wf_silt
-                               + W_clay_wet * wf_clay
-                               + W_om_wet * wf_organ
-                               + W_rock_wet * wf_gravel
+        double denominator_wet = W_quartz_wet * vol_sand
+                               + W_silt_wet * vol_silt
+                               + W_clay_wet * vol_clay
+                               + W_om_wet * vol_organic
+                               + W_rock_wet * vol_gravel
                                + W_water_wet * VLMT
                                + W_ice_wet * ice
                                + W_air_wet * V_air_wet;
@@ -200,38 +200,39 @@ devries_weight(double lambda0,
             based on the fractional volume of its component parts.
 ******************************************************************************/
 double
-volumetric_heat_capacity(double Wsat_node,
+volumetric_heat_capacity(double soil_pore,
                          double liq,
                          double ice,
                          double soil_T,
                          double matric,
-                         double BD_avg,
                          double pressure,
                          double excess_ice,
-                         double wf_sand,
-                         double wf_silt,
-                         double wf_clay,
-                         double wf_organ,
-                         double wf_gravel)
+                         double vol_sand,
+                         double vol_silt,
+                         double vol_clay,
+                         double vol_organic,
+                         double vol_gravel)
 {
+    const double BD_gravel_kg = 2800;   // kg/m3
+    const double BD_mineral_kg = 2710;  // kg/m3
+    const double BD_organic_kg = 1300;  // kg/m3
     double Cs = 0.0;
     double air = 0.0;
     double esat_T = 0.0;
     double qsdT = 0.0;
     double qsaT = 0.0;
-    double avg_soil_dens = BD_avg * 1000.0; // 转换为 kg/m3
     if (excess_ice > 0.0) {
         air = 0.0;
     } else {
-        air = Wsat_node - liq - ice;
+        air = soil_pore - liq - ice;
     }
     if (air < 0.0) {
         air = 0.0;
     }
     // Constant values are volumetric heat capacities in J/m^3/K
-    Cs = avg_soil_dens * (wf_gravel * CONST_CPGRAVEL +      // gravel
-         (wf_sand + wf_silt + wf_clay) * CONST_CPMINE +     // mineral
-                            wf_organ * CONST_CPORGANIC);    // organic
+    Cs = BD_gravel_kg * vol_gravel * CONST_CPGRAVEL +       // gravel
+         BD_mineral_kg * (vol_sand + vol_silt + vol_clay) * CONST_CPMINE +  // mineral
+         BD_organic_kg * vol_organic * CONST_CPORGANIC;     // organic 
     Cs += CONST_CPFWICE * liq * CONST_RHOFW;                // liquid water
     Cs += CONST_CPDAIR * air * CONST_RHODAIR;               // air
     Cs += CONST_CPICE * ice * CONST_RHOICE;                 // ice
@@ -365,6 +366,70 @@ distribute_node_moisture_properties(cell_data_struct *cell,
             // 计算土壤基质势
             matric[nidx] = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
                                                    liq[nidx], 0.0, soil_con);
+        }
+    }
+    return (0);
+}
+
+/******************************************************************************
+* @brief    This subroutine calculates soil porocity and The volumetric 
+            fractions of soil solids needed for soil parameter estimations.
+******************************************************************************/
+int
+calc_solids_fractions(soil_con_struct *soil_con)
+{
+    // 定义常数
+    const double V_pores_gravel = 0.24;  
+    const double BD_organic = 1.3;   // g/cm3
+    const double BD_mineral = 2.71;  // g/cm3
+    const double BD_gravel = 2.80;   // g/cm3
+    double *vol_clay = soil_con->vol_clay;
+    double *vol_sand = soil_con->vol_sand;
+    double *vol_silt = soil_con->vol_silt;
+    double *vol_gravel = soil_con->vol_gravel;
+    double *vol_organic = soil_con->vol_organic;
+    double *clay_node = soil_con->clay_node; 
+    double *sand_node = soil_con->sand_node;
+    double *silt_node = soil_con->silt_node;
+    double *soil_pore = soil_con->soil_pore;
+    double *gravel_node = soil_con->gravel_node;
+    double *organic_node = soil_con->organic_node;
+    double *bulk_dens_avg = soil_con->bulk_dens_avg;
+    double *bulk_dens_node = soil_con->bulk_dens_node;
+
+    for (size_t i = 0; i < soil_con->Nbedrock-1; i++) {
+        double wf_om_fine = 1.724 * organic_node[i];
+        // double vf_om_fine = min(wf_om_fine * bulk_dens_node[i] / BD_organic, 1.0);
+        vol_gravel[i] = gravel_node[i] * (1.0 - V_pores_gravel);
+        bulk_dens_avg[i] = (1.0 - vol_gravel[i] / (1.0 - V_pores_gravel)) * 
+                            bulk_dens_node[i] + vol_gravel[i] * BD_gravel;
+
+        double wf_gravel = vol_gravel[i] * BD_gravel / bulk_dens_avg[i];
+        double wf_sand = sand_node[i] * (1.0 - wf_om_fine) * (1.0 - wf_gravel);
+        double wf_silt = silt_node[i] * (1.0 - wf_om_fine) * (1.0 - wf_gravel);
+        double wf_clay = clay_node[i] * (1.0 - wf_om_fine) * (1.0 - wf_gravel);
+        double wf_organ = wf_om_fine * (1.0 - wf_gravel);
+        // 各组分在全土中的体积分数（固相）
+        vol_sand[i] = wf_sand * bulk_dens_avg[i] / BD_mineral;
+        vol_clay[i] = wf_clay * bulk_dens_avg[i] / BD_mineral;
+        vol_silt[i] = wf_silt * bulk_dens_avg[i] / BD_mineral;
+        vol_organic[i] = wf_organ * bulk_dens_avg[i] / BD_organic;
+        double BD_particle_inv = wf_gravel / BD_gravel +
+                (1.0 - wf_gravel) * ((1.0 - wf_om_fine) / BD_mineral + wf_om_fine / BD_organic);
+        double BD_particle = 1.0 / BD_particle_inv;
+        // 土壤孔隙度
+        soil_pore[i] = 1.0 - bulk_dens_avg[i] * BD_particle_inv;
+        if (soil_pore[i] <= 0.0) {
+            log_err("Error: negative soil porosity. bulk density = %.4f, particle density = %.4f", 
+                    bulk_dens_avg[i], BD_particle);
+        }
+
+        // 一致性检查
+        double error = vol_gravel[i] + vol_organic[i] + vol_sand[i] + 
+                       vol_clay[i] + vol_silt[i] - (1.0 - soil_pore[i]);
+        if (fabs(error) > 1.0e-3) {
+            log_err("Error in soil volumetric calculation at layer %zu: "
+                    "sum of solid volume fractions minus (1 - porosity) = %.6f, ", i, error);
         }
     }
     return (0);

@@ -48,6 +48,12 @@ initialize_soil_con(soil_con_struct *soil_con)
         soil_con->Ksat_node[i] = 0.0;
         soil_con->Wpwp_node[i] = 0.0;
         soil_con->Wsat_node[i] = 0.0;
+        soil_con->vol_clay[i] = 0.0;
+        soil_con->vol_gravel[i] = 0.0;
+        soil_con->vol_organic[i] = 0.0;
+        soil_con->vol_sand[i] = 0.0;
+        soil_con->vol_silt[i] = 0.0;
+        soil_con->soil_pore[i] = 0.0;
     }
 
     for (i = 0; i < options.SNOW_BAND; i++) {

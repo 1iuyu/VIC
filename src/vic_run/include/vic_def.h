@@ -509,7 +509,6 @@ typedef struct {
  * @brief   This structure stores the soil parameters for a grid cell.
  *****************************************************************************/
 typedef struct {
-
     size_t Nbedrock;                  /**< Number of thermal nodes in the model */
     double Ksat_node[MAX_SOILS];      /**< saturated hydraulic conductivity (m/s) */          
     double Wpwp_node[MAX_SOILS];      /**< soil moisture content at permanent
@@ -522,7 +521,8 @@ typedef struct {
     double b_infilt;                  /**< infiltration parameter */
     double b_dynamic;                 /**< Dynamic VIC heterogeniety parameter for infiltration */
     double expt_node[MAX_SOILS];      /**< layer-specific exponent n van Genuchten eqn */
-    double bulk_dens_node[MAX_SOILS]; /**< soil bulk density (kg/m^3) */
+    double bulk_dens_avg[MAX_SOILS];
+    double bulk_dens_node[MAX_SOILS]; /**< bulk density of fine earth (mineral+organic) [g/cm^3] */
     double capil_drive;               /**< mean capilary drive (m) for dynamic VIC runoff */
     double clay_node[MAX_SOILS];      /**< clay content of soil (fraction of mineral soil volume) */
     double depth[MAX_LAYERS];         /**< thickness of each soil moisture layer (m) */
@@ -535,6 +535,12 @@ typedef struct {
     double silt_node[MAX_SOILS];      /**< silt content of soil (fraction of mineral soil volume) */
     double lpar_node[MAX_SOILS];      /**< unsaturated hydraulic conductivity exponent in van Genuchten eqn. */
     double mpar_node[MAX_SOILS];      /**< unsaturated hydraulic conductivity exponent in van Genuchten eqn. */
+    double soil_pore[MAX_SOILS];      /**< volumetric pore space of the soil */
+    double vol_sand[MAX_SOILS];       /**< volumetric fraction of sand */
+    double vol_silt[MAX_SOILS];       /**< volumetric fraction of silt */
+    double vol_clay[MAX_SOILS];       /**< volumetric fraction of clay */
+    double vol_organic[MAX_SOILS];    /**< volumetric fraction of organic matter */
+    double vol_gravel[MAX_SOILS];     /**< volumetric fraction of gravels */
     double *BandElev;                 /**< Elevation of each snow elevation band */
     double *AreaFract;                /**< Fraction of grid cell included in each snow elevation band */
     double *Pfactor;                  /**< Change in Precipitation due to elevation (fract) in each snow elevation band */
@@ -966,7 +972,7 @@ typedef struct {
     double snow_evap;               /**< snow surface evaporation rate [mm/s] */
     double pack_comb;               /**< excess liquid water when snow layers combine (mm) */
     double swq;                     /**< snow water equivalent of the entire pack (mm) */
-    double ref_swq;                 /**<  */
+    double snowaccum;               /**< accumulated snowfall since last snow-free state */
     double last_swq;                /**< snow water equivalent of the entire pack from previous time step (mm) */
 } snow_data_struct;
 
