@@ -32,13 +32,8 @@ soil_conductivity(double liq,
     const double GA_CLAY = 0.125;     // 黏土形状因子
     const double GA_OM = 0.5;         // 有机质形状因子
     const double GA_ROCK = 0.333;     // 岩石形状因子
-        
-    double air = 0.0;
-    if (excess_ice > 0.0) {
-        air  = 0.0;
-    } else {
-        air = soil_pore - liq - ice;
-    }
+    
+    double air = soil_pore - liq - ice - excess_ice;
     if (air < 0.0) {
         air = 0.0;
     }
@@ -217,15 +212,10 @@ volumetric_heat_capacity(double soil_pore,
     const double BD_mineral_kg = 2710;  // kg/m3
     const double BD_organic_kg = 1300;  // kg/m3
     double Cs = 0.0;
-    double air = 0.0;
     double esat_T = 0.0;
     double qsdT = 0.0;
     double qsaT = 0.0;
-    if (excess_ice > 0.0) {
-        air = 0.0;
-    } else {
-        air = soil_pore - liq - ice;
-    }
+    double air = soil_pore - liq - ice - excess_ice;
     if (air < 0.0) {
         air = 0.0;
     }
@@ -320,7 +310,7 @@ distribute_node_moisture_properties(cell_data_struct *cell,
     double *liq = cell->liq;
     double *soil_T = cell->soil_T;
     double *Wsat_node = soil_con->Wsat_node;
-    double *porosity = cell->porosity;
+    double *eff_porosity = cell->eff_porosity;
     double *matric = cell->matric;
     double *excess_ice = cell->excess_ice;
 
@@ -329,7 +319,7 @@ distribute_node_moisture_properties(cell_data_struct *cell,
         if (cell->IS_GLAC) {
             ice[nidx] = 1.0;
             moist[nidx] = 1.0;
-            porosity[nidx] = 0.0;
+            eff_porosity[nidx] = 0.0;
         }
         else {
             if (soil_T[nidx] < CONST_TKFRZ) {
@@ -354,13 +344,13 @@ distribute_node_moisture_properties(cell_data_struct *cell,
             if (total_vol > Wsat_node[nidx]) {
                 excess_ice[nidx] = total_vol - Wsat_node[nidx];
                 ice[nidx] = Wsat_node[nidx] - liq[nidx];
-                porosity[nidx] = 0.0;
+                eff_porosity[nidx] = 0.0;
             } 
             else {
                 excess_ice[nidx] = 0.0;
-                porosity[nidx] = Wsat_node[nidx] - ice[nidx];
-                if (porosity[nidx] < 0.0) {
-                    porosity[nidx] = 0.0;
+                eff_porosity[nidx] = Wsat_node[nidx] - ice[nidx];
+                if (eff_porosity[nidx] < 0.0) {
+                    eff_porosity[nidx] = 0.0;
                 } 
             }
             // 计算土壤基质势

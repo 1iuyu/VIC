@@ -181,16 +181,11 @@ snow_hydrology(double             step_dt,
     /*******************************
       Snowpack hydrology processes
     *******************************/
-    if (Nsnow == 0 && snow->swq > 0.0) {
+    if (Nsnow == 0) {
         double old_swq = snow->swq;
         double snow_accum = (snowfrost - snow_sublim) * step_dt * coverage;
         double snow_vapor = (snow_dew - snow_evap) * step_dt * coverage;
         snow->swq += (snow_accum - snow_vapor);
-        snow->swq = max(snow->swq, 0.0);
-        snow->snowaccum = max(snow->swq, snow->snowaccum);
-        double ratio = snow->swq / old_swq;
-        snow->snow_depth = max(0.0, ratio * snow->snow_depth);
-        snow->snow_depth = min(max(snow->snow_depth, snow->swq / 500.0), snow->swq / 50.0);
         if (snow->swq < 0.0) {
             ice[0] += snow->swq / (dz_soil[0] * MM_PER_M);
             snow->swq = 0.0;
@@ -198,10 +193,28 @@ snow_hydrology(double             step_dt,
             snow->coverage = 0.0;
             snow->snowaccum = 0.0;
         }
+        else if (snow->swq > 0.0) {
+            double coverage = max(snow->coverage, param.TOL_A);
+            double local_swq = snow->swq / coverage;
+            if (old_swq > 1e-12 && snow->snow_depth > 0.0) {
+                double ratio = snow->swq / old_swq;
+                snow->snow_depth = max(0.0, ratio * snow->snow_depth);
+            }
+            else {
+                snow->snow_depth = local_swq / snow->new_snow_density;
+            }
+            // 用积雪尺度水当量约束雪深对应的密度范围 50–500 kg/m3
+            snow->snow_depth = min(max(snow->snow_depth, snow->swq / 500.0), snow->swq / 50.0);
+        }
+        else {
+            snow->snow_depth = 0.0;
+            snow->coverage = 0.0;
+        }
+        snow->snowaccum += (snowfrost + snow_dew) * step_dt * coverage;
+        snow->snowaccum = max(snow->swq, snow->snowaccum);
         // soil layer evaporation/deposition
-        double snow_out = (snow_dew - snow_evap) * step_dt * coverage;
         double soil_inflow = ((soil_dew - soil_evap) * 
-                             (1.0 - coverage) + rainfall) * step_dt + snow_out;
+                             (1.0 - coverage) + rainfall) * step_dt;
         if (soil_inflow < 0.0) {
             liq[0] += soil_inflow / (dz_soil[0] * MM_PER_M);
             cell->soil_inflow = 0.0;
@@ -213,23 +226,10 @@ snow_hydrology(double             step_dt,
         // 检查土壤总含水量是否超过饱和，多余的冰转移到 excess_ice
         double total_water = liq[0] + ice[0];
         if (total_water > Wsat_node[0]) {
-            double excess_water = total_water - Wsat_node[0];
-            // 优先移出冰，但不超过当前冰量
-            double ice_excess = min(ice[0], excess_water);
+            double ice_excess = total_water - Wsat_node[0];
             ice[0] -= ice_excess;
-            excess_ice[0] += ice_excess * dz_soil[0] * CONST_RHOICE; // 转换为 kg/m2
+            excess_ice[0] += ice_excess;
         }
-        if (ice[0] < 0.0) {
-            liq[0] += ice[0];
-            ice[0] = 0.0;
-        }
-        cell->moist[0] = liq[0] + ice[0] * CONST_RHOICE / CONST_RHOFW;
-    }
-    if (snow->snow_depth < param.TOL_B || snow->swq < param.TOL_A) {
-        snow->snow_depth = 0.0;
-        snow->swq = 0.0;
-        snow->coverage = 0.0;
-        snow->snowaccum = 0.0;
     }
 
     /* for multi-layer (>= 1) snow */
@@ -239,6 +239,7 @@ snow_hydrology(double             step_dt,
         pack_ice[0] = max(pack_ice[0], 0.0);
         pack_liq[0] += (snow_dew - snow_evap) * step_dt * coverage;
         pack_liq[0] = max(0.0, pack_liq[0]);
+        snow->snowaccum += (snowfrost + snow_dew) * step_dt * coverage;
         /* soil layer evaporation/deposition */
         double soil_inflow = (soil_dew - soil_evap + rainfall) * step_dt * (1.0 - coverage);
         if (soil_inflow < 0.0) {
@@ -260,17 +261,10 @@ snow_hydrology(double             step_dt,
         // 检查土壤总含水量是否超过饱和，多余的冰转移到 excess_ice
         double total_water = liq[0] + ice[0];
         if (total_water > Wsat_node[0]) {
-            double excess_water = total_water - Wsat_node[0];
-            // 优先移出冰，但不超过当前冰量
-            double ice_excess = min(ice[0], excess_water);
+            double ice_excess = total_water - Wsat_node[0];
             ice[0] -= ice_excess;
-            excess_ice[0] += ice_excess * dz_soil[0] * CONST_RHOICE; // 转换为 kg/m2
+            excess_ice[0] += ice_excess;
         }
-        if (ice[0] < 0.0) {
-            liq[0] += ice[0];
-            ice[0] = 0.0;
-        }
-        cell->moist[0] = liq[0] + ice[0] * CONST_RHOICE / CONST_RHOFW;
     }
 
     /* compute inter-layer snow water flow */
@@ -359,8 +353,8 @@ snow_hydrology(double             step_dt,
     }
 
     // 计算累计厚度和中心位置
-    double cum_depth = 0.0;
     for (i = 0; i < snow->Nsnow; i++) {
+        double cum_depth = 0.0;
         cum_depth += snow->dz_snow[i];
         snow->Zsum_snow[i] = cum_depth;  // 累计厚度到该层底部
         snow->zc_snow[i] = cum_depth - snow->dz_snow[i] / 2.0;  // 中心位置
@@ -374,6 +368,7 @@ snow_hydrology(double             step_dt,
             snow->swq += pack_ice[i] + pack_liq[i];
             snow->snow_depth += dz_snow[i];
         }
+        snow->snowaccum = max(snow->swq, snow->snowaccum);
     }
 
     // update snow quantity

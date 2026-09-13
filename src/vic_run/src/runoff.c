@@ -23,9 +23,11 @@ runoff(double             step_dt,
     // 指针赋值 
     double *liq = cell->liq;
     double *ice = cell->ice;
+    double *moist = cell->moist;
     double *dz_soil = soil_con->dz_soil;
+    double *excess_ice = cell->excess_ice;
     double *Wsat_node = soil_con->Wsat_node;
-    double *porosity = cell->porosity;  // 有效孔隙度
+    double *eff_porosity = cell->eff_porosity;  // 有效孔隙度
     // 初始化
     Nsoil = cell->Nsoil;
     cell->soil_excess = 0.0; // 土壤超出水分[m]
@@ -37,17 +39,25 @@ runoff(double             step_dt,
     double baseflow = 0.0;
     // 计算土壤超出水分
     for (i = 0; i < Nsoil; i++) {
-        porosity[i] = max(0.0, Wsat_node[i] - ice[i]);
+        eff_porosity[i] = max(0.0, Wsat_node[i] - ice[i]);
         /** Set Layer Liquid Moisture Content **/
-        cell->soil_excess += max(0.0, liq[i] - porosity[i]) * dz_soil[i];
-        if (liq[i] > porosity[i]) {
-            liq[i] = porosity[i];
+        if (liq[i] > eff_porosity[i]) {
+            cell->soil_excess += (liq[i] - eff_porosity[i]) * dz_soil[i];
+            liq[i] = eff_porosity[i];
+        }
+        moist[i] = liq[i] + (ice[i] + excess_ice[i]) *
+                         CONST_RHOICE / CONST_RHOFW;
+        // 土壤水分诊断
+        if (moist[i] > Wsat_node[i] + 1.0e-12) {
+            log_err("Soil moisture exceeds saturation: layer = %zu, moist = %.4f, Wsat = %.4f, ",
+                    i, moist[i], Wsat_node[i]);
         }
     }
-    /**************************************************
-       Compute Flow Between Soil Layers
-    **************************************************/
-    // 计算入渗率、蓄满产流和超渗产流
+
+    /*************************************************
+       Compute surface runoff
+    *************************************************/
+    // Compute infiltration rate, saturation excess runoff and infiltration excess runoff.
     calc_dynamicVIC(inflow, &infil_acc,
                     step_dt, &runoff,
                     &infil_rate, 

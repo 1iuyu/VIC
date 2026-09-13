@@ -21,7 +21,7 @@ CalcPhaseChange(size_t             nidx,
     double tmp_tkfrz = 0.0;
     double eff_Cs = 0.0;
     double EnergyRes = 0.0;
-    double liq_deriv = 0.0;
+    //double liq_deriv = 0.0;
     double equil_liq = 0.0;
     double tmp_matric = 0.0;
     double fusion_flux = 0.0;
@@ -55,7 +55,6 @@ CalcPhaseChange(size_t             nidx,
     
     // 分情况处理
     if (*T <= tmp_tkfrz) {
-        equil_liq = frozen_soil(nidx, tmp_tkfrz, *T, liq, ice, soil_con);
         // 热力学上所有水都能保持液态，但需要检查是否有足够冷量来冻结
         if (total_liq < equil_liq) {
             liq[nidx] = total_liq;

@@ -20,7 +20,6 @@ calc_snow_coverage(double            step_dt,
                    int               flag)
 {
     extern parameters_struct param;
-
     /* initialization */
     double coverage = 0.0;
     double topo_std = soil_con->topo_std;
@@ -31,8 +30,8 @@ calc_snow_coverage(double            step_dt,
         n_melt = 10.0;
     }
 
-    double new_snow = snowfall * step_dt;
     if (flag == SNOW_ACCU) {
+        double new_snow = snowfall * step_dt;
         double k_accum = 1.15 * pow(topo_std, -0.55);
         if (snow->swq <= 0.0) {
             if (new_snow > 0.0) {
@@ -45,19 +44,25 @@ calc_snow_coverage(double            step_dt,
         }
         else {
             if (new_snow > 0.0) {
-                snow->coverage = snow->coverage + tanh(k_accum * new_snow) *
+                coverage = snow->coverage + tanh(k_accum * new_snow) *
                                 (1.0 - snow->coverage);
             }
             snow->coverage =
-                min(1.0, max(0.0, snow->coverage));            
+                min(1.0, max(0.0, coverage));            
         }
         // Add newsnow to integrated snowfall
         if (new_snow > 0.0) {
-            // Characteristic SWE corresponding to the snow-covered fraction before snowmelt.
-            double temp_intsnow = (snow->swq + new_snow) / 
-                        (0.5 * (cos(CONST_PI * pow(1.0 - snow->coverage, 1.0 / n_melt)) + 1.0));
-
-            snow->snowaccum = min(1.e8, temp_intsnow);
+            double tmp_intsnow = snow->swq + new_snow;
+            if (snow->swq > 0.0 && coverage > 1.0e-3) {
+                double a = pow(1.0 - coverage, 1.0 / n_melt);
+                double s = sin(0.5 * CONST_PI * (1.0 - a));
+                double denom = s * s;
+                if (denom > 1.e-12 && !isfinite(denom)) {
+                    tmp_intsnow = (snow->swq + new_snow) / denom;
+                }
+            }
+            // 数值限制
+            snow->snowaccum = min(1.e8, tmp_intsnow);
         }
         snow->snowaccum += new_snow;
     }
