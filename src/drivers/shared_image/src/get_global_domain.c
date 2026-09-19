@@ -303,7 +303,7 @@ initialize_location(location_struct *location)
     location->area = MISSING;
     location->frac = MISSING;
     location->nveg = MISSING_USI;
-    location->band = MISSING_USI;
+    location->nband = MISSING_USI;
     location->global_idx = MISSING_USI;
     location->io_idx = MISSING_USI;
     location->local_idx = MISSING_USI;
@@ -334,10 +334,10 @@ add_subgrid_to_global_domain(nameid_struct *nc_nameid,
         global_domain->locations[i].nveg = (size_t) ivar[i];
     }
 
-    get_nc_field_int(nc_nameid, "band", d2start, d2count, ivar);
+    get_nc_field_int(nc_nameid, "nband", d2start, d2count, ivar);
 
     for (i = 0; i < global_domain->ncells_total; i++) {
-        global_domain->locations[i].band = (size_t) ivar[i];
+        global_domain->locations[i].nband = (size_t) ivar[i];
     }
 
 

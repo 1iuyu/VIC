@@ -12,9 +12,7 @@
  * @brief    Calculate the canopy energy balance.
  *****************************************************************************/
 int
-func_canopy_energy_bal(size_t             hidx,
-                       double             step_dt,
-                       double             air_temp,
+func_canopy_energy_bal(double             step_dt,
                        force_data_struct *force,
                        energy_bal_struct *energy,
                        cell_data_struct  *cell,
@@ -29,14 +27,15 @@ func_canopy_energy_bal(size_t             hidx,
     int         ErrorFlag;
     double      Ra_leaf;
     /* Initialization */
-    double Qair = force->Qair[hidx];
-    double wind = force->wind[hidx];
-    double pressure = force->pressure[hidx];
-    double longwave = force->longwave[hidx];
-    double air_density = force->density[hidx];
-    double theta_pot = force->theta_pot[hidx];
-    double theta_v = force->theta_v[hidx];
-    double daylen = force->daylen[hidx];
+    double Qair = force->Qair;
+    double wind = force->wind;
+    double air_temp = force->air_temp;
+    double pressure = force->pressure;
+    double longwave = force->longwave;
+    double air_density = force->density;
+    double theta_pot = force->theta_pot;
+    double theta_v = force->theta_v;
+    double daylen = soil_con->daylen;
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
     double fcanopy = veg_var->fcanopy;

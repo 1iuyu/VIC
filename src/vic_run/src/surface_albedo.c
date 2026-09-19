@@ -12,9 +12,7 @@
  *****************************************************************************/
 int
 surface_albedo(double             step_dt,
-               double             coszen,
-               double             air_temp,
-               double             snowfall,
+               force_data_struct *force,
                energy_bal_struct *energy,
                cell_data_struct  *cell,
                snow_data_struct  *snow,
@@ -27,6 +25,9 @@ surface_albedo(double             step_dt,
     size_t i, j;
     double leaf_frac = 0.0;
     double stem_frac = 0.0;
+    double coszen = soil_con->coszen;
+    double air_temp = force->air_temp;
+    double snowfall = force->snowf;
     double coverage = snow->coverage;
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
@@ -148,8 +149,8 @@ surface_albedo(double             step_dt,
 
         /* Compute ground albedo based on soil and snow albedo */
         GroundAlbedo(cell->moist[0],
-                     coszen, energy,
-                     cell, soil_con);
+                     coszen, 
+                     energy, cell);
 
         // age snow albedo if no new snowfall
         // solar radiation process is only done if there is light

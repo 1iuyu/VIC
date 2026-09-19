@@ -74,10 +74,7 @@ update_nodes(double             pressure,
 
     // update new snow layer properties
     if (Nsnow != last_Nsnow) {
-        double new_T[MAX_NODES];
-        for (i = 0; i < MAX_NODES; i++) {
-            new_T[i] = 0.0;
-        }
+        double new_T[MAX_NODES] = {0};
         for (i = 0; i < cell->Nnode; i++) {
             if (i < Nsnow) {
                 new_T[i] = pack_T[i];
@@ -100,8 +97,6 @@ update_nodes(double             pressure,
     }
 
     // update the last time step values
-    snow->last_Nsnow = snow->Nsnow;
-    snow->last_swq = snow->swq;
     for (i = 0; i < tmp_Nnode; i++) {
         last_T[i] = T[i];
     }

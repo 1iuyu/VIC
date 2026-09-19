@@ -14,9 +14,9 @@
  *           are stored in state files.
  *****************************************************************************/
 void
-compute_derived_state_vars(all_vars_struct *all_vars,
-                           soil_con_struct *soil_con,
-                           veg_con_struct  *veg_con)
+compute_derived_state_vars(all_vars_struct   *all_vars,
+                           soil_con_struct   *soil_con,
+                           veg_con_struct    *veg_con)
 {
     extern global_param_struct global_param;
     extern parameters_struct   param;

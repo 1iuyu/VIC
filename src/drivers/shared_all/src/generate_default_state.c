@@ -12,8 +12,7 @@
  *           snow components) to default values.
  *****************************************************************************/
 void
-generate_default_state(force_data_struct *force,
-                       all_vars_struct   *all_vars,
+generate_default_state(all_vars_struct   *all_vars,
                        soil_con_struct   *soil_con,
                        veg_con_struct    *veg_con,
                        veg_lib_struct    *veg_lib)
@@ -32,16 +31,15 @@ generate_default_state(force_data_struct *force,
     snow_data_struct *snow;
     veg_var_struct *veg_var;
     energy_bal_struct *energy;
+    force_data_struct *force;
     cell = all_vars->cell;
     snow = all_vars->snow;
     veg_var = all_vars->veg_var;
     energy = all_vars->energy;
+    force = all_vars->force;
     Nveg = veg_con[0].vegetat_type_num;
     double *zc_soil = soil_con->zc_soil;
     double step_dt = global_param.step_dt;
-    double wind = force->wind[NR];
-    double air_temp = force->air_temp[NR];
-    double pressure = force->pressure[NR];
 
     /************************************
       Initialize snowpack properties
@@ -79,9 +77,7 @@ generate_default_state(force_data_struct *force,
                 snow[veg].coverage = coverage;
             }
             // set snow layer properties
-            distribute_snow_state(step_dt, wind, 
-                                  air_temp,
-                                  pressure, &snow[veg]);
+            distribute_snow_state(step_dt, &force[veg], &snow[veg]);
         }
     }
 
@@ -137,7 +133,7 @@ generate_default_state(force_data_struct *force,
             band = veg_con[veg].BandIndex;
             Nsnow = snow[veg].Nsnow;
             double T_soil = 0.0;
-            double surf_temp = air_temp + soil_con->Tfactor[band];
+            double surf_temp = force[band].air_temp;
             // Initialize snow node temperatures
             for (i = 0; i < Nsnow; i++) {
                 energy[veg].T[i] = snow[veg].pack_T[i];
@@ -215,6 +211,8 @@ generate_default_state(force_data_struct *force,
                 cell[veg].last_liq[i] = cell[veg].liq[i];
                 cell[veg].last_matric[i] = cell[veg].matric[i];
             }
+            band = veg_con[veg].BandIndex;
+            double pressure = force[band].pressure;
             /* Soil and ice thermal properties for the layer */
             prepare_full_energy(pressure, &cell[veg], 
                                 &energy[veg],

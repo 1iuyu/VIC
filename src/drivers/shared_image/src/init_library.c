@@ -10,10 +10,10 @@
  * @brief    Initialize soil con sructure.
  *****************************************************************************/
 void
-initialize_soil_con(soil_con_struct *soil_con)
+initialize_soil_con(size_t           Nband,
+                    soil_con_struct *soil_con)
 {
-    extern option_struct options;
-    size_t               i;
+    size_t i;
     
     soil_con->gridcel = MISSING_USI;
     soil_con->avg_temp = 0.0;
@@ -28,6 +28,8 @@ initialize_soil_con(soil_con_struct *soil_con)
     soil_con->slope = 0.0;
     soil_con->topo_std = 0.0;
     soil_con->init_zwt = 0.0;
+    soil_con->coszen = 0.0;
+    soil_con->daylen = 0.0;
 
     for (i = 0; i < MAX_LAYERS; i++) {
         soil_con->depth[i] = 0.0;
@@ -56,7 +58,7 @@ initialize_soil_con(soil_con_struct *soil_con)
         soil_con->soil_pore[i] = 0.0;
     }
 
-    for (i = 0; i < options.SNOW_BAND; i++) {
+    for (i = 0; i < Nband; i++) {
         soil_con->BandElev[i] = 0.;
         soil_con->AreaFract[i] = 1.;
         soil_con->Pfactor[i] = 0.;

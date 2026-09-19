@@ -14,11 +14,7 @@
  *****************************************************************************/
 int
 snow_hydrology(double             step_dt,
-               double             air_temp,
-               double             rainfall,
-               double             snowfall,
-               double             pressure,
-               double             wind,
+               force_data_struct *force,
                energy_bal_struct *energy,
                cell_data_struct  *cell,
                snow_data_struct  *snow,        
@@ -38,6 +34,7 @@ snow_hydrology(double             step_dt,
     // 指针赋值               
     double *liq = cell->liq;
     double *ice = cell->ice;
+    double *moist = cell->moist;
     double *dz_snow = snow->dz_snow;
     double *snow_porosity = snow->porosity;
     double *theta_liq = snow->theta_liq;
@@ -54,6 +51,11 @@ snow_hydrology(double             step_dt,
     double snow_density = 0.0;
     double excess_flux = 0.0;
     double liquid_capacity = 0.0;
+    double wind = force->wind;
+    double air_temp = force->air_temp;
+    double pressure = force->pressure;
+    double snowfall = force->snowf;
+    double rainfall = force->rainf;
     double coverage = snow->coverage;
     double LatentVapGrnd = energy->LatentVapGrnd;
 
@@ -61,6 +63,7 @@ snow_hydrology(double             step_dt,
         dew rate based on energy flux. **/
     // positive part of ground latent heat
     double snow_limit = 0.0, soil_limit = 0.0;
+    double bare_frac = 1.0 - coverage;
     if (Nsnow > 0) {
         vapor_grnd = energy->LatentSnow / LatentVapGrnd; // mm/s
         if (vapor_grnd >= 0.0) {
@@ -91,8 +94,8 @@ snow_hydrology(double             step_dt,
         // update soil energy fluxes
         vapor_grnd = energy->LatentSoil / LatentVapGrnd; // mm/s
         if (vapor_grnd >= 0.0) {
-            if (liq[0] + ice[0] > 0.0) {
-                soil_evap = max(vapor_grnd * (liq[0] / (liq[0] + ice[0])), 0.0); // mm/s
+            if (moist[0] > 0.0) {
+                soil_evap = max(vapor_grnd * (liq[0] / moist[0]), 0.0); // mm/s
             }
             else {
                 soil_evap = 0.0;
@@ -107,16 +110,33 @@ snow_hydrology(double             step_dt,
                 soilfrost = fabs(vapor_grnd); // mm/s
             }
         }
-        double soil_water = liq[0] * dz_soil[0] * CONST_RHOFW + ice[0] * dz_soil[0] * CONST_RHOICE;
-        soil_limit = soil_water / ((1.0 - coverage) * step_dt);
-        if (vapor_grnd > soil_limit) {
-            soil_evap = min(soil_evap, liq[0] * dz_soil[0] * CONST_RHOFW / ((1.0 - coverage) * step_dt));
-            soil_sublim = min(soil_sublim, ice[0] * dz_soil[0] * CONST_RHOICE / ((1.0 - coverage) * step_dt));
-            energy->LatentSoil = soil_limit * LatentVapGrnd;
-            energy->SensibleSoil += (vapor_grnd - soil_limit) * LatentVapGrnd;
+        if (1.0 - coverage > 0.0) {
+            if (soilfrost > 0.0) {
+                soil_limit = max(Wsat_node[0] - moist[0], 0.0) *
+                            dz_soil[0] * MM_PER_M /
+                            (bare_frac * step_dt);
+
+                if (soilfrost > soil_limit) {
+                    soilfrost -= soil_limit;
+                    snow->swq += soilfrost * step_dt * bare_frac;
+                    soilfrost = soil_limit;
+                }
+            }
+            soil_limit = moist[0] * dz_soil[0] * MM_PER_M / (bare_frac * step_dt);
+            if (vapor_grnd > soil_limit) {
+                soil_evap = min(soil_evap, liq[0] * dz_soil[0] * MM_PER_M / (bare_frac * step_dt));
+                soil_sublim = min(soil_sublim, (ice[0] + excess_ice[0]) * dz_soil[0] * CONST_RHOICE * MM_PER_M / 
+                                CONST_RHOFW / (bare_frac * step_dt));
+                double soil_actual = min(soil_evap + soil_sublim, soil_limit);
+                if (soil_evap + soil_sublim > soil_actual) {
+                    soil_sublim = max(soil_actual - soil_evap, 0.0);
+                }
+                energy->LatentSoil = soil_actual * LatentVapGrnd;
+                energy->SensibleSoil += (vapor_grnd - soil_actual) * LatentVapGrnd;
+            }
         }
-        energy->latent = energy->LatentSnow * coverage + energy->LatentSoil * (1.0 - coverage);
-        energy->sensible = energy->SensibleSnow * coverage + energy->SensibleSoil * (1.0 - coverage);
+        energy->latent = energy->LatentSnow * coverage + energy->LatentSoil * bare_frac;
+        energy->sensible = energy->SensibleSnow * coverage + energy->SensibleSoil * bare_frac;
     }
     else {
         vapor_grnd = energy->latent / LatentVapGrnd; // mm/s
@@ -134,18 +154,20 @@ snow_hydrology(double             step_dt,
             soil_evap = 0.0;
             soil_sublim = 0.0;
             if (1.0 - coverage > 0.0) {
-                if (liq[0] + ice[0] > 0.0) {
-                    soil_evap = max(vapor_grnd * (liq[0] / (liq[0] + ice[0])), 0.0);
+                if (moist[0] > 0.0) {
+                    soil_evap = max(vapor_grnd * (liq[0] / moist[0]), 0.0);
                 }
                 soil_sublim = vapor_grnd - soil_evap;
-                double soil_water = liq[0] * dz_soil[0] * CONST_RHOFW +
-                                    ice[0] * dz_soil[0] * CONST_RHOICE;
-                soil_limit = soil_water / ((1.0 - coverage) * step_dt);
+                soil_limit = moist[0] * dz_soil[0] * MM_PER_M / (bare_frac * step_dt);
                 if (vapor_grnd > soil_limit) {
-                    soil_evap = min(soil_evap, liq[0] * dz_soil[0] * CONST_RHOFW /
-                                    ((1.0 - coverage) * step_dt));
-                    soil_sublim = min(soil_sublim, ice[0] * dz_soil[0] * CONST_RHOICE /
-                                    ((1.0 - coverage) * step_dt));
+                    soil_evap = min(soil_evap, liq[0] * dz_soil[0] * MM_PER_M /
+                                    (bare_frac * step_dt));
+                    soil_sublim = min(soil_sublim, (ice[0] + excess_ice[0]) * dz_soil[0] * 
+                                CONST_RHOICE / CONST_RHOFW * MM_PER_M / (bare_frac * step_dt));
+                    double soil_actual = min(soil_evap + soil_sublim, soil_limit);
+                    if (soil_evap + soil_sublim > soil_actual) {
+                        soil_sublim = max(soil_actual - soil_evap, 0.0);
+                    }
                 }
             }
         }
@@ -165,16 +187,36 @@ snow_hydrology(double             step_dt,
                 else {
                     soilfrost = fabs(vapor_grnd);
                 }
+                if (soilfrost > 0.0) {
+                    soil_limit = max(Wsat_node[0] - moist[0], 0.0) *
+                                dz_soil[0] * MM_PER_M /
+                                (bare_frac * step_dt);
+
+                    if (soilfrost > soil_limit) {
+                        soilfrost -= soil_limit;
+                        snow->swq += soilfrost * step_dt * bare_frac;
+                        soilfrost = soil_limit;
+                    }
+                }
             }
         }
         /* actual cell-average latent heat flux after snow/soil water limitation */
-        double vapor_actual = coverage * (snow_evap + snow_sublim) +
-                              (1.0 - coverage) * (soil_evap + soil_sublim);
+        double vapor_actual = 0.0;
+        if (vapor_grnd >= 0.0) {
+            vapor_actual = coverage * (snow_evap + snow_sublim) +
+                        bare_frac * (soil_evap + soil_sublim);
+        } else {
+            vapor_actual = coverage * (snow_dew + snowfrost) +
+                        bare_frac * (soil_dew + soilfrost);
+            vapor_actual = -vapor_actual; // 凝结为负通量
+        }
         /* conserve total energy flux. The difference between evaporation demand
            and actual evaporation is returned to sensible heat. */
-        if (vapor_actual < vapor_grnd) {
+        if (fabs(vapor_actual) < fabs(vapor_grnd)) {
             energy->latent = vapor_actual * LatentVapGrnd;
             energy->sensible += (vapor_grnd - vapor_actual) * LatentVapGrnd;
+        } else {
+            energy->latent = vapor_actual * LatentVapGrnd;
         }
     }
 
@@ -222,11 +264,16 @@ snow_hydrology(double             step_dt,
         else {
             cell->soil_inflow = soil_inflow;
         }
-        ice[0] += (soilfrost - soil_sublim) * step_dt * (1.0 - coverage) / (dz_soil[0] * MM_PER_M);
+        ice[0] += (soilfrost - soil_sublim) * step_dt * (1.0 - coverage) * 
+                   CONST_RHOFW / (CONST_RHOICE * dz_soil[0] * MM_PER_M);
+        if (ice[0] < 0.0) {
+            excess_ice[0] += ice[0];
+            ice[0] = 0.0;
+            excess_ice[0] = max(excess_ice[0], 0.0);
+        }
         // 检查土壤总含水量是否超过饱和，多余的冰转移到 excess_ice
-        double total_water = liq[0] + ice[0];
-        if (total_water > Wsat_node[0]) {
-            double ice_excess = total_water - Wsat_node[0];
+        if (ice[0] > max(Wsat_node[0] - liq[0], 0.0)) {
+            double ice_excess = ice[0] - max(Wsat_node[0] - liq[0], 0.0);
             ice[0] -= ice_excess;
             excess_ice[0] += ice_excess;
         }
@@ -249,19 +296,20 @@ snow_hydrology(double             step_dt,
         else {
             if (soil_inflow > 0.0001) {
                 soil_inflow *= step_dt * MM_PER_M;
-                log_warn("Soil inflow is too large: %f mm", soil_inflow);
+                log_warn("Soil inflow is too large: %.4f mm", soil_inflow);
             }
             cell->soil_inflow = soil_inflow;
         }
-        ice[0] += (soilfrost - soil_sublim) * step_dt * (1.0 - coverage) / (dz_soil[0] * MM_PER_M);
+        ice[0] += (soilfrost - soil_sublim) * step_dt * (1.0 - coverage) * 
+                    CONST_RHOFW / (CONST_RHOICE * dz_soil[0] * MM_PER_M);
         if (ice[0] < 0.0) {
-            liq[0] += ice[0];
+            excess_ice[0] += ice[0];
             ice[0] = 0.0;
+            excess_ice[0] = max(excess_ice[0], 0.0);
         }
         // 检查土壤总含水量是否超过饱和，多余的冰转移到 excess_ice
-        double total_water = liq[0] + ice[0];
-        if (total_water > Wsat_node[0]) {
-            double ice_excess = total_water - Wsat_node[0];
+        if (ice[0] > max(Wsat_node[0] - liq[0], 0.0)) {
+            double ice_excess = ice[0] - max(Wsat_node[0] - liq[0], 0.0);
             ice[0] -= ice_excess;
             excess_ice[0] += ice_excess;
         }
@@ -353,8 +401,8 @@ snow_hydrology(double             step_dt,
     }
 
     // 计算累计厚度和中心位置
+    double cum_depth = 0.0;
     for (i = 0; i < snow->Nsnow; i++) {
-        double cum_depth = 0.0;
         cum_depth += snow->dz_snow[i];
         snow->Zsum_snow[i] = cum_depth;  // 累计厚度到该层底部
         snow->zc_snow[i] = cum_depth - snow->dz_snow[i] / 2.0;  // 中心位置
@@ -390,6 +438,8 @@ snow_hydrology(double             step_dt,
     update_nodes(pressure, 
                  energy,  cell, 
                  snow, soil_con);
+    snow->last_Nsnow = snow->Nsnow;
+    snow->last_swq = snow->swq;
 
     // === 损失项（正值） ===
     cell->soil_evap = soil_evap * (1.0 - coverage);       // 裸土蒸发

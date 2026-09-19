@@ -15,9 +15,12 @@
 void
 free_all_vars(all_vars_struct *all_vars)
 {
-
+    if (all_vars == NULL) {
+        return;
+    }
     free(all_vars->cell);
     free(all_vars->veg_var);
     free(all_vars->energy);
     free(all_vars->snow);
+    free(all_vars->force);
 }

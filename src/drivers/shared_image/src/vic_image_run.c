@@ -14,7 +14,6 @@ void
 vic_image_run(dmy_struct *dmy_current)
 {
     extern all_vars_struct    *all_vars;
-    extern force_data_struct  *force;
     extern domain_struct       local_domain;
     extern option_struct       options;
     extern global_param_struct global_param;
@@ -42,12 +41,12 @@ vic_image_run(dmy_struct *dmy_current)
         update_step_vars(&(all_vars[i]), veg_con[i], veg_hist[i]);
 
         timer_start(&timer);
-        vic_run(&(force[i]), &(all_vars[i]), &global_param,
+        vic_run(&(all_vars[i]), &global_param,
                 &(soil_con[i]), veg_con[i], veg_lib);
         timer_stop(&timer);
 
-        put_data(output_streams[0].nveg[i], &(all_vars[i]), &(force[i]),
-                 veg_con[i], out_data[i], &timer, &(output_streams[0]));
+        put_data(&(all_vars[i]), veg_con[i], &soil_con[i], 
+                 out_data[i], &timer, &(output_streams[0]));
     }
 
     // run routing over the domain

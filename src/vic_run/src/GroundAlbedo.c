@@ -15,14 +15,13 @@ void
 GroundAlbedo(double             moist,
              double             coszen,
              energy_bal_struct *energy,
-             cell_data_struct  *cell,
-             soil_con_struct   *soil_con)
+             cell_data_struct  *cell)
 {
     extern parameters_struct param;
     extern option_struct     options;
     double  swcf_albedo;
-    double *AlbedoSat = soil_con->AlbedoSat;
-    double *AlbedoDry = soil_con->AlbedoDry;
+    double *AlbedoSat = energy->AlbedoSat;
+    double *AlbedoDry = energy->AlbedoDry;
     double *AlbedoSoilDir = energy->AlbedoSoilDir;
     double *AlbedoSoilDfs = energy->AlbedoSoilDfs;
 

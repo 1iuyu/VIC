@@ -86,7 +86,7 @@ initialize_parameters()
     param.SVP_D6 = 0.133268878e-10;
     param.SVP_D7 = 0.394116744e-13;
     param.SVP_D8 = 0.498070196e-16;
-    param.SVP_FRZ = 0.611;
+    param.SVP_FRZ = 6.112;  // Vapor Pressure at Freezing STD (mb)
     param.SVP_RDAIR = 0.622;
 
     // Photosynthesis Parameters
@@ -182,7 +182,7 @@ initialize_parameters()
     param.MAX_LIMIT = 1.0e6;
 
     // Wetbulb Iterations
-    param.TOL_WETBULB = 0.001;
+    param.TOL_WETBULB = 1.0e-5;
     param.MAX_ITER_WETBULB = 10;
 
     // two-stream parameter omega for snow

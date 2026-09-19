@@ -12,10 +12,9 @@
  *           an array for later output to the output files.
  *****************************************************************************/
 void
-put_data(size_t             nveg,
-         all_vars_struct   *all_vars,
-         force_data_struct *force,
+put_data(all_vars_struct   *all_vars,
          veg_con_struct    *veg_con,
+         soil_con_struct   *soil_con,
          double          ***out_data,
          timer_struct      *timer,
          stream_struct     *streams)
@@ -33,11 +32,13 @@ put_data(size_t             nveg,
     energy_bal_struct *energy;
     snow_data_struct  *snow;
     veg_var_struct    *veg_var;
+    force_data_struct *force;
 
     cell = all_vars->cell;
     energy = all_vars->energy;
     snow = all_vars->snow;
     veg_var = all_vars->veg_var;
+    force = all_vars->force;
 
     double dt_sec = global_param.step_dt;
 
@@ -45,77 +46,14 @@ put_data(size_t             nveg,
         size_t varid = streams->varid[j];
         output_var[varid] = true;
     }
-
+    size_t nveg = veg_con[0].vegetat_type_num;
     // Initialize output data to zero
     zero_output_list(nveg, out_data, streams);
-
-    // Set output versions of input forcings
-    if (output_var[OUT_AIR_TEMP]) {
-        out_data[OUT_AIR_TEMP][0][0] = force->air_temp[NR];
-    }
-    if (output_var[OUT_DENSITY]) {
-        out_data[OUT_DENSITY][0][0] = force->density[NR];
-    }
-    if (output_var[OUT_LWDOWN]) {
-        out_data[OUT_LWDOWN][0][0] = force->longwave[NR];
-    }
-    if (output_var[OUT_PREC]) {
-        out_data[OUT_PREC][0][0] = force->prec[NR] * dt_sec;  // mm over grid cell
-    }
-    if (output_var[OUT_PRESSURE]) {
-        out_data[OUT_PRESSURE][0][0] = force->pressure[NR] / PA_PER_KPA;
-    }
-    if (output_var[OUT_QAIR]) {
-        out_data[OUT_QAIR][0][0] = force->Qair[NR];
-    }
-    if (output_var[OUT_RAINF]) {
-        out_data[OUT_RAINF][0][0] = force->rainf[NR] * dt_sec;   // mm over grid cell
-    }
-    if (output_var[OUT_REL_HUMID]) {
-        out_data[OUT_REL_HUMID][0][0] = force->rel_humid[NR];
-    }
-    if (output_var[OUT_SWDOWN]) {
-        out_data[OUT_SWDOWN][0][0] = force->shortwave[NR];
-    }
-    if (output_var[OUT_SNOWF]) {
-        out_data[OUT_SNOWF][0][0] = force->snowf[NR] * dt_sec;   // mm over grid cell
-    }
-    if (output_var[OUT_VP]) {
-        out_data[OUT_VP][0][0] = force->vp[NR] / PA_PER_KPA;
-    }
-    if (output_var[OUT_WIND]) {
-        out_data[OUT_WIND][0][0] = force->wind[NR];
-    }
-    if (output_var[OUT_COSZEN]) {
-        out_data[OUT_COSZEN][0][0] = force->coszen[NR];
-    }
-    if (options.CARBON) {
-        if (output_var[OUT_CATM]) {
-            out_data[OUT_CATM][0][0] = force->Catm[NR] / PPM_to_MIXRATIO;
-        }
-        if (output_var[OUT_FDIR]) {
-            out_data[OUT_FDIR][0][0] = force->fdir[NR];
-        }
-        if (output_var[OUT_PAR]) {
-            out_data[OUT_PAR][0][0] = force->par[NR];
-        }
-    }
-    else {
-        if (output_var[OUT_CATM]) {
-            out_data[OUT_CATM][0][0] = MISSING;
-        }
-        if (output_var[OUT_FDIR]) {
-            out_data[OUT_FDIR][0][0] = MISSING;
-        }
-        if (output_var[OUT_PAR]) {
-            out_data[OUT_PAR][0][0] = MISSING;
-        }
-    }
 
     /****************************************
        Store Output for all Vegetation Types
     ****************************************/
-    for (veg = 0; veg <= veg_con[0].vegetat_type_num; veg++) {
+    for (veg = 0; veg <= nveg; veg++) {
         // Determine whether the land cover is vegetation
         if (cell[veg].IS_VEG) {
             HasVeg = true;
@@ -123,8 +61,78 @@ put_data(size_t             nveg,
         else if (cell[veg].IS_GLAC) {
             HasGlac = true;
         }
+        
         if (veg_con[veg].Cv > 0.0) {
-            // Ground (soil/snow) surface
+
+            size_t band = veg_con[veg].BandIndex;
+            /****************************************
+             Set output versions of input forcings
+            ****************************************/
+            if (output_var[OUT_AIR_TEMP]) {
+                out_data[OUT_AIR_TEMP][veg][0] = force[band].air_temp;
+            }
+            if (output_var[OUT_DENSITY]) {
+                out_data[OUT_DENSITY][veg][0] = force[band].density;
+            }
+            if (output_var[OUT_LWDOWN]) {
+                out_data[OUT_LWDOWN][veg][0] = force[band].longwave;
+            }
+            if (output_var[OUT_PREC]) {
+                out_data[OUT_PREC][veg][0] = force[band].prec * dt_sec;  // mm over grid cell
+            }
+            if (output_var[OUT_PRESSURE]) {
+                out_data[OUT_PRESSURE][veg][0] = force[band].pressure / PA_PER_KPA;
+            }
+            if (output_var[OUT_QAIR]) {
+                out_data[OUT_QAIR][veg][0] = force[band].Qair;
+            }
+            if (output_var[OUT_RAINF]) {
+                out_data[OUT_RAINF][veg][0] = force[band].rainf * dt_sec;   // mm over grid cell
+            }
+            if (output_var[OUT_REL_HUMID]) {
+                out_data[OUT_REL_HUMID][veg][0] = force[band].rel_humid;
+            }
+            if (output_var[OUT_SWDOWN]) {
+                out_data[OUT_SWDOWN][veg][0] = force[band].shortwave;
+            }
+            if (output_var[OUT_SNOWF]) {
+                out_data[OUT_SNOWF][veg][0] = force[band].snowf * dt_sec;   // mm over grid cell
+            }
+            if (output_var[OUT_VP]) {
+                out_data[OUT_VP][veg][0] = force[band].vp / PA_PER_KPA;
+            }
+            if (output_var[OUT_WIND]) {
+                out_data[OUT_WIND][veg][0] = force[band].wind;
+            }
+            if (output_var[OUT_COSZEN]) {
+                out_data[OUT_COSZEN][veg][0] = soil_con->coszen;
+            }
+            if (options.CARBON) {
+                if (output_var[OUT_CATM]) {
+                    out_data[OUT_CATM][veg][0] = force[band].Catm / PPM_to_MIXRATIO;
+                }
+                if (output_var[OUT_FDIR]) {
+                    out_data[OUT_FDIR][veg][0] = force[band].fdir;
+                }
+                if (output_var[OUT_PAR]) {
+                    out_data[OUT_PAR][veg][0] = force[band].par;
+                }
+            }
+            else {
+                if (output_var[OUT_CATM]) {
+                    out_data[OUT_CATM][veg][0] = MISSING;
+                }
+                if (output_var[OUT_FDIR]) {
+                    out_data[OUT_FDIR][veg][0] = MISSING;
+                }
+                if (output_var[OUT_PAR]) {
+                    out_data[OUT_PAR][veg][0] = MISSING;
+                }
+            }
+
+            /****************************************
+             Set Ground (soil/snow) surface
+            ****************************************/
             double tmp_evap = 0.0;
             tmp_evap += cell[veg].evap;
             if (output_var[OUT_NET_EVAP]) {

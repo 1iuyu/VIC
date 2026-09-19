@@ -35,7 +35,7 @@
 #define MOLE_PER_KMOLE 1000 /**< moles per kilomole */
 #define FRACT_TO_PERCENT 100
 #define PPM_to_MIXRATIO 1.0e-6
-#define C_TO_F(t) (t * 9. / 5.) + 32.
+#define C_TO_F(t) (t * 9.0 / 5.0) + 32.0
 #define K_TO_C(k) ((k) - 273.15)
 #define C_TO_K(t) ((t) + 273.15)
 
@@ -57,6 +57,7 @@
 #define CONST_OBLIQUITY 0.4090928 /**< earth's obliquity (radians) IAU 1976 (J2000.0) */ 
 /***** Physical Constants *****/
 #define CONST_REARTH 6.37122e6  /**< radius of the earth ~ m */
+#define CONST_SOLAR 1370.0 /**< solar constant (W/m2) */
 #define CONST_G 9.80616  /**< (m s-2) standard gravitational accel. */
 #define CONST_STEBOL 5.67e-8  /**< Stefan-Boltzmann constant ~ W/m^2/K^4 */
 #define CONST_BOLTZ 1.38065e-23  /**< Boltzmann's constant ~ J/K/molecule */
@@ -73,12 +74,13 @@
 #define CONST_RDAIR (CONST_RGAS / CONST_MWDAIR)  /**< Dry air gas constant ~ J/K/kg */
 #define CONST_RWV (CONST_RGAS / CONST_MWWV)  /**< Water vapor gas constant 461.269 ~ [J/K/kg] */ 
 #define CONST_EPS (CONST_MWWV / CONST_MWAIR)  /**< Ratio of molecular weights */
+#define CONST_DEPS (CONST_MWWV / CONST_MWDAIR) /**< ratio of molecular weight of water vapor to dry air */
 /**< temperatures */
 #define CONST_TKTRIP 273.16  /**< triple point of fresh water ~ K */
 #define CONST_TKFRZ 273.15  /**< freezing T of fresh water ~ K */
 /**< standard temperature and pressure */
 #define CONST_PSTD 101325.0  /**< (Pa) standard pressure at 0.0 m elevation */
-#define CONST_TSTD (CONST_TKFRZ + 15.0)  /**< (K) standard temp at 0.0 m elevation */
+#define CONST_PSREF 1000.0  /**< Reference Pressure (mb) */
 /**< densities */
 #define CONST_RHODAIR (CONST_PSTD / (CONST_RDAIR * CONST_TKFRZ))  /**< density of dry air at STP ~ kg/m^3 */
 #define CONST_RHOFW 1.000e3  /**< density of fresh water ~ kg/m^3 */

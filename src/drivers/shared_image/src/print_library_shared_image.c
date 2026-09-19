@@ -10,33 +10,28 @@
  * @brief    Print atmos data structure.
  *****************************************************************************/
 void
-print_force_data(force_data_struct *force)
+print_atmos_data(atmos_data_struct *atmos)
 {
     extern option_struct options;
 
     fprintf(LOG_DEST, "force_data  :\n");
-    fprintf(LOG_DEST, "\tair_temp  : %.4f\n", force->air_temp[0]);
-    fprintf(LOG_DEST, "\tdensity   : %.4f\n", force->density[0]);
-    fprintf(LOG_DEST, "\tlongwave  : %.4f\n", force->longwave[0]);
-    fprintf(LOG_DEST, "\tprec      : %.4f\n", force->prec[0]);
-    fprintf(LOG_DEST, "\tsnowf     : %.4f\n", force->snowf[0]);
-    fprintf(LOG_DEST, "\trainf     : %.4f\n", force->rainf[0]);
-    fprintf(LOG_DEST, "\tQair      : %.4f\n", force->Qair[0]);
-    fprintf(LOG_DEST, "\tpressure  : %.4f\n", force->pressure[0]);
-    fprintf(LOG_DEST, "\tshortwave : %.4f\n", force->shortwave[0]);
-    fprintf(LOG_DEST, "\trel_humid : %.4f\n", force->rel_humid[0]);
-    fprintf(LOG_DEST, "\tvp        : %.4f\n", force->vp[0]);
-    fprintf(LOG_DEST, "\tcoszen    : %.4f\n", force->coszen[0]);
-    fprintf(LOG_DEST, "\twind      : %.4f\n", force->wind[0]);
-    fprintf(LOG_DEST, "\ttheta_pot : %.4f\n", force->theta_pot[0]);
-    fprintf(LOG_DEST, "\ttheta_v   : %.4f\n", force->theta_v[0]);
+    fprintf(LOG_DEST, "\tair_temp  : %.4f\n", atmos->air_temp[0]);
+    fprintf(LOG_DEST, "\tlongwave  : %.4f\n", atmos->longwave[0]);
+    fprintf(LOG_DEST, "\tprec      : %.4f\n", atmos->prec[0]);
+    fprintf(LOG_DEST, "\tsnowf     : %.4f\n", atmos->snowf[0]);
+    fprintf(LOG_DEST, "\trainf     : %.4f\n", atmos->rainf[0]);
+    fprintf(LOG_DEST, "\tQair      : %.4f\n", atmos->Qair[0]);
+    fprintf(LOG_DEST, "\tpressure  : %.4f\n", atmos->pressure[0]);
+    fprintf(LOG_DEST, "\tshortwave : %.4f\n", atmos->shortwave[0]);
+    fprintf(LOG_DEST, "\trel_humid : %.4f\n", atmos->rel_humid[0]);
+    fprintf(LOG_DEST, "\twind      : %.4f\n", atmos->wind[0]);
     if (options.CARBON) {
-        fprintf(LOG_DEST, "\tCatm      : %.4f\n", force->Catm[0]);
-        fprintf(LOG_DEST, "\tfdir      : %.4f\n", force->fdir[0]);
-        fprintf(LOG_DEST, "\tpar       : %.4f\n", force->par[0]);
+        fprintf(LOG_DEST, "\tCatm      : %.4f\n", atmos->Catm[0]);
+        fprintf(LOG_DEST, "\tfdir      : %.4f\n", atmos->fdir[0]);
+        fprintf(LOG_DEST, "\tpar       : %.4f\n", atmos->par[0]);
     }
     if (options.ROUT) {
-        fprintf(LOG_DEST, "\tchannel_in      : %.4f\n", force->channel_in[0]);
+        fprintf(LOG_DEST, "\tchannel_in      : %.4f\n", atmos->channel_in[0]);
     }
 }
 

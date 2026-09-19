@@ -12,9 +12,7 @@
  * @brief    Calculate the bare soil surface energy balance.
  *****************************************************************************/
 int
-func_surf_energy_bal(size_t             hidx,
-                     double             air_temp,
-                     force_data_struct *force,
+func_surf_energy_bal(force_data_struct *force,
                      energy_bal_struct *energy,
                      cell_data_struct  *cell,
                      snow_data_struct  *snow)
@@ -32,13 +30,14 @@ func_surf_energy_bal(size_t             hidx,
     double *Z0m_grnd = cell->Z0m_grnd;
     double *ref_height = cell->ref_height;
     double *displacement = cell->displacement;
-    double Qair = force->Qair[hidx];
-    double wind = force->wind[hidx];
-    double pressure = force->pressure[hidx];
-    double longwave = force->longwave[hidx];
-    double air_density = force->density[hidx];
-    double theta_pot = force->theta_pot[hidx];
-    double theta_v = force->theta_v[hidx];
+    double Qair = force->Qair;
+    double wind = force->wind;
+    double air_temp = force->air_temp;
+    double pressure = force->pressure;
+    double longwave = force->longwave;
+    double air_density = force->density;
+    double theta_pot = force->theta_pot;
+    double theta_v = force->theta_v;
     double LatentVapGrnd = energy->LatentVapGrnd;
     double EmissLongGrnd = energy->EmissLongGrnd;
     double corr_wind = 0.0;

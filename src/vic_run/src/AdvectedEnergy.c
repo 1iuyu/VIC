@@ -10,9 +10,7 @@
 * @brief    Calculates the heat flux advected from precipitation
 ******************************************************************************/
 void
-AdvectedEnergy(double             air_temp,
-               double             snowfall,
-               double             rainfall,
+AdvectedEnergy(force_data_struct *force,
                energy_bal_struct *energy,
                cell_data_struct  *cell,
                veg_var_struct    *veg_var)
@@ -21,6 +19,9 @@ AdvectedEnergy(double             air_temp,
     double AdvectOver = 0.0;
     double AdvectGrnd = 0.0;
     double AdvectSub = 0.0;
+    double air_temp = force->air_temp;
+    double snowfall = force->snowf;
+    double rainfall = force->rainf;
     double fcanopy = veg_var->fcanopy;
     double Tgrnd = energy->Tgrnd;
     

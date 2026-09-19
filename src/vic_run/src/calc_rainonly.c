@@ -12,24 +12,14 @@
  *           precipitation is frozen and unfrozen (snow and rain).
  *****************************************************************************/
 void
-calc_rainonly(double  air_temp,
-              double  prec,
-              double  vp,
-              double  pressure,
+calc_rainonly(double  prec,
+              double  Twet_bulb,
               double  rel_humid,
               double  elevation,
               double *snowfall,
               double *rainfall)
 {   
-    extern parameters_struct param;
-    
-    size_t      iter;
     double      snowfrac;
-    double      svp;         
-    double      Twet;        // wetbulb temperature [C]
-    double      latent;      // latent heat of vapor or sublimation
-    double      PsychConst;  // psychrometric constant
-    double      delta;
     double      expr;
     double      T0;
     double      delta_T;
@@ -64,39 +54,15 @@ calc_rainonly(double  air_temp,
         MAX_SNOW_TEMP = T0;     
     }
 
-    if (air_temp > 0.) {
-        latent = CONST_LATVAP;
-    }
-    else {
-        latent = CONST_LATSUB;
-    }
-    /* Calculate psychrometric constant */
-    PsychConst = CONST_CPDAIR * pressure / (0.622 * latent);
-
-    /* initial guess */
-    Twet = air_temp - 3.0;
-
-    /* iterate wet-bulb temperature */
-    iter = 0;
-    do {
-        // saturation vapor pressure
-        svp = 610.8 * exp((17.27 * Twet) / (237.3 + Twet));
-        delta = (svp - vp) / PsychConst;
-        Twet -= delta;
-        iter++;
-    } 
-    while (iter < param.MAX_ITER_WETBULB &&
-        fabs(delta) > param.TOL_WETBULB);
-
     /* Decide phase fraction */
-    if (Twet < MAX_SNOW_TEMP && Twet > MIN_RAIN_TEMP) {
-        snowfrac = 1.0 / (1.0 + exp((Twet - T0) / delta_S));
+    if (Twet_bulb < MAX_SNOW_TEMP && Twet_bulb > MIN_RAIN_TEMP) {
+        snowfrac = 1.0 / (1.0 + exp((Twet_bulb - T0) / delta_S));
     }
-    else if (Twet >= MAX_SNOW_TEMP) {
-        snowfrac = 0.;  // all rain
+    else if (Twet_bulb >= MAX_SNOW_TEMP) {
+        snowfrac = 0.0;  // all rain
     }
-    else if (Twet <= MIN_RAIN_TEMP) {
-        snowfrac = 1.;  // all snow
+    else if (Twet_bulb <= MIN_RAIN_TEMP) {
+        snowfrac = 1.0;  // all snow
     }
 
     /* Final outputs */ 

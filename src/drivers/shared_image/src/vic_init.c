@@ -44,6 +44,30 @@ vic_init(void)
     size_t                     d3start[3];
     size_t                     n_ny, n_nx;
 
+    // Saturated visible soil reflectance
+    static const double AlbedoSatVis[20] = {
+        0.26, 0.24, 0.22, 0.20, 0.19, 0.18, 0.17, 0.16, 0.15, 0.14,
+        0.13, 0.12, 0.11, 0.10, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04
+    };
+    // Dry visible soil reflectance
+    static const double AlbedoDryVis[20] = {
+        0.37, 0.35, 0.33, 0.31, 0.30, 0.29, 0.28, 0.27, 0.26, 0.25,
+        0.24, 0.23, 0.22, 0.21, 0.20, 0.19, 0.18, 0.17, 0.16, 0.15
+    };
+    // Saturated near infrared soil reflectance
+    static const double AlbedoSatNir[20] = {
+        0.52, 0.48, 0.44, 0.40, 0.38, 0.36, 0.34, 0.32, 0.30, 0.28,
+        0.26, 0.24, 0.22, 0.20, 0.18, 0.16, 0.14, 0.12, 0.10, 0.08
+    };
+    // Dry near infrared soil reflectance
+    static const double AlbedoDryNir[20] = {
+        0.63, 0.59, 0.55, 0.51, 0.49, 0.47, 0.45, 0.43, 0.41, 0.39,
+        0.37, 0.35, 0.33, 0.31, 0.29, 0.27, 0.25, 0.23, 0.21, 0.19
+    };
+    // soil color index
+    static const int IGBP_to_iwv[17] = {
+        16, 17, 19, 18, 12, 8, 7, 3, 2, 1, 14, 5, 15, 11, 0, 0, 0
+    };
     // allocate memory for Cv_sum
     Cv_sum = malloc(local_domain.ncells_active * sizeof(*Cv_sum));
     check_alloc_status(Cv_sum, "Memory allocation error.");
@@ -217,7 +241,7 @@ vic_init(void)
         soil_con[i].dz_soil[11] = 0.3;
         // 剩余深度以等比数列累加，直到总厚度达到z_bedrock为止
         k = 12;
-        double ratio = 1.30;
+        double ratio = 1.50;
         double accum_depth = 2.0;
         double current_thick = 0.5;
         while (k < MAX_SOILS && accum_depth < z_bedrock) {
@@ -235,8 +259,8 @@ vic_init(void)
             }
             k++;
             /* 防止厚度增长过大 */
-            if (current_thick > 5.0) {
-                current_thick = 5.0;
+            if (current_thick > 15.0) {
+                current_thick = 15.0;
             }
         }
         size_t Nbedrock = k + 1;
@@ -254,12 +278,6 @@ vic_init(void)
 
         // Calculate grid cell area.
         soil_con[i].cell_area = local_domain.locations[i].area;
-
-        // set soil albedo parameters
-        soil_con[i].AlbedoSat[0] = 0.09;  // saturated soil albedo at visible band
-        soil_con[i].AlbedoSat[1] = 0.18;  // saturated soil albedo at NIR band
-        soil_con[i].AlbedoDry[0] = 0.18;  // dry soil albedo at visible band
-        soil_con[i].AlbedoDry[1] = 0.36;  // dry soil albedo at NIR band
 
         /* Central Longitude of Current Time Zone */ 
         soil_con[i].time_zone_lng = soil_con[i].off_gmt * 360.0 / HOURS_PER_DAY;
@@ -373,124 +391,113 @@ vic_init(void)
                             &array[i * Nlayer]);
     }
     
-    /*  bulk density and soil density (particle density) read from 
-        soil parameter file; otherwise campute from PedoTransfer.c */
-    if (options.PARAM_FROM_SOIL) {
-        // bulk_density: mineral bulk density for each soil layer
-
-        // alpha: retention shape parameter in van Genuchten equation [1/m]
-        for (j = 0; j < Nlayer; j++) {
-            d3start[0] = j;
-            get_scatter_nc_field_double(&(filenames.params), "alpha",
-                                        d3start, d3count, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                lidx = i * Nlayer + j;
-                array[lidx] = (double) dvar[i];
-            }
-        }
+    // alpha: retention shape parameter in van Genuchten equation [1/m]
+    for (j = 0; j < Nlayer; j++) {
+        d3start[0] = j;
+        get_scatter_nc_field_double(&(filenames.params), "alpha",
+                                    d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
-            set_node_parameters(soil_con[i].Nbedrock,
-                                soil_con[i].depth,
-                                soil_con[i].Zsum_soil,
-                                &soil_con[i].alpha_node[0],
-                                &array[i * Nlayer]);
+            lidx = i * Nlayer + j;
+            array[lidx] = (double) dvar[i];
         }
-        // expt: layer-specific exponent n in van Genuchten eqn
-        for (j = 0; j < Nlayer; j++) {
-            d3start[0] = j;
-            get_scatter_nc_field_double(&(filenames.params), "expt",
-                                        d3start, d3count, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                lidx = i * Nlayer + j;
-                array[lidx] = (double) dvar[i];
-            }
-        }
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            set_node_parameters(soil_con[i].Nbedrock,
-                                soil_con[i].depth,
-                                soil_con[i].Zsum_soil,
-                                &soil_con[i].expt_node[0],
-                                &array[i * Nlayer]);
-        }
-        // Ksat: saturated hydraulic conductivity [m/s]
-        for (j = 0; j < Nlayer; j++) {
-            d3start[0] = j;
-            get_scatter_nc_field_double(&(filenames.params), "Ksat",
-                                        d3start, d3count, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                lidx = i * Nlayer + j;
-                array[lidx] = (double) dvar[i];
-            }
-        }
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            set_node_parameters(soil_con[i].Nbedrock,
-                                soil_con[i].depth,
-                                soil_con[i].Zsum_soil,
-                                &soil_con[i].Ksat_node[0],
-                                &array[i * Nlayer]);
-        }
-        // Wpwp: soil moisture content at permanent wilting point [m3/m3]
-        for (j = 0; j < Nlayer; j++) {
-            d3start[0] = j;
-            get_scatter_nc_field_double(&(filenames.params), "Wpwp",
-                                        d3start, d3count, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                lidx = i * Nlayer + j;
-                array[lidx] = (double) dvar[i];
-            }
-        }
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            set_node_parameters(soil_con[i].Nbedrock,
-                                soil_con[i].depth,
-                                soil_con[i].Zsum_soil,
-                                &soil_con[i].Wpwp_node[0],
-                                &array[i * Nlayer]);
-        }
-        // Wsat: soil moisture content at saturation [m3/m3]
-        for (j = 0; j < Nlayer; j++) {
-            d3start[0] = j;
-            get_scatter_nc_field_double(&(filenames.params), "Wsat",
-                                        d3start, d3count, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                lidx = i * Nlayer + j;
-                array[lidx] = (double) dvar[i];
-            }
-        }
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            set_node_parameters(soil_con[i].Nbedrock,
-                                soil_con[i].depth,
-                                soil_con[i].Zsum_soil,
-                                &soil_con[i].Wsat_node[0],
-                                &array[i * Nlayer]);
-        }
-        // lpar: unsaturated hydraulic conductivity exponent.
-        for (j = 0; j < Nlayer; j++) {
-            d3start[0] = j;
-            get_scatter_nc_field_double(&(filenames.params), "lpar",
-                                        d3start, d3count, dvar);
-            for (i = 0; i < local_domain.ncells_active; i++) {
-                lidx = i * Nlayer + j;
-                array[lidx] = (double) dvar[i];
-            }
-        }
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            set_node_parameters(soil_con[i].Nbedrock,
-                                soil_con[i].depth,
-                                soil_con[i].Zsum_soil,
-                                &soil_con[i].lpar_node[0],
-                                &array[i * Nlayer]);
-        }
-        for (i = 0; i < local_domain.ncells_active; i++) {
-            for (j = 0; j < soil_con[i].Nbedrock - 1; j++) {
-                soil_con[i].mpar_node[j] = 1.0 - 1.0 / soil_con[i].expt_node[i];
-            }
-        }     
-
     }
-    else {
-        // 土壤参数从PedoTransfer函数中计算得到
-        PedoTransfer(soil_con); // not used in current version.       
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        set_node_parameters(soil_con[i].Nbedrock,
+                            soil_con[i].depth,
+                            soil_con[i].Zsum_soil,
+                            &soil_con[i].alpha_node[0],
+                            &array[i * Nlayer]);
     }
+    // expt: layer-specific exponent n in van Genuchten eqn
+    for (j = 0; j < Nlayer; j++) {
+        d3start[0] = j;
+        get_scatter_nc_field_double(&(filenames.params), "expt",
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            lidx = i * Nlayer + j;
+            array[lidx] = (double) dvar[i];
+        }
+    }
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        set_node_parameters(soil_con[i].Nbedrock,
+                            soil_con[i].depth,
+                            soil_con[i].Zsum_soil,
+                            &soil_con[i].expt_node[0],
+                            &array[i * Nlayer]);
+    }
+    // Ksat: saturated hydraulic conductivity [m/s]
+    for (j = 0; j < Nlayer; j++) {
+        d3start[0] = j;
+        get_scatter_nc_field_double(&(filenames.params), "Ksat",
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            lidx = i * Nlayer + j;
+            array[lidx] = (double) dvar[i];
+        }
+    }
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        set_node_parameters(soil_con[i].Nbedrock,
+                            soil_con[i].depth,
+                            soil_con[i].Zsum_soil,
+                            &soil_con[i].Ksat_node[0],
+                            &array[i * Nlayer]);
+    }
+    // Wpwp: soil moisture content at permanent wilting point [m3/m3]
+    for (j = 0; j < Nlayer; j++) {
+        d3start[0] = j;
+        get_scatter_nc_field_double(&(filenames.params), "Wpwp",
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            lidx = i * Nlayer + j;
+            array[lidx] = (double) dvar[i];
+        }
+    }
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        set_node_parameters(soil_con[i].Nbedrock,
+                            soil_con[i].depth,
+                            soil_con[i].Zsum_soil,
+                            &soil_con[i].Wpwp_node[0],
+                            &array[i * Nlayer]);
+    }
+    // Wsat: soil moisture content at saturation [m3/m3]
+    for (j = 0; j < Nlayer; j++) {
+        d3start[0] = j;
+        get_scatter_nc_field_double(&(filenames.params), "Wsat",
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            lidx = i * Nlayer + j;
+            array[lidx] = (double) dvar[i];
+        }
+    }
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        set_node_parameters(soil_con[i].Nbedrock,
+                            soil_con[i].depth,
+                            soil_con[i].Zsum_soil,
+                            &soil_con[i].Wsat_node[0],
+                            &array[i * Nlayer]);
+    }
+    // lpar: unsaturated hydraulic conductivity exponent.
+    for (j = 0; j < Nlayer; j++) {
+        d3start[0] = j;
+        get_scatter_nc_field_double(&(filenames.params), "lpar",
+                                    d3start, d3count, dvar);
+        for (i = 0; i < local_domain.ncells_active; i++) {
+            lidx = i * Nlayer + j;
+            array[lidx] = (double) dvar[i];
+        }
+    }
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        set_node_parameters(soil_con[i].Nbedrock,
+                            soil_con[i].depth,
+                            soil_con[i].Zsum_soil,
+                            &soil_con[i].lpar_node[0],
+                            &array[i * Nlayer]);
+    }
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        for (j = 0; j < soil_con[i].Nbedrock - 1; j++) {
+            soil_con[i].mpar_node[j] = 1.0 - 1.0 / soil_con[i].expt_node[i];
+        }
+    }     
 
     // Initialize volumetric fractions of soil solids
     for (i = 0; i < local_domain.ncells_active; i++) {
@@ -516,8 +523,9 @@ vic_init(void)
             get_scatter_nc_field_double(&(filenames.params), "AreaFract",
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
-                double value  = (double) dvar[i];
-                if (!isnan(value) && !isinf(value) && value > 0) {
+                double value = (double) dvar[i];
+                if (!isnan(value) && !isinf(value) && value > 0 &&
+                    j < local_domain.locations[i].nband) {
                     soil_con[i].AreaFract[j] = value;
                 }
             }
@@ -529,7 +537,8 @@ vic_init(void)
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
                 double value  = (double) dvar[i];
-                if (!isnan(value) && !isinf(value) && value > 0) {
+                if (!isnan(value) && !isinf(value) && value > 0 &&
+                    j < local_domain.locations[i].nband) {
                     soil_con[i].BandElev[j] = (double) dvar[i];
                 }
             }
@@ -537,8 +546,9 @@ vic_init(void)
         // Run some checks and corrections for soil
         for (i = 0; i < local_domain.ncells_active; i++) {
             // Make sure area fractions are positive and add to 1
-            sum = 0.;
-            for (j = 0; j < options.SNOW_BAND; j++) {
+            sum = 0.0;
+            size_t Nband = local_domain.locations[i].nband;
+            for (j = 0; j < Nband; j++) {
                 if (soil_con[i].AreaFract[j] < 0) {
                     sprint_location(locstr, &(local_domain.locations[i]));
                     log_err("Negative snow band area fraction (%f) read from "
@@ -554,7 +564,7 @@ vic_init(void)
                     log_warn("Sum of the snow band area fractions does not "
                              "equal 1 (%f), dividing each fraction by the "
                              "sum\n%s", sum, locstr);
-                    for (j = 0; j < options.SNOW_BAND; j++) {
+                    for (j = 0; j < Nband; j++) {
                         soil_con[i].AreaFract[j] /= sum;
                     }
                 }
@@ -566,7 +576,7 @@ vic_init(void)
             // check that the mean elevation from the snow bands matches the
             // grid cell mean elevation. If not reset mean
             mean = 0.;
-            for (j = 0; j < options.SNOW_BAND; j++) {
+            for (j = 0; j < Nband; j++) {
                 if (soil_con[i].BandElev[j] > 0.0) {
                     mean += soil_con[i].BandElev[j] * soil_con[i].AreaFract[j];
                 }
@@ -581,7 +591,7 @@ vic_init(void)
                 soil_con[i].elevation = (double)mean;
             }
             // Tfactor: calculate the temperature factor
-            for (j = 0; j < options.SNOW_BAND; j++) {
+            for (j = 0; j < Nband; j++) {
                 if (soil_con[i].AreaFract[j] > 0) {
                     soil_con[i].Tfactor[j] = (soil_con[i].BandElev[j] -
                                             soil_con[i].elevation) *
@@ -593,9 +603,9 @@ vic_init(void)
             }
             // Pfactor: calculate Pfactor from the precipitation fraction read
             // from file
-            sum = 0.;
+            sum = 0.0;
             // Calculate Precipitation Fraction
-            for (j = 0; j < options.SNOW_BAND; j++) {
+            for (j = 0; j < Nband; j++) {
                 if (soil_con[i].AreaFract[j] > 0) {
                     soil_con[i].Pfactor[j] = (1.0 + param.SNOW_PGRAD * (soil_con[i].BandElev[j] 
                         - soil_con[i].elevation)) * soil_con[i].AreaFract[j];
@@ -616,11 +626,11 @@ vic_init(void)
                 log_warn("Sum of the snow band precipitation fractions does "
                          "not equal 1 (%f), dividing each fraction by the "
                          "sum\n%s", sum, locstr);
-                for (j = 0; j < options.SNOW_BAND; j++) {
+                for (j = 0; j < Nband; j++) {
                     soil_con[i].Pfactor[j] /= sum;
                 }
             }
-            for (j = 0; j < options.SNOW_BAND; j++) {
+            for (j = 0; j < Nband; j++) {
                 if (soil_con[i].AreaFract[j] > 0.0) {
                     soil_con[i].Pfactor[j] /= soil_con[i].AreaFract[j];
                 }
@@ -1419,7 +1429,7 @@ vic_init(void)
         initialize_energy(all_vars[i].energy, nveg);
     }
 
-    size_t veg_class = 0;
+    size_t veg_class, iwv;
     // Initialize landunit types based on vegetation class
     for (i = 0; i < local_domain.ncells_active; i++) {
         for (j = 0; j <= local_domain.locations[i].nveg; j++) {
@@ -1440,6 +1450,25 @@ vic_init(void)
                 else {
                     log_err("Unknown Landtype option");
                 }
+            }
+        }
+    }
+
+    // set soil albedo parameters
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        for (j = 0; j <= local_domain.locations[i].nveg; j++) {
+            if (veg_con[i][j].Cv > 0) {
+                veg_class = veg_con[i][j].veg_class;
+                if (veg_class <= 16) {
+                    iwv = IGBP_to_iwv[veg_class];
+                }
+                else {
+                    iwv = 0;
+                }
+                all_vars[i].energy[j].AlbedoSat[0] = AlbedoSatVis[iwv];  // saturated soil albedo at visible band
+                all_vars[i].energy[j].AlbedoSat[1] = AlbedoSatNir[iwv];  // saturated soil albedo at NIR band
+                all_vars[i].energy[j].AlbedoDry[0] = AlbedoDryVis[iwv];  // dry soil albedo at visible band
+                all_vars[i].energy[j].AlbedoDry[1] = AlbedoDryNir[iwv];  // dry soil albedo at NIR band
             }
         }
     }

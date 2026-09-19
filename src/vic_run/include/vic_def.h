@@ -40,11 +40,11 @@
 #define ERROR        -999      /**< Error Flag returned by subroutines */
 
 /***** Define maximum array sizes for model source code *****/
-#define MAX_LAYERS      7      /**< maximum number of soil moisture layers */
+#define MAX_LAYERS      6      /**< maximum number of soil moisture layers */
 #define MAX_NODES       50     /**< maximum number of nodes = MAX_SNOWS + MAX_SOILS + 1 */
 #define MAX_FRONTS      3      /**< maximum number of freezing and thawing front depths to store */
 #define MAX_SNOWS       3      /**< maximum number of snowpack layers */
-#define MAX_SOILS       45     /**< maximum number of soil nodes */
+#define MAX_SOILS       40     /**< maximum number of soil nodes */
 #define MAX_SWBANDS     2      /**< maximum number of solar radiation wave bands */
 #define MAX_CANOPYS     10     /**< maximum number of canopy layers for radiative transfer */
 #define MAX_HRUS        50     /**< maximum number of hydrological response units */
@@ -250,7 +250,6 @@ typedef struct {
                                           FROM_VEGPARAM = use SAI values from the veg param file */
     unsigned short int SNOW_SHAPE;     /**< Snow shape type: 1=sphere; 2=spheroid; 3=hexagonal plate; 4=koch snowflake */
     unsigned short int FORCE_TIME;
-    bool PARAM_FROM_SOIL; /**< TRUE = bulk density and soil density (particle density) read from soil parameter file; otherwise set to 0.0 */
     bool ROUT;            /**< TRUE = */
     // state options
     unsigned short int STATE_FORMAT;  /**< TRUE = model state file is binary (default) */
@@ -514,19 +513,19 @@ typedef struct {
     double Wpwp_node[MAX_SOILS];      /**< soil moisture content at permanent
                                            wilting point (m3/m3) */
     double Wsat_node[MAX_SOILS];      /** soil moisture content at saturation (m3/m3) */  
-    double AlbedoSat[MAX_SWBANDS];    /** soil albedo at saturation */
-    double AlbedoDry[MAX_SWBANDS];      
     double avg_temp;                  /**< Mean Annual Ground Temperature (K) */
     double alpha_node[MAX_SOILS];     /**< retention shape parameter in van Genuchten equation [1/m] */
     double b_infilt;                  /**< infiltration parameter */
     double b_dynamic;                 /**< Dynamic VIC heterogeniety parameter for infiltration */
-    double expt_node[MAX_SOILS];      /**< layer-specific exponent n van Genuchten eqn */
     double bulk_dens_avg[MAX_SOILS];
     double bulk_dens_node[MAX_SOILS]; /**< bulk density of fine earth (mineral+organic) [g/cm^3] */
     double capil_drive;               /**< mean capilary drive (m) for dynamic VIC runoff */
+    double coszen;                    /**< cosine of the solar zenith angle */
     double clay_node[MAX_SOILS];      /**< clay content of soil (fraction of mineral soil volume) */
     double depth[MAX_LAYERS];         /**< thickness of each soil moisture layer (m) */
+    double daylen;                    /**< day length in seconds */
     double dz_soil[MAX_SOILS];        /**< thermal node thickness (m) */
+    double expt_node[MAX_SOILS];      /**< layer-specific exponent n van Genuchten eqn */
     double Zsum_soil[MAX_SOILS];      /**< thermal node depth (m) */
     double zc_soil[MAX_SOILS];        /**< depth of thermal nodes below soil surface (m) */
     double gravel_node[MAX_SOILS];    /**< gravel content of soil (fraction of mineral soil weight) */
@@ -567,10 +566,9 @@ typedef struct {
                                                             canopy (fraction) */
     double LAI[MONTHS_PER_YEAR];        /**< leaf area index */
     double SAI[MONTHS_PER_YEAR];        /**< stem area index */
-    double Cv;              /**< fraction of vegetation coverage */
-    int veg_class;          /**< vegetation class id number */
-    size_t vegetat_type_num; /**< number of vegetation types in the grid
-                                cell */
+    double Cv;                          /**< fraction of vegetation coverage */
+    int veg_class;                      /**< vegetation class id number */
+    size_t vegetat_type_num;            /**< number of vegetation types in the grid cell */
     int BandIndex;
 } veg_con_struct;
 
@@ -640,34 +638,56 @@ typedef struct {
 } veg_hist_struct;
 
 /******************************************************************************
- * @brief   This structure stores the forcing data for each model
+ * @brief   This structure stores the atmosphere data for each model
  * time step for a single grid cell.  Each array stores the values for the
  * SNOW_STEPs during the current model step and the value for the entire model
  * step.  The latter is referred to by array[NR].  Looping over the SNOW_STEPs
  * is done by for (i = 0; i < NF; i++)
  *****************************************************************************/
 typedef struct {
-    double *air_temp;   /**< air temperature (K) */
-    double *prec;       /**< average precipitation in grid cell (mm/s) */
-    double *snowf;      /**< snowfall partitioned from precipitation (mm/s) */
-    double *rainf;      /**< rainfall partitioned from precipitation (mm/s) */
-    double *wind;       /**< wind speed (m/s) */
-    double *Qair;       /**< specific humidity (kg/kg) */
-    double *pressure;   /**< atmospheric pressure (kPa) */
-    double *shortwave;  /**< incoming shortwave radiation (W/m^2) */
-    double *longwave;   /**< incoming longwave radiation (W/m^2) (net incoming
-                                           longwave for water balance model) */
+    double *air_temp;   /**< average air temperature in grid cell (K) */
     double *Catm;       /**< atmospheric CO2 mixing ratio (mol CO2/ mol air) */
-    double *channel_in; /**< upstream input river channel inflow for time step (m/s) */
-    double *coszen;     /**< cosine of the solar zenith angle */
-    double *daylen;     /**< day length in seconds */
-    double *density;    /**< atmospheric density (kg/m^3) */
+    double *channel_in; /**< incoming channel inflow for time step (m3/s) */
     double *fdir;       /**< fraction of incoming shortwave that is direct (fraction) */
-    double *par;        /**< incoming photosynthetically active radiation (μmol/m^2/s) */
-    double *vp;         /**< atmospheric vapor pressure (kPa) */
-    double *rel_humid;  /**< atmospheric relative humidity (%) */
-    double *theta_pot;  /**< atmospheric potential temperature (K) */
-    double *theta_v;    /**< atmospheric virtual potential temperature (K) */
+    double *longwave;   /**< average incoming longwave radiation in grid cell (W/m^2) */
+    double *par;        /**< incoming photosynthetically active radiation () */
+    double *prec;       /**< average precipitation in grid cell (mm/s) */
+    double *snowf;      /**< average snowfall in grid cell (mm/s) */
+    double *rainf;      /**< average rainfall in grid cell (mm/s) */
+    double *pressure;   /**< average atmospheric pressure in grid cell (kPa) */
+    double *Qair;       /**< average specific humidity in grid cell (kg/kg) */
+    double *shortwave;  /**< average incoming shortwave radiation in grid cell (W/m^2) */
+    double *wind;       /**< average wind speed in grid cell (m/s) */
+    double *rel_humid;  /**< average relative humidity in grid cell (%) */
+} atmos_data_struct;
+
+/******************************************************************************
+ * @brief   This structure stores the atmosphere data for each model
+ * time step for a single grid cell.  Each array stores the values for the
+ * SNOW_STEPs during the current model step and the value for the entire model
+ * step.  The latter is referred to by array[NR].  Looping over the SNOW_STEPs
+ * is done by for (i = 0; i < NF; i++)
+ *****************************************************************************/
+typedef struct {
+    double air_temp;    /**< band scale air temperature (K) */
+    double prec;        /**< average precipitation in grid cell (mm/s) */
+    double snowf;       /**< snowfall partitioned from precipitation (mm/s) */
+    double rainf;       /**< rainfall partitioned from precipitation (mm/s) */
+    double wind;        /**< wind speed (m/s) */
+    double Qair;        /**< specific humidity (kg/kg) */
+    double pressure;    /**< atmospheric pressure (kPa) */
+    double shortwave;   /**< incoming shortwave radiation (W/m^2) */
+    double longwave;    /**< incoming longwave radiation (W/m^2) */
+    double Catm;        /**< atmospheric CO2 mixing ratio (mol CO2/ mol air) */
+    double channel_in;  /**< upstream input river channel inflow for time step (m/s) */
+    double density;     /**< atmospheric density (kg/m^3) */
+    double fdir;        /**< fraction of incoming shortwave that is direct (fraction) */
+    double par;         /**< incoming photosynthetically active radiation (μmol/m^2/s) */
+    double vp;          /**< atmospheric vapor pressure (kPa) */
+    double rel_humid;   /**< atmospheric relative humidity (%) */
+    double theta_pot;   /**< atmospheric potential temperature (K) */
+    double theta_v;     /**< atmospheric virtual potential temperature (K) */
+    double wet_bulb;    /**< wet bulb temperature (K) */
 } force_data_struct;
 
 /******************************************************************************
@@ -787,6 +807,8 @@ typedef struct {
     bool moist_flag;                   /**< moisture or matric potential converge flag */
     size_t Esignchg_count;             /**< number of times the iteration residuals change sign */
     size_t Msignchg_count;             /**< number of times the iteration residuals change sign */
+    double AlbedoSat[MAX_SWBANDS];     /**< soil surface albedo at saturation (fraction) */
+    double AlbedoDry[MAX_SWBANDS];     /**< soil surface albedo at dry (fraction) */
     double kappa_node[MAX_NODES];      /**< thermal conductivity of the soil thermal nodes (W/m/K) */
     double Cs_node[MAX_NODES];         /**< volumetric heat capacity of the snow and soil thermal nodes (J/m^3/K) */
     double T[MAX_NODES];               /**< thermal node temperatures (k) */
@@ -985,6 +1007,7 @@ typedef struct {
     energy_bal_struct *energy;   /**< Stores energy balance variables */
     snow_data_struct  *snow;     /**< Stores snow variables */
     veg_var_struct    *veg_var;  /**< Stores vegetation variables */
+    force_data_struct *force;    /**< Store the forcing data for each HRU */
 } all_vars_struct;
 
 #endif

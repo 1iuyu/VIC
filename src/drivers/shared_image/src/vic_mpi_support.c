@@ -439,7 +439,7 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     MPI_Datatype   *mpi_types;
 
     // nitems has to equal the number of elements in option_struct
-    nitems = 28;
+    nitems = 27;
     blocklengths = malloc(nitems * sizeof(*blocklengths));
     check_alloc_status(blocklengths, "Memory allocation error.");
 
@@ -548,10 +548,6 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     // unsigned short FORCE_TIME;
     offsets[i] = offsetof(option_struct, FORCE_TIME);
     mpi_types[i++] = MPI_UNSIGNED_SHORT;
-
-    // bool DENSITY_FROM_SOIL;
-    offsets[i] = offsetof(option_struct, PARAM_FROM_SOIL);
-    mpi_types[i++] = MPI_C_BOOL;
 
     // unsigned short STATE_FORMAT;
     offsets[i] = offsetof(option_struct, STATE_FORMAT);

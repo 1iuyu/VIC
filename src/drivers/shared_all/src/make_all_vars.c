@@ -12,17 +12,25 @@
  *           cell's states and fluxes.
  *****************************************************************************/
 all_vars_struct
-make_all_vars(size_t nveg)
+make_all_vars(size_t    Nvegs,
+              size_t    Nbands)
 {
-    all_vars_struct temp;
-    size_t          Nitems;
+    all_vars_struct all_vars;
 
-    Nitems = nveg + 1;
+    all_vars.snow = calloc(Nvegs, sizeof(*all_vars.snow));
+    check_alloc_status(all_vars.snow, "Memory allocation error.");
 
-    temp.snow = make_snow_data(Nitems);
-    temp.energy = make_energy_bal(Nitems);
-    temp.veg_var = make_veg_var(Nitems);
-    temp.cell = make_cell_data(Nitems);
+    all_vars.energy = calloc(Nvegs, sizeof(*all_vars.energy));
+    check_alloc_status(all_vars.energy, "Memory allocation error.");
 
-    return (temp);
+    all_vars.veg_var = calloc(Nvegs, sizeof(*all_vars.veg_var));
+    check_alloc_status(all_vars.veg_var, "Memory allocation error.");
+
+    all_vars.cell = calloc(Nvegs, sizeof(*all_vars.cell));
+    check_alloc_status(all_vars.cell, "Memory allocation error.");
+
+    all_vars.force = calloc(Nbands, sizeof(*all_vars.force));   
+    check_alloc_status(all_vars.force, "Memory allocation error.");
+
+    return (all_vars);
 }

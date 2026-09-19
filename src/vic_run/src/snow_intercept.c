@@ -11,13 +11,14 @@
 * @brief    Calculate snow interception and release by the canopy
 ******************************************************************************/
 int
-snow_intercept(double            step_dt,
-               double            Tcanopy,  // canopy air temperature
-               double           *SnowFall,
-               double           *RainFall,
-               double            Wind,
-               snow_data_struct *snow,
-               veg_var_struct   *veg_var)
+snow_intercept(double             step_dt,
+               double             Tcanopy,  // canopy air temperature
+               force_data_struct *force,
+               energy_bal_struct *energy,
+               cell_data_struct  *cell,
+               snow_data_struct  *snow,
+               soil_con_struct   *soil_con,
+               veg_var_struct    *veg_var)
 {
     extern option_struct     options;   
     extern parameters_struct param;
@@ -39,7 +40,10 @@ snow_intercept(double            step_dt,
     double      SnowThroughFall; /* Amount of snow reaching to the ground (m)
                                                */
     /* Initialization */
+    double wind = force->wind;
     double Wdew = veg_var->Wdew;
+    double snowfall = force->snowf;
+    double rainfall = force->rainf;
     double NetLAI = veg_var->NetLAI;
     double NetSAI = veg_var->NetSAI;
     double fcanopy = veg_var->fcanopy;
@@ -53,17 +57,17 @@ snow_intercept(double            step_dt,
 
     /* Calculate snow interception. */
     if (NetLAI + NetSAI > 0.0) {
-        DeltaSnowInt = fcanopy * (*SnowFall);
+        DeltaSnowInt = fcanopy * snowfall;
         DeltaSnowInt = min(DeltaSnowInt, (MaxSnowInt - int_snow) / step_dt * 
-                            (1.0 - exp(-*SnowFall * step_dt / MaxSnowInt)));
+                            (1.0 - exp(-snowfall * step_dt / MaxSnowInt)));
         DeltaSnowInt = max(DeltaSnowInt, 0.0);
         /* Reduce the amount of intercepted snow if windy and cold. */
         SnowDriptemp = max(0.0, (Tcanopy - 270.15) / 1.87e5);
-        SnowDripwind = max(0.0, Wind / 1.56e5);
+        SnowDripwind = max(0.0, wind / 1.56e5);
         SnowUnload = max(0, int_snow) * (SnowDriptemp + SnowDripwind);
         SnowUnload = min(SnowUnload, int_snow / step_dt + DeltaSnowInt);
-        SnowDrip = (*SnowFall * fcanopy - DeltaSnowInt);
-        SnowThroughFall = (*SnowFall) * (1 - fcanopy);
+        SnowDrip = (snowfall * fcanopy - DeltaSnowInt);
+        SnowThroughFall = snowfall * (1 - fcanopy);
 
         /* now update snowfall and total accumulated intercepted snow amounts */
         int_snow += (DeltaSnowInt - SnowUnload) * step_dt;
@@ -74,7 +78,7 @@ snow_intercept(double            step_dt,
     else {
         DeltaSnowInt = 0.0;
         SnowDrip = 0.0;
-        SnowThroughFall = (*SnowFall);
+        SnowThroughFall = snowfall;
         /* canopy gets buried by snow */
         if (int_snow > 0.0) {
             SnowDrip += int_snow / step_dt;
@@ -85,12 +89,12 @@ snow_intercept(double            step_dt,
     intercepted snow. */
     MaxRainInt = fcanopy * Wdew * NetVEG;
     if (NetVEG > 0.0) {
-        DeltaRainInt = fcanopy * (*RainFall);
+        DeltaRainInt = fcanopy * rainfall;
         DeltaRainInt = min(DeltaRainInt, (MaxRainInt - int_rain) / step_dt *
-                                        (1.0 - exp(-*RainFall * step_dt / MaxRainInt)));
+                                        (1.0 - exp(-rainfall * step_dt / MaxRainInt)));
         DeltaRainInt = max(DeltaRainInt, 0.0);
-        RainDrip = (*RainFall) * fcanopy - DeltaRainInt;
-        RainThroughFall = (*RainFall) * (1 - fcanopy);
+        RainDrip = rainfall * fcanopy - DeltaRainInt;
+        RainThroughFall = rainfall * (1 - fcanopy);
         int_rain += DeltaRainInt * step_dt;
         if (int_rain < 0.0) {
             int_rain = 0.0;
@@ -99,7 +103,7 @@ snow_intercept(double            step_dt,
     else {
         DeltaRainInt = 0.0;
         RainDrip = 0.0;
-        RainThroughFall = (*RainFall);
+        RainThroughFall = rainfall;
         /* canopy gets buried by rain */
         if (int_rain > 0.0) {
             RainDrip += int_rain / step_dt;
@@ -165,19 +169,20 @@ snow_intercept(double            step_dt,
     veg_var->iter_intrain = veg_var->int_rain;
     veg_var->iter_intsnow = veg_var->int_snow;
     /* rain or snow on the ground [mm/s] */
-    (*RainFall) = RainDrip + RainThroughFall; 
-    (*SnowFall) = SnowDrip + SnowThroughFall + SnowUnload;
+    force->rainf = RainDrip + RainThroughFall; 
+    force->snowf = SnowDrip + SnowThroughFall + SnowUnload;
     /* Update snow water equivalent and snow depth */
-    if (*SnowFall > 0.0 && snow->coverage > 0.0 && new_snow_density > 0.0) {
-        snow->delta_depth = *SnowFall / (snow->coverage * new_snow_density);
+    if (force->snowf > 0.0 && snow->coverage > 0.0 && new_snow_density > 0.0) {
+        snow->delta_depth = force->snowf / (snow->coverage * new_snow_density);
     }
     else {
         snow->delta_depth = 0.0;
     }
 
     /* snowpack water processs */
-    update_snow(step_dt, Tcanopy,
-                *SnowFall, *RainFall, snow);
+    update_snow(step_dt, force,
+                energy, cell, 
+                snow, soil_con);
     
     return (0);
 }

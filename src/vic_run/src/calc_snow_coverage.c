@@ -19,7 +19,6 @@ calc_snow_coverage(double            step_dt,
                    soil_con_struct  *soil_con,
                    int               flag)
 {
-    extern parameters_struct param;
     /* initialization */
     double coverage = 0.0;
     double topo_std = soil_con->topo_std;

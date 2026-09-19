@@ -15,7 +15,7 @@ vic_finalize(void)
     extern size_t             *filter_active_cells;
     extern size_t             *mpi_map_mapping_array;
     extern all_vars_struct    *all_vars;
-    extern force_data_struct  *force;
+    extern atmos_data_struct  *atmos;
     extern domain_struct       global_domain;
     extern domain_struct       local_domain;
     extern filep_struct        filep;
@@ -56,7 +56,7 @@ vic_finalize(void)
     }
 
     for (i = 0; i < local_domain.ncells_active; i++) {
-        free_force(&(force[i]));
+        free_atmos(&(atmos[i]));
         free(soil_con[i].AreaFract);
         free(soil_con[i].BandElev);
         free(soil_con[i].Tfactor);
@@ -71,7 +71,7 @@ vic_finalize(void)
 
     free_out_data(output_streams, out_data);
     free_streams(&output_streams);
-    free(force);
+    free(atmos);
     free(soil_con);
     free(veg_con);
     free(veg_hist);

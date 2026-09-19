@@ -534,13 +534,10 @@ double all_leap_from_dmy(dmy_struct *dmy);
 void alloc_aggdata(stream_struct *stream);
 void alloc_out_data(size_t ngridcells, double ****out_data, stream_struct *stream);
 double average(double *ar, size_t n);
-double calc_energy_balance_error(double, double, double, double, double);
 void calc_root_fractions(size_t, cell_data_struct *cell, veg_var_struct *vag_var, 
                          soil_con_struct *soil_con, veg_lib_struct *veg_lib);
-double calc_water_balance_error(double, double, double, double);
 double calc_max_daylength(double);
 bool cell_method_from_agg_type(unsigned short int aggtype, char cell_method[]);
-bool check_write_flag(int rec);
 void compute_derived_state_vars(all_vars_struct *, soil_con_struct *,
                                 veg_con_struct *);
 double compute_theta(double t, double p);
@@ -549,6 +546,8 @@ size_t count_force_vars(FILE *gp);
 void cmd_proc(int argc, char **argv, char *globalfilename);
 void compress_files(char string[], short int level);
 stream_struct create_outstream(stream_struct *output_streams);
+double downscale_shortwave(double, double, double, double, double);
+double downscale_longwave(double, double, double, double, double, double, double);
 double get_cpu_time();
 void get_current_datetime(char *cdt);
 double get_wall_time();
@@ -568,13 +567,10 @@ void free_all_vars(all_vars_struct *all_vars);
 void free_dmy(dmy_struct **dmy);
 void free_out_data(stream_struct *streams, double ****out_data);
 void free_streams(stream_struct **streams);
-void generate_default_state(force_data_struct *force, all_vars_struct *all_vars, 
-                            soil_con_struct *soil_con, veg_con_struct *veg_con,
-                            veg_lib_struct *veg_lib);
+void generate_default_state(all_vars_struct *all_vars, soil_con_struct *soil_con,
+                            veg_con_struct *veg_con, veg_lib_struct *veg_lib);
 void get_parameters(FILE *paramfile);
 size_t get_output_nelem(size_t varid, size_t icell, size_t iveg);
-void init_output_list(double **out_data, int write, char *format, int type,
-                      double mult);
 void initialize_energy(energy_bal_struct *energy, size_t nveg);
 void initialize_global(void);
 void initialize_options(void);
@@ -585,14 +581,10 @@ void initialize_time(void);
 void initialize_veg(veg_var_struct *veg_var, size_t nveg);
 double julian_day_from_dmy(dmy_struct *dmy, unsigned short int calendar);
 bool leap_year(unsigned short int year, unsigned short int calendar);
-all_vars_struct make_all_vars(size_t nveg);
-cell_data_struct *make_cell_data(size_t veg_type_num);
+all_vars_struct make_all_vars(size_t nveg, size_t Nband);
 dmy_struct *make_dmy(global_param_struct *global);
-energy_bal_struct *make_energy_bal(size_t nveg);
 void make_lastday(unsigned short int calendar, unsigned short int year,
                   unsigned short int lastday[]);
-snow_data_struct *make_snow_data(size_t nveg);
-veg_var_struct *make_veg_var(size_t veg_type_num);
 double no_leap_day_from_dmy(dmy_struct *dmy);
 void num2date(double origin, double time_value, double tzoffset,
               unsigned short int calendar, unsigned short int time_units,
@@ -600,7 +592,7 @@ void num2date(double origin, double time_value, double tzoffset,
 FILE *open_file(char string[], char type[]);
 void parse_nc_time_units(char *nc_unit_chars, unsigned short int *units,
                          dmy_struct *dmy);
-void put_data(size_t nveg, all_vars_struct *, force_data_struct *, veg_con_struct *, 
+void put_data(all_vars_struct *, veg_con_struct *, soil_con_struct *,
               double ***out_data, timer_struct *timer, stream_struct *stream);
 void print_alarm(alarm_struct *alarm);
 void print_cell_data(cell_data_struct *cell);
@@ -624,7 +616,6 @@ void print_veg_lib(veg_lib_struct *vlib);
 void print_veg_var(veg_var_struct *vvar, size_t ncanopy);
 void print_version(char *);
 void print_usage(char *);
-void PedoTransfer(soil_con_struct *scon);
 double q_to_vp(double q, double p);
 bool raise_alarm(alarm_struct *alarm, dmy_struct *dmy_current);
 void reset_alarm(alarm_struct *alarm, dmy_struct *dmy_current);

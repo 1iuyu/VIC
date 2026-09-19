@@ -12,7 +12,7 @@
  *           stores its location in the description of the current forcing file.
  *****************************************************************************/
 void
-set_force_type(char *cmdstr,
+set_atmos_type(char *cmdstr,
                int   file_num,
                int  *field)
 {

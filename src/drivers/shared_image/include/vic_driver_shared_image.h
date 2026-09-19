@@ -39,7 +39,7 @@ typedef struct {
     double area; /**< area of grid cell */
     double frac; /**< fraction of grid cell that is active */
     size_t nveg; /**< number of vegetation type according to parameter file */
-    size_t band; /**< Number of elevation bands */
+    size_t nband; /**< Number of elevation bands */
     size_t global_idx; /**< index of grid cell in global list of grid cells */
     size_t io_idx; /**< index of cell in 1-D I/O arrays */
     size_t local_idx; /**< index of grid cell in local list of grid cells */
@@ -156,13 +156,13 @@ typedef struct {
 
 void add_subgrid_to_global_domain(nameid_struct *nc_nameid,
                                   domain_struct *global_domain);
-void alloc_force(force_data_struct *force);
+void alloc_atmos(atmos_data_struct *atmos);
 void alloc_veg_hist(veg_hist_struct *veg_hist);
 double air_density(double t, double p, double vp);
 double average(double *ar, size_t n);
 void check_init_state_file(void);
 void compare_ncdomain_with_global_domain(nameid_struct *nc_nameid);
-void free_force(force_data_struct *force);
+void free_atmos(atmos_data_struct *atmos);
 void free_veg_hist(veg_hist_struct *veg_hist);
 void get_domain_type(char *cmdstr);
 size_t get_global_domain(nameid_struct *domain_nc_nameid,
@@ -197,17 +197,17 @@ int initialize_model_state(all_vars_struct *all_vars, size_t Nveg,
                            soil_con_struct *soil_con, veg_con_struct *veg_con);
 void initialize_nc_file(nc_file_struct *nc_file, size_t nvars, unsigned int *varids,
                         unsigned short int *dtypes, unsigned short int *domains);
-void initialize_soil_con(soil_con_struct *soil_con);
+void initialize_soil_con(size_t Nband, soil_con_struct *soil_con);
 void initialize_veg_con(veg_con_struct *veg_con);
 void parse_output_info(FILE *gp, stream_struct **output_streams,
                        size_t *nstreams, dmy_struct *dmy_current);
-void print_force_data(force_data_struct *force);
+void print_atmos_data(atmos_data_struct *atmos);
 void print_domain(domain_struct *domain, bool print_loc);
 void print_location(location_struct *location);
 void print_nc_file(nc_file_struct *nc);
 void print_nc_var(nc_var_struct *nc_var);
 void put_nc_attr(int nc_id, int var_id, const char *name, const char *value);
-void set_force_type(char *cmdstr, int file_num, int *field);
+void set_atmos_type(char *cmdstr, int file_num, int *field);
 void set_global_nc_attributes(int ncid, unsigned short int file_type);
 void set_state_meta_data_info();
 void set_nc_var_dimids(unsigned int varid, unsigned short int domain, 

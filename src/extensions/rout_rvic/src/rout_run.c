@@ -15,7 +15,7 @@ rout_run(void)
     extern double           ***out_data;
     extern domain_struct       local_domain;
     extern rout_struct        *rout;
-    extern force_data_struct  *force;
+    extern atmos_data_struct  *atmos;
     extern parameters_struct   param;
     extern global_param_struct global_param;
     int    ErrorFlag;
@@ -40,7 +40,7 @@ rout_run(void)
     }
     // 存在模拟区域外的上游来水，需要将其加入到upstream中
     for (i = 0; i < local_domain.ncells_active; i++) {
-        rout[i].upstream = force[i].channel_in[NR];
+        rout[i].upstream = atmos[i].channel_in[NR];
     }
     // Run the convolution on the master node
     for (i = 0; i < local_domain.ncells_active; i++) {

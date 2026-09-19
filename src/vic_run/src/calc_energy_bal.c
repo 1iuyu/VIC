@@ -14,9 +14,7 @@
 *               snow code for both the full_energy and water_balance models.
 ******************************************************************************/
 int
-calc_energy_bal(size_t             hidx,
-                double             step_dt,
-                double             air_temp,
+calc_energy_bal(double             step_dt,
                 force_data_struct *force,
                 energy_bal_struct *energy,
                 cell_data_struct  *cell,
@@ -29,7 +27,7 @@ calc_energy_bal(size_t             hidx,
      MAIN ROUTINE
     ***************/
     int    ErrorFlag;
-    double pressure = force->pressure[hidx];
+    double pressure = force->pressure;
     double Tfoliage = energy->Tfoliage;
     double coverage = snow->coverage;
     /************************************
@@ -81,8 +79,7 @@ calc_energy_bal(size_t             hidx,
     /**********************************
       Bare ground surface energy flux
     **********************************/
-    ErrorFlag = func_surf_energy_bal(hidx, air_temp, 
-                                     force,
+    ErrorFlag = func_surf_energy_bal(force,
                                      energy,
                                      cell, snow);
 
@@ -94,8 +91,7 @@ calc_energy_bal(size_t             hidx,
       Vegetation surface energy flux
     **********************************/
     if (cell->IS_VEG == true) {
-        ErrorFlag = func_canopy_energy_bal(hidx, step_dt, 
-                                           air_temp, force,
+        ErrorFlag = func_canopy_energy_bal(step_dt, force,
                                            energy, cell, 
                                            snow, soil_con,
                                            veg_var, veg_lib);

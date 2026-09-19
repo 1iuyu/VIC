@@ -103,13 +103,19 @@ snow_albedo(double             coszen,
 *           algorithm of the US Army Corps of Engineers.
 ******************************************************************************/
 void
-update_snow(double            step_dt,
-            double            air_temp,
-            double            snowfall,
-            double            rainfall,
-            snow_data_struct *snow)
+update_snow(double             step_dt,
+            force_data_struct *force,
+            energy_bal_struct *energy,
+            cell_data_struct  *cell,
+            snow_data_struct  *snow,
+            soil_con_struct   *soil_con)
 {
+    extern parameters_struct param;
     /* 定义局部变量指向结构体成员 */
+    double snowfall = force->snowf;
+    double rainfall = force->rainf;
+    double air_temp = force->air_temp;
+    double pressure = force->pressure;
     double *dz_snow = snow->dz_snow;
     double *pack_T = snow->pack_T;
     double *pack_ice = snow->pack_ice;
@@ -124,13 +130,17 @@ update_snow(double            step_dt,
         snow->swq += snowfall * step_dt;
     }
     // 如果没有雪层，且雪深大于0.025m，则创建一个新的雪层
-    if (snow->Nsnow == 0 && snow->snow_depth > 0.025) {
+    if (snow->Nsnow == 0 && snow->snow_depth > 0.025 && snow->swq > param.TOL_A) {
         snow->Nsnow = 1;
         new_layer = 1;
         dz_snow[0] = snow->snow_depth;
         pack_T[0] = min(CONST_TKTRIP, air_temp);
         pack_ice[0] = snow->swq;
         pack_liq[0] = 0.0;
+        // Update node properties
+        update_nodes(pressure, 
+                     energy,  cell, 
+                     snow, soil_con);
     }
     // 如果有雪层，且雪深大于0.025m，则更新现有雪层的厚度和水当量
     if (snow->Nsnow > 0 && new_layer == 0 && (snowfall > 0.0 || rainfall > 0.0)) {
@@ -194,14 +204,15 @@ update_snow_fluxes(double    *depth1,
 *           combined snowpack layer
 ******************************************************************************/
 void
-distribute_snow_state(double            step_dt,
-                      double            wind,
-                      double            air_temp,
-                      double            pressure,
-                      snow_data_struct *snow)
+distribute_snow_state(double             step_dt,
+                      force_data_struct *force,
+                      snow_data_struct  *snow)
 
 {
     // 定义局部变量指向结构体成员
+    double wind = force->wind;
+    double air_temp = force->air_temp;
+    double pressure = force->pressure;
     double swq = snow->swq;
     double coverage = snow->coverage;
     double snow_depth = snow->snow_depth;
