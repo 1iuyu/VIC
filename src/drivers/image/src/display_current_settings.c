@@ -159,12 +159,6 @@ display_current_settings(int mode)
     fprintf(LOG_DEST, "\n");
     fprintf(LOG_DEST, "Constants File\t\t%s\n", filenames.constants);
     fprintf(LOG_DEST, "Parameters file\t\t%s\n", filenames.params.nc_filename);
-    if (options.PARAM_FROM_SOIL) {
-        fprintf(LOG_DEST, "PARAM_FROM_SOIL\t\tTRUE\n");
-    }
-    else {
-        fprintf(LOG_DEST, "PARAM_FROM_SOIL\t\tFALSE\n");
-    }
 
     fprintf(LOG_DEST, "\n");
     if (options.LAI_SRC == FROM_VEGHIST) {

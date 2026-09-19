@@ -14,7 +14,7 @@ size_t              current;
 size_t             *filter_active_cells = NULL;
 size_t             *mpi_map_mapping_array = NULL;
 all_vars_struct    *all_vars = NULL;
-force_data_struct  *force = NULL;
+atmos_data_struct  *atmos = NULL;
 dmy_struct         *dmy = NULL;
 dmy_struct          dmy_state;
 filenames_struct    filenames;

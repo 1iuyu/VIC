@@ -213,7 +213,7 @@ get_global_param(FILE *gp)
                 param_set.N_TYPES[file_num] = count_force_vars(gp);
             }
             else if (strcasecmp("FORCE_TYPE", optstr) == 0) {
-                set_force_type(cmdstr, file_num, &field);
+                set_atmos_type(cmdstr, file_num, &field);
             }
             else if (strcasecmp("FORCE_STEPS_PER_DAY", optstr) == 0) {
                 sscanf(cmdstr, "%*s %zu",
@@ -258,10 +258,6 @@ get_global_param(FILE *gp)
                     options.ROUT = true;
                     strcpy(filenames.rout_params.nc_filename, flgstr);
                 }
-            }
-            else if (strcasecmp("PARAM_FROM_SOIL", optstr) == 0) {
-                sscanf(cmdstr, "%*s %s", flgstr);
-                options.PARAM_FROM_SOIL = str_to_bool(flgstr);
             }
             else if (strcasecmp("LAI_SRC", optstr) == 0) {
                 sscanf(cmdstr, "%*s %s", flgstr);

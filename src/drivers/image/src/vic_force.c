@@ -16,7 +16,8 @@ vic_force(void)
     extern size_t              NR;
     extern size_t              current;
     extern int                 mpi_rank;
-    extern force_data_struct  *force;
+    extern atmos_data_struct  *atmos;
+    extern all_vars_struct    *all_vars;
     extern dmy_struct         *dmy;
     extern domain_struct       global_domain;
     extern domain_struct       local_domain;
@@ -27,6 +28,7 @@ vic_force(void)
     extern veg_con_struct    **veg_con;
     extern veg_hist_struct   **veg_hist;
     extern param_set_struct    param_set;
+    extern parameters_struct   param;
 
     double                    *dvar = NULL;
     size_t                     i, j, v;
@@ -64,7 +66,7 @@ vic_force(void)
                                     param_set.TYPE[AIR_TEMP].varname,
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
-            force[i].air_temp[j] = (double) dvar[i];
+            atmos[i].air_temp[j] = (double) dvar[i];
         }
     }
     if (has_prec && !has_rain && !has_snow) {
@@ -76,9 +78,9 @@ vic_force(void)
                                         param_set.TYPE[PREC].varname,
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
-                force[i].prec[j] = (double) dvar[i];
-                force[i].rainf[j] = 0.;
-                force[i].snowf[j] = 0.;
+                atmos[i].prec[j] = (double) dvar[i];
+                atmos[i].rainf[j] = 0.0;
+                atmos[i].snowf[j] = 0.0;
             }
         }
     }
@@ -92,7 +94,7 @@ vic_force(void)
                                             param_set.TYPE[SNOWF].varname,
                                             d3start, d3count, dvar);
                 for (i = 0; i < local_domain.ncells_active; i++) {
-                    force[i].snowf[j] = (double) dvar[i];
+                    atmos[i].snowf[j] = (double) dvar[i];
                 }
             }
             // Rainfall: rainf [mm/s]
@@ -103,7 +105,7 @@ vic_force(void)
                                             param_set.TYPE[RAINF].varname,
                                             d3start, d3count, dvar);
                 for (i = 0; i < local_domain.ncells_active; i++) {
-                    force[i].rainf[j] = (double) dvar[i];
+                    atmos[i].rainf[j] = (double) dvar[i];
                 }
             }
         }
@@ -120,7 +122,7 @@ vic_force(void)
                                     param_set.TYPE[SWDOWN].varname,
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
-            force[i].shortwave[j] = (double) dvar[i];
+            atmos[i].shortwave[j] = (double) dvar[i];
         }
     }
 
@@ -132,7 +134,7 @@ vic_force(void)
                                     param_set.TYPE[LWDOWN].varname,
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
-            force[i].longwave[j] = (double) dvar[i];
+            atmos[i].longwave[j] = (double) dvar[i];
         }
     }
 
@@ -144,7 +146,7 @@ vic_force(void)
                                     param_set.TYPE[WIND].varname,
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
-            force[i].wind[j] = (double) dvar[i];
+            atmos[i].wind[j] = (double) dvar[i];
         }
     }
 
@@ -156,7 +158,7 @@ vic_force(void)
                                     param_set.TYPE[REL_HUMID].varname,
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
-            force[i].rel_humid[j] = (double) dvar[i];
+            atmos[i].rel_humid[j] = (double) dvar[i];
         }
     }
 
@@ -168,9 +170,10 @@ vic_force(void)
                                     param_set.TYPE[PRESSURE].varname,
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
-            force[i].pressure[j] = (double) dvar[i];
+            atmos[i].pressure[j] = (double) dvar[i] * PA_PER_KPA;
         }
     }
+
     // specific humidity [kg/kg]: Qair
     for (j = 0; j < NF; j++) {
         d3start[0] = global_param.forceskip[0] + 
@@ -179,7 +182,7 @@ vic_force(void)
                                     param_set.TYPE[QAIR].varname,
                                     d3start, d3count, dvar);
         for (i = 0; i < local_domain.ncells_active; i++) {
-            force[i].Qair[j] = (double) dvar[i];
+            atmos[i].Qair[j] = (double) dvar[i];
         }
     }
 
@@ -192,7 +195,7 @@ vic_force(void)
                                         param_set.TYPE[CATM].varname,
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
-                force[i].Catm[j] = (double) dvar[i];
+                atmos[i].Catm[j] = (double) dvar[i];
             }
         }
         // Fraction of shortwave that is direct
@@ -203,7 +206,7 @@ vic_force(void)
                                         param_set.TYPE[FDIR].varname,
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
-                force[i].fdir[j] = (double) dvar[i];
+                atmos[i].fdir[j] = (double) dvar[i];
             }
         }
         // Photosynthetically active radiation
@@ -214,7 +217,7 @@ vic_force(void)
                                         param_set.TYPE[PAR].varname,
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
-                force[i].par[j] = (double) dvar[i];
+                atmos[i].par[j] = (double) dvar[i];
             }
         }
     }
@@ -227,7 +230,7 @@ vic_force(void)
                                         param_set.TYPE[CHANNEL_IN].varname,
                                         d3start, d3count, dvar);
             for (i = 0; i < local_domain.ncells_active; i++) {
-                force[i].channel_in[j] = (double) dvar[i];
+                atmos[i].channel_in[j] = (double) dvar[i];
             }
         }
     }
@@ -339,37 +342,6 @@ vic_force(void)
         global_param.forceoffset[1] += NF;
     }
 
-    // Convert forcings into what we need and calculate missing ones
-    for (i = 0; i < local_domain.ncells_active; i++) {
-        for (j = 0; j < NF; j++) {
-            // pressure in Pa
-            force[i].pressure[j] *= PA_PER_KPA;
-            // vapor pressure in Pa
-            force[i].vp[j] = q_to_vp(force[i].Qair[j], 
-                                force[i].pressure[j]);
-
-            // air density in kg/m3
-            force[i].density[j] = air_density(force[i].air_temp[j],
-                                              force[i].pressure[j],
-                                              force[i].vp[j]);
-            // Cosine of solar zenith angle: coszen
-            compute_coszen(
-                    local_domain.locations[i].latitude,
-                    local_domain.locations[i].longitude,
-                    soil_con[i].time_zone_lng, 
-                    dmy[current].day_in_year,
-                    dmy[current].dayseconds,
-                    &force[i].coszen[j],
-                    &force[i].daylen[j]);
-            // atmospheric potential temperature (K)
-            force[i].theta_pot[j] = compute_theta(force[i].air_temp[j],
-                                                  force[i].pressure[j]);
-            // atmospheric virtual potential temperature (K)
-            force[i].theta_v[j] = compute_theta_v(force[i].Qair[j],
-                                                  force[i].theta_pot[j]);
-        }
-    }
-
     // Checks on fcanopy and LAI
     for (i = 0; i < local_domain.ncells_active; i++) {
         for (v = 0; v < local_domain.locations[i].nveg; v++) {
@@ -395,28 +367,16 @@ vic_force(void)
     // Put average value in NR field
     if (NF > 1) {
         for (i = 0; i < local_domain.ncells_active; i++) {
-            force[i].air_temp[NR] = average(force[i].air_temp, NF);
-            force[i].prec[NR] = average(force[i].prec, NF);
-            force[i].rainf[NR] = average(force[i].rainf, NF);
-            force[i].snowf[NR] = average(force[i].snowf, NF);
-            force[i].shortwave[NR] = average(force[i].shortwave, NF);
-            force[i].longwave[NR] = average(force[i].longwave, NF);
-            force[i].pressure[NR] = average(force[i].pressure, NF);
-            force[i].wind[NR] = average(force[i].wind, NF);
-            force[i].vp[NR] = average(force[i].vp, NF);
-            force[i].Qair[NR] = average(force[i].Qair, NF);
-            force[i].rel_humid[NR] = average(force[i].rel_humid, NF);
-            force[i].density[NR] = air_density(force[i].air_temp[NR],
-                                            force[i].pressure[NR],
-                                            force[i].vp[NR]);
-            // for coszen, use value at noon
-            compute_coszen(local_domain.locations[i].latitude,
-                           local_domain.locations[i].longitude,
-                           soil_con[i].time_zone_lng,
-                           dmy[current].day_in_year,
-                           SEC_PER_DAY / 2,
-                           &force[i].coszen[NR],
-                           &force[i].daylen[NR]);
+            atmos[i].air_temp[NR] = average(atmos[i].air_temp, NF);
+            atmos[i].prec[NR] = average(atmos[i].prec, NF);
+            atmos[i].rainf[NR] = average(atmos[i].rainf, NF);
+            atmos[i].snowf[NR] = average(atmos[i].snowf, NF);
+            atmos[i].shortwave[NR] = average(atmos[i].shortwave, NF);
+            atmos[i].longwave[NR] = average(atmos[i].longwave, NF);
+            atmos[i].pressure[NR] = average(atmos[i].pressure, NF);
+            atmos[i].wind[NR] = average(atmos[i].wind, NF);
+            atmos[i].Qair[NR] = average(atmos[i].Qair, NF);
+            atmos[i].rel_humid[NR] = average(atmos[i].rel_humid, NF);
 
             for (v = 0; v < local_domain.locations[i].nveg; v++) {
                     // not the correct way to calculate average albedo in general,
@@ -430,12 +390,121 @@ vic_force(void)
 
             // Optional inputs
             if (options.CARBON) {
-                force[i].Catm[NR] = average(force[i].Catm, NF);
-                force[i].fdir[NR] = average(force[i].fdir, NF);
-                force[i].par[NR] = average(force[i].par, NF);
+                atmos[i].Catm[NR] = average(atmos[i].Catm, NF);
+                atmos[i].fdir[NR] = average(atmos[i].fdir, NF);
+                atmos[i].par[NR] = average(atmos[i].par, NF);
             }
             if (options.ROUT) {
-                force[i].channel_in[NR] = average(force[i].channel_in, NF);
+                atmos[i].channel_in[NR] = average(atmos[i].channel_in, NF);
+            }
+        }
+    }
+
+    // Convert forcings into what we need and calculate missing ones
+    size_t band;
+    double qsat_cell = 0.0, qsat_band = 0.0;
+    for (i = 0; i < local_domain.ncells_active; i++) {
+
+        // Cosine of solar zenith angle: coszen
+        compute_coszen(local_domain.locations[i].latitude,
+                       local_domain.locations[i].longitude,
+                       soil_con[i].time_zone_lng, 
+                       dmy[current].day_in_year,
+                       dmy[current].dayseconds,
+                       &soil_con[i].coszen,
+                       &soil_con[i].daylen);
+
+        for (band = 0; band < local_domain.locations[i].nband; band++) {
+
+            // adjust air_temp for band scale
+            all_vars[i].force[band].air_temp = atmos[i].air_temp[NR] + soil_con[i].Tfactor[band];
+
+            // adjust pressure for band scale
+            double hscale = CONST_RDAIR * 0.5 * (atmos[i].air_temp[NR] + 
+                            all_vars[i].force[band].air_temp) / CONST_G;
+            all_vars[i].force[band].pressure = atmos[i].pressure[NR] * 
+                        exp(-(soil_con[i].BandElev[band] - soil_con[i].elevation) / hscale);
+
+            // adjust specific humidity for band scale
+            // cell尺度饱和比湿
+            svp_flags(atmos[i].air_temp[NR], 
+                      atmos[i].pressure[NR], 
+                      NULL, &qsat_cell, NULL, NULL, QSAT);
+            // band尺度饱和比湿         
+            svp_flags(all_vars[i].force[band].air_temp, 
+                      all_vars[i].force[band].pressure, 
+                      NULL, &qsat_band, NULL, NULL, QSAT);
+            // 通过饱和比湿比例调整
+            all_vars[i].force[band].Qair = atmos[i].Qair[NR] * (qsat_band / qsat_cell);
+
+            /* adjust relative humidity for band scale */
+            if (qsat_band > 0.0) {
+                all_vars[i].force[band].rel_humid =
+                    100.0 * all_vars[i].force[band].Qair / qsat_band;
+            }
+            else {
+                all_vars[i].force[band].rel_humid = 0.0;
+            }
+            all_vars[i].force[band].rel_humid = min(max(all_vars[i].force[band].rel_humid, 0.0), 100.0);
+
+            // adjust air density for band scale
+            all_vars[i].force[band].density = air_density(all_vars[i].force[band].air_temp,
+                                                          all_vars[i].force[band].pressure,
+                                                          all_vars[i].force[band].Qair);
+
+            /* adjust longwave radiation for band scale */
+            all_vars[i].force[band].longwave =
+                                downscale_longwave(atmos[i].air_temp[NR],
+                                                   atmos[i].Qair[NR],
+                                                   atmos[i].pressure[NR],
+                                                   atmos[i].longwave[NR],
+                                                   all_vars[i].force[band].air_temp,
+                                                   all_vars[i].force[band].Qair,
+                                                   all_vars[i].force[band].pressure);
+
+            /* adjust shortwave radiation for band scale */
+            all_vars[i].force[band].shortwave =
+                                downscale_shortwave(atmos[i].shortwave[NR],
+                                                    atmos[i].pressure[NR],
+                                                    all_vars[i].force[band].pressure,
+                                                    soil_con[i].coszen,
+                                                    dmy[current].day_in_year);
+
+            // adjust potential temperature (K) for band scale
+            double theta_pot = compute_theta(atmos[i].air_temp[NR],
+                                             atmos[i].pressure[NR]);
+            all_vars[i].force[band].theta_pot = theta_pot + (all_vars[i].force[band].air_temp -
+                                    atmos[i].air_temp[NR]) * exp((param.REF_HEIGHT / hscale) * 
+                                    (CONST_RDAIR / CONST_CPDAIR));
+
+            // adjust atmospheric virtual potential temperature (K) for band scale
+            all_vars[i].force[band].theta_v = compute_theta_v(all_vars[i].force[band].Qair,
+                                                              all_vars[i].force[band].theta_pot);
+
+            // adjust vapor pressure in Pa for band scale
+            all_vars[i].force[band].vp = q_to_vp(all_vars[i].force[band].Qair, 
+                                                 all_vars[i].force[band].pressure);
+
+            // wet bulb temperature (K) for band scale
+            all_vars[i].force[band].wet_bulb = calc_wet_bulb(all_vars[i].force[band].air_temp,
+                                                             all_vars[i].force[band].pressure,
+                                                             all_vars[i].force[band].rel_humid);
+            // precipitation (mm/s) for band scale
+            if (has_prec && !has_rain && !has_snow) {
+                all_vars[i].force[band].prec = atmos[i].prec[NR] * soil_con[i].Pfactor[band];
+                /** Calculate Fraction of Precipitation that falls as Rain **/
+                calc_rainonly(all_vars[i].force[band].prec,
+                              all_vars[i].force[band].wet_bulb,
+                              all_vars[i].force[band].rel_humid,
+                              soil_con[i].BandElev[band],
+                              &all_vars[i].force[band].snowf,
+                              &all_vars[i].force[band].rainf);
+            }
+            else if (has_rain && has_snow) {
+                all_vars[i].force[band].rainf = atmos[i].rainf[NR] * soil_con[i].Pfactor[band];
+                all_vars[i].force[band].snowf = atmos[i].snowf[NR] * soil_con[i].Pfactor[band];
+                all_vars[i].force[band].prec = all_vars[i].force[band].rainf +
+                                               all_vars[i].force[band].snowf;
             }
         }
     }
@@ -445,7 +514,8 @@ vic_force(void)
 }
 
 /******************************************************************************
- * @brief    Determine timestep and start year, month, day, and seconds of forcing files
+ * @brief    Determine timestep and start year, month, day, and seconds 
+ *           of forcing files
  *****************************************************************************/
 void
 get_forcing_file_info(param_set_struct *param_set,
