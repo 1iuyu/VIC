@@ -13,6 +13,7 @@
  *****************************************************************************/
 int
 calc_vapor_flux(double             pressure,
+                energy_bal_struct *energy,
                 cell_data_struct  *cell,
                 snow_data_struct  *snow,
                 soil_con_struct   *soil_con)
@@ -38,8 +39,8 @@ calc_vapor_flux(double             pressure,
     double vapor_diff[MAX_NODES] = {0};
     double diff_therm[MAX_SOILS] = {0};
     double diff_vapor[MAX_NODES] = {0};
-    double *ice = cell->ice;
-    double *liq = cell->liq;
+    double *ice = energy->ice;
+    double *liq = energy->liq;
     double *pack_T = snow->pack_T;
     double *soil_T = cell->soil_T;
     double *zc_snow = snow->zc_snow;

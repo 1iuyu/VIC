@@ -23,6 +23,7 @@ surface_albedo(double             step_dt,
     extern option_struct options;
     extern parameters_struct param;
     size_t i, j;
+    size_t Nsnow = snow->Nsnow;
     double leaf_frac = 0.0;
     double stem_frac = 0.0;
     double coszen = soil_con->coszen;
@@ -148,7 +149,7 @@ surface_albedo(double             step_dt,
     if (coszen > 0.0) {
 
         /* Compute ground albedo based on soil and snow albedo */
-        GroundAlbedo(cell->moist[0],
+        GroundAlbedo(energy->moist[Nsnow],
                      coszen, 
                      energy, cell);
 

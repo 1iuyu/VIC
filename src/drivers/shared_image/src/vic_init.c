@@ -1012,7 +1012,7 @@ vic_init(void)
     // Cv: for each vegetation type, read the cover fraction into the mapping
     // structure. Then assign only the ones with a fraction greater than 0 to
     // the veg_con structure
-    for (j = 0; j < options.MAX_HRU; j++) {
+    for (j = 0; j < options.HRU; j++) {
         d3start[0] = j;
         get_scatter_nc_field_double(&(filenames.params), "Cv",
                                     d3start, d3count, dvar);
@@ -1022,7 +1022,7 @@ vic_init(void)
             }
         }
     }
-    for (j = 0; j < options.MAX_HRU; j++) {
+    for (j = 0; j < options.HRU; j++) {
         d3start[0] = j;
         get_scatter_nc_field_int(&(filenames.params), "BandIndex",
                                 d3start, d3count, ivar);
@@ -1032,7 +1032,7 @@ vic_init(void)
             }
         }
     }
-    for (j = 0; j < options.MAX_HRU; j++) {
+    for (j = 0; j < options.HRU; j++) {
         d3start[0] = j;
         get_scatter_nc_field_int(&(filenames.params), "veg_class",
                                 d3start, d3count, ivar);

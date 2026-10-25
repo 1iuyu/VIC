@@ -33,7 +33,7 @@ initialize_options()
     options.Nlayer = 3;
     options.Nswband = 2;
     options.Nfrost = 1;
-    options.MAX_HRU = 50;
+    options.HRU = 3;
     options.SNOW_BAND = 1;
     // input options
     options.AERO_RESIST = AR_MEIER;

@@ -174,16 +174,16 @@ generate_default_state(all_vars_struct   *all_vars,
             for (lidx = 0; lidx < Nsoil; lidx++) {
                 // 温度大于0，地下水位以上设为田间持水量，地下水位以下设为饱和含水量
                 if (soil_con->Zsum_soil[lidx] <= cell[veg].zwt) {
-                    cell[veg].moist[lidx] = soil_con->Wsat_node[lidx] * 0.7;
+                    energy[veg].moist[lidx] = soil_con->Wsat_node[lidx] * 0.7;
                 }
                 else {
-                    cell[veg].moist[lidx] = soil_con->Wsat_node[lidx];
+                    energy[veg].moist[lidx] = soil_con->Wsat_node[lidx];
                 }
-                cell[veg].liq[lidx] = cell[veg].moist[lidx]; // 将liq初始化为moist
+                energy[veg].liq[lidx] = energy[veg].moist[lidx]; // 将liq初始化为moist
 
-                if (cell[veg].moist[lidx] >
+                if (energy[veg].moist[lidx] >
                     soil_con->Wsat_node[lidx]) {
-                    cell[veg].moist[lidx] =
+                    energy[veg].moist[lidx] =
                             soil_con->Wsat_node[lidx];
                 }
             }
@@ -199,6 +199,7 @@ generate_default_state(all_vars_struct   *all_vars,
             // set soil moisture properties for all soil thermal nodes
             ErrorFlag =
                     distribute_node_moisture_properties(
+                        &energy[veg],
                         &cell[veg],
                         soil_con);
             if (ErrorFlag == ERROR) {
@@ -207,8 +208,8 @@ generate_default_state(all_vars_struct   *all_vars,
             }
             // initialize last step soil layer properties
             for (i = 0; i < cell[veg].Nsoil; i++) {
-                cell[veg].last_ice[i] = cell[veg].ice[i];
-                cell[veg].last_liq[i] = cell[veg].liq[i];
+                energy[veg].last_ice[i] = energy[veg].ice[i];
+                energy[veg].last_liq[i] = energy[veg].liq[i];
                 cell[veg].last_matric[i] = cell[veg].matric[i];
             }
             band = veg_con[veg].BandIndex;
@@ -218,7 +219,7 @@ generate_default_state(all_vars_struct   *all_vars,
                                 &energy[veg],
                                 &snow[veg], soil_con);
             for (i = 0; i <= snow[veg].Nsnow; i++) {
-                snow[veg].last_enthalpy[i] = snow[veg].enthalpy[i];
+                energy[veg].last_enthalpy[i] = energy[veg].enthalpy[i];
             }
         }
     }
@@ -233,7 +234,7 @@ generate_default_state(all_vars_struct   *all_vars,
             veg_class = veg_con[veg].veg_class;
             Canopy_Upper = veg_lib[veg_class].Canopy_Upper;
             
-            for (i = 0; i < veg_var[veg].Nroot; i++) {
+            for (i = 0; i < cell[veg].Nroot; i++) {
                 root_psi += cell[veg].root[i] * (cell[veg].matric[i] - soil_con->zc_soil[i]);
                 total_root += cell[veg].root[i];
             }

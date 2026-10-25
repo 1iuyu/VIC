@@ -78,7 +78,7 @@ vic_restore(void)
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                             j < all_vars[i].cell[m].Nsoil) {
-                    all_vars[i].cell[m].moist[j] = dvar[i];
+                    all_vars[i].energy[m].moist[j] = dvar[i];
                 }
             }
         }
@@ -95,7 +95,7 @@ vic_restore(void)
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                             j < all_vars[i].cell[m].Nsoil) {
-                    all_vars[i].cell[m].ice[j] = dvar[i];
+                    all_vars[i].energy[m].ice[j] = dvar[i];
                 }
             }
         }
@@ -112,7 +112,7 @@ vic_restore(void)
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                             j < all_vars[i].cell[m].Nsoil) {
-                    all_vars[i].cell[m].liq[j] = dvar[i];
+                    all_vars[i].energy[m].liq[j] = dvar[i];
                 }
             }
         }
@@ -129,7 +129,7 @@ vic_restore(void)
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                             j < all_vars[i].cell[m].Nsoil) {
-                    all_vars[i].cell[m].last_ice[j] = dvar[i];
+                    all_vars[i].energy[m].last_ice[j] = dvar[i];
                 }
             }
         }
@@ -146,7 +146,7 @@ vic_restore(void)
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                             j < all_vars[i].cell[m].Nsoil) {
-                    all_vars[i].cell[m].last_liq[j] = dvar[i];
+                    all_vars[i].energy[m].last_liq[j] = dvar[i];
                 }
             }
         }
@@ -503,7 +503,7 @@ vic_restore(void)
                                 d3start, d3count, ivar);
         for (i = 0; i < local_domain.ncells_active; i++) {
             if (m < local_domain.locations[i].nveg) {
-                all_vars[i].veg_var[m].Nroot = ivar[i];
+                all_vars[i].cell[m].Nroot = ivar[i];
             }
         }
     }

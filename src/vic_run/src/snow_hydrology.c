@@ -32,9 +32,9 @@ snow_hydrology(double             step_dt,
     double soil_sublim = 0.0;
     double soilfrost = 0.0;
     // 指针赋值               
-    double *liq = cell->liq;
-    double *ice = cell->ice;
-    double *moist = cell->moist;
+    double *liq = energy->liq;
+    double *ice = energy->ice;
+    double *moist = energy->moist;
     double *dz_snow = snow->dz_snow;
     double *snow_porosity = snow->porosity;
     double *theta_liq = snow->theta_liq;
@@ -395,7 +395,7 @@ snow_hydrology(double             step_dt,
                         air_temp, wind,
                         pressure, snow);
         /* snow layer combination */
-        snow_combination(dz_soil[0], cell, snow);
+        snow_combination(dz_soil[0], energy, snow);
         /* snow layer division */
         snow_division(snow);
     }

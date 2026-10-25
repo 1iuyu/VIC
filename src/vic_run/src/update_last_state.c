@@ -21,16 +21,16 @@ update_last_state(energy_bal_struct *energy,
     size_t Nsnow = snow->Nsnow;
     double *T = energy->T;
     double *last_T = energy->last_T;
-    double *ice = cell->ice;
-    double *liq = cell->liq;
+    double *ice = energy->ice;
+    double *liq = energy->liq;
     double *matric = cell->matric;
-    double *last_ice = cell->last_ice;
-    double *last_liq = cell->last_liq;
+    double *last_ice = energy->last_ice;
+    double *last_liq = energy->last_liq;
     double *last_matric = cell->last_matric;
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
-    double *enthalpy = snow->enthalpy;
-    double *last_enthalpy= snow->last_enthalpy;
+    double *enthalpy = energy->enthalpy;
+    double *last_enthalpy= energy->last_enthalpy;
     double *last_thice = snow->last_thice;
     double *last_thliq = snow->last_thliq;
     // Set to the default value
@@ -44,6 +44,7 @@ update_last_state(energy_bal_struct *energy,
     // Update thermal states
     for (i = 0; i < Nnode; i++) {
         last_T[i] = T[i];
+        last_enthalpy[i] = enthalpy[i];
     }
 
     // Update soil water states
@@ -57,7 +58,6 @@ update_last_state(energy_bal_struct *energy,
     for (i = 0; i < Nsnow; i++) {
         last_thice[i] = theta_ice[i];
         last_thliq[i] = theta_liq[i];
-        last_enthalpy[i] = enthalpy[i];
+        
     }
-    last_enthalpy[Nsnow] = enthalpy[Nsnow];
 }

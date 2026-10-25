@@ -10,21 +10,22 @@
  * @brief   Compute the resistance factor for soil evaporation calculation.
  *****************************************************************************/
 void
-compute_soil_resis(double            coverage,
-                   cell_data_struct *cell,
-                   soil_con_struct  *soil_con)
+compute_soil_resis(double             coverage,
+                   energy_bal_struct *energy,
+                   cell_data_struct  *cell,
+                   soil_con_struct   *soil_con)
 {
     extern parameters_struct param;
     /* Allocate temp arrays */
     double Ra_evap = 0.0; // [m/s]
     if (cell->IS_VEG) {
-        double *liq = cell->liq;
+        double *liq = energy->liq;
         double *eff_porosity = cell->eff_porosity;  // 有效孔隙度
         double *Wsat_node = soil_con->Wsat_node;
-        double aird = SoilWaterRetentionCurve(MOIST_FLAG, 0, 0.0, -1.0e4, soil_con);
+        double aird = SoilWaterRetentionCurve(MOIST_FLAG, 0, 0.0, -1.0e4, 0.0, soil_con);
         double d0 = CONST_VAPDIFF * pow(cell->soil_T[0] / CONST_TKFRZ, 1.75);
         double eps = Wsat_node[0] - aird;
-        double eps100 = Wsat_node[0] - SoilWaterRetentionCurve(MOIST_FLAG, 0, 0.0, -1.0, soil_con);
+        double eps100 = Wsat_node[0] - SoilWaterRetentionCurve(MOIST_FLAG, 0, 0.0, -1.0, 0.0, soil_con);
         // 3POE 方案的曲折度计算
         double tao = Wsat_node[0] * Wsat_node[0] * 
                     pow(eps / Wsat_node[0], 2.0 + log(pow(eps100, 0.25)) / log(eps100 / Wsat_node[0]));

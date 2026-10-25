@@ -52,10 +52,6 @@ initialize_snow(snow_data_struct *snow,
             snow[i].last_snowfrac[lidx] = 0.0;
             snow[i].snow_thresholds[lidx] = dz_snow_min[lidx];
         }
-        for (lidx = 0; lidx < MAX_SNOWS+1; lidx++) {
-            snow[i].enthalpy[lidx] = 0.0;
-            snow[i].last_enthalpy[lidx] = 0.0;
-        }
         snow[i].glac_excess = 0.0;
         snow[i].pack_comb = 0.0;
         snow[i].snow_dew = 0.0;

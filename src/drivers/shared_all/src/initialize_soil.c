@@ -49,13 +49,8 @@ initialize_soil(cell_data_struct *cell,
         cell[veg].asat = 0.0;
         cell[veg].zwt = 0.0;  // initial water table depth (m)
         for (lidx = 0; lidx < MAX_SOILS; lidx++) {
-            cell[veg].ice[lidx] = 0.0;
-            cell[veg].liq[lidx] = 0.0;
-            cell[veg].last_ice[lidx] = 0.0;
-            cell[veg].last_liq[lidx] = 0.0;
             cell[veg].lateral_flow[lidx] = 0.0;
             cell[veg].dQvdSMP[lidx] = 0.0;
-            cell[veg].moist[lidx] = 0.0;
             cell[veg].excess_ice[lidx] = 0.0;
             cell[veg].soil_T[lidx] = 0.0;
             cell[veg].eff_porosity[lidx] = 0.0;

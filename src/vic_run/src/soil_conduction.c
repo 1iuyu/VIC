@@ -14,17 +14,19 @@
 *               of Soils
 ******************************************************************************/
 double
-soil_conductivity(double liq,
-                  double ice,
-                  double clay_node,
-                  double sand_node,
-                  double soil_pore,
-                  double excess_ice,
-                  double vol_sand,
-                  double vol_silt,
-                  double vol_clay,
-                  double vol_organic,
-                  double vol_gravel)
+soil_conductivity(double  liq,
+                  double  ice,
+                  double  clay_node,
+                  double  sand_node,
+                  double  soil_pore,
+                  double  excess_ice,
+                  double  vol_sand,
+                  double  vol_silt,
+                  double  vol_clay,
+                  double  vol_organic,
+                  double  vol_gravel,
+                  double *dTK_dliq,
+                  double *dTK_dice)
 {
     // 形状因子
     const double GA_QUARTZ = 0.144;   // 沙粒形状因子
@@ -49,10 +51,13 @@ soil_conductivity(double liq,
     
     // 根据含水量选择计算方法
     double TK;
+    (*dTK_dliq) = 0.0;
+    (*dTK_dice) = 0.0;
     
     if (liq > VLMT) {
         // 空气的形状因子随含水量变化
         double GAAIR = 0.035 + 0.298 * (liq - VLMT) / (soil_pore - VLMT);
+        double dGAAIR_dliq = 0.298 / (soil_pore - VLMT);
         double W_air = devries_weight(CONST_KFWICE, CONST_KDAIR, GAAIR);
         
         // 湿润条件下的权重因子
@@ -63,28 +68,30 @@ soil_conductivity(double liq,
         double W_clay = devries_weight(CONST_KFWICE, CONST_KCLAY, GA_CLAY);
         double W_om = devries_weight(CONST_KFWICE, CONST_KORGANIC, GA_OM);
         double W_rock = devries_weight(CONST_KFWICE, CONST_KGRAVEL, GA_ROCK);
-        
+        double dW_air_dliq = devries_weight_dga(CONST_KFWICE, CONST_KDAIR, GAAIR) * dGAAIR_dliq;
         // 加权平均
-        double numerator = W_quartz * vol_sand * CONST_KQUARTZ
-                         + W_silt * vol_silt *  CONST_KSILT
-                         + W_clay * vol_clay * CONST_KCLAY
-                         + W_om * vol_organic * CONST_KORGANIC
-                         + W_rock * vol_gravel * CONST_KGRAVEL
-                         + W_liq * liq * CONST_KFWICE
-                         + W_ice * ice * CONST_KICE
-                         + W_air * air * CONST_KDAIR;
+        double numer = W_quartz * vol_sand * CONST_KQUARTZ +
+                       W_silt * vol_silt *  CONST_KSILT +
+                       W_clay * vol_clay * CONST_KCLAY +
+                       W_om * vol_organic * CONST_KORGANIC +
+                       W_rock * vol_gravel * CONST_KGRAVEL +
+                       W_liq * liq * CONST_KFWICE +
+                       W_ice * ice * CONST_KICE +
+                       W_air * air * CONST_KDAIR;
         
-        double denominator = W_quartz * vol_sand
-                           + W_silt * vol_silt
-                           + W_clay * vol_clay
-                           + W_om * vol_organic
-                           + W_rock * vol_gravel
-                           + W_liq * liq
-                           + W_ice * ice
-                           + W_air * air;
+        double denom = W_quartz * vol_sand +
+                       W_silt * vol_silt +
+                       W_clay * vol_clay +
+                       W_om * vol_organic +
+                       W_rock * vol_gravel +
+                       W_liq * liq +
+                       W_ice * ice +
+                       W_air * air;
         
-        TK = numerator / denominator;
-        
+        TK = numer / denom;
+        double dnumer_dliq = W_liq * CONST_KFWICE - W_air * CONST_KDAIR + dW_air_dliq * air * CONST_KDAIR;
+        double ddenom_dliq = W_liq - W_air + dW_air_dliq * air;
+        (*dTK_dliq) = (dnumer_dliq - TK * ddenom_dliq) / denom;
     } 
     else {     
         // 计算干燥土壤热导率
@@ -102,24 +109,24 @@ soil_conductivity(double liq,
             V_air_dry = 0.0;
         }
         
-        double numerator_dry = W_quartz_dry * vol_sand * CONST_KQUARTZ
-                             + W_silt_dry * vol_silt * CONST_KSILT
-                             + W_clay_dry * vol_clay * CONST_KCLAY
-                             + W_om_dry * vol_organic * CONST_KORGANIC
-                             + W_rock_dry * vol_gravel * CONST_KGRAVEL
-                             + W_ice_dry * ice * CONST_KICE
-                             + W_air_dry * V_air_dry * CONST_KDAIR;
+        double numer_dry = W_quartz_dry * vol_sand * CONST_KQUARTZ +
+                           W_silt_dry * vol_silt * CONST_KSILT +
+                           W_clay_dry * vol_clay * CONST_KCLAY +
+                           W_om_dry * vol_organic * CONST_KORGANIC +
+                           W_rock_dry * vol_gravel * CONST_KGRAVEL +
+                           W_ice_dry * ice * CONST_KICE +
+                           W_air_dry * V_air_dry * CONST_KDAIR;
         
-        double denominator_dry = W_quartz_dry * vol_sand
-                               + W_silt_dry * vol_silt
-                               + W_clay_dry * vol_clay
-                               + W_om_dry * vol_organic
-                               + W_rock_dry * vol_gravel
-                               + W_ice_dry * ice
-                               + W_air_dry * V_air_dry;
+        double denom_dry = W_quartz_dry * vol_sand +
+                           W_silt_dry * vol_silt +
+                           W_clay_dry * vol_clay +
+                           W_om_dry * vol_organic +
+                           W_rock_dry * vol_gravel +
+                           W_ice_dry * ice +
+                           W_air_dry * V_air_dry;
         
-        double TK_dry = numerator_dry / denominator_dry;
-        
+        double TK_dry = numer_dry / denom_dry;
+        double dTKdry_dice = (CONST_KICE - CONST_KDAIR) / denom_dry;
         // 计算湿润下限热导率 (含水量 = VLMT)
         double V_air_wet = soil_pore - ice - VLMT;
         if (V_air_wet < 0.0) {
@@ -137,39 +144,49 @@ soil_conductivity(double liq,
         double W_om_wet = devries_weight(CONST_KFWICE, CONST_KORGANIC, GA_OM);
         double W_rock_wet = devries_weight(CONST_KFWICE, CONST_KGRAVEL, GA_ROCK);
         
-        double numerator_wet = W_quartz_wet * vol_sand * CONST_KQUARTZ
-                             + W_silt_wet * vol_silt * CONST_KSILT
-                             + W_clay_wet * vol_clay * CONST_KCLAY
-                             + W_om_wet * vol_organic * CONST_KORGANIC
-                             + W_rock_wet * vol_gravel * CONST_KGRAVEL
-                             + W_water_wet * VLMT * CONST_KFWICE
-                             + W_ice_wet * ice * CONST_KICE
-                             + W_air_wet * V_air_wet * CONST_KDAIR;
+        double numer_wet = W_quartz_wet * vol_sand * CONST_KQUARTZ +
+                           W_silt_wet * vol_silt * CONST_KSILT +
+                           W_clay_wet * vol_clay * CONST_KCLAY +
+                           W_om_wet * vol_organic * CONST_KORGANIC +
+                           W_rock_wet * vol_gravel * CONST_KGRAVEL +
+                           W_water_wet * VLMT * CONST_KFWICE +
+                           W_ice_wet * ice * CONST_KICE +
+                           W_air_wet * V_air_wet * CONST_KDAIR;
         
-        double denominator_wet = W_quartz_wet * vol_sand
-                               + W_silt_wet * vol_silt
-                               + W_clay_wet * vol_clay
-                               + W_om_wet * vol_organic
-                               + W_rock_wet * vol_gravel
-                               + W_water_wet * VLMT
-                               + W_ice_wet * ice
-                               + W_air_wet * V_air_wet;
+        double denom_wet = W_quartz_wet * vol_sand +
+                           W_silt_wet * vol_silt +
+                           W_clay_wet * vol_clay +
+                           W_om_wet * vol_organic +
+                           W_rock_wet * vol_gravel +
+                           W_water_wet * VLMT +
+                           W_ice_wet * ice +
+                           W_air_wet * V_air_wet;
         
-        double TK_wet = numerator_wet / denominator_wet;
-        
+        double TK_wet = numer_wet / denom_wet;
+        double dTKwet_dice = (W_ice_wet * CONST_KICE - W_air_wet * CONST_KDAIR - 
+                             TK_wet * (W_ice_wet - W_air_wet)) / denom_wet;
         // 线性插值
         if (VLMT > 0.0) {
             TK = TK_dry + (TK_wet - TK_dry) * liq / VLMT;
-        } else {
+            (*dTK_dliq) = (TK_wet - TK_dry) / VLMT;
+            (*dTK_dice) = dTKdry_dice + liq / VLMT * (dTKwet_dice - dTKdry_dice);
+        } 
+        else {
             TK = TK_dry;
+            (*dTK_dliq) = 0.0;
+            (*dTK_dice) = dTKdry_dice;
         }
     }
     
     if (TK < CONST_KDAIR) {
         TK = CONST_KDAIR;
+        (*dTK_dliq) = 0.0;
+        (*dTK_dice) = 0.0;
     }
     if (TK > CONST_KQUARTZ) {
         TK = CONST_KQUARTZ;
+        (*dTK_dliq) = 0.0;
+        (*dTK_dice) = 0.0;
     }
     
     return TK;
@@ -188,6 +205,21 @@ devries_weight(double lambda0,
     double term1 = 2.0 / 3.0 / (1.0 + ratio * ga);
     double term2 = 1.0 / 3.0 / (1.0 + ratio * (1.0 - 2.0 * ga));
     return term1 + term2;
+}
+
+/******************************************************************************
+* @brief    This subroutine calculates the weight of the effective thermal 
+            conductivity for each component in the porous medium.
+******************************************************************************/
+double
+devries_weight_dga(double lambda0, 
+                   double lambda1,
+                   double ga)
+{
+    double ratio = lambda1 / lambda0 - 1.0;
+    double term1 = 1.0 + ratio * ga;
+    double term2 = 1.0 + ratio * (1.0 - 2.0 * ga);
+    return -(2.0 / 3.0) * ratio / (term1 * term1) + (2.0 / 3.0) * ratio / (term2 * term2);
 }
 
 /******************************************************************************
@@ -298,16 +330,17 @@ set_node_parameters(size_t  Nbedrock,
 *           moisture contents.
 ******************************************************************************/
 int
-distribute_node_moisture_properties(cell_data_struct *cell,
-                                    soil_con_struct  *soil_con)
+distribute_node_moisture_properties(energy_bal_struct *energy,
+                                    cell_data_struct  *cell,
+                                    soil_con_struct   *soil_con)
 {
     extern option_struct     options;
     size_t nidx;
     size_t Nsoil = cell->Nsoil;
     double equil_liq = 0.0;
-    double *moist = cell->moist;
-    double *ice = cell->ice;
-    double *liq = cell->liq;
+    double *moist = energy->moist;
+    double *ice = energy->ice;
+    double *liq = energy->liq;
     double *soil_T = cell->soil_T;
     double *Wsat_node = soil_con->Wsat_node;
     double *eff_porosity = cell->eff_porosity;
@@ -354,8 +387,8 @@ distribute_node_moisture_properties(cell_data_struct *cell,
                 } 
             }
             // 计算土壤基质势
-            matric[nidx] = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
-                                                   liq[nidx], 0.0, soil_con);
+            matric[nidx] = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, liq[nidx], 
+                                                   0.0, 0.0, soil_con);
         }
     }
     return (0);
@@ -422,5 +455,58 @@ calc_solids_fractions(soil_con_struct *soil_con)
                     "sum of solid volume fractions minus (1 - porosity) = %.6f, ", i, error);
         }
     }
+    return (0);
+}
+
+/******************************************************************************
+* @brief    This subroutine compute the critical temperature above which 
+*           all water is unfrozen.
+******************************************************************************/
+double
+calc_tkfrz(size_t             nidx,
+           double            *dT_dpsi,
+           energy_bal_struct *energy,
+           cell_data_struct  *cell,
+           soil_con_struct   *soil_con)
+{
+    double *liq = energy->liq;
+    double *ice = energy->ice;
+    double tmp_tkfrz = 0.0;
+    double Wsat_node = soil_con->Wsat_node[nidx];
+    double total_liq = liq[nidx] + ice[nidx] * CONST_RHOICE / CONST_RHOFW;
+    if (total_liq > Wsat_node) {
+        total_liq = Wsat_node;
+    }
+    double tmp_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, total_liq, 0.0, 0.0, soil_con);
+    if (tmp_matric < 0.0) {
+        double A = CONST_LATICE / CONST_G;
+        tmp_tkfrz = CONST_TKTRIP * tmp_matric / (A - tmp_matric) + CONST_TKTRIP;
+        double denom = A - tmp_matric;
+        (*dT_dpsi) = CONST_TKTRIP * A / (denom * denom);
+    } 
+    else {
+        tmp_tkfrz = CONST_TKTRIP;
+        (*dT_dpsi) = 0.0;
+    }
+
+    return (tmp_tkfrz);
+}
+
+/******************************************************************************
+* @brief    This subroutine compute the soil compressibility (-) and its 
+*           derivative with respect to matric head (m-1).           
+******************************************************************************/
+int
+soil_compress(double  liq,
+              double  ice,
+              double  Wsat_node,
+              double  matric,
+              double  last_matric,
+              double *compress,
+              double *dcompress_dpsi)
+{
+    (*dcompress_dpsi) = (liq + ice) / Wsat_node;
+    (*compress) = matric - last_matric * (*dcompress_dpsi);
+
     return (0);
 }

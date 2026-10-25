@@ -59,9 +59,19 @@ piecewise_linear_interp(size_t  nd,
     
     return yi;
 }
+
 /******************************************************************************
  * @brief    定义sign函数
  *****************************************************************************/
 double sign(double a, double b) {
     return (b >= 0) ? fabs(a) : -fabs(a);
+}
+
+/******************************************************************************
+ * @brief    Get the index in the band-diagonal matrix or full matrix
+ *****************************************************************************/
+size_t 
+get_band_idx(size_t row, size_t col)
+{
+    return (LAPACK_KL + LAPACK_KU + row - col) + col * LAPACK_LDAB;
 }

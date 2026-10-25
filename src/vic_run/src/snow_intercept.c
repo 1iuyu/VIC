@@ -86,7 +86,7 @@ snow_intercept(double             step_dt,
         }
     }
     /* Calculate amount of rain intercepted on branches and stored in
-    intercepted snow. */
+       intercepted snow. */
     MaxRainInt = fcanopy * Wdew * NetVEG;
     if (NetVEG > 0.0) {
         DeltaRainInt = fcanopy * rainfall;
@@ -133,18 +133,15 @@ snow_intercept(double             step_dt,
                     if (f_snow > 1.0) {
                         f_snow = 1.0;
                     }
-                }
-                else {
+                } else {
                     f_snow = 0.0;
                 }
-            }
-            else {
+            } else {
                 wetFrac = 0.0;
                 f_snow = 0.0;
             }
             dryFrac = (1.0 - wetFrac) * NetLAI / NetVEG;
-        }
-        else {
+        } else {
             dryFrac = 0.0;
             wetFrac = 0.0;
         }

@@ -476,5 +476,13 @@ func_canopy_energy_bal(double             step_dt,
     }
     energy->Tsurf = EmissLongSub * Tfoliage + (1.0 - EmissLongSub) * sqrt(sqrt(pow(Tgrnd, 4.0)));
 
+    // If NOFLUX option is set, set derivatives to zero
+    if (options.NOFLUX) {
+        energy->deriv_snow = 0.0;
+        energy->deriv_soil = 0.0;
+        energy->deriv_terms = 0.0;
+        energy->deriv_evap = 0.0;
+    }
+
     return (0);
 }

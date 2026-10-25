@@ -34,20 +34,21 @@
 #define MAXSTRING    2048
 #define MISSING      -99999.   /**< missing value */
 #define MISSING_USI  99999.    /**< missing value for unsigned ints */
-#define MISSING_S    "MISSING"    /**< missing value for strings */
+#define MISSING_S    "MISSING" /**< missing value for strings */
 #define NODATA_VH    -1        /**< missing value for veg_hist inputs */
 #define NODATA_VEG   -1        /**< flag for veg types not in grid cell */
 #define ERROR        -999      /**< Error Flag returned by subroutines */
 
 /***** Define maximum array sizes for model source code *****/
 #define MAX_LAYERS      6      /**< maximum number of soil moisture layers */
-#define MAX_NODES       50     /**< maximum number of nodes = MAX_SNOWS + MAX_SOILS + 1 */
+#define MAX_STATES      100    /**< maximum number of state nodes */
+#define MAX_NODES       50     /**< maximum number of nodes */
 #define MAX_FRONTS      3      /**< maximum number of freezing and thawing front depths to store */
 #define MAX_SNOWS       3      /**< maximum number of snowpack layers */
 #define MAX_SOILS       40     /**< maximum number of soil nodes */
 #define MAX_SWBANDS     2      /**< maximum number of solar radiation wave bands */
 #define MAX_CANOPYS     10     /**< maximum number of canopy layers for radiative transfer */
-#define MAX_HRUS        50     /**< maximum number of hydrological response units */
+#define MAX_HRUS        50     /**< maximum number of hydrological response units in each cell */
 
 /***** Define values for model parameters *****/
 #define MINSOILDEPTH    0.001  /**< Minimum layer depth with which model can work (m) */
@@ -64,6 +65,9 @@
 #define LOOKUP_TEMP        11  /**< maximum temperature index used in aging lookup table [idx] */
 #define LOOKUP_DTDZ        31  /**< maximum temperature gradient index used in aging lookup table [idx] */
 #define LOOKUP_DENS         8  /**< maximum snow density index used in aging lookup table [idx] */
+#define LAPACK_KL           3  /**< lower bandwidth of the coupled water-heat Jacobian matrix */
+#define LAPACK_KU           3  /**< upper bandwidth of the coupled water-heat Jacobian matrix */
+#define LAPACK_LDAB (2 * LAPACK_KL + LAPACK_KU + 1)  /**< leading dimension of the band matrix */
 
 /***** Define minimum and maximum values for model timesteps *****/
 #define MIN_SUBDAILY_STEPS_PER_DAY  1
@@ -77,7 +81,7 @@ extern size_t NR;       /**< array index for force struct that indicates
 extern size_t NF;       /**< array index loop counter limit for force
                              struct that indicates the SNOW_STEP values */
 
-extern char          vic_run_ref_str[MAXSTRING];
+extern char vic_run_ref_str[MAXSTRING];
 
 /******************************************************************************
  * @brief   Snow Density parametrizations
@@ -183,6 +187,16 @@ enum
 };
 
 /******************************************************************************
+ * @brief   Snow freezing curve. Defines which part is called.
+ *****************************************************************************/
+enum
+{
+    SNOWLIQ_FLAG,
+    TEMPLIQ_FLAG,
+    DERILIQ_FLAG
+};
+
+/******************************************************************************
  * @brief   Soil water retention curve parametrizations
  *          Defines which part is called.
  *****************************************************************************/
@@ -190,7 +204,10 @@ enum
 {
     MATRIC_FLAG,   // θ → ψ
     MOIST_FLAG,    // ψ → θ
-    DERIV_FLAG,    // dψ/dθ
+    DERIVW_FLAG,   // dθ/dψ
+    DERIVK_FLAG,   // dK/dψ
+    DERIVM_FLAG,   // dψ/dθ
+    DERIVT_FLAG,   // dθ/dT
     CONDUCT_FLAG   // θ → k
 };
 
@@ -222,13 +239,12 @@ typedef struct {
     size_t Nlayer;       /**< Number of layers in model */
     size_t Nswband;      /**< Number of waveband in model */
     size_t Nfrost;       /**< Number of frost layer in model */
-    size_t MAX_HRU;      /**< maximum number of hydrological response units */
+    size_t HRU;          /**< number of hydrological response units in each cells */
     bool NOFLUX;         /**< TRUE = Use no flux lower bondary when computing
                               soil thermal fluxes */
-    size_t NVEGTYPES;    /**< number of vegetation types in veg_param file */
+    size_t NVEGTYPES;    /**< number of vegetation types in veg_lib file */
     unsigned short int SNOW_DENSITY;   /**< DENS_BRAS: Use algorithm of Bras, 1990; DENS_SNTHRM: Use algorithm of SNTHRM89 adapted for 1-layer pack */
-    size_t SNOW_BAND;    /**< Number of elevation bands over which to solve the
-                            snow model */
+    size_t SNOW_BAND;    /**< Number of elevation bands in each cells */
     bool TFALLBACK;      /**< TRUE = when any temperature iterations fail to converge,
                                    use temperature from previous time step; the number
                                    of instances when this occurs will be logged and
@@ -410,6 +426,7 @@ typedef struct {
     double SNOW_AGE_DFS_NIR;
     double SNOW_NEW_SNOW_VIS;
     double SNOW_NEW_SNOW_NIR;
+    double SNOW_FRZ_SCALE;
     double SNOW_RELEASE_FAC;
     double SNOW_REFRZF;
     double SNOW_WET_C1;     /**< constant for liquid water grain growth [m3 s-1], from Brun89 */
@@ -417,6 +434,8 @@ typedef struct {
     double SNOW_RASNOW;     /**< aerodynamic resistance over snow surface (s/m) */
     double SNOW_BETADS;
     double SNOW_BETAIS;
+    double SNOW_EXPMELT;    /**< exponent for meltwater flow */
+    double SOIL_EXPMAC;     /**< exponent for macropore flow */
     double SNOW_OMEGAS[MAX_SWBANDS];
     double GLAC_ALBEDO[MAX_SWBANDS];
     double LAKE_ALBEDO[MAX_SWBANDS];
@@ -509,10 +528,12 @@ typedef struct {
  *****************************************************************************/
 typedef struct {
     size_t Nbedrock;                  /**< Number of thermal nodes in the model */
-    double Ksat_node[MAX_SOILS];      /**< saturated hydraulic conductivity (m/s) */          
+    double Ksat_node[MAX_SOILS];      /**< saturated hydraulic conductivity (m/s) */
+    double Kmac_node[MAX_SOILS];      /**< saturated hydraulic conductivity for macropore flow (m/s) */       
     double Wpwp_node[MAX_SOILS];      /**< soil moisture content at permanent
                                            wilting point (m3/m3) */
-    double Wsat_node[MAX_SOILS];      /** soil moisture content at saturation (m3/m3) */  
+    double Wsat_node[MAX_SOILS];      /**< soil moisture content at saturation (m3/m3) */
+    double Wmac_node[MAX_SOILS];      /**< minimum volumetric liquid water content for macropore flow */
     double avg_temp;                  /**< Mean Annual Ground Temperature (K) */
     double alpha_node[MAX_SOILS];     /**< retention shape parameter in van Genuchten equation [1/m] */
     double b_infilt;                  /**< infiltration parameter */
@@ -548,6 +569,7 @@ typedef struct {
     double lat;                       /**< grid cell central latitude */
     double lng;                       /**< grid cell central longitude */
     double cell_area;                 /**< Area of grid cell (m^2) */
+    double wet_front;                 /**< Green-Ampt wetting front suction (m) */
     double time_zone_lng;             /**< central meridian of the time zone */
     unsigned int gridcel;             /**< grid cell number */
     double off_gmt;                   /**< offset from GMT (hours) */
@@ -714,6 +736,7 @@ typedef struct {
     bool   IS_URBAN;                    /**< TRUE = landunit is urban */
     size_t Nsoil;                       /**< Number of soil nodes in the model */
     size_t Nnode;                       /**< Number of thermal nodes in the model */
+    size_t Nroot;                       /**< Number of root nodes in the model */
     double Ra_over[3];                  /**< The aerodynamic resistance (s/m) that was actually used
                                           in flux calculations. [0] = wind speed at reference height, 
                                           [1] = sensible heat flux, [2] = latent heat flux */
@@ -742,11 +765,6 @@ typedef struct {
     double QsdT_grnd;                  /**< temperature derivative of "Qair_grnd" */
     double QsdT_soil;                  /**< temperature derivative of "Qair_soil" */
     double QsdT_snow;                  /**< temperature derivative of "Qair_snow" */
-    double ice[MAX_SOILS];             /**< ice content of the soil sublayer [m3/m3] */
-    double liq[MAX_SOILS];             /**< liq content of the soil sublayer [m3/m3] */
-    double last_ice[MAX_SOILS];        /**< last step ice content of the soil sublayer [m3/m3] */
-    double last_liq[MAX_SOILS];        /**< last step liq content of the soil sublayer [m3/m3] */
-    double moist[MAX_SOILS];           /**< moisture content of the unfrozen sublayer [m3/m3] */
     double excess_ice[MAX_SOILS];      /**< soil layer excess ice (kg/m2) */
     double eff_porosity[MAX_SOILS];    /**< soil layer effective porosity */
     double soil_T[MAX_SOILS];
@@ -755,6 +773,9 @@ typedef struct {
     double runoff;                     /**< runoff from current cell (mm/TS) */
     double soil_inflow;                /**< moisture that reaches the top of
                                             the soil column (mm) */
+    double runoff_sat;
+    double runoff_infil;
+    double infiltration;
     double recharge;                   /**< aquifer recharge rate (mm/s) */
     double storage_aqf;                /**< water storage in aquifer [m] */
     double esoil;
@@ -782,6 +803,7 @@ typedef struct {
     double esoil_sub;
     double esoil_grnd;
     double transp_fact;                   /**< soil water transpiration factor (0 to 1) */
+    double root_depth;
     double soil_excess;
     double root[MAX_SOILS];
     double hksr_int[MAX_SOILS];        /**< soil-root interface conductance (mm/s) */
@@ -791,6 +813,13 @@ typedef struct {
     double transp_sink[MAX_SOILS];     /**< transpiration sink term [m/s] */
     double conductivity[MAX_SOILS];    /**< soil hydraulic conductivity [m/s] */
     double conduct_int[MAX_SOILS];     /**< soil hydraulic conductivity for interface between layers */
+    double dconduct_dpsi[MAX_SOILS];
+    double dconduct_dT[MAX_SOILS];
+    double dpsiliq_dT[MAX_SOILS];
+    double dpsiliq_dpsi[MAX_SOILS];    /**< derivative of matric potential with respect to liquid water content */
+    double compress[MAX_SOILS];        /**< soil compressibility */
+    double dcompress_dpsi[MAX_SOILS];  /**< derivative of compressibility with respect to matric potential */
+    double dtheta_dpsi[MAX_SOILS];     /**< derivative of soil moisture content with respect to matric potential */
     double matric[MAX_SOILS];          /**< soil matric potential [m] */
     double last_matric[MAX_SOILS];
 } cell_data_struct;
@@ -811,6 +840,7 @@ typedef struct {
     double AlbedoDry[MAX_SWBANDS];     /**< soil surface albedo at dry (fraction) */
     double kappa_node[MAX_NODES];      /**< thermal conductivity of the soil thermal nodes (W/m/K) */
     double Cs_node[MAX_NODES];         /**< volumetric heat capacity of the snow and soil thermal nodes (J/m^3/K) */
+    double Cm_node[MAX_NODES];
     double T[MAX_NODES];               /**< thermal node temperatures (k) */
     double last_T[MAX_NODES];          /**< last step thermal node temperatures (k) */
     double kappa_int[MAX_NODES];       /**< thermal conductivity used for interface between nodes (W/m/K) */
@@ -819,6 +849,33 @@ typedef struct {
     double Tgrnd;                      /**< temperature of the bare ground [K] */
     double Tfoliage;                   /**< temperature of the foliage [K] */
     double Tstem;                      /**< temperature of the stem [K] */
+    double enthalpy[MAX_NODES];        /**< enthalpy values of each snow and soil layer */
+    double last_enthalpy[MAX_NODES];   /**< last step enthalpy values of each snow and soil layer */
+    double dEdW_left[MAX_NODES];       /**< derivatives in the flux w.r.t. water state in the layer above */
+    double dEdW_right[MAX_NODES];      /**< derivatives in the flux w.r.t. water state in the layer below */
+    double dEdT_left[MAX_NODES];
+    double dEdT_right[MAX_NODES];
+    double dWdQ_left[MAX_NODES];
+    double dWdQ_right[MAX_NODES];
+    double dWdE_left[MAX_NODES];
+    double dWdE_right[MAX_NODES];
+    double dWdQ_surf[MAX_NODES];
+    double dWdE_surf[MAX_NODES];
+    double dfliq_dT[MAX_NODES];
+    double dtheta_dT[MAX_NODES];
+    double dCs_dT[MAX_NODES];
+    double dCm_dT[MAX_NODES];
+    double dCs_dtheta[MAX_NODES];
+    double dCs_dpsi[MAX_NODES];
+    double dCm_dpsi[MAX_NODES];
+    double dkappa_dT[MAX_NODES];
+    double dkappa_dtheta[MAX_NODES];
+    double ice[MAX_NODES];             /**< ice content of the soil sublayer [m3/m3] */
+    double liq[MAX_NODES];             /**< liq content of the soil sublayer [m3/m3] */
+    double last_ice[MAX_NODES];        /**< last step ice content of the soil sublayer [m3/m3] */
+    double last_liq[MAX_NODES];        /**< last step liq content of the soil sublayer [m3/m3] */
+    double moist[MAX_NODES];           /**< volumetric total water content [m3/m3] */
+    double last_moist[MAX_NODES];      /**< last step volumetric total water content [m3/m3] */
     double deriv_snow;
     double deriv_soil;
     double deriv_terms;                /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
@@ -898,7 +955,6 @@ typedef struct {
 typedef struct {
     // State variables
     size_t Ncanopy;             /**< Number of canopy layer in model */
-    size_t Nroot;               /**< Number of root nodes in the model */
     double fcanopy;             /**< current fractional area of plant canopy (fraction) */
     double LAI;                 /**< current leaf area index (m2/m2) */
     double SAI;                 /**< current stem area index (m2/m2) */
@@ -986,8 +1042,7 @@ typedef struct {
     double pack_melt[MAX_SNOWS];
     double pack_frze[MAX_SNOWS];
     double phase_snow[MAX_SNOWS];   /**< last step Phase change heat source W/m2 */
-    double enthalpy[MAX_SNOWS+1];
-    double last_enthalpy[MAX_SNOWS+1];
+    double liq_deriv[MAX_SNOWS];
     double snow_frost;              /**< snow surface frost rate [mm/s] */
     double snow_sublim;             /**< snow surface sublimation rate [mm/s] */
     double snow_dew;                /**< snow surface dew rate [mm/s] */

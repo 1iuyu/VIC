@@ -47,8 +47,8 @@ update_nodes(double             pressure,
     double *pack_outflow = snow->pack_outflow;
     double *last_thice = snow->last_thice;
     double *last_thliq = snow->last_thliq;
-    double *enthalpy = snow->enthalpy;
-    double *last_enthalpy = snow->last_enthalpy;
+    double *enthalpy = energy->enthalpy;
+    double *last_enthalpy = energy->last_enthalpy;
     // update the number of nodes
     if (cell->h2osfc > 0.0) {
         tmp_Nnode++;

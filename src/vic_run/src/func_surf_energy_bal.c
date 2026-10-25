@@ -219,6 +219,13 @@ func_surf_energy_bal(force_data_struct *force,
         energy->deriv_snow = energy->deriv_terms;
         energy->deriv_soil = energy->deriv_terms;
     }
+    // If NOFLUX option is set, set derivatives to zero
+    if (options.NOFLUX) {
+        energy->deriv_snow = 0.0;
+        energy->deriv_soil = 0.0;
+        energy->deriv_terms = 0.0;
+        energy->deriv_evap = 0.0;
+    }
 
     return (0);
 }

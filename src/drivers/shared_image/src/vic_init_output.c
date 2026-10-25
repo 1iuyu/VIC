@@ -676,7 +676,7 @@ initialize_nc_file(nc_file_struct     *nc_file,
     nc_file->canopy_size = MAX_CANOPYS;
     nc_file->wave_size = MAX_SWBANDS;
     nc_file->time_size = NC_UNLIMITED;
-    nc_file->hru_size = options.MAX_HRU;
+    nc_file->hru_size = options.HRU;
     nc_file->vegmat_size = 4;
 
     // allocate memory for nc_vars

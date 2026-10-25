@@ -12,9 +12,9 @@
 *           overburden, & melt.
 ******************************************************************************/
 void 
-snow_combination(double            dz_soil,
-                 cell_data_struct *cell,
-                 snow_data_struct *snow)
+snow_combination(double             dz_soil,
+                 energy_bal_struct *energy,
+                 snow_data_struct  *snow)
 {
     /* initialize */
     size_t i, j;
@@ -24,8 +24,8 @@ snow_combination(double            dz_soil,
     double pack_comb = 0.0;
 
     // 定义指针指向结构体中的数组
-    double *ice = cell->ice;
-    double *liq = cell->liq;
+    double *ice = energy->ice;
+    double *liq = energy->liq;
     double *dz_snow = snow->dz_snow;
     double *pack_T = snow->pack_T;
     double *pack_ice = snow->pack_ice;

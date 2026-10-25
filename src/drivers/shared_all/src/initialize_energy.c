@@ -74,6 +74,8 @@ initialize_energy(energy_bal_struct *energy,
             energy[veg].T[lidx] = 0.0;
             energy[veg].last_T[lidx] = 0.0;
             energy[veg].kappa_int[lidx] = 0.0;
+            energy[veg].enthalpy[lidx] = 0.0;
+            energy[veg].last_enthalpy[lidx] = 0.0;
         }
         energy[veg].energy_flag = false;
         energy[veg].moist_flag = false;

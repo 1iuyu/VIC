@@ -70,11 +70,6 @@ compute_derived_state_vars(all_vars_struct   *all_vars,
                 snow[veg].snow_frac[i] = snow[veg].pack_ice[i] / SnowMass;
                 snow[veg].density[i] = snow[veg].pack_ice[i] / 
                                       (snow[veg].dz_snow[i] * snow[veg].coverage);
-                double CP_snow = 92.96 + 7.37 * snow[veg].pack_T[i];
-                snow[veg].enthalpy[i] = (snow[veg].pack_ice[i] * CP_snow + 
-                                snow[veg].pack_liq[i] * CONST_CPFWICE) * (snow[veg].pack_T[i] - 
-                                CONST_TKFRZ) - snow[veg].pack_ice[i] * CONST_LATICE;
-                snow[veg].enthalpy[i] /= snow[veg].coverage;
             }
         }
     }

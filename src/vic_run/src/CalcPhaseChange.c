@@ -25,8 +25,8 @@ CalcPhaseChange(size_t             nidx,
     double equil_liq = 0.0;
     double tmp_matric = 0.0;
     double fusion_flux = 0.0;
-    double *ice = cell->ice;
-    double *liq = cell->liq;
+    double *ice = energy->ice;
+    double *liq = energy->liq;
     double *matric = cell->matric;
     double *Cs_node = energy->Cs_node;
     double *Wpwp_node = soil_con->Wpwp_node;
@@ -40,8 +40,9 @@ CalcPhaseChange(size_t             nidx,
     if (total_liq > Wsat_node[nidx]) {
         total_liq = Wsat_node[nidx];
     }
-    tmp_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
-                                         total_liq, 0.0, soil_con);
+    tmp_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, 
+                                         total_liq, 0.0, 0.0, soil_con);
+
     if (tmp_matric < 0.0) {
         tmp_tkfrz = CONST_TKTRIP * tmp_matric /
                     (CONST_LATICE / CONST_G - tmp_matric) + CONST_TKTRIP;
@@ -66,7 +67,7 @@ CalcPhaseChange(size_t             nidx,
             double new_liq = equil_liq;
             if (tmp_ice == 0.0 && new_ice > 0.0) {
                 EnergyRes = Cs_node[nidx] * (tmp_tkfrz - *T);
-                *T = tmp_tkfrz - EnergyRes / eff_Cs;
+                *T = tmp_tkfrz - EnergyRes / eff_Cs; // ???
                 // 用修正后的温度重新计算平衡态
                 equil_liq = frozen_soil(nidx, tmp_tkfrz, *T, liq, ice, soil_con);
                 liq[nidx] = equil_liq;
@@ -101,8 +102,9 @@ CalcPhaseChange(size_t             nidx,
     }
     // 重新计算基质势
     if (liq[nidx] > Wpwp_node[nidx]) {
-        matric[nidx] = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
-                                               liq[nidx], 0.0, soil_con);
+        matric[nidx] = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, 
+                                               liq[nidx], 0.0, 0.0, soil_con);
+
     }
 
     return (0);

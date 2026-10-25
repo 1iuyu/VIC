@@ -49,7 +49,7 @@ calc_root_fractions(size_t            veg_class,
         if (last_node == -1) {
             last_node = Nsoil - 1;
         }
-        veg_var->Nroot = last_node + 1;
+        cell->Nroot = last_node + 1;
         // 计算各层根系分数
         Zsum = 0.0;
         for (layer = 0; layer <= last_node; layer++) {
@@ -93,6 +93,6 @@ calc_root_fractions(size_t            veg_class,
         }
     }
     else {
-        veg_var->Nroot = 0;
+        cell->Nroot = 0;
     }
 }

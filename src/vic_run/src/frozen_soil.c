@@ -30,7 +30,7 @@ frozen_soil(size_t           nidx,
     // 通过 Clausius-Clapeyron 方程计算
     double total_potent = CONST_LATICE * ((T - tmp_tkfrz) / T) / CONST_G;
     equil_liq = SoilWaterRetentionCurve(MOIST_FLAG, nidx, 0.0,
-                                        total_potent, soil_con);
+                                        total_potent, 0.0, soil_con);
 
     // Newton-Raphson 迭代
     int iter = 0, converged = 0;
@@ -38,13 +38,12 @@ frozen_soil(size_t           nidx,
         if (equil_liq < Wpwp_node[nidx]) {
             equil_liq = Wpwp_node[nidx] + param.TOL_A;
         }
-        double tmp_mat = SoilWaterRetentionCurve(MATRIC_FLAG, nidx,
-                                                    equil_liq, 0.0, soil_con);
-        double tmp_der = SoilWaterRetentionCurve(DERIV_FLAG, nidx, equil_liq,
-                                                    tmp_mat, soil_con);
+        double tmp_mat = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, liq[nidx], 0.0, 0.0, soil_con);
+        double tmp_der = SoilWaterRetentionCurve(DERIVW_FLAG, nidx, equil_liq,
+                                                    tmp_mat, 0.0, soil_con);
         if (tmp_der == 0.0) {
-            tmp_der = SoilWaterRetentionCurve(DERIV_FLAG, nidx, equil_liq,
-                                                total_potent, soil_con);
+            tmp_der = SoilWaterRetentionCurve(DERIVW_FLAG, nidx, equil_liq,
+                                                total_potent, 0.0, soil_con);
         }
         double error = total_potent - tmp_mat;
         double delta = error / (1.0 / tmp_der);

@@ -277,17 +277,17 @@ put_data(all_vars_struct   *all_vars,
             /** record nodes moistures **/
             if (output_var[OUT_SOIL_LIQ]) {
                 for (i = 0; i < cell[veg].Nsoil; i++) {
-                    out_data[OUT_SOIL_LIQ][veg][i] = cell[veg].liq[i];
+                    out_data[OUT_SOIL_LIQ][veg][i] = energy[veg].liq[i];
                 }
             }
             if (output_var[OUT_SOIL_ICE]) {
                 for (i = 0; i < cell[veg].Nsoil; i++) {
-                    out_data[OUT_SOIL_ICE][veg][i] = cell[veg].ice[i];
+                    out_data[OUT_SOIL_ICE][veg][i] = energy[veg].ice[i];
                 }
             }
             if (output_var[OUT_SOIL_MOIST]) {
                 for (i = 0; i < cell[veg].Nsoil; i++) {
-                    out_data[OUT_SOIL_MOIST][veg][i] = cell[veg].moist[i];
+                    out_data[OUT_SOIL_MOIST][veg][i] = energy[veg].moist[i];
                 }
             }
             if (output_var[OUT_MATRIC]) {

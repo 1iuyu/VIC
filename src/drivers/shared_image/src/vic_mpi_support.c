@@ -244,7 +244,7 @@ create_MPI_filenames_struct_type(MPI_Datatype *mpi_type)
     MPI_Datatype   *mpi_types;
 
     // nitems has to equal the number of elements in filenames_struct
-    nitems = 10;
+    nitems = 11;
     blocklengths = malloc(nitems * sizeof(*blocklengths));
     check_alloc_status(blocklengths, "Memory allocation error.");
 
@@ -291,6 +291,10 @@ create_MPI_filenames_struct_type(MPI_Datatype *mpi_type)
 
     // char params[MAXSTRING];
     offsets[i] = offsetof(filenames_struct, params);
+    mpi_types[i++] = MPI_CHAR;
+
+    // char rout_params[MAXSTRING];
+    offsets[i] = offsetof(filenames_struct, rout_params);
     mpi_types[i++] = MPI_CHAR;
 
     // char result_dir[MAXSTRING];
@@ -346,7 +350,7 @@ create_MPI_location_struct_type(MPI_Datatype *mpi_type)
     MPI_Datatype   *mpi_types;
 
     // nitems has to equal the number of elements in location_struct
-    nitems = 9;
+    nitems = 10;
     blocklengths = malloc(nitems * sizeof(*blocklengths));
     check_alloc_status(blocklengths, "Memory allocation error.");
 
@@ -386,6 +390,10 @@ create_MPI_location_struct_type(MPI_Datatype *mpi_type)
 
     // size_t nveg;
     offsets[i] = offsetof(location_struct, nveg);
+    mpi_types[i++] = MPI_AINT;
+
+    // size_t nband;
+    offsets[i] = offsetof(location_struct, nband);
     mpi_types[i++] = MPI_AINT;
 
     // size_t global_idx;
@@ -439,7 +447,7 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     MPI_Datatype   *mpi_types;
 
     // nitems has to equal the number of elements in option_struct
-    nitems = 27;
+    nitems = 29;
     blocklengths = malloc(nitems * sizeof(*blocklengths));
     check_alloc_status(blocklengths, "Memory allocation error.");
 
@@ -493,8 +501,8 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(option_struct, Nfrost);
     mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent 
 
-    // size_t MAX_HRU;
-    offsets[i] = offsetof(option_struct, MAX_HRU);
+    // size_t HRU;
+    offsets[i] = offsetof(option_struct, HRU);
     mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent 
 
     // bool NOFLUX;
@@ -563,6 +571,14 @@ create_MPI_option_struct_type(MPI_Datatype *mpi_type)
 
     // bool ROUT;
     offsets[i] = offsetof(option_struct, ROUT);
+    mpi_types[i++] = MPI_C_BOOL;
+
+    // size_t Noutstreams;
+    offsets[i] = offsetof(option_struct, Noutstreams);
+    mpi_types[i++] = MPI_AINT; // note there is no MPI_SIZE_T equivalent
+
+    // bool PRT_HEADER;
+    offsets[i] = offsetof(option_struct, PRT_HEADER);
     mpi_types[i++] = MPI_C_BOOL;
 
     // make sure that the we have the right number of elements

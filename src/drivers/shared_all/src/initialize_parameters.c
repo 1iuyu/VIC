@@ -151,6 +151,7 @@ initialize_parameters()
     param.SNOW_RADIUS_MIN = 54.526;
     param.SNOW_RADIUS_MAX = 1500.0;
     param.SNOW_NEW_RADIUS = 204.526;
+    param.SNOW_FRZ_SCALE = 0.1;
     // BATS snow aging parameters
     param.SNOW_AGE_FACT = 1.0e6;
     param.SNOW_AGE_VAPF = 5000.;

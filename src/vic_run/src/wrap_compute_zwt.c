@@ -11,9 +11,10 @@
  *           position is measured in m and is positive below the soil surface.
  *****************************************************************************/
 double
-wrap_compute_zwt(double            step_dt,
-                 cell_data_struct *cell,
-                 soil_con_struct  *soil_con)
+wrap_compute_zwt(double             step_dt,
+                 energy_bal_struct *energy,
+                 cell_data_struct  *cell,
+                 soil_con_struct   *soil_con)
 {
     extern parameters_struct param;
     size_t  i, j, lidx;
@@ -27,9 +28,9 @@ wrap_compute_zwt(double            step_dt,
     double  aqf_yield1; // 含水层给水度 [m]
     double  soil_excess;
     double  frac_ice[MAX_SOILS];
-    double *moist = cell->moist;
-    double *ice = cell->ice;
-    double *liq = cell->liq;
+    double *moist = energy->moist;
+    double *ice = energy->ice;
+    double *liq = energy->liq;
     double *soil_T = cell->soil_T;
     double *matric = cell ->matric;
     double *zc_soil = soil_con->zc_soil;

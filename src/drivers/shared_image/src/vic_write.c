@@ -93,7 +93,7 @@ vic_write(stream_struct  *stream,
         }
         // Determine the number of HRUs to write.
         if (stream->domain[k] == OUT_DOMAIN_HRU) {
-            nveg = options.MAX_HRU;
+            nveg = options.HRU;
         }
         else {
             nveg = 1;

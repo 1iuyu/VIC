@@ -447,6 +447,9 @@ vic_force(void)
             }
             all_vars[i].force[band].rel_humid = min(max(all_vars[i].force[band].rel_humid, 0.0), 100.0);
 
+            // adjust wind for band scale
+            all_vars[i].force[band].wind = atmos[i].wind[NR];
+
             // adjust air density for band scale
             all_vars[i].force[band].density = air_density(all_vars[i].force[band].air_temp,
                                                           all_vars[i].force[band].pressure,

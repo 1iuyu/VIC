@@ -137,8 +137,8 @@ vic_run(all_vars_struct     *all_vars,
             if (ErrorFlag == ERROR) {
                 return (ERROR);
             }
-        } /** end non-zero area veg tile **/
-    } /** end of vegetation loop **/
+        }
+    }
 
     return (0);
 }
