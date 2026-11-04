@@ -32,18 +32,18 @@ snow_hydrology(double             step_dt,
     double soil_sublim = 0.0;
     double soilfrost = 0.0;
     // 指针赋值               
-    double *liq = energy->liq;
-    double *ice = energy->ice;
-    double *moist = energy->moist;
-    double *dz_snow = snow->dz_snow;
-    double *snow_porosity = snow->porosity;
     double *theta_liq = snow->theta_liq;
+    double *theta_ice = snow->theta_ice;
+    double *dz_snow = snow->dz_snow;
+    double *liq = cell->liq;
+    double *ice = cell->ice;
+    double *moist = cell->moist;
+    double *snow_porosity = snow->snow_porosity;
     double *excess_ice = cell->excess_ice;
     double *dz_soil = soil_con->dz_soil;
     double *Wsat_node = soil_con->Wsat_node;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
-    double *theta_ice = snow->theta_ice;
     double *pack_outflow = snow->pack_outflow;
 
     /* initialize */
@@ -51,8 +51,6 @@ snow_hydrology(double             step_dt,
     double snow_density = 0.0;
     double excess_flux = 0.0;
     double liquid_capacity = 0.0;
-    double wind = force->wind;
-    double air_temp = force->air_temp;
     double pressure = force->pressure;
     double snowfall = force->snowf;
     double rainfall = force->rainf;
@@ -343,7 +341,7 @@ snow_hydrology(double             step_dt,
             
             /* excess liquid water snow-area basis */
             double drainage = max(0.0, (theta_liq[i] - liquid_capacity * 
-                                snow_porosity[i]) * dz_snow[i] * CONST_RHOFW);
+                                  snow_porosity[i]) * dz_snow[i] * CONST_RHOFW);
             if (i == 0) {
                 // 表层重力排水可被释放系数限制；超孔隙水已经立即排出
                 double release_frac =
@@ -391,11 +389,9 @@ snow_hydrology(double             step_dt,
     // snow layer compaction, combination, and division
     if (Nsnow > 0) {
         /* snow layer combination */
-        snow_compaction(step_dt, 
-                        air_temp, wind,
-                        pressure, snow);
+        snow_compaction(step_dt, force, snow);
         /* snow layer combination */
-        snow_combination(dz_soil[0], energy, snow);
+        snow_combination(dz_soil[0], snow);
         /* snow layer division */
         snow_division(snow);
     }
@@ -435,26 +431,26 @@ snow_hydrology(double             step_dt,
     snow->glac_excess = excess_flux * step_dt;
 
     // Update node properties
-    update_nodes(pressure, 
+    update_nodes(step_dt, pressure, 
                  energy,  cell, 
                  snow, soil_con);
     snow->last_Nsnow = snow->Nsnow;
     snow->last_swq = snow->swq;
 
     // === 损失项（正值） ===
-    cell->soil_evap = soil_evap * (1.0 - coverage);       // 裸土蒸发
-    cell->soil_sublim = soil_sublim * (1.0 - coverage);   // 裸土升华
-    snow->snow_evap = snow_evap * coverage;               // 雪面蒸发
-    snow->snow_sublim = snow_sublim * coverage;           // 雪面升华
+    cell->soil_evap = soil_evap;       // 裸土蒸发
+    cell->soil_sublim = soil_sublim;   // 裸土升华
+    snow->snow_evap = snow_evap;       // 雪面蒸发
+    snow->snow_sublim = snow_sublim;   // 雪面升华
 
     // === 收入项（负值） ===
-    cell->soil_dew = soil_dew * (1.0 - coverage);         // 裸土露水
-    cell->soil_frost = soilfrost * (1.0 - coverage);      // 裸土霜凝华
-    snow->snow_dew = snow_dew * coverage;                 // 雪面露水
-    snow->snow_frost = snowfrost * coverage;              // 雪面霜凝华
+    cell->soil_dew = soil_dew;         // 裸土露水
+    cell->soil_frost = soilfrost;      // 裸土霜凝华
+    snow->snow_dew = snow_dew;         // 雪面露水
+    snow->snow_frost = snowfrost;      // 雪面霜凝华
 
-    cell->evap = (cell->soil_evap + cell->soil_sublim + snow->snow_evap + snow->snow_sublim)
-               - (cell->soil_dew + cell->soil_frost + snow->snow_dew + snow->snow_frost);
+    cell->evap = (soil_evap + soil_sublim - soil_dew - soilfrost) * (1.0 - coverage) + 
+                 (snow_evap + snow_sublim - snow_dew - snowfrost) * coverage;
 
     return (0);
 }

@@ -13,18 +13,17 @@
  *****************************************************************************/
 double
 water_curve_deriv(size_t  		     nidx,
-                  energy_bal_struct *energy,
                   cell_data_struct  *cell,
                   soil_con_struct   *soil_con)
 {
     double tmp_deriv = 0.0;
     double liq_derivT = 0.0;
-    double *liq = energy->liq;
+    double *liq = cell->liq;
     double *matric = cell->matric;
     double *soil_T = cell->soil_T;
 
     // 计算dθ/dψ
-    tmp_deriv = SoilWaterRetentionCurve(DERIVW_FLAG, nidx, liq[nidx],
+    tmp_deriv = SoilWaterRetentionCurve(DW_DPSI_FLAG, nidx, liq[nidx],
                                         matric[nidx], soil_T[nidx], soil_con);
     if (tmp_deriv > 0.0) {
         liq_derivT = (CONST_LATICE * tmp_deriv) / (CONST_G * soil_T[nidx]);

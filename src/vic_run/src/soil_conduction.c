@@ -330,65 +330,63 @@ set_node_parameters(size_t  Nbedrock,
 *           moisture contents.
 ******************************************************************************/
 int
-distribute_node_moisture_properties(energy_bal_struct *energy,
-                                    cell_data_struct  *cell,
+distribute_node_moisture_properties(cell_data_struct  *cell,
                                     soil_con_struct   *soil_con)
 {
     extern option_struct     options;
-    size_t nidx;
-    size_t Nsoil = cell->Nsoil;
+    size_t i, Nsoil = cell->Nsoil;
     double equil_liq = 0.0;
-    double *moist = energy->moist;
-    double *ice = energy->ice;
-    double *liq = energy->liq;
+    double *moist = cell->moist;
+    double *ice = cell->ice;
+    double *liq = cell->liq;
     double *soil_T = cell->soil_T;
     double *Wsat_node = soil_con->Wsat_node;
-    double *eff_porosity = cell->eff_porosity;
+    double *soil_porosity = cell->soil_porosity;
     double *matric = cell->matric;
     double *excess_ice = cell->excess_ice;
 
     /* node estimates */
-    for (nidx = 0; nidx < Nsoil; nidx++) {
+    for (i = 0; i < Nsoil; i++) {
         if (cell->IS_GLAC) {
-            ice[nidx] = 1.0;
-            moist[nidx] = 1.0;
-            eff_porosity[nidx] = 0.0;
+            ice[i] = 1.0;
+            moist[i] = 1.0;
+            soil_porosity[i] = 0.0;
         }
         else {
-            if (soil_T[nidx] < CONST_TKFRZ) {
+            if (soil_T[i] < CONST_TKFRZ) {
                 /* compute moisture and ice contents */
-                equil_liq = frozen_soil(nidx, CONST_TKFRZ,
-                                        soil_T[nidx],
-                                        liq, ice,
+                equil_liq = frozen_soil(i, CONST_TKFRZ,
+                                        soil_T[i], 
+                                        cell,
                                         soil_con);
-                liq[nidx] = equil_liq;
-                ice[nidx] = (moist[nidx] - liq[nidx]) * CONST_RHOFW / CONST_RHOICE;
-                if (ice[nidx] < 0) {
-                    ice[nidx] = 0;
+                liq[i] = equil_liq;
+                ice[i] = (moist[i] - liq[i]) * CONST_RHOFW / CONST_RHOICE;
+                if (ice[i] < 0) {
+                    ice[i] = 0;
                 }
             }
             else {
-                liq[nidx] = moist[nidx];
-                ice[nidx] = 0.0;
+                liq[i] = moist[i];
+                ice[i] = 0.0;
             }
 
             // 计算有效孔隙度和过量冰含量
-            double total_vol = liq[nidx] + ice[nidx];
-            if (total_vol > Wsat_node[nidx]) {
-                excess_ice[nidx] = total_vol - Wsat_node[nidx];
-                ice[nidx] = Wsat_node[nidx] - liq[nidx];
-                eff_porosity[nidx] = 0.0;
+            double total_vol = liq[i] + ice[i];
+            if (total_vol > Wsat_node[i]) {
+                excess_ice[i] = total_vol - Wsat_node[i];
+                ice[i] = Wsat_node[i] - liq[i];
+                soil_porosity[i] = 0.0;
             } 
             else {
-                excess_ice[nidx] = 0.0;
-                eff_porosity[nidx] = Wsat_node[nidx] - ice[nidx];
-                if (eff_porosity[nidx] < 0.0) {
-                    eff_porosity[nidx] = 0.0;
+                excess_ice[i] = 0.0;
+                soil_porosity[i] = Wsat_node[i] - ice[i];
+                if (soil_porosity[i] < 0.0) {
+                    soil_porosity[i] = 0.0;
                 } 
             }
             // 计算土壤基质势
-            matric[nidx] = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, liq[nidx], 
-                                                   0.0, 0.0, soil_con);
+            matric[i] = SoilWaterRetentionCurve(MATRIC_FLAG, i, liq[i], 
+                                                0.0, 0.0, soil_con);
         }
     }
     return (0);
@@ -465,19 +463,17 @@ calc_solids_fractions(soil_con_struct *soil_con)
 double
 calc_tkfrz(size_t             nidx,
            double            *dT_dpsi,
-           energy_bal_struct *energy,
            cell_data_struct  *cell,
            soil_con_struct   *soil_con)
 {
-    double *liq = energy->liq;
-    double *ice = energy->ice;
     double tmp_tkfrz = 0.0;
+    double *moist = cell->moist;
     double Wsat_node = soil_con->Wsat_node[nidx];
-    double total_liq = liq[nidx] + ice[nidx] * CONST_RHOICE / CONST_RHOFW;
-    if (total_liq > Wsat_node) {
-        total_liq = Wsat_node;
+    if (moist[nidx] > Wsat_node) {
+        moist[nidx] = Wsat_node;
     }
-    double tmp_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, total_liq, 0.0, 0.0, soil_con);
+    double tmp_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, 
+                                                moist[nidx], 0.0, 0.0, soil_con);
     if (tmp_matric < 0.0) {
         double A = CONST_LATICE / CONST_G;
         tmp_tkfrz = CONST_TKTRIP * tmp_matric / (A - tmp_matric) + CONST_TKTRIP;
@@ -499,14 +495,17 @@ calc_tkfrz(size_t             nidx,
 int
 soil_compress(double  liq,
               double  ice,
+              double  step_dt,
               double  Wsat_node,
               double  matric,
               double  last_matric,
               double *compress,
               double *dcompress_dpsi)
 {
-    (*dcompress_dpsi) = (liq + ice) / Wsat_node;
-    (*compress) = matric - last_matric * (*dcompress_dpsi);
+    extern parameters_struct param;
+    
+    (*dcompress_dpsi) = param.SOIL_SPECSTORE * (liq + ice) / Wsat_node;
+    (*compress) = (matric - last_matric) * (*dcompress_dpsi) / step_dt;
 
     return (0);
 }

@@ -16,7 +16,6 @@
 int
 calc_Jacob_mat(double             step_dt,
                double            *mat_LHS,
-               force_data_struct *force,
                energy_bal_struct *energy,
                cell_data_struct  *cell,
                snow_data_struct  *snow,
@@ -76,8 +75,8 @@ calc_Jacob_mat(double             step_dt,
         }
     }
     // 计算地表水分通量限制
-    double *moist = energy->moist;
-    double *last_moist = energy->last_moist;
+    double *moist = cell->moist;
+    double *last_moist = cell->last_moist;
     double deriv_evap = energy->deriv_evap;
     double *dcompress_dpsi = cell->dcompress_dpsi;
     // 计算固定的时间步长系数
@@ -86,14 +85,14 @@ calc_Jacob_mat(double             step_dt,
     for (i = 0; i < Nnode; i++) {
         if (Nsnow > 0 && i < Nsnow) {
             if (i == 0) {
-                fact[i] = 0.5 * (zc_node[i] + capr * zc_node[i+1]) / step_dt;
+                fact[i] = step_dt / 0.5 / (zc_node[i] + capr * zc_node[i+1]);
             }
             else {
-                fact[i] = dz_snow[i] / step_dt;
+                fact[i] = step_dt / dz_snow[i];
             }
         }
         else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
-            fact[i] = 0.5 * cell->h2osfc / step_dt;
+            fact[i] = step_dt / (0.5 * cell->h2osfc);
             tmp_Nsnow++;
         }
         else {
@@ -106,7 +105,6 @@ calc_Jacob_mat(double             step_dt,
             }
         }
     }
-
     // ============================================================
     //     构建Jacobian矩阵
     // ============================================================
@@ -116,22 +114,32 @@ calc_Jacob_mat(double             step_dt,
                 // 主对角项(本层能量对温度的导数) dE(i)/dT(i)
                 idx = get_band_idx(j, j);
                 mat_LHS[idx] = (dEdT_left[i] - deriv_snow) * fact[i] + Cs_node[i] + CONST_LATICE * 
-                                CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + dCm_dT[i] * 
-                                (moist[i] - last_moist[i]) + CONST_LATICE * CONST_RHOFW * dfliq_dT[i] * 
-                                (moist[i] - last_moist[i]);
+                                CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + (dCm_dT[i] +
+                                CONST_LATICE * CONST_RHOFW * dfliq_dT[i]) * (moist[i] - last_moist[i]);
                 // 主对角项(本层能量对水量的导数) dE(i)/dθ(i)
                 idx = get_band_idx(j, j+1);
-                mat_LHS[idx] = (-1.0 + theta_liq[i]) * CONST_LATICE * CONST_RHOFW + dCs_dtheta[i] * 
+                mat_LHS[idx] = (-1.0 + theta_liq[i]) * CONST_LATICE * CONST_RHOFW + dCs_dtheta[i] *
                                 (T[i] - last_T[i]) + Cm_node[i] + fact[i] * dEdW_left[i] + 
+                                CONST_LATICE * CONST_RHOFW * (T[i] - last_T[i]) * dfliq_dT[i];
+            }
+            else if (i < Nsnow - 1) {
+                // 主对角项(本层能量对温度的导数) dE(i)/dT(i)
+                idx = get_band_idx(j, j);
+                mat_LHS[idx] = (dEdT_left[i] - dEdT_right[i-1]) * fact[i] + Cs_node[i] + CONST_LATICE * 
+                                CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + (dCm_dT[i] +
+                                CONST_LATICE * CONST_RHOFW * dfliq_dT[i]) * (moist[i] - last_moist[i]);
+                // 主对角项(本层能量对水量的导数) dE(i)/dθ(i)
+                idx = get_band_idx(j, j+1);
+                mat_LHS[idx] = (-1.0 + theta_liq[i]) * CONST_LATICE * CONST_RHOFW + dCs_dtheta[i] * (T[i] - 
+                                last_T[i]) + Cm_node[i] + fact[i] * (dEdW_left[i] - dEdW_right[i-1]) + 
                                 CONST_LATICE * CONST_RHOFW * (T[i] - last_T[i]) * dfliq_dT[i];
             }
             else {
                 // 主对角项(本层能量对温度的导数) dE(i)/dT(i)
                 idx = get_band_idx(j, j);
                 mat_LHS[idx] = (dEdT_left[i] - dEdT_right[i-1]) * fact[i] + Cs_node[i] + CONST_LATICE * 
-                                CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + dCm_dT[i] * 
-                                (moist[i] - last_moist[i]) + CONST_LATICE * CONST_RHOFW * dfliq_dT[i] * 
-                                (moist[i] - last_moist[i]);
+                                CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + (dCm_dT[i] +
+                                CONST_LATICE * CONST_RHOFW * dfliq_dT[i]) * (moist[i] - last_moist[i]);
                 // 主对角项(本层能量对水量的导数) dE(i)/dθ(i)
                 idx = get_band_idx(j, j+1);
                 mat_LHS[idx] = (-1.0 + theta_liq[i]) * CONST_LATICE * CONST_RHOFW + dCs_dtheta[i] * (T[i] - 
@@ -145,7 +153,7 @@ calc_Jacob_mat(double             step_dt,
                 mat_LHS[idx] = fact[i-1] * dEdT_right[i-1];
             }
             // 下对角项(下层温度对本层温度的导数) dE(i+1)/dT(i)
-            if (i < Nsnow - 1) {
+            if (i < Nsnow) {
                 idx = get_band_idx(j+2, j);
                 mat_LHS[idx] = -fact[i+1] * dEdT_left[i];
             }
@@ -155,7 +163,7 @@ calc_Jacob_mat(double             step_dt,
                 mat_LHS[idx] = fact[i-1] * dEdW_right[i-1];
             }
             // 下对角项(下层温度对本层水量的导数) dE(i+1)/dθ(i)
-            if (i < Nsnow - 1) {
+            if (i < Nsnow) {
                 idx = get_band_idx(j+2, j+1);
                 mat_LHS[idx] = -fact[i+1] * dEdW_left[i];
             }
@@ -189,8 +197,7 @@ calc_Jacob_mat(double             step_dt,
                     idx = get_band_idx(j, j);
                     mat_LHS[idx] = (dEdT_left[i] - deriv_soil * (1.0 - coverage)) * fact[i] + Cs_node[i] + 
                                     CONST_LATICE * CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + 
-                                    dCm_dT[i] * (moist[i] - last_moist[i]) + CONST_LATICE * CONST_RHOFW * 
-                                    dfliq_dT[i] * (moist[i] - last_moist[i]);
+                                   (dCm_dT[i] + CONST_LATICE * CONST_RHOFW * dfliq_dT[i]) * (moist[i] - last_moist[i]);
                     // 主对角项(本层水量对液态水的导数) dW(i)/dθ(i)
                     idx = get_band_idx(j+1, j+1);
                     mat_LHS[idx] = fact[i] * dWdQ_left[lidx] + 
@@ -203,9 +210,8 @@ calc_Jacob_mat(double             step_dt,
                     // 主对角项(本层能量对温度的导数) dE(i)/dT(i) 
                     idx = get_band_idx(j, j); // 表土层裸露于大气
                     mat_LHS[idx] = (dEdT_left[i] - deriv_terms) * fact[i] + Cs_node[i] + CONST_LATICE * 
-                                    CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + dCm_dT[i] * 
-                                    (moist[i] - last_moist[i]) + CONST_LATICE * CONST_RHOFW * dfliq_dT[i] * 
-                                    (moist[i] - last_moist[i]);
+                                    CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + dCm_dT[i] +
+                                   (CONST_LATICE * CONST_RHOFW * dfliq_dT[i]) * (moist[i] - last_moist[i]);
                     // 主对角项(本层水量对液态水的导数) dW(i)/dθ(i)
                     idx = get_band_idx(j+1, j+1);
                     mat_LHS[idx] = fact[i] * dWdQ_left[lidx] + 
@@ -227,9 +233,8 @@ calc_Jacob_mat(double             step_dt,
                 // 主对角项(本层能量对温度的导数) dE(i)/dT(i) 
                 idx = get_band_idx(j, j);
                 mat_LHS[idx] = (dEdT_left[i] - dEdT_right[i-1]) * fact[i] + Cs_node[i] + CONST_LATICE * 
-                                CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + dCm_dT[i] * 
-                               (moist[i] - last_moist[i]) + CONST_LATICE * CONST_RHOFW * dfliq_dT[i] * 
-                               (moist[i] - last_moist[i]);
+                                CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + (dCm_dT[i] +
+                                CONST_LATICE * CONST_RHOFW * dfliq_dT[i]) * (moist[i] - last_moist[i]);
                 // 主对角项(本层能量对水量的导数) dE(i)/dθ(i)
                 idx = get_band_idx(j, j+1);
                 mat_LHS[idx] = Cm_node[i] * dtheta_dpsi[i] + dCs_dpsi[i] * (T[i] - last_T[i]) + dCm_dpsi[i] * 

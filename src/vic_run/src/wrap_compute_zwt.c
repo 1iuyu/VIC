@@ -12,7 +12,6 @@
  *****************************************************************************/
 double
 wrap_compute_zwt(double             step_dt,
-                 energy_bal_struct *energy,
                  cell_data_struct  *cell,
                  soil_con_struct   *soil_con)
 {
@@ -28,9 +27,9 @@ wrap_compute_zwt(double             step_dt,
     double  aqf_yield1; // 含水层给水度 [m]
     double  soil_excess;
     double  frac_ice[MAX_SOILS];
-    double *moist = energy->moist;
-    double *ice = energy->ice;
-    double *liq = energy->liq;
+    double *moist = cell->moist;
+    double *ice = cell->ice;
+    double *liq = cell->liq;
     double *soil_T = cell->soil_T;
     double *matric = cell ->matric;
     double *zc_soil = soil_con->zc_soil;
@@ -41,7 +40,7 @@ wrap_compute_zwt(double             step_dt,
     double *ksat_node = soil_con->Ksat_node;
     double *Wsat_node = soil_con->Wsat_node;
     double *Wpwp_node = soil_con->Wpwp_node;
-    double *eff_porosity = cell->eff_porosity;
+    double *soil_porosity = cell->soil_porosity;
     double *alpha_node = soil_con->alpha_node;
     double *mpar_node = soil_con->mpar_node;
     double *conductivity = cell->conductivity;
@@ -177,7 +176,7 @@ wrap_compute_zwt(double             step_dt,
             sub_drain -= drain_layer;
             liq[i] += drain_layer / dz_soil[i];
             if (sub_drain >= 0.0) {
-                zwt -= drain_layer / eff_porosity[i];
+                zwt -= drain_layer / soil_porosity[i];
                 break;
             }
             else {
@@ -236,7 +235,7 @@ wrap_compute_zwt(double             step_dt,
                 sub_drain -= drain_layer;
                 liq[i] += drain_layer / dz_soil[i];
                 if (sub_drain > 0.0) {
-                    zwt_perch -= drain_layer / eff_porosity[i];
+                    zwt_perch -= drain_layer / soil_porosity[i];
                     break;
                 }
                 else {
@@ -325,15 +324,15 @@ wrap_compute_zwt(double             step_dt,
     cell->storage_aqf = storage_aqf;
     // 检查是否存在过度饱和的层
     for (i = Nsoil - 1; i >= 1; i--) {
-        if (liq[i] > eff_porosity[i]) {
-            soil_excess = max(0.0, liq[i] - eff_porosity[i]) * dz_soil[i];
-            liq[i] = min(liq[i], eff_porosity[i]);
+        if (liq[i] > soil_porosity[i]) {
+            soil_excess = max(0.0, liq[i] - soil_porosity[i]) * dz_soil[i];
+            liq[i] = min(liq[i], soil_porosity[i]);
             liq[i-1] += soil_excess / dz_soil[i-1];
         }
     }
     // 对于第一层，额外检查是否小于MIN_SOILMOIST
-    eff_porosity[0] = max(1.0e-4, Wsat_node[0] - ice[0] - MIN_SOILMOIST);
-    soil_excess = max(max(0.0, liq[0] - MIN_SOILMOIST) - eff_porosity[0], 0.0) * dz_soil[0];
+    soil_porosity[0] = max(1.0e-4, Wsat_node[0] - ice[0] - MIN_SOILMOIST);
+    soil_excess = max(max(0.0, liq[0] - MIN_SOILMOIST) - soil_porosity[0], 0.0) * dz_soil[0];
     liq[0] -= soil_excess / dz_soil[0];
     double sub_excess = soil_excess / step_dt;
     // 额外检查是否小于MIN_SOILMOIST
@@ -342,7 +341,7 @@ wrap_compute_zwt(double             step_dt,
         if (liq[i] < MIN_SOILMOIST) {
             soil_loss = (MIN_SOILMOIST - liq[i]) * dz_soil[i];
             if (i == zwt_lidx) {
-                zwt += soil_loss / eff_porosity[i];
+                zwt += soil_loss / soil_porosity[i];
             }
         }
         else {

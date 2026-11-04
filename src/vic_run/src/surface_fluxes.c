@@ -44,7 +44,6 @@ surface_fluxes(double             step_dt,
     size_t i, j, k;
     size_t col, row;
     size_t jmin, jmax;
-    size_t Nsoil = cell->Nsoil;
     size_t Nnode = cell->Nnode;
     size_t Nstate = Nnode * 2;
     int IPIV[MAX_STATES] = {0};
@@ -70,7 +69,7 @@ surface_fluxes(double             step_dt,
     /*******************************
       Update surface water fraction
     *******************************/
-    calc_surf_water(step_dt, energy, cell,
+    calc_surf_water(step_dt, cell,
                     snow, soil_con);
                     
     /***************************
@@ -111,7 +110,7 @@ surface_fluxes(double             step_dt,
 
             for (i = 0, j = 0; i < Nnode; i++, j+=2) {
                 mat_state[j] = iter_energy.T[i];
-                mat_state[j+1] = iter_energy.moist[i];
+                mat_state[j+1] = iter_cell.moist[i];
             }
 
             /************************************
@@ -126,8 +125,7 @@ surface_fluxes(double             step_dt,
             /**********************************************
                 Solve Energy Balance Components
             **********************************************/
-            ErrorFlag = calc_Jacob_mat(iter_dt, mat_LHS, 
-                                       force,
+            ErrorFlag = calc_Jacob_mat(iter_dt, mat_LHS,
                                        &iter_energy,
                                        &iter_cell,
                                        &iter_snow, soil_con);
@@ -169,7 +167,11 @@ surface_fluxes(double             step_dt,
 
             /* Scale band Jacobian: J_s = F * J * X */
             for (col = 0; col < Nnode; col++) {
-                jmin = max(0, col - LAPACK_KU);
+                if (col > LAPACK_KU) {
+                    jmin = col - LAPACK_KU;
+                } else {
+                    jmin = 0;
+                }
                 jmax = min(Nnode - 1, col + LAPACK_KL);
 
                 for (row = jmin; row <= jmax; row++) {

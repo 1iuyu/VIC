@@ -12,7 +12,7 @@
  *****************************************************************************/
 int
 CalcPhaseChange(size_t             nidx,
-                double            *T,
+                double            *soil_T,
                 energy_bal_struct *energy,
                 cell_data_struct  *cell,
                 soil_con_struct   *soil_con)
@@ -25,8 +25,8 @@ CalcPhaseChange(size_t             nidx,
     double equil_liq = 0.0;
     double tmp_matric = 0.0;
     double fusion_flux = 0.0;
-    double *ice = energy->ice;
-    double *liq = energy->liq;
+    double *ice = cell->ice;
+    double *liq = cell->liq;
     double *matric = cell->matric;
     double *Cs_node = energy->Cs_node;
     double *Wpwp_node = soil_con->Wpwp_node;
@@ -34,7 +34,7 @@ CalcPhaseChange(size_t             nidx,
     // 保存临时变量
     double tmp_ice = ice[nidx];
     double tmp_liq = liq[nidx];
-    double tmp_T = (*T);
+    double tmp_T = (*soil_T);
     // 计算冰点和等效热容量（假设所有水为液态）
     double total_liq = liq[nidx] + ice[nidx] * CONST_RHOICE / CONST_RHOFW;
     if (total_liq > Wsat_node[nidx]) {
@@ -51,11 +51,11 @@ CalcPhaseChange(size_t             nidx,
         tmp_tkfrz = CONST_TKTRIP;
     }
     // 计算当前温度对应的热力学平衡液态水
-    equil_liq = frozen_soil(nidx, tmp_tkfrz, *T, liq, ice, soil_con);
+    equil_liq = frozen_soil(nidx, tmp_tkfrz, *soil_T, cell, soil_con);
     equil_liq = max(Wpwp_node[nidx], min(equil_liq, total_liq));
     
     // 分情况处理
-    if (*T <= tmp_tkfrz) {
+    if (*soil_T <= tmp_tkfrz) {
         // 热力学上所有水都能保持液态，但需要检查是否有足够冷量来冻结
         if (total_liq < equil_liq) {
             liq[nidx] = total_liq;
@@ -66,10 +66,10 @@ CalcPhaseChange(size_t             nidx,
             double new_ice = (total_liq - equil_liq) * CONST_RHOFW / CONST_RHOICE;
             double new_liq = equil_liq;
             if (tmp_ice == 0.0 && new_ice > 0.0) {
-                EnergyRes = Cs_node[nidx] * (tmp_tkfrz - *T);
-                *T = tmp_tkfrz - EnergyRes / eff_Cs; // ???
+                EnergyRes = Cs_node[nidx] * (tmp_tkfrz - *soil_T);
+                *soil_T = tmp_tkfrz - EnergyRes / eff_Cs; // ???
                 // 用修正后的温度重新计算平衡态
-                equil_liq = frozen_soil(nidx, tmp_tkfrz, *T, liq, ice, soil_con);
+                equil_liq = frozen_soil(nidx, tmp_tkfrz, *soil_T, cell, soil_con);
                 liq[nidx] = equil_liq;
                 ice[nidx] = (total_liq - equil_liq) * CONST_RHOFW / CONST_RHOICE;
             }
@@ -90,13 +90,13 @@ CalcPhaseChange(size_t             nidx,
             if (EnergyRes >= fusion_flux) {
                 liq[nidx] = total_liq;
                 ice[nidx] = 0.0;
-                (*T) = tmp_tkfrz + (EnergyRes - fusion_flux) / Cs_node[nidx];
+                (*soil_T) = tmp_tkfrz + (EnergyRes - fusion_flux) / Cs_node[nidx];
             }
             else {
                 double melted_ice = EnergyRes / (CONST_RHOICE * CONST_LATICE);
                 liq[nidx] = tmp_liq + melted_ice * CONST_RHOICE / CONST_RHOFW;
                 ice[nidx] = tmp_ice - melted_ice;
-                (*T) = tmp_tkfrz;
+                (*soil_T) = tmp_tkfrz;
             }
         }
     }

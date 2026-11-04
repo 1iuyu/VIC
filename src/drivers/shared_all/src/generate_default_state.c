@@ -46,8 +46,8 @@ generate_default_state(all_vars_struct   *all_vars,
     ************************************/
     for (veg = 0; veg <= Nveg; veg++) {
         if (veg_con[veg].Cv > 0) {
-            snow[veg].swq = 0.0;   // [mm] or [kg/m2]
-            snow[veg].snowaccum = 0.0;
+            snow[veg].swq = 10.0;   // [mm] or [kg/m2]
+            snow[veg].snowaccum = 10.0;
             double snow_density = 200.0;   // [kg/m3]
             if (snow[veg].swq > 0.0) {
                 // calculate snow coverage
@@ -174,16 +174,16 @@ generate_default_state(all_vars_struct   *all_vars,
             for (lidx = 0; lidx < Nsoil; lidx++) {
                 // 温度大于0，地下水位以上设为田间持水量，地下水位以下设为饱和含水量
                 if (soil_con->Zsum_soil[lidx] <= cell[veg].zwt) {
-                    energy[veg].moist[lidx] = soil_con->Wsat_node[lidx] * 0.7;
+                    cell[veg].moist[lidx] = soil_con->Wsat_node[lidx] * 0.7;
                 }
                 else {
-                    energy[veg].moist[lidx] = soil_con->Wsat_node[lidx];
+                    cell[veg].moist[lidx] = soil_con->Wsat_node[lidx];
                 }
-                energy[veg].liq[lidx] = energy[veg].moist[lidx]; // 将liq初始化为moist
+                cell[veg].liq[lidx] = cell[veg].moist[lidx]; // 将liq初始化为moist
 
-                if (energy[veg].moist[lidx] >
+                if (cell[veg].moist[lidx] >
                     soil_con->Wsat_node[lidx]) {
-                    energy[veg].moist[lidx] =
+                    cell[veg].moist[lidx] =
                             soil_con->Wsat_node[lidx];
                 }
             }
@@ -199,23 +199,24 @@ generate_default_state(all_vars_struct   *all_vars,
             // set soil moisture properties for all soil thermal nodes
             ErrorFlag =
                     distribute_node_moisture_properties(
-                        &energy[veg],
                         &cell[veg],
                         soil_con);
+                        
             if (ErrorFlag == ERROR) {
                 log_err("Error setting physical properties for "
                         "soil thermal nodes"); 
             }
             // initialize last step soil layer properties
             for (i = 0; i < cell[veg].Nsoil; i++) {
-                energy[veg].last_ice[i] = energy[veg].ice[i];
-                energy[veg].last_liq[i] = energy[veg].liq[i];
+                cell[veg].last_ice[i] = cell[veg].ice[i];
+                cell[veg].last_liq[i] = cell[veg].liq[i];
                 cell[veg].last_matric[i] = cell[veg].matric[i];
             }
             band = veg_con[veg].BandIndex;
             double pressure = force[band].pressure;
             /* Soil and ice thermal properties for the layer */
-            prepare_full_energy(pressure, &cell[veg], 
+            prepare_full_energy(step_dt, pressure, 
+                                &cell[veg], 
                                 &energy[veg],
                                 &snow[veg], soil_con);
             for (i = 0; i <= snow[veg].Nsnow; i++) {
@@ -225,7 +226,7 @@ generate_default_state(all_vars_struct   *all_vars,
     }
 
     /******************************************
-       initialize vegetation potential and actual water stress
+     initialize vegetation potential and actual water stress
     ******************************************/
     double root_psi = 0.0;
     double total_root = 0.0;

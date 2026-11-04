@@ -10,7 +10,8 @@
  * @brief    This routine update the nodes properties in the vertical direction.
  *****************************************************************************/
 void
-update_nodes(double             pressure,
+update_nodes(double             step_dt,
+             double             pressure,
              energy_bal_struct *energy,
              cell_data_struct  *cell,
              snow_data_struct  *snow,
@@ -33,7 +34,7 @@ update_nodes(double             pressure,
     double *dz_snow = snow->dz_snow; 
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
-    double *porosity = snow->porosity;
+    double *snow_porosity = snow->snow_porosity;
     double *snow_frac = snow->snow_frac;
     double *pack_frze = snow->pack_frze;
     double *pack_melt = snow->pack_melt;
@@ -61,8 +62,8 @@ update_nodes(double             pressure,
     cell->Nnode = tmp_Nnode;
     for (i = 0; i < Nsnow; i++) {
         theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * coverage * CONST_RHOICE));
-        porosity[i] = 1.0 - theta_ice[i];
-        theta_liq[i] = min(porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW));
+        snow_porosity[i] = 1.0 - theta_ice[i];
+        theta_liq[i] = min(snow_porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW));
         double SnowMass = pack_ice[i] + pack_liq[i];
         snow_frac[i] = pack_ice[i] / SnowMass;
         density[i] = pack_ice[i] / (dz_snow[i] * coverage);
@@ -91,7 +92,7 @@ update_nodes(double             pressure,
             T[i] = new_T[i];
         }
         // update the Cs_node for the new snow layer
-        prepare_full_energy(pressure, 
+        prepare_full_energy(step_dt, pressure,
                             cell, energy,
                             snow, soil_con);
     }
@@ -118,7 +119,7 @@ update_nodes(double             pressure,
         last_snowfrac[i] = 0.0;
         density[i] = 0.0;
         enthalpy[i] = 0.0;
-        porosity[i] = 0.0;
+        snow_porosity[i] = 0.0;
         theta_ice[i] = 0.0;
         theta_liq[i] = 0.0;
         pack_frze[i] = 0.0;

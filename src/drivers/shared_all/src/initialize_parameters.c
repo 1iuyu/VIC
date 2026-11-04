@@ -126,9 +126,10 @@ initialize_parameters()
     param.SNOW_ROUGH = 0.00085;
     param.SOIL_ROUGH = 0.000775;
     param.GLAC_ROUGH = 0.002300;
+    // Soil Parameters
     param.SOIL_RROOT = 0.29e-03;
     param.SOIL_RHOROOT = 0.31e06;
-
+    param.SOIL_SPECSTORE = 1.0e-6;  // Specific storage coefficient (m-1) of soil
     // Snow Parameters
     param.SNOW_MAX_SURFACE_SWE = 5000.0;
     param.SNOW_LIQUID_WATER_CAPACITY = 0.03;   // 0.03
@@ -142,7 +143,8 @@ initialize_parameters()
     param.SNOW_NEW_BRAS_DENOM = 100.;
     param.SNOW_PGRAD = 0.0005;
     param.SNOW_RASNOW = 50.0;
-    param.SNOW_CONDUCT = 2.9302e-6; // ???
+    param.SNOW_THERMAL_COND = 2.9302e-6; // ???
+    param.SNOW_HYDRA_COND = 0.0055;
     param.SNOW_COMPACT_A = 2.5e-6;
     param.SNOW_COMPACT_B = 0.04;
     param.SNOW_COMPACT_C = 2.0;
@@ -152,6 +154,7 @@ initialize_parameters()
     param.SNOW_RADIUS_MAX = 1500.0;
     param.SNOW_NEW_RADIUS = 204.526;
     param.SNOW_FRZ_SCALE = 0.1;
+    param.SNOW_EXPMELT = 3.0;
     // BATS snow aging parameters
     param.SNOW_AGE_FACT = 1.0e6;
     param.SNOW_AGE_VAPF = 5000.;
@@ -199,7 +202,5 @@ initialize_parameters()
     // MOST Iterations
     param.MAX_ITER_MOST = 5;
     param.MAX_ITER_OVER = 15;
-
-    param.CN_FACTOR = 0.5;
 
 }

@@ -1048,8 +1048,12 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
     offsets[i] = offsetof(parameters_struct, SNOW_NEW_BRAS_DENOM);
     mpi_types[i++] = MPI_DOUBLE;
 
-    // double SNOW_CONDUCT
-    offsets[i] = offsetof(parameters_struct, SNOW_CONDUCT);
+    // double SNOW_THERMAL_COND
+    offsets[i] = offsetof(parameters_struct, SNOW_THERMAL_COND);
+    mpi_types[i++] = MPI_DOUBLE;
+
+    // double SNOW_HYDRA_COND
+    offsets[i] = offsetof(parameters_struct, SNOW_HYDRA_COND);
     mpi_types[i++] = MPI_DOUBLE;
 
     // double SNOW_PGRAD
@@ -1174,10 +1178,6 @@ create_MPI_param_struct_type(MPI_Datatype *mpi_type)
 
     // double TOL_WETBULB
     offsets[i] = offsetof(parameters_struct, TOL_WETBULB);
-    mpi_types[i++] = MPI_DOUBLE;
-
-    // double CN_FACTOR
-    offsets[i] = offsetof(parameters_struct, CN_FACTOR);
     mpi_types[i++] = MPI_DOUBLE;
 
     // int MAX_ITER_WETBULB

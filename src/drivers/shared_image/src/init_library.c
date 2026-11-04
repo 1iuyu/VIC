@@ -46,10 +46,13 @@ initialize_soil_con(size_t           Nband,
         soil_con->Zsum_soil[i] = 0.0;
         soil_con->zc_soil[i] = 0.0;
         soil_con->organic_node[i] = 0.0;
+        soil_con->bulk_dens_avg[i] = 0.0;
         soil_con->bulk_dens_node[i] = 0.0;
         soil_con->Ksat_node[i] = 0.0;
+        soil_con->Kmac_node[i] = 0.0;
         soil_con->Wpwp_node[i] = 0.0;
         soil_con->Wsat_node[i] = 0.0;
+        soil_con->Wmac_node[i] = 0.0;
         soil_con->vol_clay[i] = 0.0;
         soil_con->vol_gravel[i] = 0.0;
         soil_con->vol_organic[i] = 0.0;

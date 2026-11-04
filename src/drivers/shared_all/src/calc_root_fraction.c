@@ -14,7 +14,6 @@
 void
 calc_root_fractions(size_t            veg_class,
                     cell_data_struct *cell,
-                    veg_var_struct   *veg_var,
                     soil_con_struct  *soil_con,
                     veg_lib_struct   *veg_lib)
 {

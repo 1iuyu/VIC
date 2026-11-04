@@ -80,7 +80,7 @@ vic_store(dmy_struct *dmy_state,
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg) {
                     dvar[i] =
-                        (double) all_vars[i].energy[m].moist[j];
+                        (double) all_vars[i].cell[m].moist[j];
                 }
                 else {
                     dvar[i] = nc_state_file.d_fillvalue;
@@ -105,7 +105,7 @@ vic_store(dmy_struct *dmy_state,
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg) {
                     dvar[i] =
-                        (double) all_vars[i].energy[m].ice[j];
+                        (double) all_vars[i].cell[m].ice[j];
                 }
                 else {
                     dvar[i] = nc_state_file.d_fillvalue;
@@ -131,7 +131,7 @@ vic_store(dmy_struct *dmy_state,
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg) {
                     dvar[i] =
-                        (double) all_vars[i].energy[m].liq[j];
+                        (double) all_vars[i].cell[m].liq[j];
                 }
                 else {
                     dvar[i] = nc_state_file.d_fillvalue;
@@ -630,7 +630,7 @@ vic_store(dmy_struct *dmy_state,
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 k < all_vars[i].cell[m].Nsoil) {
-                    dvar[i] = (double) all_vars[i].energy[m].last_liq[k];
+                    dvar[i] = (double) all_vars[i].cell[m].last_liq[k];
                 }
                 else {
                     dvar[i] = nc_state_file.d_fillvalue;
@@ -655,7 +655,7 @@ vic_store(dmy_struct *dmy_state,
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 k < all_vars[i].cell[m].Nsoil) {
-                    dvar[i] = (double) all_vars[i].energy[m].last_ice[k];
+                    dvar[i] = (double) all_vars[i].cell[m].last_ice[k];
                 }
                 else {
                     dvar[i] = nc_state_file.d_fillvalue;

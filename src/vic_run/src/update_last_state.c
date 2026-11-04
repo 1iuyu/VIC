@@ -21,11 +21,11 @@ update_last_state(energy_bal_struct *energy,
     size_t Nsnow = snow->Nsnow;
     double *T = energy->T;
     double *last_T = energy->last_T;
-    double *ice = energy->ice;
-    double *liq = energy->liq;
+    double *ice = cell->ice;
+    double *liq = cell->liq;
     double *matric = cell->matric;
-    double *last_ice = energy->last_ice;
-    double *last_liq = energy->last_liq;
+    double *last_ice = cell->last_ice;
+    double *last_liq = cell->last_liq;
     double *last_matric = cell->last_matric;
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;

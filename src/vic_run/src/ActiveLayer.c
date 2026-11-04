@@ -11,8 +11,7 @@
  *           based on Monin-Obukhov (M-O) Similarity Theory (MOST).
  *****************************************************************************/
 void
-ActiveLayer(energy_bal_struct *energy,
-            cell_data_struct  *cell,
+ActiveLayer(cell_data_struct  *cell,
             soil_con_struct   *soil_con)
 {
     size_t Nsoil = cell->Nsoil;
@@ -20,9 +19,9 @@ ActiveLayer(energy_bal_struct *energy,
     size_t Nthaw = 0;
     size_t Nfrost = 0;
     double *Zsum_soil = soil_con->Zsum_soil;
-    double *ice = energy->ice;
-    double *liq = energy->liq;
-    double *moist = energy->moist;
+    double *ice = cell->ice;
+    double *liq = cell->liq;
+    double *moist = cell->moist;
 
     bool found_frost = false;
 

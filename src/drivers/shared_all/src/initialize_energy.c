@@ -14,8 +14,7 @@ initialize_energy(energy_bal_struct *energy,
                   size_t             Nveg)
 {
 
-    size_t               i, lidx;
-    size_t               veg;
+    size_t     i, veg;
 
     // initialize miscellaneous energy balance terms
     for (veg = 0; veg <= Nveg; veg++) {
@@ -68,14 +67,14 @@ initialize_energy(energy_bal_struct *energy,
         energy[veg].deriv_snow = 0.0;
         energy[veg].deriv_soil = 0.0;
         energy[veg].deriv_terms = 0.0;
-        for (lidx = 0; lidx < MAX_NODES; lidx++) {
-            energy[veg].Cs_node[lidx] = 0.0;
-            energy[veg].kappa_node[lidx] = 0.0;
-            energy[veg].T[lidx] = 0.0;
-            energy[veg].last_T[lidx] = 0.0;
-            energy[veg].kappa_int[lidx] = 0.0;
-            energy[veg].enthalpy[lidx] = 0.0;
-            energy[veg].last_enthalpy[lidx] = 0.0;
+        for (i = 0; i < MAX_NODES; i++) {
+            energy[veg].Cs_node[i] = 0.0;
+            energy[veg].kappa_node[i] = 0.0;
+            energy[veg].T[i] = 0.0;
+            energy[veg].last_T[i] = 0.0;
+            energy[veg].kappa_int[i] = 0.0;
+            energy[veg].enthalpy[i] = 0.0;
+            energy[veg].last_enthalpy[i] = 0.0;
         }
         energy[veg].energy_flag = false;
         energy[veg].moist_flag = false;

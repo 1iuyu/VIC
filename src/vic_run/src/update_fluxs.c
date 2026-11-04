@@ -53,7 +53,7 @@ update_fluxes(double             step_dt,
       Calculate active layer depth
     ********************************/
     if (options.ACTIVE_LAYER) {
-        ActiveLayer(energy, cell, soil_con);
+        ActiveLayer(cell, soil_con);
     }
 
     /**********************************
@@ -70,7 +70,7 @@ update_fluxes(double             step_dt,
         }
     }
     // 假设只有当liq[0] = 0.0 时发生升华
-    if ((energy->ice[Nsnow] > 0.0 && energy->Tgrnd < CONST_TKFRZ) || cell->IS_GLAC) {
+    if ((cell->ice[0] > 0.0 && energy->Tgrnd < CONST_TKFRZ) || cell->IS_GLAC) {
         energy->LatentVapGrnd = CONST_LATSUB;
         energy->FrozenGrnd = true;
     }
@@ -81,12 +81,12 @@ update_fluxes(double             step_dt,
     /*****************************
       Compute surface resistance
     *****************************/
-    compute_soil_resis(coverage, energy, cell, soil_con);
+    compute_soil_resis(coverage, cell, soil_con);
 
     /***************************************
       Compute the vapor flux between nodes
     ***************************************/
-    calc_vapor_flux(pressure, energy, cell, 
+    calc_vapor_flux(pressure, cell, 
                     snow, soil_con);
 
     /***************************************
@@ -97,7 +97,7 @@ update_fluxes(double             step_dt,
     /***************************************
       Compute layer thermal properties
     ***************************************/
-    prepare_full_energy(pressure, 
+    prepare_full_energy(step_dt, pressure, 
                         cell, energy,
                         snow, soil_con);
     

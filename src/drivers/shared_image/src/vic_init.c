@@ -1480,7 +1480,6 @@ vic_init(void)
                 veg_class = veg_con[i][j].veg_class;
                 calc_root_fractions(veg_class, 
                                     &all_vars[i].cell[j],
-                                    &all_vars[i].veg_var[j],
                                     &soil_con[i], veg_lib);
             }
         }

@@ -63,8 +63,8 @@ compute_derived_state_vars(all_vars_struct   *all_vars,
                 snow[veg].zc_snow[i] = cum_depth - snow[veg].dz_snow[i] / 2.0;
                 snow[veg].theta_ice[i] = min(1.0, snow[veg].pack_ice[i] / 
                             (snow[veg].dz_snow[i] * snow[veg].coverage * CONST_RHOICE));
-                snow[veg].porosity[i] = 1.0 - snow[veg].theta_ice[i];
-                snow[veg].theta_liq[i] = min(snow[veg].porosity[i], snow[veg].pack_liq[i] / 
+                snow[veg].snow_porosity[i] = 1.0 - snow[veg].theta_ice[i];
+                snow[veg].theta_liq[i] = min(snow[veg].snow_porosity[i], snow[veg].pack_liq[i] / 
                                 (snow[veg].dz_snow[i] * snow[veg].coverage * CONST_RHOFW));
                 double SnowMass = snow[veg].pack_ice[i] + snow[veg].pack_liq[i];
                 snow[veg].snow_frac[i] = snow[veg].pack_ice[i] / SnowMass;

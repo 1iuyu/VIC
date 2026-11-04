@@ -11,8 +11,7 @@
  *  submerged based on surface microtopography and surface water storage.
  *****************************************************************************/
 int
-calc_surf_water(double            step_dt,
-                energy_bal_struct *energy,
+calc_surf_water(double             step_dt,
                 cell_data_struct  *cell,
                 snow_data_struct  *snow,
                 soil_con_struct   *soil_con)
@@ -20,7 +19,6 @@ calc_surf_water(double            step_dt,
     extern parameters_struct param;
     size_t iter = 0;
     size_t MAX_ITER = 10;
-    size_t Nsnow = snow->Nsnow;
     double fd;
     double dfdd;
     double beta = -3.0;
@@ -94,7 +92,7 @@ calc_surf_water(double            step_dt,
         }
     }
     h2osfc -= surf2soil;
-    energy->liq[Nsnow] += surf2soil * step_dt;
+    cell->liq[0] += surf2soil * step_dt;
     snow->coverage = coverage;
     cell->h2osfc = h2osfc;
     cell->frac_h2o = frac_h2o;

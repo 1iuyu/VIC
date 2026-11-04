@@ -26,7 +26,7 @@ apply_phase_change(double             iter_dt,
     double *dz_snow = snow->dz_snow;
     double *T = energy->T;
     double *pack_T = snow->pack_T;
-    double *porosity = snow->porosity;
+    double *snow_porosity = snow->snow_porosity;
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
     double *pack_frze = snow->pack_frze;
@@ -70,12 +70,12 @@ apply_phase_change(double             iter_dt,
             theta_liq[i] = pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW);
             theta_ice[i] = min(1.0, max(0.0, theta_ice[i]));
             theta_liq[i] = max(0.0, theta_liq[i]);
-            porosity[i] = max(0.0, 1.0 - theta_ice[i]);
+            snow_porosity[i] = max(0.0, 1.0 - theta_ice[i]);
         }
         else {
             theta_ice[i] = 0.0;
             theta_liq[i] = 0.0;
-            porosity[i] = 0.0;
+            snow_porosity[i] = 0.0;
         }
         // Clear phase-change flux after applying it.
         phase_snow[i] = 0.0;

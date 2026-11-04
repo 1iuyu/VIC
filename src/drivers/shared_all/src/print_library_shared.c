@@ -376,7 +376,7 @@ print_parameters(parameters_struct *param)
             param->SNOW_NEW_SNOW_DENSITY);
     fprintf(LOG_DEST, "\tSNOW_NEW_SNOW_DENS_MAX: %.4f\n",
             param->SNOW_NEW_SNOW_DENS_MAX);
-    fprintf(LOG_DEST, "\tSNOW_CONDUCT: %.4f\n", param->SNOW_CONDUCT);
+    fprintf(LOG_DEST, "\tSNOW_THERMAL_COND: %.4f\n", param->SNOW_THERMAL_COND);
 }
 
 /******************************************************************************

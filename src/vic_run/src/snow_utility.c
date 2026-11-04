@@ -138,7 +138,7 @@ update_snow(double             step_dt,
         pack_ice[0] = snow->swq;
         pack_liq[0] = 0.0;
         // Update node properties
-        update_nodes(pressure, 
+        update_nodes(step_dt, pressure, 
                      energy,  cell, 
                      snow, soil_con);
     }
@@ -210,9 +210,7 @@ distribute_snow_state(double             step_dt,
 
 {
     // 定义局部变量指向结构体成员
-    double wind = force->wind;
     double air_temp = force->air_temp;
-    double pressure = force->pressure;
     double swq = snow->swq;
     double coverage = snow->coverage;
     double snow_depth = snow->snow_depth;
@@ -225,11 +223,12 @@ distribute_snow_state(double             step_dt,
     double *pack_liq = snow->pack_liq;
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
-    double *porosity = snow->porosity;
+    double *snow_porosity = snow->snow_porosity;
     double *density = snow->density;
     double *snow_frac = snow->snow_frac;
     double *last_thice = snow->last_thice;
     double *last_thliq = snow->last_thliq;
+    double *theta_moist = snow->theta_moist;
     double *last_snowfrac = snow->last_snowfrac;
 
     if (snow_depth < 0.025) {
@@ -288,10 +287,7 @@ distribute_snow_state(double             step_dt,
     // snow layer compaction, combination, and division
     if (Nsnow > 0) {
         /* snow layer combination */
-        snow_compaction(step_dt, 
-                        air_temp, wind,
-                        pressure, snow);
-
+        snow_compaction(step_dt, force, snow);
         /* snow layer division */
         snow_division(snow);
     }
@@ -301,10 +297,12 @@ distribute_snow_state(double             step_dt,
         snow_frac[i] = pack_ice[i] / SnowMass;
         theta_ice[i] = min(1.0, pack_ice[i] / 
                         (dz_snow[i] * coverage * CONST_RHOICE));
-        porosity[i] = 1.0 - theta_ice[i];
+        snow_porosity[i] = 1.0 - theta_ice[i];
         // 积雪覆盖区域内的体积分数
-        theta_liq[i] = max(0.0, min(porosity[i], pack_liq[i] / 
+        theta_liq[i] = max(0.0, min(snow_porosity[i], pack_liq[i] / 
                         (dz_snow[i] * coverage * CONST_RHOFW)));
+        theta_moist[i] = theta_liq[i] + theta_ice[i] *
+                            (CONST_RHOICE / CONST_RHOFW);
         density[i] = pack_ice[i] / (dz_snow[i] * coverage);
         radius[i] = new_snow_radius(air_temp); // 假设为新雪半径
     }

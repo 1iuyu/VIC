@@ -147,8 +147,8 @@ get_parameters(FILE *paramfile)
             else if (strcasecmp("SNOW_NEW_BRAS_DENOM", optstr) == 0) {
                 sscanf(cmdstr, "%*s %lf", &param.SNOW_NEW_BRAS_DENOM);
             }
-            else if (strcasecmp("SNOW_CONDUCT", optstr) == 0) {
-                sscanf(cmdstr, "%*s %lf", &param.SNOW_CONDUCT);
+            else if (strcasecmp("SNOW_THERMAL_COND", optstr) == 0) {
+                sscanf(cmdstr, "%*s %lf", &param.SNOW_THERMAL_COND);
             }
             else {
                 log_warn("Unrecognized option in the parameter file:  %s "
@@ -264,7 +264,7 @@ validate_parameters()
     // SNOW_DENS_C5 - Currently, no constraints
     // SNOW_DENS_C6 - Currently, no constraints
     // SNOW_DENS_F - Currently, no constraints
-    if (!(param.SNOW_CONDUCT >= 0.)) {
+    if (!(param.SNOW_THERMAL_COND >= 0.)) {
         log_err("SNOW_CONDUCT must be defined on the interval [0, inf) (W/mK)");
     }
 

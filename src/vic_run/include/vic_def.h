@@ -204,10 +204,10 @@ enum
 {
     MATRIC_FLAG,   // θ → ψ
     MOIST_FLAG,    // ψ → θ
-    DERIVW_FLAG,   // dθ/dψ
-    DERIVK_FLAG,   // dK/dψ
-    DERIVM_FLAG,   // dψ/dθ
-    DERIVT_FLAG,   // dθ/dT
+    DW_DPSI_FLAG,  // dθ/dψ
+    DK_DPSI_FLAG,  // dK/dψ
+    DPSI_DW_FLAG,  // dψ/dθ
+    DW_DT_FLAG,    // dθ/dT
     CONDUCT_FLAG   // θ → k
 };
 
@@ -391,8 +391,10 @@ typedef struct {
     double SNOW_ROUGH;
     double SOIL_ROUGH;
     double GLAC_ROUGH;
+    // Soil Parameters
     double SOIL_RROOT;
     double SOIL_RHOROOT;
+    double SOIL_SPECSTORE;  /**< Specific storage coefficient (m-1) of soil */
     // Snow Parameters
     double SNOW_MAX_SURFACE_SWE;  /**< maximum depth of the surface layer in water equivalent (m) */
     double SNOW_MAX_LIQUID_FRAC;
@@ -403,7 +405,8 @@ typedef struct {
     double SNOW_NEW_SNT_C2; /**< Constant in Sntherm new snow density computation. */
     double SNOW_NEW_SNT_C3; /**< Constant in Sntherm new snow density computation. */
     double SNOW_NEW_BRAS_DENOM;  /**< Constant in Bras new snow density computation. */
-    double SNOW_CONDUCT;  /**< conductivity of snow (W/mK) */
+    double SNOW_THERMAL_COND;    /**< thermal conductivity of snow (W/(m·K)) */
+    double SNOW_HYDRA_COND;      /**< hydraulic conductivity of snow (m s-1), 0.0055 = approx. 20 m/hr, from UEB */
     double SNOW_PGRAD;
     double SNOW_COMPACT_A;
     double SNOW_COMPACT_B;
@@ -450,8 +453,6 @@ typedef struct {
     double MAX_ITER_WETBULB;
     double MAX_ITER_MOST;
     double MAX_ITER_OVER;
-    // Crank Nicholson factor between 0 and 1
-    double CN_FACTOR;
 } parameters_struct;
 
 /******************************************************************************
@@ -744,7 +745,7 @@ typedef struct {
     double Ra_grnd[3];                  /**< bare ground surface resistance */
     double Ra_evap;                     /**< ground surface resistance [s/m] to evaporation */
     double Ra_leaf;                     /**< canopy leaf resistance [s/m] to transpiration */
-    double Ra_stem;
+    double Ra_stem;                     /**< plant stem resistance [s/m] to transpiration */
     double Z0m_grnd[3];
     double Z0m_sub[3];
     double displacement[2];            /**< displacement height (m) */
@@ -766,8 +767,14 @@ typedef struct {
     double QsdT_soil;                  /**< temperature derivative of "Qair_soil" */
     double QsdT_snow;                  /**< temperature derivative of "Qair_snow" */
     double excess_ice[MAX_SOILS];      /**< soil layer excess ice (kg/m2) */
-    double eff_porosity[MAX_SOILS];    /**< soil layer effective porosity */
-    double soil_T[MAX_SOILS];
+    double ice[MAX_SOILS];             /**< ice content of the soil sublayer [m3/m3] */
+    double liq[MAX_SOILS];             /**< liq content of the soil sublayer [m3/m3] */
+    double last_ice[MAX_SOILS];        /**< last step ice content of the soil sublayer [m3/m3] */
+    double last_liq[MAX_SOILS];        /**< last step liq content of the soil sublayer [m3/m3] */
+    double moist[MAX_SOILS];           /**< volumetric total water content [m3/m3] */
+    double last_moist[MAX_SOILS];      /**< last step volumetric total water content [m3/m3] */
+    double soil_porosity[MAX_SOILS];   /**< soil layer effective porosity */
+    double soil_T[MAX_SOILS];          /**< soil temperature [K] */
     // Fluxes
     double baseflow;                   /**< baseflow from current cell (mm/TS) */
     double runoff;                     /**< runoff from current cell (mm/TS) */
@@ -853,29 +860,22 @@ typedef struct {
     double last_enthalpy[MAX_NODES];   /**< last step enthalpy values of each snow and soil layer */
     double dEdW_left[MAX_NODES];       /**< derivatives in the flux w.r.t. water state in the layer above */
     double dEdW_right[MAX_NODES];      /**< derivatives in the flux w.r.t. water state in the layer below */
-    double dEdT_left[MAX_NODES];
-    double dEdT_right[MAX_NODES];
-    double dWdQ_left[MAX_NODES];
-    double dWdQ_right[MAX_NODES];
-    double dWdE_left[MAX_NODES];
-    double dWdE_right[MAX_NODES];
-    double dWdQ_surf[MAX_NODES];
-    double dWdE_surf[MAX_NODES];
-    double dfliq_dT[MAX_NODES];
-    double dtheta_dT[MAX_NODES];
-    double dCs_dT[MAX_NODES];
-    double dCm_dT[MAX_NODES];
+    double dEdT_left[MAX_NODES];       /**< derivatives in the flux w.r.t. temperature in the layer above */
+    double dEdT_right[MAX_NODES];      /**< derivatives in the flux w.r.t. temperature in the layer below */
+    double dWdQ_left[MAX_NODES];       /**< derivatives in flux at layer interfaces w.r.t. states in the layer above */
+    double dWdQ_right[MAX_NODES];      /**< derivatives in flux at layer interfaces w.r.t. states in the layer below */
+    double dWdE_left[MAX_NODES];       /**< derivatives in flux at layer interfaces w.r.t. states in the layer above */
+    double dWdE_right[MAX_NODES];      /**< derivatives in flux at layer interfaces w.r.t. states in the layer below */
+    double dWdQ_surf[MAX_NODES];       /**< derivatives in the flux in soil surface interface w.r.t. state variables in layers */
+    double dWdE_surf[MAX_NODES];       /**< derivatives in the flux in soil surface interface w.r.t. state variables in layers */
+    double dtheta_dT[MAX_NODES];       /**< derivatives in volumetric liquid water content w.r.t. temperature */
+    double dCs_dT[MAX_NODES];          /**< derivatives in heat capacity w.r.t. temperature (J m-3 K-2) */
+    double dCm_dT[MAX_NODES];          /**< derivatives in heat capacity w.r.t. temperature (J kg-1 K-2) */
     double dCs_dtheta[MAX_NODES];
     double dCs_dpsi[MAX_NODES];
-    double dCm_dpsi[MAX_NODES];
-    double dkappa_dT[MAX_NODES];
-    double dkappa_dtheta[MAX_NODES];
-    double ice[MAX_NODES];             /**< ice content of the soil sublayer [m3/m3] */
-    double liq[MAX_NODES];             /**< liq content of the soil sublayer [m3/m3] */
-    double last_ice[MAX_NODES];        /**< last step ice content of the soil sublayer [m3/m3] */
-    double last_liq[MAX_NODES];        /**< last step liq content of the soil sublayer [m3/m3] */
-    double moist[MAX_NODES];           /**< volumetric total water content [m3/m3] */
-    double last_moist[MAX_NODES];      /**< last step volumetric total water content [m3/m3] */
+    double dCm_dpsi[MAX_NODES];        /**< derivatives in heat capacity w.r.t. matric potential (J kg-1) */
+    double dkappa_dT[MAX_NODES];       /**< derivative in thermal conductivity w.r.t. temperature */
+    double dkappa_dtheta[MAX_NODES];   /**< derivative in thermal conductivity w.r.t. matric head or volumetric liquid water */
     double deriv_snow;
     double deriv_soil;
     double deriv_terms;                /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
@@ -1021,7 +1021,6 @@ typedef struct {
     double delta_depth;             /**< snow depth increasing rate [m/s] due to snowfall */
     double Zsum_snow[MAX_SNOWS];    /**< snow interface layer depth (m) */
     double zc_snow[MAX_SNOWS];      /**< depth of snow thermal nodes (m) */
-    double snow_thresholds[MAX_SNOWS]; /**< snow depth thresholds for layer remobilization (m) */
     double glac_excess;             /**< accumulated glacier excess flow [mm] */
     double snow_depth;              /**< snow depth (m) */
     double snowage;                 /**< snow age (s) */
@@ -1030,17 +1029,18 @@ typedef struct {
     double pack_ice[MAX_SNOWS];     /**< ice content of the snow pack (mm) */
     double pack_liq[MAX_SNOWS];     /**< liquid water content of the snow pack (mm) */
     double pack_outflow[MAX_SNOWS]; /**< outflow of liq water from each snow pack (m/s) */
+    double theta_moist[MAX_SNOWS];  /**< volumetric water content of each snow pack (m3/m3) */
     double theta_ice[MAX_SNOWS];    /**< partial volume of snow ice [m3/m3] */
     double theta_liq[MAX_SNOWS];    /**< partial volume of snow liquid water [m3/m3] */
     double last_thice[MAX_SNOWS];   /**< partial volume of snow ice from previous time step */
     double last_thliq[MAX_SNOWS];   /**< partial volume of snow liquid water from previous time step */
-    double porosity[MAX_SNOWS];     /**< porosity of each snow pack (fraction) */
+    double snow_porosity[MAX_SNOWS]; /**< snow layer effective porosity [m3/m3] */
     double snow_frac[MAX_SNOWS];    /**< fraction of each snow pack that is snow (fraction) */
     double last_snowfrac[MAX_SNOWS]; /**< fraction of each snow pack that is snow from previous time step */
     double snow_outflow;            /**< outflow of liquid water from the snowpack bottom (m/s) */
     double new_snow_density;        /**< bulk density of snowfall [kg/m3] */
-    double pack_melt[MAX_SNOWS];
-    double pack_frze[MAX_SNOWS];
+    double pack_melt[MAX_SNOWS];    /**< melt rate of each snow pack [m/s] */
+    double pack_frze[MAX_SNOWS];    /**< freeze rate of each snow pack [m/s] */
     double phase_snow[MAX_SNOWS];   /**< last step Phase change heat source W/m2 */
     double liq_deriv[MAX_SNOWS];
     double snow_frost;              /**< snow surface frost rate [mm/s] */

@@ -45,8 +45,8 @@ SoilWaterRetentionCurve(int              flag,
         if (Se >= 1.0) {
             return 0.0;
         }
-        else if (Se <= 0.0) {
-            return -1e4; // 防止数值爆炸
+        else if (Se <= 1.0e-6) {
+            return -1e6; // 防止数值爆炸
         }
         else {
             return -1.0 / fabs(alpha_node[idx]) *
@@ -66,7 +66,7 @@ SoilWaterRetentionCurve(int              flag,
             return Wsat_node[idx];
         }
     }
-    else if (flag == DERIVW_FLAG) {
+    else if (flag == DW_DPSI_FLAG) {
         /* dθ/dψ */
         if (matric < 0.0) {
             tmp = pow(fabs(alpha_node[idx] * 
@@ -78,7 +78,7 @@ SoilWaterRetentionCurve(int              flag,
             return 0.0;
         }
     }
-    else if (flag == DERIVM_FLAG) {
+    else if (flag == DPSI_DW_FLAG) {
         /* dψ/dθ */
         if (liq < Wsat_node[idx]) {
             Se = (liq - Wpwp_node[idx]) / (Wsat_node[idx] - Wpwp_node[idx]);
@@ -99,7 +99,7 @@ SoilWaterRetentionCurve(int              flag,
             return (0.0);
         }
     }
-    else if (flag == DERIVK_FLAG) {
+    else if (flag == DK_DPSI_FLAG) {
         /* dK/dψ */
         if (matric >= 0.0) {
             return 0.0;
@@ -137,19 +137,23 @@ SoilWaterRetentionCurve(int              flag,
             return orig_d * (1.0 - s) + (Ksat_node[idx] - orig_val) * ds_dpsi;
         }
     }
-    else if (flag == DERIVT_FLAG) {
+    else if (flag == DW_DT_FLAG) {
         /* dθ/dT */
-        if (soil_T > CONST_TKFRZ) {
-            return 0.0;
+        double kappa = CONST_LATICE / (CONST_G * CONST_TKFRZ);
+        double xtemp = alpha_node[idx] * kappa * (CONST_TKFRZ - soil_T);
+        double xn = 0.0;
+        if (xtemp > 0.0) {
+            xn = pow(xtemp, expt_node[idx] - 1.0);
+        }
+        else if (expt_node[idx] > 1.0) {
+            xn = 0.0;
         }
         else {
-            double kappa = CONST_LATICE / (CONST_G * CONST_TKFRZ);
-            double xtemp = alpha_node[idx] * kappa * (soil_T - CONST_TKFRZ);
-            /* 链式法则求导 */
-            return (alpha_node[idx] * kappa) * expt_node[idx] * pow(xtemp, expt_node[idx] - 1.0) *
-                (-mpar_node[idx]) * pow(1.0 + pow(xtemp, expt_node[idx]), -mpar_node[idx] - 1.0) *
-                (Wsat_node[idx] - Wpwp_node[idx]);
+            xn = 0.0;
         }
+        /* 链式法则求导 */
+        return (alpha_node[idx] * kappa) * expt_node[idx] * xn * (-mpar_node[idx]) * pow(1.0 + 
+               pow(xtemp, expt_node[idx]), -mpar_node[idx] - 1.0) * (Wsat_node[idx] - Wpwp_node[idx]);
     }
     else if (flag == CONDUCT_FLAG) {
         double *lpar_node = soil_con->lpar_node;

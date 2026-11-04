@@ -25,9 +25,9 @@ runoff(double             step_dt,
     double top_max_moist = 0.0;
     double infil_area, sat_area;
     // 指针赋值 
-    double *liq = energy->liq;
-    double *ice = energy->ice;
-    double *moist = energy->moist;
+    double *liq = cell->liq;
+    double *ice = cell->ice;
+    double *moist = cell->moist;
     double *soil_T = cell->soil_T;
     double *dz_soil = soil_con->dz_soil;
     double *matric = cell->matric;
@@ -39,7 +39,7 @@ runoff(double             step_dt,
     double *dWdE_surf = energy->dWdE_surf;
     double *Ksat_node = soil_con->Ksat_node;
     double *Wsat_node = soil_con->Wsat_node;
-    double *eff_porosity = cell->eff_porosity;  // 有效孔隙度
+    double *soil_porosity = cell->soil_porosity;  // 有效孔隙度
     // 初始化
     size_t Nsoil = cell->Nsoil;
     size_t Nroot = cell->Nroot;
@@ -47,6 +47,7 @@ runoff(double             step_dt,
     double b_infilt = soil_con->b_infilt;
     double capil_drive = soil_con->capil_drive;
     cell->soil_excess = 0.0; // 土壤超出水分[m]
+    // from m/s convert to m
     inflow *= step_dt;
     /*************************
        Initialize Variables
@@ -54,11 +55,11 @@ runoff(double             step_dt,
     double baseflow = 0.0;
     // 计算土壤超出水分
     for (i = 0; i < Nsoil; i++) {
-        eff_porosity[i] = max(0.0, Wsat_node[i] - ice[i]);
+        soil_porosity[i] = max(0.0, Wsat_node[i] - ice[i]);
         /** Set Layer Liquid Moisture Content **/
-        if (liq[i] > eff_porosity[i]) {
-            cell->soil_excess += (liq[i] - eff_porosity[i]) * dz_soil[i];
-            liq[i] = eff_porosity[i];
+        if (liq[i] > soil_porosity[i]) {
+            cell->soil_excess += (liq[i] - soil_porosity[i]) * dz_soil[i];
+            liq[i] = soil_porosity[i];
         }
         moist[i] = liq[i] + (ice[i] + excess_ice[i]) *
                          CONST_RHOICE / CONST_RHOFW;
@@ -114,7 +115,7 @@ runoff(double             step_dt,
     double f_m = f_0 * (soil_con->b_dynamic + 1.0);
     double dliq_dWat, dice_dWat;
     for (i = 0; i < Nroot; i++) {
-        double soil_tkfrz = calc_tkfrz(i, NULL, energy, cell, soil_con);
+        double soil_tkfrz = calc_tkfrz(i, NULL, cell, soil_con);
         double dInfilArea_dS1 = -ex * pow(base, ex - 1.0) / top_max_moist;
         if (soil_T[i] < soil_tkfrz) {
             dliq_dWat = 0.0;
@@ -169,7 +170,7 @@ runoff(double             step_dt,
     /************************************************
       Compute Baseflow and watertable
     ************************************************/
-    baseflow = wrap_compute_zwt(step_dt, energy,
+    baseflow = wrap_compute_zwt(step_dt,
                                 cell, soil_con);
 
     /** Store tile-wide values **/    

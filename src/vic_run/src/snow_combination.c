@@ -13,10 +13,12 @@
 ******************************************************************************/
 void 
 snow_combination(double             dz_soil,
-                 energy_bal_struct *energy,
                  snow_data_struct  *snow)
 {
     /* initialize */
+    static const double dz_snow_min[MAX_SNOWS] = {
+        0.025, 0.025, 0.1
+    };
     size_t i, j;
     size_t lidx;
     double tmp_ice = 0.0;
@@ -24,8 +26,8 @@ snow_combination(double             dz_soil,
     double pack_comb = 0.0;
 
     // 定义指针指向结构体中的数组
-    double *ice = energy->ice;
-    double *liq = energy->liq;
+    double *theta_ice = snow->theta_ice;
+    double *theta_liq = snow->theta_liq;
     double *dz_snow = snow->dz_snow;
     double *pack_T = snow->pack_T;
     double *pack_ice = snow->pack_ice;
@@ -74,7 +76,7 @@ snow_combination(double             dz_soil,
                     else {
                         pack_comb += pack_liq[i] + pack_ice[i];
                         if (pack_comb < 0.0) {
-                            ice[0] += pack_comb / (dz_soil * MM_PER_M);
+                            theta_ice[0] += pack_comb / (dz_soil * MM_PER_M);
                             pack_comb = 0.0;
                         }
                         snow->swq = 0.0;
@@ -128,9 +130,9 @@ snow_combination(double             dz_soil,
         i++;
     }
     
-    if (ice[0] < 0.0) {
-        liq[0] += ice[0] * CONST_RHOICE / CONST_RHOFW;
-        ice[0] = 0.0;
+    if (theta_ice[0] < 0.0) {
+        theta_liq[0] += theta_ice[0] * CONST_RHOICE / CONST_RHOFW;
+        theta_ice[0] = 0.0;
     }
     /* if no longer multi-layer */
     if (snow->Nsnow == 0) {
@@ -171,7 +173,7 @@ snow_combination(double             dz_soil,
         i = 0;
         while (i < snow->Nsnow) {
 
-            if (dz_snow[i] < snow->snow_thresholds[lidx]) {
+            if (dz_snow[i] < dz_snow_min[lidx]) {
                 size_t source;
                 size_t target;         
                 // 选择源层和目标层

@@ -12,15 +12,13 @@
 *           overburden, & melt.
 ******************************************************************************/
 void 
-snow_compaction(double            step_dt,
-                double            air_temp,
-                double            wind,
-                double            pressure,
-                snow_data_struct *snow)
+snow_compaction(double             step_dt,
+                force_data_struct *force,
+                snow_data_struct  *snow)
 {
     extern parameters_struct   param;
 
-    size_t i, Nsnow;
+    size_t i, Nsnow = snow->Nsnow;
     bool   DRIFT = true;              
     double pack_press = 0.0;                 // Pressure of overlying snow [kg/m2]
     double TempDiff;                   // ConstFreezePoint - [K]
@@ -35,6 +33,9 @@ snow_compaction(double            step_dt,
     double pseudo_depth = 0.0;    // wind drift compaction pseudo depth
     double density = 0.0;  // Partial density of ice [kg/m3]
     // 定义指针指向结构体中的数组
+    double air_temp = force->air_temp;
+    double wind = force->wind;
+    double pressure = force->pressure;
     double *dz_snow = snow->dz_snow;
     double *pack_T = snow->pack_T;
     double *pack_ice = snow->pack_ice;
@@ -43,7 +44,7 @@ snow_compaction(double            step_dt,
     double *pack_melt = snow->pack_melt;
     double *last_snowfrac = snow->last_snowfrac;
     double coverage = snow->coverage;
-    Nsnow = snow->Nsnow;
+
     double SNOW_COMPACT_P = -0.000695 * air_temp + 0.206067;
     if (pressure >= 85000.0) {
         SNOW_COMPACT_P = max(SNOW_COMPACT_P, 0.017);

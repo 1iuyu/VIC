@@ -11,7 +11,6 @@
  *****************************************************************************/
 void
 compute_soil_resis(double             coverage,
-                   energy_bal_struct *energy,
                    cell_data_struct  *cell,
                    soil_con_struct   *soil_con)
 {
@@ -19,8 +18,8 @@ compute_soil_resis(double             coverage,
     /* Allocate temp arrays */
     double Ra_evap = 0.0; // [m/s]
     if (cell->IS_VEG) {
-        double *liq = energy->liq;
-        double *eff_porosity = cell->eff_porosity;  // 有效孔隙度
+        double *liq = cell->liq;
+        double *soil_porosity = cell->soil_porosity;  // 有效孔隙度
         double *Wsat_node = soil_con->Wsat_node;
         double aird = SoilWaterRetentionCurve(MOIST_FLAG, 0, 0.0, -1.0e4, 0.0, soil_con);
         double d0 = CONST_VAPDIFF * pow(cell->soil_T[0] / CONST_TKFRZ, 1.75);
@@ -32,7 +31,7 @@ compute_soil_resis(double             coverage,
         // 计算气体扩散度
         double dg = d0 * tao;
         // SL14, Swenson and Lawrence (2014)
-        double dsl = 0.015 * max(param.TOL_A, (0.8 * eff_porosity[0] - liq[0])) /
+        double dsl = 0.015 * max(param.TOL_A, (0.8 * soil_porosity[0] - liq[0])) /
                     max(param.TOL_A, (0.8 * Wsat_node[0] - aird)); // [m/s]
 
         dsl = min(max(dsl, 0.0), 0.2);
