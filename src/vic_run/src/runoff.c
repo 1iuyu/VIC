@@ -104,14 +104,16 @@ runoff(double             step_dt,
         double posHead = 0.5 * (matric[i] + denom);
         compHeadRootZone += posHead * dz_soil[i];
     }
-    compHeadRootZone /= Zsum_soil[Nsoil-1];
+    compHeadRootZone /= root_depth;
     double compArg = (compHeadRootZone - compHeadCutoff) / compHeadWidth;
     double compLimiter = 1.0 / (1.0 + exp(2.0 * compArg));
-    double dCompLimiter_dHead = -(2.0 / compHeadWidth) * compLimiter * (1.0 - compLimiter);
+    double dCompLimiter_dHead = -(2.0 / compHeadWidth) * 
+                                    compLimiter * (1.0 - compLimiter);
     infil_area = infil_area * compLimiter;
     double availCapacity = rootCapacity - rootice;
     double wetfront = rootliq / availCapacity * root_depth;
-    double f_0 = Ksat_node[0] * (1.0 + (1.0 - wetfront / Zsum_soil[Nsoil-1]) * capil_drive / wetfront);
+    double f_0 = Ksat_node[0] * (1.0 + (1.0 - wetfront / 
+                  Zsum_soil[Nsoil-1]) * capil_drive / wetfront);
     double f_m = f_0 * (soil_con->b_dynamic + 1.0);
     double dliq_dWat, dice_dWat;
     for (i = 0; i < Nroot; i++) {
@@ -136,8 +138,10 @@ runoff(double             step_dt,
         double dwetfront_dTk = (drootliq_dTk * root_depth +
                                 drootice_dTk * wetfront) / availCapacity;
         // 最大下渗率（Green-Ampt）的导数
-        double dinfilrate_dWat = -Ksat_node[i] * capil_drive * dwetfront_dWat / (wetfront * wetfront);
-        double dinfilrate_dTk = -Ksat_node[i] * capil_drive * dwetfront_dTk / (wetfront * wetfront);
+        double dinfilrate_dWat = -Ksat_node[i] * capil_drive * 
+                                    dwetfront_dWat / (wetfront * wetfront);
+        double dinfilrate_dTk = -Ksat_node[i] * capil_drive * 
+                                    dwetfront_dTk / (wetfront * wetfront);
         // 下渗面积导数
         double dInfilArea_dWat;
         double dInfilArea_dTk = dInfilArea_dS1 * dz_soil[i] * dtheta_dT[i];
@@ -160,9 +164,10 @@ runoff(double             step_dt,
     }
 
     /*************************************************
-       Compute surface runoff
+       Compute surface runoff and infiltration
     *************************************************/
-    // Compute infiltration rate, saturation excess runoff and infiltration excess runoff.
+    // Compute infiltration rate, saturation excess 
+    // runoff and infiltration excess runoff.
     calc_dynamicVIC(inflow, i_0, i_m,
                     f_0, f_m, step_dt,
                     cell, soil_con);
@@ -204,6 +209,10 @@ calc_dynamicVIC(double            inflow, // m
     
     if (inflow <= 0.0) {
         cell->runoff = 0.0;
+        cell->runoff_infil = 0.0;
+        cell->runoff_sat = 0.0;
+        cell->infiltration = 0.0;
+
         return (0); 
     }
 
@@ -247,12 +256,14 @@ calc_dynamicVIC(double            inflow, // m
                             b_infilt, 
                             &runoff_sat, 
                             &dsat_dy);
+                            
             calc_infil_runoff(step_dt, inflow, 
                               f_m, f_0, dsat_dy, 
                               b_dynamic, 
                               runoff_sat, 
                               &dinfil_dy, 
                               &runoff_infil);
+
             if (fabs(y + runoff_infil - inflow) < param.TOL_A) {
                 converged = true;
             }
@@ -272,13 +283,29 @@ calc_dynamicVIC(double            inflow, // m
         double y_high = inflow;
         double F_low;
         double F_high;
+        // 计算边界值
+        calc_sat_runoff(i_0, i_m, y_low, 
+                        b_infilt, 
+                        &runoff_sat, &dsat_dy);
+        // 计算超渗产流和导数
+        calc_infil_runoff(step_dt, inflow, f_m, 
+                          f_0, dsat_dy, 
+                          b_dynamic, runoff_sat, 
+                          &dinfil_dy, &runoff_infil);
 
-        calc_sat_runoff(i_0, i_m, y_low, b_infilt, &runoff_sat, &dsat_dy);
-        calc_infil_runoff(step_dt, inflow, f_m, f_0, dsat_dy, b_dynamic, runoff_sat, &dinfil_dy, &runoff_infil);
         F_low = y_low + runoff_infil - inflow;
 
-        calc_sat_runoff(i_0, i_m, y_high, b_infilt, &runoff_sat, &dsat_dy);
-        calc_infil_runoff(step_dt, inflow, f_m, f_0, dsat_dy, b_dynamic, runoff_sat, &dinfil_dy, &runoff_infil);
+        // 计算边界值
+        calc_sat_runoff(i_0, i_m, y_high, 
+                        b_infilt, 
+                        &runoff_sat, &dsat_dy);
+        // 计算超渗产流和导数
+        calc_infil_runoff(step_dt, inflow, 
+                          f_m, f_0, 
+                          dsat_dy, b_dynamic, 
+                          runoff_sat, 
+                          &dinfil_dy, &runoff_infil);
+
         F_high = y_high + runoff_infil - inflow;
 
         if (F_low > 0.0 || F_high < 0.0) {
@@ -290,8 +317,14 @@ calc_dynamicVIC(double            inflow, // m
         for (iter = 0; iter < param.MAX_ITER_MOST; iter++) {
             y = 0.5 * (y_low + y_high);
 
-            calc_sat_runoff(i_0, i_m, y, b_infilt, &runoff_sat, &dsat_dy);
-            calc_infil_runoff(step_dt, inflow, f_m, f_0, dsat_dy, b_dynamic, runoff_sat, &dinfil_dy, &runoff_infil);
+            calc_sat_runoff(i_0, i_m, y, 
+                            b_infilt, 
+                            &runoff_sat, &dsat_dy);
+                            
+            calc_infil_runoff(step_dt, inflow, 
+                              f_m, f_0, dsat_dy, 
+                              b_dynamic, runoff_sat, 
+                              &dinfil_dy, &runoff_infil);
 
             double F_val = y + runoff_infil - inflow;
 
@@ -315,8 +348,15 @@ calc_dynamicVIC(double            inflow, // m
     }
 
     /* Recalculate runoff using the final y */
-    calc_sat_runoff(i_0, i_m, y, b_infilt, &runoff_sat, &dsat_dy);
-    calc_infil_runoff(step_dt, inflow, f_m, f_0, dsat_dy, b_dynamic, runoff_sat, &dinfil_dy, &runoff_infil);
+    calc_sat_runoff(i_0, i_m, y, 
+                    b_infilt, 
+                    &runoff_sat, 
+                    &dsat_dy);
+
+    calc_infil_runoff(step_dt, inflow, 
+                      f_m, f_0, dsat_dy, 
+                      b_dynamic, runoff_sat, 
+                      &dinfil_dy, &runoff_infil);
 
     // 更新地表产流和入渗量
     cell->runoff_infil = runoff_infil / step_dt; // [m/s]

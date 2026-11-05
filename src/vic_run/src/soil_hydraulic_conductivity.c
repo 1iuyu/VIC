@@ -18,14 +18,14 @@ soil_hydraulic_conductivity(energy_bal_struct *energy,
     extern parameters_struct param;
     extern option_struct     options;
 
-    size_t i, j;
+    size_t i, nidx;
     size_t Nsoil = cell->Nsoil;
     size_t Nsnow = snow->Nsnow;
     double ice_param = -6.0;
     double liquid_cap;
     double conduct_mp;
     double dimped_dT;
-    double *dpsiliq_dT = cell->dpsiliq_dT;
+    double *dpsi_dT = cell->dpsi_dT;
     double dTK_dpsi_noice;
     double dmacro_dliq, dmacro_dpsi, dmacro_dT;
     double dmicro_dT, dmicro_dpsi;
@@ -57,7 +57,7 @@ soil_hydraulic_conductivity(energy_bal_struct *energy,
     double *dtheta_dpsi = cell->dtheta_dpsi;
     double *dconduct_dT = cell->dconduct_dT;
     double *dconduct_dpsi = cell->dconduct_dpsi;
-    double *dpsiliq_dpsi = cell->dpsiliq_dpsi;
+    double *dpsi_dpsi = cell->dpsi_dpsi;
     // 雪层液态水通量
     for (i = 0; i < Nsnow; i++) {
         if (snow_density[i] >= 200.0) {
@@ -82,9 +82,24 @@ soil_hydraulic_conductivity(energy_bal_struct *energy,
 
     //  计算土壤水和冰的相对饱和度
     for (i = 0; i < Nsoil; i++) {
-        j = Nsnow + i;
-        double ice_equiv = ice[j] * (CONST_RHOICE / CONST_RHOFW);
-        double denom = liq[j] + ice_equiv - Wpwp_node[i];
+        nidx = Nsnow + i;
+        double ice_equiv = ice[i] * (CONST_RHOICE / CONST_RHOFW);
+        double denom = liq[i] + ice_equiv - Wpwp_node[i];
+
+        if (ice[i] > 1.0e-12 && matric[i] < 0.0) {
+            double dpsi_deffsat = SoilWaterRetentionCurve(DPSI_DW_FLAG, i, liq[i], 
+                                                          0.0, 0.0, soil_con);
+            dpsi_dpsi[i] = dtheta_dpsi[i] * dpsi_deffsat * (liq[i] - Wpwp_node[i]) / 
+                                                pow(Wsat_node[i] - Wpwp_node[i], 2.0);
+            double deffsat_dT = -dtheta_dT[nidx] * (liq[i] - Wpwp_node[i]) / 
+                                pow(Wsat_node[i] - Wpwp_node[i], 2.0) + 
+                                dtheta_dT[nidx] / (Wsat_node[i] - Wpwp_node[i]);
+            dpsi_dT[i] = dpsi_deffsat * deffsat_dT;
+        }
+        else {
+            dpsi_dpsi[i] = 1.0;
+            dpsi_dT[i] = 0.0;
+        }
         if (denom > 1.0e-10) {  // 防止除零
             frac_ice[i] = min(1.0, ice_equiv / denom);
         }
@@ -94,28 +109,26 @@ soil_hydraulic_conductivity(energy_bal_struct *energy,
     }
     // 计算冻土导致的不透水率
     for (i = 0; i < Nsoil; i++) {
-        j = Nsnow + i;
+        nidx = Nsnow + i;
         if (i == Nsoil - 1) {
             soil_imped[i] = pow(10.0, frac_ice[i] * ice_param);
         }
         else {
             soil_imped[i] = pow(10.0, 0.5 * (frac_ice[i] + frac_ice[i+1]) * ice_param);
         }
-        dtheta_dpsi[i] = SoilWaterRetentionCurve(DW_DPSI_FLAG, i, liq[j], 
-                                                 matric[i], soil_T[i], soil_con);
 
-        double conduct_noice = SoilWaterRetentionCurve(CONDUCT_FLAG, i, liq[j], 
+        double conduct_noice = SoilWaterRetentionCurve(CONDUCT_FLAG, i, liq[i], 
                                                        matric[i], soil_T[i], soil_con);
         // derivative of ice impedance factor with respect to temperature
-        dimped_dT = log(10.0) * ice_param * pow(10.0, ice_param * frac_ice[i]) * dtheta_dT[j];
+        dimped_dT = log(10.0) * ice_param * pow(10.0, ice_param * frac_ice[i]) * dtheta_dT[nidx];
         // derivative for macropores
-        if (liq[j] > Wmac_node[i]) {
-            double relSatMP = (liq[j] - Wmac_node[i]) / (Wsat_node[i] - Wmac_node[i]);
+        if (liq[i] > Wmac_node[i]) {
+            double relSatMP = (liq[i] - Wmac_node[i]) / (Wsat_node[i] - Wmac_node[i]);
             conduct_mp = (Kmac_node[i] - Ksat_node[i]) * pow(relSatMP, param.SOIL_EXPMAC);
             dmacro_dliq = ((Kmac_node[i] - Ksat_node[i]) / (Wsat_node[i] - Wmac_node[i])) * 
                             param.SOIL_EXPMAC * pow(relSatMP, param.SOIL_EXPMAC - 1.0);
             dmacro_dpsi = dmacro_dliq * dtheta_dpsi[i];
-            dmacro_dT = dmacro_dliq * dtheta_dT[j];   
+            dmacro_dT = dmacro_dliq * dtheta_dT[nidx];
         }
         else {
             conduct_mp = 0.0;
@@ -124,16 +137,16 @@ soil_hydraulic_conductivity(energy_bal_struct *energy,
             dmacro_dT = 0.0;
         }
         // derivative for micropores
-        if (ice[j] > 1.0e-12) {
-            dTK_dpsi_noice = SoilWaterRetentionCurve(DK_DPSI_FLAG, i, liq[j], 
+        if (ice[i] > 1.0e-12) {
+            dTK_dpsi_noice = SoilWaterRetentionCurve(DK_DPSI_FLAG, i, liq[i], 
                                                      matric[i], soil_T[i], soil_con);
-            dmicro_dT = dpsiliq_dT[i] * dTK_dpsi_noice;
+            dmicro_dT = dpsi_dT[i] * dTK_dpsi_noice;
             dmicro_dpsi = conduct_noice * dimped_dT * dtheta_dpsi[i] +
                                     dTK_dpsi_noice * soil_imped[i];
         }
         else {
             dmicro_dT = 0.0;
-            dmicro_dpsi = SoilWaterRetentionCurve(DK_DPSI_FLAG, i, liq[j], 
+            dmicro_dpsi = SoilWaterRetentionCurve(DK_DPSI_FLAG, i, liq[i], 
                                                   matric[i], soil_T[i], soil_con);
         } 
         
@@ -149,7 +162,7 @@ soil_hydraulic_conductivity(energy_bal_struct *energy,
 
     // Calculates the liquid moisture flux between soil nodes.
     for (i = 0; i < Nsoil - 1; i++) {
-        j = Nsnow + i;
+        nidx = Nsnow + i;
         // 设置临时变量
         double dzp = zc_soil[i+1] - zc_soil[i];
         double zdn = Zsum_soil[i] - zc_soil[i];          /* 界面上节点距离 */
@@ -171,21 +184,21 @@ soil_hydraulic_conductivity(energy_bal_struct *energy,
 
         // 界面水通量
         conduct_int[i] = k_int / dzp;
-        liquid_flux[j] = conduct_int[i] * (matric[i] - matric[i+1] + dzp);
+        liquid_flux[nidx] = conduct_int[i] * (matric[i] - matric[i+1] + dzp);
 
         double delt_psi = matric[i+1] - matric[i];
 
         // 对左侧（上层）基质吸力的导数
-        dWdQ_left[i] = -dTKdpsi_left * delt_psi / dzp + conduct_int[i] + dTKdpsi_left * dpsiliq_dpsi[i];
+        dWdQ_left[i] = -dTKdpsi_left * delt_psi / dzp + conduct_int[i] + dTKdpsi_left * dpsi_dpsi[i];
 
         // 对右侧（下层）基质吸力的导数
-        dWdQ_right[i] = -dTKdpsi_right * delt_psi / dzp - conduct_int[i] + dTKdpsi_right * dpsiliq_dpsi[i+1];
+        dWdQ_right[i] = -dTKdpsi_right * delt_psi / dzp - conduct_int[i] + dTKdpsi_right * dpsi_dpsi[i+1];
 
         // 对左侧（上层）温度的导数
-        dWdE_left[i] = -dTKdT_left * delt_psi / dzp + conduct_int[i] * dpsiliq_dT[i] + dTKdT_left;
+        dWdE_left[i] = -dTKdT_left * delt_psi / dzp + conduct_int[i] * dpsi_dT[i] + dTKdT_left;
 
         // 对右侧（下层）温度的导数
-        dWdE_right[i] = -dTKdT_right * delt_psi / dzp - conduct_int[i] * dpsiliq_dT[i+1] + dTKdT_right;
+        dWdE_right[i] = -dTKdT_right * delt_psi / dzp - conduct_int[i] * dpsi_dT[i+1] + dTKdT_right;
     }
     // 底部边界条件
     if (options.NOFLUX) {

@@ -210,6 +210,7 @@ generate_default_state(all_vars_struct   *all_vars,
             for (i = 0; i < cell[veg].Nsoil; i++) {
                 cell[veg].last_ice[i] = cell[veg].ice[i];
                 cell[veg].last_liq[i] = cell[veg].liq[i];
+                cell[veg].last_moist[i] = cell[veg].moist[i];
                 cell[veg].last_matric[i] = cell[veg].matric[i];
             }
             band = veg_con[veg].BandIndex;
@@ -219,7 +220,7 @@ generate_default_state(all_vars_struct   *all_vars,
                                 &cell[veg], 
                                 &energy[veg],
                                 &snow[veg], soil_con);
-            for (i = 0; i <= snow[veg].Nsnow; i++) {
+            for (i = 0; i <= cell[veg].Nnode; i++) {
                 energy[veg].last_enthalpy[i] = energy[veg].enthalpy[i];
             }
         }

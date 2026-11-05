@@ -29,7 +29,7 @@ prepare_full_energy(double             step_dt,
     double dzp, zdn, zdp, denom, k_int;
     double enthliq, enthice, enthair;
     double dliq_dtheta, dice_dtheta;
-    double dice_dT, dfliq_dT;
+    double dice_dT;
     double tmp_density = 0.0;
     double qsaT = 0.0, qsdT = 0.0;
     double h2osfc = cell->h2osfc;
@@ -66,13 +66,14 @@ prepare_full_energy(double             step_dt,
     double *moist = cell->moist;
     double *dCs_dT = energy->dCs_dT;
     double *dCm_dT = energy->dCm_dT;
+    double *dfliq_dT = energy->dfliq_dT;
     double *dtheta_dT = energy->dtheta_dT;
     double *dEdW_left = energy->dEdW_left;
     double *dEdW_right = energy->dEdW_right;
     double *dEdT_left = energy->dEdT_left;
     double *dEdT_right = energy->dEdT_right;
-    double *dCs_dpsi = energy->dCs_dpsi;
-    double *dCm_dpsi = energy->dCm_dpsi;
+    double *dCs_dpsi = cell->dCs_dpsi;
+    double *dCm_dpsi = cell->dCm_dpsi;
     double *dCs_dtheta = energy->dCs_dtheta;
     double *dtheta_dpsi = cell->dtheta_dpsi;
     double *dkappa_dT = energy->dkappa_dT;
@@ -136,8 +137,8 @@ prepare_full_energy(double             step_dt,
                             frac_liq) + CONST_RHODAIR * ((frac_liq - 1.0) * (CONST_RHOFW / 
                             CONST_RHOICE) - frac_liq) * CONST_CPDAIR;
             if (pack_T[i] < CONST_TKFRZ) {
-                dfliq_dT = SnowFreezingCurve(DERILIQ_FLAG, pack_T[i], 0.0);
-                dtheta_dT[i] = dfliq_dT * (theta_ice[i] * CONST_RHOICE / CONST_RHOFW + theta_liq[i]);
+                dfliq_dT[i] = SnowFreezingCurve(DERILIQ_FLAG, pack_T[i], 0.0);
+                dtheta_dT[i] = dfliq_dT[i] * (theta_ice[i] * CONST_RHOICE / CONST_RHOFW + theta_liq[i]);
                 dCs_dT[i] = (CONST_RHOFW * (-CONST_CPICE + CONST_CPFWICE) + CONST_CPDAIR * 
                             (CONST_RHOFW / CONST_RHOICE - 1.0) * CONST_CPDAIR) * dtheta_dT[i];
                 enthliq = CONST_RHOFW * CONST_CPFWICE * theta_moist[i] * integral;
@@ -146,6 +147,7 @@ prepare_full_energy(double             step_dt,
                           (difft - integral) + integral));
             }
             else {
+                dfliq_dT[i] = 0.0;
                 dCs_dT[i] = 0.0;
                 dtheta_dT[i] = 0.0;
                 enthliq = CONST_RHOFW * CONST_CPFWICE * theta_moist[i] * difft;
@@ -203,15 +205,17 @@ prepare_full_energy(double             step_dt,
         dtheta_dpsi[i] = SoilWaterRetentionCurve(DW_DPSI_FLAG, i, liq[i], 
                                                  matric[i], soil_T[i], soil_con);
         if (soil_T[i] < soil_tkfrz) {
+            dfliq_dT[nidx] = 0.0;
             dliq_dtheta = 0.0;
             dice_dtheta = dtheta_dpsi[i];
-            dtheta_dT[i] = SoilWaterRetentionCurve(DW_DT_FLAG, i, liq[i], 
-                                                   matric[i], soil_T[i], soil_con);
+            dtheta_dT[nidx] = SoilWaterRetentionCurve(DW_DT_FLAG, i, liq[i], 
+                                                      matric[i], soil_T[i], soil_con);
         }
         else {
+            dfliq_dT[nidx] = 0.0;
             dliq_dtheta = dtheta_dpsi[i];
             dice_dtheta = 0.0;
-            dtheta_dT[i] = 0.0;
+            dtheta_dT[nidx] = 0.0;
         }
              
         // 计算土壤压缩性
@@ -240,20 +244,20 @@ prepare_full_energy(double             step_dt,
                                              vol_gravel[i],
                                              &dTK_dliq, &dTK_dice);
         // 计算土壤热导率的偏导数
-        dkappa_dtheta[i] = dTK_dliq * dliq_dtheta + dTK_dice * dice_dtheta;
-        dkappa_dT[i] = dTK_dliq * dtheta_dT[i] - dTK_dice * dtheta_dT[i];
+        dkappa_dtheta[nidx] = dTK_dliq * dliq_dtheta + dTK_dice * dice_dtheta;
+        dkappa_dT[nidx] = dTK_dliq * dtheta_dT[nidx] - dTK_dice * dtheta_dT[nidx];
         // 计算土壤体积热容量的偏导数
         double difft = soil_T[i] - CONST_TKFRZ;
         double air = soil_pore[i] - liq[i] - ice[i] - excess_ice[i];
-        dCs_dtheta[i] = CONST_RHOFW * CONST_CPFWICE;
+        dCs_dtheta[nidx] = CONST_RHOFW * CONST_CPFWICE;
         if (soil_T[i] < soil_tkfrz) {
             Cm_node[nidx] = -CONST_RHODAIR * CONST_CPDAIR * difft + CONST_RHOICE * CONST_CPICE * 
                         (soil_T[i] - soil_tkfrz) + CONST_RHOFW * CONST_CPFWICE * difft;
             dCm_dT[nidx] = -CONST_RHODAIR * CONST_CPDAIR + CONST_RHOICE * CONST_CPICE;
 
-            dCm_dpsi[nidx] = (-CONST_RHOICE * CONST_CPICE + CONST_RHOFW * CONST_CPFWICE) * dT_dpsi;
+            dCm_dpsi[i] = (-CONST_RHOICE * CONST_CPICE + CONST_RHOFW * CONST_CPFWICE) * dT_dpsi;
             dCs_dpsi[i] = (CONST_RHOICE * CONST_CPICE - CONST_RHODAIR * CONST_CPDAIR) * dtheta_dpsi[i];
-            dCs_dT[nidx] = (-CONST_RHOICE * CONST_CPICE + CONST_RHOFW * CONST_CPFWICE) * dtheta_dT[i];
+            dCs_dT[nidx] = (-CONST_RHOICE * CONST_CPICE + CONST_RHOFW * CONST_CPFWICE) * dtheta_dT[nidx];
             enthliq = CONST_RHOFW * CONST_CPFWICE * liq[i] * difft;
             enthice = CONST_RHOICE * CONST_CPICE * ice[i] * difft;
             enthair = CONST_RHODAIR * CONST_CPDAIR * air * difft;
@@ -261,7 +265,7 @@ prepare_full_energy(double             step_dt,
         else {
             Cm_node[nidx] = (-CONST_RHODAIR * CONST_CPDAIR + CONST_RHOFW * CONST_CPFWICE) * difft;
             dCm_dT[nidx] = -CONST_RHODAIR * CONST_CPDAIR + CONST_RHOFW * CONST_CPFWICE;
-            dCm_dpsi[nidx] = 0.0;
+            dCm_dpsi[i] = 0.0;
             dCs_dpsi[i] = (CONST_RHOFW * CONST_CPFWICE - CONST_RHODAIR * CONST_CPDAIR) * dtheta_dpsi[i];
             dCs_dT[nidx] = 0.0;
             enthliq = CONST_RHOFW * CONST_CPFWICE * moist[i] * difft;

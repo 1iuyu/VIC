@@ -822,13 +822,15 @@ typedef struct {
     double conduct_int[MAX_SOILS];     /**< soil hydraulic conductivity for interface between layers */
     double dconduct_dpsi[MAX_SOILS];
     double dconduct_dT[MAX_SOILS];
-    double dpsiliq_dT[MAX_SOILS];
-    double dpsiliq_dpsi[MAX_SOILS];    /**< derivative of matric potential with respect to liquid water content */
+    double dpsi_dT[MAX_SOILS];         /**< derivative in the liquid water matric potential w.r.t. temperature (m K-1) */
+    double dpsi_dpsi[MAX_SOILS];       /**< derivative in the liquid water matric potential w.r.t. the total water matric potential (-) */
     double compress[MAX_SOILS];        /**< soil compressibility */
     double dcompress_dpsi[MAX_SOILS];  /**< derivative of compressibility with respect to matric potential */
     double dtheta_dpsi[MAX_SOILS];     /**< derivative of soil moisture content with respect to matric potential */
+    double dCs_dpsi[MAX_SOILS];        /**< derivatives in heat capacity w.r.t. matric potential (J m-3) */
+    double dCm_dpsi[MAX_SOILS];        /**< derivatives in heat capacity w.r.t. matric potential (J kg-1) */
     double matric[MAX_SOILS];          /**< soil matric potential [m] */
-    double last_matric[MAX_SOILS];
+    double last_matric[MAX_SOILS];     /**< last step soil matric potential [m] */
 } cell_data_struct;
 
 /******************************************************************************
@@ -871,9 +873,8 @@ typedef struct {
     double dtheta_dT[MAX_NODES];       /**< derivatives in volumetric liquid water content w.r.t. temperature */
     double dCs_dT[MAX_NODES];          /**< derivatives in heat capacity w.r.t. temperature (J m-3 K-2) */
     double dCm_dT[MAX_NODES];          /**< derivatives in heat capacity w.r.t. temperature (J kg-1 K-2) */
-    double dCs_dtheta[MAX_NODES];
-    double dCs_dpsi[MAX_NODES];
-    double dCm_dpsi[MAX_NODES];        /**< derivatives in heat capacity w.r.t. matric potential (J kg-1) */
+    double dCs_dtheta[MAX_NODES];      /**< derivatives in heat capacity w.r.t. volumetric liquid water content (J m-3) */
+    double dfliq_dT[MAX_NODES];        /**< derivatives in liquid water content w.r.t. temperature */
     double dkappa_dT[MAX_NODES];       /**< derivative in thermal conductivity w.r.t. temperature */
     double dkappa_dtheta[MAX_NODES];   /**< derivative in thermal conductivity w.r.t. matric head or volumetric liquid water */
     double deriv_snow;
@@ -1032,8 +1033,9 @@ typedef struct {
     double theta_moist[MAX_SNOWS];  /**< volumetric water content of each snow pack (m3/m3) */
     double theta_ice[MAX_SNOWS];    /**< partial volume of snow ice [m3/m3] */
     double theta_liq[MAX_SNOWS];    /**< partial volume of snow liquid water [m3/m3] */
-    double last_thice[MAX_SNOWS];   /**< partial volume of snow ice from previous time step */
-    double last_thliq[MAX_SNOWS];   /**< partial volume of snow liquid water from previous time step */
+    double last_thtice[MAX_SNOWS];   /**< partial volume of snow ice from previous time step */
+    double last_thtliq[MAX_SNOWS];   /**< partial volume of snow liquid water from previous time step */
+    double last_thtmoist[MAX_SNOWS]; /**< volumetric water content of each snow pack from previous time step (m3/m3) */
     double snow_porosity[MAX_SNOWS]; /**< snow layer effective porosity [m3/m3] */
     double snow_frac[MAX_SNOWS];    /**< fraction of each snow pack that is snow (fraction) */
     double last_snowfrac[MAX_SNOWS]; /**< fraction of each snow pack that is snow from previous time step */

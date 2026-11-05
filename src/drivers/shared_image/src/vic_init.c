@@ -493,11 +493,24 @@ vic_init(void)
                             &soil_con[i].lpar_node[0],
                             &array[i * Nlayer]);
     }
+    // mpar: unsaturated hydraulic conductivity exponent.
     for (i = 0; i < local_domain.ncells_active; i++) {
         for (j = 0; j < soil_con[i].Nbedrock - 1; j++) {
             soil_con[i].mpar_node[j] = 1.0 - 1.0 / soil_con[i].expt_node[i];
         }
-    }     
+    }
+    // Wmac_node: soil moisture content at macropore saturation [m3/m3]
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        for (j = 0; j < soil_con[i].Nbedrock - 1; j++) {
+            soil_con[i].Wmac_node[j] = soil_con[i].Wsat_node[j] - soil_con[i].Wpwp_node[j];
+        }
+    }
+    // Kmac_node: saturated hydraulic conductivity of macropores [m/s]
+    for (i = 0; i < local_domain.ncells_active; i++) {
+        for (j = 0; j < soil_con[i].Nbedrock - 1; j++) {
+            soil_con[i].Kmac_node[j] = soil_con[i].Ksat_node[j] * 10.0;
+        }
+    }
 
     // Initialize volumetric fractions of soil solids
     for (i = 0; i < local_domain.ncells_active; i++) {

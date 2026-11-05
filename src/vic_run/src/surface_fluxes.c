@@ -109,8 +109,15 @@ surface_fluxes(double             step_dt,
         while (!iter_energy.energy_flag || !iter_energy.moist_flag) {
 
             for (i = 0, j = 0; i < Nnode; i++, j+=2) {
-                mat_state[j] = iter_energy.T[i];
-                mat_state[j+1] = iter_cell.moist[i];
+                if (i < snow->Nsnow) {
+                    mat_state[j] = iter_snow.pack_T[i];
+                    mat_state[j+1] = iter_snow.theta_moist[i];
+                }
+                else {
+                    size_t nidx = i - snow->Nsnow;
+                    mat_state[j] = iter_cell.soil_T[nidx];
+                    mat_state[j+1] = iter_cell.moist[nidx];
+                }
             }
 
             /************************************

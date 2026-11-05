@@ -46,8 +46,8 @@ update_nodes(double             step_dt,
     double *kappa_int = energy->kappa_int;
     double *last_snowfrac = snow->last_snowfrac;
     double *pack_outflow = snow->pack_outflow;
-    double *last_thice = snow->last_thice;
-    double *last_thliq = snow->last_thliq;
+    double *last_thtice = snow->last_thtice;
+    double *last_thtliq = snow->last_thtliq;
     double *enthalpy = energy->enthalpy;
     double *last_enthalpy = energy->last_enthalpy;
     // update the number of nodes
@@ -100,15 +100,14 @@ update_nodes(double             step_dt,
     // update the last time step values
     for (i = 0; i < tmp_Nnode; i++) {
         last_T[i] = T[i];
+        last_enthalpy[i] = enthalpy[i];
     }
     // Update snow states
     for (i = 0; i < Nsnow; i++) {
-        last_thice[i] = theta_ice[i];
-        last_thliq[i] = theta_liq[i];
+        last_thtice[i] = theta_ice[i];
+        last_thtliq[i] = theta_liq[i];
         last_snowfrac[i] = snow_frac[i];
-        last_enthalpy[i] = enthalpy[i];
     }
-    last_enthalpy[Nsnow] = enthalpy[Nsnow];
 
     /* remove old snow layers */
     for(i = Nsnow; i < last_Nsnow; i++) {
@@ -125,9 +124,9 @@ update_nodes(double             step_dt,
         pack_frze[i] = 0.0;
         pack_melt[i] = 0.0;
         snow_frac[i] = 0.0;
-        last_thice[i] = 0.0;
+        last_thtice[i] = 0.0;
         last_enthalpy[i] = 0.0;
-        last_thliq[i] = 0.0;
+        last_thtliq[i] = 0.0;
         pack_outflow[i] = 0.0;
     }
     if (last_Nsnow > Nsnow) {

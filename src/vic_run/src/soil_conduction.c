@@ -477,12 +477,16 @@ calc_tkfrz(size_t             nidx,
     if (tmp_matric < 0.0) {
         double A = CONST_LATICE / CONST_G;
         tmp_tkfrz = CONST_TKTRIP * tmp_matric / (A - tmp_matric) + CONST_TKTRIP;
-        double denom = A - tmp_matric;
-        (*dT_dpsi) = CONST_TKTRIP * A / (denom * denom);
+        if (dT_dpsi != NULL) {
+            double denom = A - tmp_matric;
+            (*dT_dpsi) = CONST_TKTRIP * A / (denom * denom);
+        }
     } 
     else {
         tmp_tkfrz = CONST_TKTRIP;
-        (*dT_dpsi) = 0.0;
+        if (dT_dpsi != NULL) {
+            *dT_dpsi = 0.0;
+        }
     }
 
     return (tmp_tkfrz);

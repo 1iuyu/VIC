@@ -104,18 +104,19 @@ SoilWaterRetentionCurve(int              flag,
         if (matric >= 0.0) {
             return 0.0;
         }
-        double f_x1 = pow(matric * alpha_node[idx], expt_node[idx] - 1.0);
-        double f_x2 = pow(1.0 + pow(matric * alpha_node[idx], expt_node[idx]), -mpar_node[idx]);
-        double d_x1 = alpha_node[idx] * (expt_node[idx] - 1.0) * pow(matric * alpha_node[idx], expt_node[idx] - 2.0);
-        double d_x2 = alpha_node[idx] * expt_node[idx] * pow(matric * alpha_node[idx], expt_node[idx] - 1.0) *
-              (-mpar_node[idx]) * pow(1.0 + pow(matric * alpha_node[idx], expt_node[idx]), -mpar_node[idx] - 1.0);
+        double base = fabs(matric) * alpha_node[idx]; /* = α|ψ| ≥ 0 */
+        double f_x1 = pow(base, expt_node[idx] - 1.0);
+        double f_x2 = pow(1.0 + pow(base, expt_node[idx]), -mpar_node[idx]);
+        double d_x1 = alpha_node[idx] * (expt_node[idx] - 1.0) * pow(base, expt_node[idx] - 2.0);
+        double d_x2 = alpha_node[idx] * expt_node[idx] * pow(base, expt_node[idx] - 1.0) *
+              (-mpar_node[idx]) * pow(1.0 + pow(base, expt_node[idx]), -mpar_node[idx] - 1.0);
 
         double f_nm = (1.0 - f_x1 * f_x2) * (1.0 - f_x1 * f_x2);
         double d_nm = (-d_x1 * f_x2 - f_x1 * d_x2) * 2.0 * (1.0 - f_x1 * f_x2);
 
-        double f_dm = pow(1.0 + pow(matric * alpha_node[idx], expt_node[idx]), mpar_node[idx] / 2.0);
-        double d_dm = alpha_node[idx] * expt_node[idx] * pow(matric * alpha_node[idx], expt_node[idx] - 1.0) *
-                        (mpar_node[idx] / 2.0) * pow(1.0 + pow(matric * alpha_node[idx], expt_node[idx]), 
+        double f_dm = pow(1.0 + pow(base, expt_node[idx]), mpar_node[idx] / 2.0);
+        double d_dm = alpha_node[idx] * expt_node[idx] * pow(base, expt_node[idx] - 1.0) *
+                        (mpar_node[idx] / 2.0) * pow(1.0 + pow(base, expt_node[idx]), 
                         mpar_node[idx] / 2.0 - 1.0);
 
         double orig_val = Ksat_node[idx] * (f_nm / f_dm);

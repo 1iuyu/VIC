@@ -81,7 +81,15 @@ update_fluxes(double             step_dt,
     /*****************************
       Compute surface resistance
     *****************************/
-    compute_soil_resis(coverage, cell, soil_con);
+    compute_soil_resis(coverage, 
+                       cell, soil_con);
+
+    /***************************************
+      Compute layer thermal properties
+    ***************************************/
+    prepare_full_energy(step_dt, pressure, 
+                        cell, energy,
+                        snow, soil_con);
 
     /***************************************
       Compute the vapor flux between nodes
@@ -92,14 +100,8 @@ update_fluxes(double             step_dt,
     /***************************************
       Compute the hydraulic conductivity
     ***************************************/
-    soil_hydraulic_conductivity(energy, cell, snow, soil_con);
-
-    /***************************************
-      Compute layer thermal properties
-    ***************************************/
-    prepare_full_energy(step_dt, pressure, 
-                        cell, energy,
-                        snow, soil_con);
+    soil_hydraulic_conductivity(energy, cell, 
+                                snow, soil_con);
     
     /**********************************
       Bare ground surface energy flux

@@ -259,7 +259,7 @@ vic_restore(void)
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 all_vars[i].snow[m].Nsnow > 0) {
-                    all_vars[i].snow[m].last_thice[j] = dvar[i];
+                    all_vars[i].snow[m].last_thtice[j] = dvar[i];
                 }
             }
         }
@@ -276,7 +276,7 @@ vic_restore(void)
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 all_vars[i].snow[m].Nsnow > 0) {
-                    all_vars[i].snow[m].last_thliq[j] = dvar[i];
+                    all_vars[i].snow[m].last_thtliq[j] = dvar[i];
                 }
             }
         }

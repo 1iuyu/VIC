@@ -42,12 +42,12 @@ calc_snow_coverage(double            step_dt,
             snow->coverage = coverage;
         }
         else {
+            coverage = snow->coverage;
             if (new_snow > 0.0) {
-                coverage = snow->coverage + tanh(k_accum * new_snow) *
-                                (1.0 - snow->coverage);
+                coverage += tanh(k_accum * new_snow) * (1.0 - coverage);
             }
             snow->coverage =
-                min(1.0, max(0.0, coverage));            
+                min(1.0, max(0.0, coverage));   
         }
         // Add newsnow to integrated snowfall
         if (new_snow > 0.0) {

@@ -226,10 +226,11 @@ distribute_snow_state(double             step_dt,
     double *snow_porosity = snow->snow_porosity;
     double *density = snow->density;
     double *snow_frac = snow->snow_frac;
-    double *last_thice = snow->last_thice;
-    double *last_thliq = snow->last_thliq;
+    double *last_thtice = snow->last_thtice;
+    double *last_thtliq = snow->last_thtliq;
     double *theta_moist = snow->theta_moist;
     double *last_snowfrac = snow->last_snowfrac;
+    double *last_thtmoist = snow->last_thtmoist;
 
     if (snow_depth < 0.025) {
         snow->Nsnow = 0;
@@ -307,9 +308,10 @@ distribute_snow_state(double             step_dt,
         radius[i] = new_snow_radius(air_temp); // 假设为新雪半径
     }
     for (i = 0; i < Nsnow; i++) {
-        last_thice[i] = theta_ice[i];
-        last_thliq[i] = theta_liq[i];
+        last_thtice[i] = theta_ice[i];
+        last_thtliq[i] = theta_liq[i];
         last_snowfrac[i] = snow_frac[i];
+        last_thtmoist[i] = theta_moist[i];
     }
 }
 

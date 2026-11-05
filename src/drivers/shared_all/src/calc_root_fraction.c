@@ -34,6 +34,8 @@ calc_root_fractions(size_t            veg_class,
         a = veg_lib[veg_class].root_a;
         b = veg_lib[veg_class].root_b;
         d = veg_lib[veg_class].root_d;
+        // 设置根系深度
+        cell->root_depth = d;
         int last_node = -1;
         double Zsum = 0.0;
 

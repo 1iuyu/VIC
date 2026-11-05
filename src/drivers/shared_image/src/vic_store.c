@@ -362,7 +362,7 @@ vic_store(dmy_struct *dmy_state,
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 k < all_vars[i].snow[m].Nsnow) {
-                    dvar[i] = (double) all_vars[i].snow[m].last_thice[k];
+                    dvar[i] = (double) all_vars[i].snow[m].last_thtice[k];
                 }
                 else {
                     dvar[i] = nc_state_file.d_fillvalue;
@@ -387,7 +387,7 @@ vic_store(dmy_struct *dmy_state,
             for (i = 0; i < local_domain.ncells_active; i++) {
                 if (m < local_domain.locations[i].nveg &&
                                 k < all_vars[i].snow[m].Nsnow) {
-                    dvar[i] = (double) all_vars[i].snow[m].last_thliq[k];
+                    dvar[i] = (double) all_vars[i].snow[m].last_thtliq[k];
                 }
                 else {
                     dvar[i] = nc_state_file.d_fillvalue;

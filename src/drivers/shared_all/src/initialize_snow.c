@@ -38,13 +38,15 @@ initialize_snow(snow_data_struct *snow,
             snow[i].pack_T[lidx] = 0.0;
             snow[i].density[lidx] = 0.0;
             snow[i].pack_outflow[lidx] = 0.0;
-            snow[i].last_thice[lidx] = 0.0;
-            snow[i].last_thliq[lidx] = 0.0;
+            snow[i].last_thtice[lidx] = 0.0;
+            snow[i].last_thtliq[lidx] = 0.0;
             snow[i].snow_frac[lidx] = 0.0;
             snow[i].pack_melt[lidx] = 0.0;
             snow[i].phase_snow[lidx] = 0.0;
             snow[i].pack_frze[lidx] = 0.0;
             snow[i].last_snowfrac[lidx] = 0.0;
+            snow[i].theta_moist[lidx] = 0.0;
+            snow[i].last_thtmoist[lidx] = 0.0;
         }
         snow[i].glac_excess = 0.0;
         snow[i].pack_comb = 0.0;
