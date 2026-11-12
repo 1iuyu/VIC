@@ -19,16 +19,19 @@ calc_resid_vec(double             step_dt,
                soil_con_struct   *soil_con)
 {
     extern parameters_struct param;
-    size_t i, j;
-    size_t lidx;
+    size_t i, j, nidx;
     size_t Nsoil = cell->Nsoil;
     size_t Nsnow = snow->Nsnow;
     size_t Nnode = cell->Nnode;
+    size_t IFLAG = 0;
+    double Qmax = 0.0;
     double fact[MAX_SOILS] = {0};
     double FLOW[MAX_SOILS] = {0};
     double EPSLON[MAX_SOILS] = {0};
     double zc_node[MAX_SNOWS+1] = {0};
     // 指针赋值
+    double *zc_snow = snow->zc_snow;
+    double *Zsum_snow = snow->Zsum_snow;
     double *dz_soil = soil_con->dz_soil;
     double *dz_snow = snow->dz_snow;
     double *zc_soil = soil_con->zc_soil;
@@ -39,7 +42,11 @@ calc_resid_vec(double             step_dt,
     double *last_ice = cell->last_ice;
 	double *matric = cell->matric;
     double *moist = cell->moist;
+    double *theta_ice = snow->theta_ice;
+    double *theta_moist = snow->theta_moist;
+    double *last_thtice = snow->last_thtice;
     double *last_moist = cell->last_moist;
+    double *last_thtmoist = snow->last_thtmoist;
     double *liquid_flux = cell->liquid_flux;
     double *transp_sink = cell->transp_sink;
 	double *vapor_flux = cell->vapor_flux;
@@ -54,10 +61,20 @@ calc_resid_vec(double             step_dt,
     double *enthalpy = energy->enthalpy;
     double *last_enthalpy = energy->last_enthalpy;
     double *conduct_int = cell->conduct_int;
-    size_t IFLAG = 0;
-    double Qmax = 0.0;
-    // 计算固定的时间步长系数
+
+    // 计算临时节点深度
     size_t tmp_Nsnow = Nsnow;
+    for (i = 0; i < Nsnow; i++) {
+        zc_node[i] = zc_snow[i];
+    }
+    if (cell->IS_VEG) {
+        zc_node[Nsnow] = zc_soil[0] + Zsum_snow[Nsnow-1];
+    }
+    else if (cell->IS_GLAC) {
+        zc_node[Nsnow] = cell->h2osfc * 0.25 + Zsum_snow[Nsnow-1];
+    }
+
+    // 计算固定的时间步长系数
     double capr = 0.34;  // heat capacity ratio
     for (i = 0; i < Nnode; i++) {
         if (Nsnow > 0 && i < Nsnow) {
@@ -77,16 +94,17 @@ calc_resid_vec(double             step_dt,
                 fact[i] = step_dt / 0.5 / (zc_soil[i] + capr * zc_soil[i+1]);
             }
             else {
-                lidx = i - tmp_Nsnow;
-                fact[i] = step_dt / dz_soil[lidx];
+                nidx = i - tmp_Nsnow;
+                fact[i] = step_dt / dz_soil[nidx];
             }
         }
     }
+
     double lateral_max = 0.0;
     double coverage = snow->coverage;
     // 确定表层的系数
     for (i = 0; i < Nsoil; i++) {
-        lidx = tmp_Nsnow + i;
+        nidx = tmp_Nsnow + i;
         if (i == 0) {
             if (matric[i] >= 0.0) {
                 // 允许侧向流出剖面
@@ -95,7 +113,7 @@ calc_resid_vec(double             step_dt,
                 
                 // 限制侧向流，使得该层不会仅因侧向流而脱饱和
                 lateral_max = cell->infiltration + cell->soil_dew + cell->soil_frost - cell->soil_evap - 
-                              cell->soil_sublim - liquid_flux[lidx] - vapor_flux[lidx] / CONST_RHOFW - 
+                              cell->soil_sublim - liquid_flux[nidx] - vapor_flux[nidx] / CONST_RHOFW - 
                               transp_sink[i] / CONST_RHOFW;
                 if (lateral_max < 0.0) {
                     lateral_max = 0.0;
@@ -118,7 +136,7 @@ calc_resid_vec(double             step_dt,
                 
                 // 限制侧向流，使该层不会脱饱和
                 lateral_max = liquid_flux[i-1] - liquid_flux[i] +
-                        (vapor_flux[lidx-1] - vapor_flux[lidx]) / CONST_RHOFW - transp_sink[i] / CONST_RHOFW -
+                        (vapor_flux[nidx-1] - vapor_flux[nidx]) / CONST_RHOFW - transp_sink[i] / CONST_RHOFW -
                         fact[i] * (liq[i] - last_liq[i] + CONST_RHOICE / CONST_RHOFW * (ice[i] - last_ice[i]));
                 
                 if (lateral_max < 0.0) {
@@ -272,6 +290,7 @@ calc_resid_vec(double             step_dt,
 
     double adv_left = 0.0;
     double adv_right = 0.0;
+    double ice_term = 0.0;
     double latent_term = 0.0;
     double liquid_term = 0.0;
     double trans_right = 0.0;   // 右侧界面传输系数
@@ -280,70 +299,69 @@ calc_resid_vec(double             step_dt,
     //     构建能量和水量状态向量
     // ============================================================
     for (i = 0, j = 0; i < Nnode; i++, j+=2) {
-        // 单位体积内因冰量变化而释放或吸收潜热通量
-        double ice_term = CONST_RHOICE * CONST_LATICE * (ice[i] - last_ice[i]);
         if (i < Nsnow) {
             adv_right = CONST_RHOFW * CONST_CPFWICE * liquid_flux[i] + 
                         CONST_CPWV * vapor_flux[i];
+            trans_right = kappa_int[i] + adv_right;
             if (i == 0) {
                 trans_left = 0.0;
-                trans_right = kappa_int[i] + adv_right;
                 latent_term = vapor_flux[i];
             }
             else {
                 adv_left = CONST_RHOFW * CONST_CPFWICE * liquid_flux[i-1] + 
                            CONST_CPWV * vapor_flux[i-1];
                 trans_left = kappa_int[i-1] + adv_left;
-                trans_right = kappa_int[i] + adv_right;
                 latent_term = vapor_flux[i-1] - vapor_flux[i];
             }
+            // 单位体积内因冰量变化而释放或吸收潜热通量
+            ice_term = CONST_RHOICE * CONST_LATICE * (theta_ice[i] - last_thtice[i]);
             // 构建右端残差项
             if (Nsnow == 1) {
                 // 能量残差项
-                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] + (grnd_snow - coverage * (trans_right * 
+                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] - (grnd_snow - coverage * (trans_right * 
                             (T[i] - T[i+1]) - CONST_LATSUB * vapor_flux[i])) * fact[i] - ice_term;   // [J/m3]
                 // 水量残差项
-                mat_RHS[j+1] = (moist[i] - last_moist[i]) + (flux_snow - (liquid_flux[i] + vapor_flux[i] / 
-                                CONST_RHOFW)) * fact[i];
+                mat_RHS[j+1] = (theta_moist[i] - last_thtmoist[i]) - (flux_snow - (liquid_flux[i] + 
+                                vapor_flux[i] / CONST_RHOFW)) * fact[i];
             }
             else if (i == 0) {
                 // 能量残差项
-                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] + (grnd_snow - trans_right * (T[i] - T[i+1]) -
+                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] - (grnd_snow - trans_right * (T[i] - T[i+1]) -
                              CONST_LATVAP * vapor_flux[i]) * fact[i] - ice_term;
                 // 水量残差项
-                mat_RHS[j+1] = (moist[i] - last_moist[i]) + (flux_snow - liquid_flux[i] - vapor_flux[i] / 
-                                CONST_RHOFW) * fact[i];
+                mat_RHS[j+1] = (theta_moist[i] - last_thtmoist[i]) - (flux_snow - liquid_flux[i] - 
+                                vapor_flux[i] / CONST_RHOFW) * fact[i];
             }
             else if (i < Nsnow - 1) {
                 // 能量残差项
-                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] + (trans_left * (T[i-1] - T[i]) - trans_right * 
+                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] - (trans_left * (T[i-1] - T[i]) - trans_right * 
                             (T[i] - T[i+1]) + CONST_LATSUB * latent_term + AbsSnowLyr[i]) * fact[i] - ice_term;
                 // 水量残差项
-                mat_RHS[j+1] = (moist[i] - last_moist[i]) + (liquid_flux[i-1] - liquid_flux[i] + 
+                mat_RHS[j+1] = (theta_moist[i] - last_thtmoist[i]) - (liquid_flux[i-1] - liquid_flux[i] + 
                                (vapor_flux[i-1] - vapor_flux[i]) / CONST_RHOFW) * fact[i];
             }
             else {
                 // 能量残差项
-                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] + (trans_left * (T[i-1] - T[i]) - 
+                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] - (trans_left * (T[i-1] - T[i]) - 
                              coverage * trans_right * (T[i] - T[i+1]) + CONST_LATSUB * (vapor_flux[i-1] - 
                              vapor_flux[i] * coverage) + AbsSnowLyr[i]) * fact[i] - ice_term;
                 // 水量残差项
-                mat_RHS[j+1] = (moist[i] - last_moist[i]) + (liquid_flux[i-1] - liquid_flux[i] + 
+                mat_RHS[j+1] = (theta_moist[i] - last_thtmoist[i]) - (liquid_flux[i-1] - liquid_flux[i] + 
                                (vapor_flux[i-1] - vapor_flux[i]) / CONST_RHOFW) * fact[i];
             }
         }
         else {
-            lidx = i - Nsnow;
-            if (i < Nnode - 1) {
+            nidx = i - Nsnow;
+            if (i < Nnode) {
                 adv_right = CONST_RHOFW * CONST_CPFWICE * liquid_flux[i] + 
                             CONST_CPWV * vapor_flux[i];
-                trans_right = kappa_int[i] + EPSLON[lidx] * adv_right;
+                trans_right = kappa_int[i] + EPSLON[nidx] * adv_right;
             } 
             else {
                 trans_right = kappa_int[i]; // bottom boundary
             }
             // 上一层的水分通量和冰量对热输送的影响
-            if (lidx == 0 && Nsnow == 0) {
+            if (nidx == 0 && Nsnow == 0) {
                 trans_left = 0.0;
             }
             else if (i == Nsnow) {
@@ -357,45 +375,41 @@ calc_resid_vec(double             step_dt,
             }
             else {
                 adv_left = CONST_RHOFW * CONST_CPFWICE * liquid_flux[i-1] +
-                                                    CONST_CPWV * vapor_flux[i-1];
-                trans_left = kappa_int[i-1] + FLOW[lidx-1] * adv_left;
+                                                CONST_CPWV * vapor_flux[i-1];
+                trans_left = kappa_int[i-1] + FLOW[nidx-1] * adv_left;
                 latent_term = vapor_flux[i-1] - vapor_flux[i];
                 liquid_term = liquid_flux[i-1] - liquid_flux[i];
             }
+            // 单位体积内因冰量变化而释放或吸收潜热通量
+            ice_term = CONST_RHOICE * CONST_LATICE * (ice[nidx] - last_ice[nidx]);
             // 构建右端残差项
             if (i == Nsnow) {
                 if (cell->h2osfc > param.TOL_A || Nsnow > 0) {
                     // 能量残差项
-                    mat_RHS[j] = enthalpy[i] - last_enthalpy[i] + ((1.0 - coverage) * grnd_soil + 
+                    mat_RHS[j] = enthalpy[i] - last_enthalpy[i] - ((1.0 - coverage) * grnd_soil + 
                                  coverage * (AbsSnowLyr[i] + trans_left * (T[i-1] - T[i])) - trans_right *
                                  (T[i] - T[i+1]) - CONST_LATVAP * vapor_flux[i]) * fact[i] - ice_term;
                     // 水量残差项
-                    mat_RHS[j+1] = (moist[i] - last_moist[i]) + ((1.0 - coverage) * flux_soil + coverage *
+                    mat_RHS[j+1] = (moist[nidx] - last_moist[nidx]) - ((1.0 - coverage) * flux_soil + coverage *
                                    (liquid_flux[i-1] + vapor_flux[i-1] / CONST_RHOFW) - liquid_flux[i] - (vapor_flux[i] + 
-                                   transp_sink[i]) / CONST_RHOFW - lateral_flow[lidx]) * fact[i] - compress[i];
+                                   transp_sink[nidx]) / CONST_RHOFW - lateral_flow[nidx]) * fact[i] - compress[nidx];
                 }
                 else {
                     // 能量残差项
-                    mat_RHS[j] = enthalpy[i] - last_enthalpy[i] + (grnd_flux - trans_right * (T[i] - T[i+1]) - 
+                    mat_RHS[j] = enthalpy[i] - last_enthalpy[i] - (grnd_flux - trans_right * (T[i] - T[i+1]) - 
                                  CONST_LATVAP * vapor_flux[i]) * fact[i] - ice_term;
                     // 水量残差项
-                    mat_RHS[j+1] = (moist[i] - last_moist[i]) + (flux_grnd - liquid_flux[i] - (vapor_flux[i] + 
-                                   transp_sink[i]) / CONST_RHOFW - lateral_flow[lidx]) * fact[i] - compress[i];
+                    mat_RHS[j+1] = (moist[nidx] - last_moist[nidx]) - (flux_grnd - liquid_flux[i] - (vapor_flux[i] + 
+                                   transp_sink[nidx]) / CONST_RHOFW - lateral_flow[nidx]) * fact[i] - compress[nidx];
                 }
-            }
-            else if (i < Nnode - 1) {
-                // 能量残差项
-                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] + (trans_left * (T[i-1] - T[i]) - trans_right * 
-                            (T[i] - T[i+1]) + CONST_LATVAP * latent_term) * fact[i] - ice_term;
-                // 水量残差项
-                mat_RHS[j+1] = (moist[i] - last_moist[i]) + (liquid_term + (latent_term - transp_sink[i]) / 
-                                CONST_RHOFW - lateral_flow[lidx]) * fact[i] - compress[i];
             }
             else {
                 // 能量残差项
-                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] + trans_left * (T[i-1] - T[i]) * fact[i];
+                mat_RHS[j] = enthalpy[i] - last_enthalpy[i] - (trans_left * (T[i-1] - T[i]) - trans_right * 
+                            (T[i] - T[i+1]) + CONST_LATVAP * latent_term) * fact[i] - ice_term;
                 // 水量残差项
-                mat_RHS[j+1] = 0.0;
+                mat_RHS[j+1] = (moist[nidx] - last_moist[nidx]) - (liquid_term + (latent_term - transp_sink[nidx]) / 
+                                CONST_RHOFW - lateral_flow[nidx]) * fact[i] - compress[nidx];
             }
         }
     }

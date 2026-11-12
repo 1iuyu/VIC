@@ -809,7 +809,7 @@ typedef struct {
     double soil_dew;                    /**< soil surface dew rate [mm/s] */
     double esoil_sub;
     double esoil_grnd;
-    double transp_fact;                   /**< soil water transpiration factor (0 to 1) */
+    double transp_fact;                 /**< soil water transpiration factor (0 to 1) */
     double root_depth;
     double soil_excess;
     double root[MAX_SOILS];
@@ -823,12 +823,12 @@ typedef struct {
     double dconduct_dpsi[MAX_SOILS];
     double dconduct_dT[MAX_SOILS];
     double dpsi_dT[MAX_SOILS];         /**< derivative in the liquid water matric potential w.r.t. temperature (m K-1) */
-    double dpsi_dpsi[MAX_SOILS];       /**< derivative in the liquid water matric potential w.r.t. the total water matric potential (-) */
+    double dpsi_dpsi0[MAX_SOILS];      /**< derivative in the liquid water matric potential w.r.t. the total water matric potential (-) */
     double compress[MAX_SOILS];        /**< soil compressibility */
     double dcompress_dpsi[MAX_SOILS];  /**< derivative of compressibility with respect to matric potential */
-    double dtheta_dpsi[MAX_SOILS];     /**< derivative of soil moisture content with respect to matric potential */
-    double dCs_dpsi[MAX_SOILS];        /**< derivatives in heat capacity w.r.t. matric potential (J m-3) */
-    double dCm_dpsi[MAX_SOILS];        /**< derivatives in heat capacity w.r.t. matric potential (J kg-1) */
+    double dwat_dpsi0[MAX_SOILS];      /**< derivative of soil moisture content with respect to matric potential */
+    double dCs_dpsi0[MAX_SOILS];       /**< derivatives in heat capacity w.r.t. matric potential (J m-3) */
+    double dCm_dpsi0[MAX_SOILS];       /**< derivatives in heat capacity w.r.t. matric potential (J kg-1) */
     double matric[MAX_SOILS];          /**< soil matric potential [m] */
     double last_matric[MAX_SOILS];     /**< last step soil matric potential [m] */
 } cell_data_struct;
@@ -925,10 +925,10 @@ typedef struct {
     // 辐射项
     double AbsSubDir[MAX_SWBANDS];
     double AbsSubDfs[MAX_SWBANDS];
-    double AbsDirSun[MAX_CANOPYS];  /**< absorbed sunlit leaf direct PAR */
-    double AbsDirSha[MAX_CANOPYS];  /**< absorbed shaded leaf direct PAR */
-    double AbsDfsSun[MAX_CANOPYS];  /**< absorbed sunlit leaf diffuse PAR */
-    double AbsDfsSha[MAX_CANOPYS];  /**< absorbed shaded leaf diffuse PAR */
+    double AbsDirSun[MAX_CANOPYS];     /**< absorbed sunlit leaf direct PAR */
+    double AbsDirSha[MAX_CANOPYS];     /**< absorbed shaded leaf direct PAR */
+    double AbsDfsSun[MAX_CANOPYS];     /**< absorbed sunlit leaf diffuse PAR */
+    double AbsDfsSha[MAX_CANOPYS];     /**< absorbed shaded leaf diffuse PAR */
     double AlbedoSoilDir[MAX_SWBANDS];
     double AlbedoSoilDfs[MAX_SWBANDS];
     double AlbedoSnowDir[MAX_SWBANDS];

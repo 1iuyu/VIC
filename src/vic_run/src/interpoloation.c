@@ -75,3 +75,24 @@ get_band_idx(size_t row, size_t col)
 {
     return (LAPACK_KL + LAPACK_KU + row - col) + col * LAPACK_LDAB;
 }
+
+/******************************************************************************
+ * @brief    Calculate the gradient: grad = J^T * rVec
+ *****************************************************************************/
+void
+calc_gradient(double *mat_LHS, const double *mat_RHS, double *grad, size_t Nstate)
+{
+    size_t i, j, jmin, jmax, k;
+
+    for (i = 0; i < Nstate; i++) {
+        grad[i] = 0.0;
+
+        jmin = (i > LAPACK_KU) ? i - LAPACK_KU : 0;
+        jmax = min(Nstate - 1, i + LAPACK_KL);
+
+        for (j = jmin; j <= jmax; j++) {
+            k = get_band_idx(j, i);
+            grad[i] += mat_LHS[k] * mat_RHS[j];
+        }
+    }
+}

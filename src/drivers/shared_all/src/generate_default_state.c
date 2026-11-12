@@ -46,8 +46,8 @@ generate_default_state(all_vars_struct   *all_vars,
     ************************************/
     for (veg = 0; veg <= Nveg; veg++) {
         if (veg_con[veg].Cv > 0) {
-            snow[veg].swq = 10.0;   // [mm] or [kg/m2]
-            snow[veg].snowaccum = 10.0;
+            snow[veg].swq = 0.0;   // [mm] or [kg/m2]
+            snow[veg].snowaccum = 0.0;
             double snow_density = 200.0;   // [kg/m3]
             if (snow[veg].swq > 0.0) {
                 // calculate snow coverage
@@ -62,7 +62,7 @@ generate_default_state(all_vars_struct   *all_vars,
                 for (int iter = 0; iter < 10; iter++) {
                     double A_over_c = A / coverage;
                     double new_coverage = tanh(A_over_c);
-                    double sech2_val = 1.0 - new_coverage * new_coverage;  // sech²(x) = 1 - tanh²(x)
+                    double sech2_val = 1.0 - new_coverage * new_coverage;  // sech2(x) = 1 - tanh2(x)
                     
                     double f = coverage - new_coverage;
                     double df = 1.0 + sech2_val * A / (coverage * coverage);
@@ -108,7 +108,7 @@ generate_default_state(all_vars_struct   *all_vars,
         Nsnow = snow[veg].Nsnow;
         if (veg_con[veg].Cv > 0) {
             cell[veg].Nsoil = Nsoil;
-            cell[veg].Nnode = Nbedrock + Nsnow;
+            cell[veg].Nnode = Nsoil + Nsnow;
             // If surface water exists, add an additional node for the surface water layer
             if (cell[veg].h2osfc > 0.0) {
                 cell[veg].Nnode += 1;

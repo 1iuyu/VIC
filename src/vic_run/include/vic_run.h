@@ -28,7 +28,7 @@ int calc_Jacob_mat(double, double *, energy_bal_struct *,
                     cell_data_struct *, snow_data_struct *, soil_con_struct *);
 int calc_resid_vec(double, double *, energy_bal_struct *, 
                    cell_data_struct *, snow_data_struct *, soil_con_struct *);
-int CalcPhaseChange(size_t, double *, energy_bal_struct *, cell_data_struct *, soil_con_struct *);
+int CalcPhaseChange(energy_bal_struct *, cell_data_struct *, snow_data_struct *, soil_con_struct *);
 void calc_rainonly(double, double, double, double, double *, double *);
 double calc_veg_displacement(double, double, double);
 void calc_snow_coverage(double, double, cell_data_struct *, snow_data_struct *, 
@@ -49,6 +49,7 @@ void canopy_two_stream(double, energy_bal_struct *, veg_var_struct *, veg_lib_st
 int calc_transp_sink(cell_data_struct *, soil_con_struct *, veg_var_struct *);
 int compute_coszen(double, double, double, unsigned short int, unsigned int, double *, double *);
 void compute_soil_resis(double, cell_data_struct *, soil_con_struct *);
+void calc_gradient(double *mat_LHS, const double *mat_RHS, double *grad, size_t Nstate);
 void correct_precip(double *, double, double, double, double);
 void ci_func_PHS(bool, size_t, double, double, double *, double *, double *, double *,
                  double *, double *, double *, double, double, double, double,
@@ -95,6 +96,9 @@ double new_snow_radius(double);
 int photosynth_hydrostress(double, double, double, double, double, double, double,
                            double, double, cell_data_struct *, soil_con_struct *,
                            veg_var_struct *, veg_lib_struct *);
+int physical_constraints(size_t, double, double, double, double *, double *, double *,
+                         force_data_struct *, energy_bal_struct *, cell_data_struct *,
+                         snow_data_struct *, soil_con_struct *, veg_var_struct *, veg_lib_struct *);
 void prepare_full_energy(double, double, cell_data_struct *, energy_bal_struct *,
                          snow_data_struct *, soil_con_struct *);
 double plc(double, double);

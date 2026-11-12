@@ -21,7 +21,7 @@ snow_hydrology(double             step_dt,
                soil_con_struct   *soil_con)
 {
     extern parameters_struct param;
-    size_t i, lidx;  
+    size_t i;  
     double vapor_grnd = 0.0;
     double snow_sublim = 0.0;
     double snowfrost = 0.0;
@@ -32,25 +32,20 @@ snow_hydrology(double             step_dt,
     double soil_sublim = 0.0;
     double soilfrost = 0.0;
     // 指针赋值               
-    double *theta_liq = snow->theta_liq;
-    double *theta_ice = snow->theta_ice;
     double *dz_snow = snow->dz_snow;
     double *liq = cell->liq;
     double *ice = cell->ice;
     double *moist = cell->moist;
-    double *snow_porosity = snow->snow_porosity;
     double *excess_ice = cell->excess_ice;
     double *dz_soil = soil_con->dz_soil;
     double *Wsat_node = soil_con->Wsat_node;
     double *pack_ice = snow->pack_ice;
     double *pack_liq = snow->pack_liq;
-    double *pack_outflow = snow->pack_outflow;
 
     /* initialize */
     size_t Nsnow = snow->Nsnow;
     double snow_density = 0.0;
     double excess_flux = 0.0;
-    double liquid_capacity = 0.0;
     double pressure = force->pressure;
     double snowfall = force->snowf;
     double rainfall = force->rainf;
@@ -313,70 +308,6 @@ snow_hydrology(double             step_dt,
         }
     }
 
-    /* compute inter-layer snow water flow */
-    if (Nsnow > 0) {
-        double snow_inflow = 0.0;
-        for (i = 0; i < Nsnow; i++) {
-            snow_density = pack_ice[i] / (dz_snow[i] * coverage);
-            if (snow_density >= 200.0) {
-                liquid_capacity = param.SNOW_LIQUID_WATER_CAPACITY;
-            }
-            else {
-                liquid_capacity = param.SNOW_LIQUID_WATER_CAPACITY + 0.07 * (200.0 - snow_density) / 200.0;
-            }
-            // 更新雪层水分含量和冰分数
-            pack_liq[i] += snow_inflow;
-            theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * coverage * CONST_RHOICE));
-            snow_porosity[i] = 1.0 - theta_ice[i];
-            theta_liq[i] = pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW);
-            // 超孔隙水立即排出
-            double outflow_snow = 0.0;
-            if (theta_liq[i] > snow_porosity[i]) {
-                double over_sat =
-                    (theta_liq[i] - snow_porosity[i]) * dz_snow[i] * CONST_RHOFW;
-                outflow_snow += over_sat;
-                pack_liq[i] -= over_sat * coverage;
-                theta_liq[i] = snow_porosity[i];
-            }
-            
-            /* excess liquid water snow-area basis */
-            double drainage = max(0.0, (theta_liq[i] - liquid_capacity * 
-                                  snow_porosity[i]) * dz_snow[i] * CONST_RHOFW);
-            if (i == 0) {
-                // 表层重力排水可被释放系数限制；超孔隙水已经立即排出
-                double release_frac =
-                    max(0.0, min(1.0, param.SNOW_RELEASE_FAC * step_dt));
-                double limited_drainage = drainage * release_frac;
-                pack_liq[i] -= limited_drainage * coverage;
-                outflow_snow += limited_drainage;
-            } else {
-                pack_liq[i] -= drainage * coverage;
-                outflow_snow += drainage;
-            }
-
-            pack_outflow[i] = outflow_snow * coverage;
-            if (pack_liq[i] / (pack_ice[i] + pack_liq[i]) > param.SNOW_MAX_LIQUID_FRAC &&
-                (pack_ice[i] + pack_liq[i]) > 0.0) {
-                double excess_liq = param.SNOW_MAX_LIQUID_FRAC / 
-                                    (1.0 - param.SNOW_MAX_LIQUID_FRAC) * pack_ice[i];
-                pack_outflow[i] += pack_liq[i] - excess_liq;
-                pack_liq[i] = excess_liq;
-            }
-            snow_inflow = pack_outflow[i];
-            theta_liq[i] = min(snow_porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW));
-        }
-    }
-    /* Liquid water from snow bottom to soil [mm/s] */
-    if (Nsnow > 0) {
-        lidx = Nsnow - 1;
-        snow->snow_outflow = pack_outflow[lidx] / step_dt;
-        for (i = 0; i < Nsnow; i++) {
-            pack_outflow[i] /= step_dt;
-        }
-    }
-    else {
-        snow->snow_outflow = 0.0;
-    }
     // obtain equilibrium state of snow in glacier region
     if (snow->swq > param.SNOW_MAX_SURFACE_SWE && Nsnow > 0) {
         snow_density = pack_ice[0] / (dz_snow[0] * coverage);

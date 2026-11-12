@@ -66,11 +66,7 @@ update_nodes(double             step_dt,
         theta_liq[i] = min(snow_porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW));
         double SnowMass = pack_ice[i] + pack_liq[i];
         snow_frac[i] = pack_ice[i] / SnowMass;
-        density[i] = pack_ice[i] / (dz_snow[i] * coverage);
-        double CP_snow = 92.96 + 7.37 * pack_T[i];
-        enthalpy[i] = (pack_ice[i] * CP_snow + pack_liq[i] * CONST_CPFWICE) * 
-                        (pack_T[i] - CONST_TKFRZ) - pack_ice[i] * CONST_LATICE;
-        enthalpy[i] /= coverage;      
+        density[i] = pack_ice[i] / (dz_snow[i] * coverage);    
     }
 
     // update new snow layer properties

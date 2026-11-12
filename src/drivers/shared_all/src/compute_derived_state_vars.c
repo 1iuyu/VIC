@@ -23,7 +23,7 @@ compute_derived_state_vars(all_vars_struct   *all_vars,
     extern option_struct       options;
     size_t veg, Nveg;
     size_t Nsnow;
-    size_t i, lidx;
+    size_t i, nidx;
     double Cv;
     double dt_thresh;
     cell_data_struct *cell;
@@ -49,8 +49,8 @@ compute_derived_state_vars(all_vars_struct   *all_vars,
                 }
                 /* Initialize soil node temperatures */
                 for (i = Nsnow; i < cell[veg].Nnode; i++) {
-                    lidx = i - Nsnow;
-                    cell[veg].soil_T[lidx] = energy[veg].T[i];
+                    nidx = i - Nsnow;
+                    cell[veg].soil_T[nidx] = energy[veg].T[i];
                 }
             }
         }

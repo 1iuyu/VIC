@@ -22,8 +22,8 @@ calc_snow_coverage(double            step_dt,
     /* initialization */
     double coverage = 0.0;
     double topo_std = soil_con->topo_std;
-    //double facter = 1.0e-4 * (topo_std * 3.3 - 9.5);
-    double n_melt = 200.0 / max(10.0, topo_std);
+    double facter = 1.0e-3 * (topo_std * 3.3 - 9.5);
+    double n_melt = 200.0 / max(10.0, topo_std) * facter;
     /* glacier snow cover fraction */
     if (cell->IS_GLAC) {
         n_melt = 10.0;
@@ -52,11 +52,10 @@ calc_snow_coverage(double            step_dt,
         // Add newsnow to integrated snowfall
         if (new_snow > 0.0) {
             double tmp_intsnow = snow->swq + new_snow;
-            if (snow->swq > 0.0 && coverage > 1.0e-3) {
+            if (snow->swq > 0.0 && coverage > 1.0e-6) {
                 double a = pow(1.0 - coverage, 1.0 / n_melt);
-                double s = sin(0.5 * CONST_PI * (1.0 - a));
-                double denom = s * s;
-                if (denom > 1.e-12 && !isfinite(denom)) {
+                double denom = 0.5 * (cos(CONST_PI * a) + 1.0);
+                if (denom > 1.e-12 && isfinite(denom)) {
                     tmp_intsnow = (snow->swq + new_snow) / denom;
                 }
             }

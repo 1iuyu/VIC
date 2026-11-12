@@ -32,7 +32,7 @@ runoff(double             step_dt,
     double *dz_soil = soil_con->dz_soil;
     double *matric = cell->matric;
     double *dtheta_dT = energy->dtheta_dT;
-    double *dtheta_dpsi = cell->dtheta_dpsi;
+    double *dwat_dpsi0 = cell->dwat_dpsi0;
     double *Zsum_soil = soil_con->Zsum_soil;
     double *excess_ice = cell->excess_ice;
     double *dWdQ_surf = energy->dWdQ_surf;
@@ -121,11 +121,11 @@ runoff(double             step_dt,
         double dInfilArea_dS1 = -ex * pow(base, ex - 1.0) / top_max_moist;
         if (soil_T[i] < soil_tkfrz) {
             dliq_dWat = 0.0;
-            dice_dWat = dtheta_dpsi[i];
+            dice_dWat = dwat_dpsi0[i];
         }
         else {
             dice_dWat = 0.0;
-            dliq_dWat = dtheta_dpsi[i];
+            dliq_dWat = dwat_dpsi0[i];
         }
         // 根区导数
         double drootliq_dWat = dliq_dWat * dz_soil[i];
@@ -148,7 +148,7 @@ runoff(double             step_dt,
         if (soil_T[i] < soil_tkfrz) {
             dInfilArea_dWat = 0.0;
         } else {
-            dInfilArea_dWat = dInfilArea_dS1 * dz_soil[i] * dtheta_dpsi[i];
+            dInfilArea_dWat = dInfilArea_dS1 * dz_soil[i] * dwat_dpsi0[i];
         }
         
         // 压缩限制因子修正
@@ -372,12 +372,12 @@ calc_dynamicVIC(double            inflow, // m
 * @brief    Calculate the saturated area and runoff
 ******************************************************************************/
 void
-calc_sat_runoff(double    i_0,
-                double    i_m,
-                double    y,
-                double    b_infilt,
-                double   *runoff_sat,
-                double   *dsat_dy)  // 蓄满产流对y的导数
+calc_sat_runoff(double  i_0,
+                double  i_m,
+                double  y,
+                double  b_infilt,
+                double *runoff_sat,
+                double *dsat_dy)  // 蓄满产流对y的导数
 {
     double  zwt;
     zwt = i_0 + y;
@@ -407,15 +407,15 @@ calc_sat_runoff(double    i_0,
 * @brief    Calculate the saturated area and runoff
 ******************************************************************************/
 void
-calc_infil_runoff(double    step_dt,
-                  double    inflow,
-                  double    f_m,
-                  double    f_0,
-                  double    dsat_dy,
-                  double    b_dynamic,
-                  double    runoff_sat,
-                  double   *dinfil_dy,
-                  double   *runoff_infil)
+calc_infil_runoff(double  step_dt,
+                  double  inflow,
+                  double  f_m,
+                  double  f_0,
+                  double  dsat_dy,
+                  double  b_dynamic,
+                  double  runoff_sat,
+                  double *dinfil_dy,
+                  double *runoff_infil)
 {
     double inflow_eff = max(0.0, inflow - runoff_sat);
     double ratio = inflow_eff / (f_m * step_dt);

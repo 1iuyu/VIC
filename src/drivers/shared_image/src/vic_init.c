@@ -68,6 +68,11 @@ vic_init(void)
     static const int IGBP_to_iwv[17] = {
         16, 17, 19, 18, 12, 8, 7, 3, 2, 1, 14, 5, 15, 11, 0, 0, 0
     };
+    // soil layer thicknesses (m) for top 12 layers
+    static const double dz_fixed[12] = {
+        0.02, 0.04, 0.04, 0.1, 0.1, 0.1, 0.1, 0.3, 0.3, 0.3, 0.3, 0.3
+    };
+
     // allocate memory for Cv_sum
     Cv_sum = malloc(local_domain.ncells_active * sizeof(*Cv_sum));
     check_alloc_status(Cv_sum, "Memory allocation error.");
@@ -224,26 +229,37 @@ vic_init(void)
                     "(%f m > %f m).\n%s", soil_con[i].depth[0],
                     soil_con[i].depth[1], locstr);
         }
+
         double z_bedrock = soil_con[i].z_bedrock;
         // Soil thermal node thicknesses and positions
         // 表层2m土层厚度固定
-        soil_con[i].dz_soil[0] = 0.02;
-        soil_con[i].dz_soil[1] = 0.04;
-        soil_con[i].dz_soil[2] = 0.04;
-        soil_con[i].dz_soil[3] = 0.1;
-        soil_con[i].dz_soil[4] = 0.1;
-        soil_con[i].dz_soil[5] = 0.1;
-        soil_con[i].dz_soil[6] = 0.1;
-        soil_con[i].dz_soil[7] = 0.3;
-        soil_con[i].dz_soil[8] = 0.3;
-        soil_con[i].dz_soil[9] = 0.3;
-        soil_con[i].dz_soil[10] = 0.3;
-        soil_con[i].dz_soil[11] = 0.3;
-        // 剩余深度以等比数列累加，直到总厚度达到z_bedrock为止
-        k = 12;
+        size_t Nbedrock = 0;
+        double accum_depth = 0.0;
+        double remain = 0.0;
+        for (k = 0; k < 12; k++) {
+            remain = z_bedrock - accum_depth;
+            if (remain <= 0.0) {
+                /* 已达基岩，停止 */
+                break;
+            }
+
+            double thick = dz_fixed[k];
+            if (thick >= remain) {
+                /* 最后一层：截断到基岩 */
+                soil_con[i].dz_soil[k] = dz_fixed[k];
+                accum_depth = z_bedrock;
+                Nbedrock = k + 1;
+                break;
+            } 
+            else {
+                soil_con[i].dz_soil[k] = thick;
+                accum_depth += thick;
+            }
+        }
+        
         double ratio = 1.50;
-        double accum_depth = 2.0;
         double current_thick = 0.5;
+        // 剩余深度以等比数列累加，直到总厚度达到z_bedrock为止
         while (k < MAX_SOILS && accum_depth < z_bedrock) {
             /* 检查加上当前层是否会超过总深度 */
             if (accum_depth + current_thick < z_bedrock) {
@@ -255,6 +271,7 @@ vic_init(void)
                 /* 最后一层：设为基岩层 */
                 soil_con[i].dz_soil[k] = current_thick;
                 accum_depth = z_bedrock;
+                Nbedrock = k + 1;
                 break;
             }
             k++;
@@ -263,8 +280,9 @@ vic_init(void)
                 current_thick = 15.0;
             }
         }
-        size_t Nbedrock = k + 1;
+
         soil_con[i].Nbedrock = Nbedrock;
+
         /* Compute soil node depths */
         double sum_dz = 0.;
         for (k = 0; k < Nbedrock; k++) {
