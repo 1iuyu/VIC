@@ -64,14 +64,16 @@ calc_resid_vec(double             step_dt,
 
     // 计算临时节点深度
     size_t tmp_Nsnow = Nsnow;
-    for (i = 0; i < Nsnow; i++) {
-        zc_node[i] = zc_snow[i];
-    }
-    if (cell->IS_VEG) {
-        zc_node[Nsnow] = zc_soil[0] + Zsum_snow[Nsnow-1];
-    }
-    else if (cell->IS_GLAC) {
-        zc_node[Nsnow] = cell->h2osfc * 0.25 + Zsum_snow[Nsnow-1];
+    if (Nsnow > 0) {
+        for (i = 0; i < Nsnow; i++) {
+            zc_node[i] = zc_snow[i];
+        }
+        if (cell->IS_VEG) {
+            zc_node[Nsnow] = zc_soil[0] + Zsum_snow[Nsnow-1];
+        }
+        else if (cell->IS_GLAC) {
+            zc_node[Nsnow] = cell->h2osfc * 0.5 + Zsum_snow[Nsnow-1];
+        }
     }
 
     // 计算固定的时间步长系数
@@ -367,10 +369,12 @@ calc_resid_vec(double             step_dt,
             else if (i == Nsnow) {
                 if (cell->h2osfc > param.TOL_A) {
                     trans_left = kappa_int[i-1];
+                    latent_term = vapor_flux[i];
                 }
                 else if (Nsnow > 0) {
                     trans_left = kappa_int[Nsnow-1] + CONST_LATSUB * 
                                     conv_vapor[Nsnow-1] * drhodT[Nsnow-1];
+                    latent_term = coverage * vapor_flux[i-1] - vapor_flux[i];
                 }
             }
             else {
@@ -388,7 +392,7 @@ calc_resid_vec(double             step_dt,
                     // 能量残差项
                     mat_RHS[j] = enthalpy[i] - last_enthalpy[i] - ((1.0 - coverage) * grnd_soil + 
                                  coverage * (AbsSnowLyr[i] + trans_left * (T[i-1] - T[i])) - trans_right *
-                                 (T[i] - T[i+1]) - CONST_LATVAP * vapor_flux[i]) * fact[i] - ice_term;
+                                 (T[i] - T[i+1]) - CONST_LATVAP * latent_term) * fact[i] - ice_term;
                     // 水量残差项
                     mat_RHS[j+1] = (moist[nidx] - last_moist[nidx]) - ((1.0 - coverage) * flux_soil + coverage *
                                    (liquid_flux[i-1] + vapor_flux[i-1] / CONST_RHOFW) - liquid_flux[i] - (vapor_flux[i] + 

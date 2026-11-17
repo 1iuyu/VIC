@@ -68,15 +68,21 @@ SoilWaterRetentionCurve(int              flag,
     }
     else if (flag == DW_DPSI_FLAG) {
         /* dθ/dψ */
+        double dtheta_dpsi;
         if (matric < 0.0) {
-            tmp = pow(fabs(alpha_node[idx] * 
-                        matric), expt_node[idx]);
-            return -(liq - Wpwp_node[idx]) * 
-                    mpar_node[idx] * expt_node[idx] * tmp / (matric * (1.0 + tmp));
+            double base = fabs(alpha_node[idx] * matric);
+            tmp = pow(base, expt_node[idx]);
+            dtheta_dpsi = (Wsat_node[idx] - Wpwp_node[idx]) * 
+                        (-mpar_node[idx] * pow(1.0 + tmp, -mpar_node[idx] - 1.0)) *
+                        expt_node[idx] * pow(base, expt_node[idx] - 1.0) * alpha_node[idx];
+            if (fabs(dtheta_dpsi) < DBL_MIN) {
+                dtheta_dpsi = DBL_MIN;
+            }
         }
         else {
-            return 0.0;
+            dtheta_dpsi = DBL_MIN;
         }
+        return (dtheta_dpsi);
     }
     else if (flag == DPSI_DW_FLAG) {
         /* dψ/dθ */
@@ -164,12 +170,19 @@ SoilWaterRetentionCurve(int              flag,
         // Van Genuchten-Mualem 公式
         double alpha_h = fabs(alpha_node[idx] * matric);
         double alpha_pow = pow(alpha_h, expt_node[idx]);
+        double inner = 1.0 - pow(alpha_h, expt_node[idx] - 1.0) * pow(1 + alpha_pow, -mpar_node[idx]);
         double denom = pow(1.0 + alpha_pow, lpar_node[idx] * mpar_node[idx]);
-        double term = 1.0 - 1.0 / (1.0 + alpha_pow);
-        double term_pow = pow(term, mpar_node[idx]);
-        double numera = 1.0 - term_pow;
-        double numera_pow = numera * numera;
-        return Ksat_node[idx] * numera_pow / denom;
+        double orig_val = Ksat_node[idx] * (inner * inner) / denom;
+
+        // 当基质势趋于0时平滑过渡
+        if (matric < -param.TOL_A) {
+            return orig_val;
+        } 
+        else {
+            double t = (matric + param.TOL_A) / param.TOL_A;
+            double s = 3.0 * t * t - 2.0 * t * t * t;
+            return orig_val * (1.0 - s) + Ksat_node[idx] * s;
+        }
     }
     else {
         log_err("Unknown FLAG option");

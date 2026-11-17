@@ -35,7 +35,7 @@ CalcPhaseChange(energy_bal_struct *energy,
     double *theta_liq = snow->theta_liq;
     double *theta_moist = snow->theta_moist;
     double *matric = cell->matric;
-    double *dfliq_dT = energy->dfliq_dT;
+    double *dFracLiq_dT = energy->dFracLiq_dT;
     double *Cs_node = energy->Cs_node;
     double *moist = cell->moist;
     double *Wpwp_node = soil_con->Wpwp_node;
@@ -95,7 +95,7 @@ CalcPhaseChange(energy_bal_struct *energy,
             }
 
             /* Calculate Newton iteration increment */
-            tempInc = EnergyRes / (Cs_node[i] + CONST_RHOFW * CONST_LATICE * dfliq_dT[i]);
+            tempInc = EnergyRes / (Cs_node[i] + CONST_RHOFW * CONST_LATICE * dFracLiq_dT[i]);
             
             /* Check convergence */
             if (fabs(EnergyRes) < 1.0e-4 || fabs(tempInc) < 1.0e-6) {

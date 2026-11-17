@@ -17,11 +17,12 @@ update_nodes(double             step_dt,
              snow_data_struct  *snow,
              soil_con_struct   *soil_con)
 {
+    extern parameters_struct param;
     // initialize variables
-    size_t i, lidx;
+    size_t i, nidx;
     size_t Nsnow = snow->Nsnow;
     size_t tmp_Nsnow = snow->Nsnow;
-    size_t tmp_Nnode = soil_con->Nbedrock;
+    size_t tmp_Nnode = cell->Nsoil; // Nnode先设为土层节点数，根据雪层和表层数量进行增加
     size_t last_Nsnow = snow->last_Nsnow;
     double coverage = snow->coverage;
     double *T = energy->T;
@@ -40,6 +41,8 @@ update_nodes(double             step_dt,
     double *pack_melt = snow->pack_melt;
     double *theta_ice = snow->theta_ice;
     double *theta_liq = snow->theta_liq;
+    double *theta_moist = snow->theta_moist;
+    double *last_thtmoist = snow->last_thtmoist;
     double *zc_snow = snow->zc_snow;
     double *Zsum_snow = snow->Zsum_snow;
     double *kappa_node = energy->kappa_node;
@@ -50,8 +53,9 @@ update_nodes(double             step_dt,
     double *last_thtliq = snow->last_thtliq;
     double *enthalpy = energy->enthalpy;
     double *last_enthalpy = energy->last_enthalpy;
+
     // update the number of nodes
-    if (cell->h2osfc > 0.0) {
+    if (cell->h2osfc > param.TOL_A) {
         tmp_Nnode++;
         tmp_Nsnow++;
     }
@@ -60,13 +64,16 @@ update_nodes(double             step_dt,
     }
     // update snow layer properties
     cell->Nnode = tmp_Nnode;
+
+    // 更新雪层性质
     for (i = 0; i < Nsnow; i++) {
         theta_ice[i] = min(1.0, pack_ice[i] / (dz_snow[i] * coverage * CONST_RHOICE));
         snow_porosity[i] = 1.0 - theta_ice[i];
         theta_liq[i] = min(snow_porosity[i], pack_liq[i] / (dz_snow[i] * coverage * CONST_RHOFW));
+        theta_moist[i] = theta_ice[i] + theta_liq[i];
         double SnowMass = pack_ice[i] + pack_liq[i];
         snow_frac[i] = pack_ice[i] / SnowMass;
-        density[i] = pack_ice[i] / (dz_snow[i] * coverage);    
+        density[i] = pack_ice[i] / (dz_snow[i] * coverage);
     }
 
     // update new snow layer properties
@@ -76,12 +83,12 @@ update_nodes(double             step_dt,
             if (i < Nsnow) {
                 new_T[i] = pack_T[i];
             }
-            else if (i == Nsnow && cell->h2osfc > 0.0) {
+            else if (i == Nsnow && cell->h2osfc > param.TOL_A) {
                 new_T[i] = cell->h2osfc_T;
             }
             else {
-                lidx = i - tmp_Nsnow;
-                new_T[i] = soil_T[lidx];
+                nidx = i - tmp_Nsnow;
+                new_T[i] = soil_T[nidx];
             }
         }
         for (i = 0; i < cell->Nnode; i++) {
@@ -103,6 +110,7 @@ update_nodes(double             step_dt,
         last_thtice[i] = theta_ice[i];
         last_thtliq[i] = theta_liq[i];
         last_snowfrac[i] = snow_frac[i];
+        last_thtmoist[i] = theta_moist[i];
     }
 
     /* remove old snow layers */
@@ -113,7 +121,6 @@ update_nodes(double             step_dt,
         Zsum_snow[i] = 0.0;
         last_snowfrac[i] = 0.0;
         density[i] = 0.0;
-        enthalpy[i] = 0.0;
         snow_porosity[i] = 0.0;
         theta_ice[i] = 0.0;
         theta_liq[i] = 0.0;
@@ -121,18 +128,23 @@ update_nodes(double             step_dt,
         pack_melt[i] = 0.0;
         snow_frac[i] = 0.0;
         last_thtice[i] = 0.0;
-        last_enthalpy[i] = 0.0;
         last_thtliq[i] = 0.0;
         pack_outflow[i] = 0.0;
+        theta_moist[i] = 0.0;
+        last_thtmoist[i] = 0.0;
     }
+
+    // 删除融化的雪层数据
     if (last_Nsnow > Nsnow) {
-        lidx = last_Nsnow - Nsnow + tmp_Nnode;
-        for (i = tmp_Nnode; i < lidx; i++) {
+        nidx = last_Nsnow - Nsnow + tmp_Nnode;
+        for (i = tmp_Nnode; i < nidx; i++) {
             T[i] = 0.0;
             last_T[i] = 0.0;
             Cs_node[i] = 0.0;
             kappa_int[i] = 0.0;
             kappa_node[i] = 0.0;
+            enthalpy[i] = 0.0;
+            last_enthalpy[i] = 0.0;
         }
     }
 }

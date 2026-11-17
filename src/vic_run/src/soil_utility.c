@@ -35,10 +35,10 @@ soil_conductivity(double  liq,
     const double GA_OM = 0.5;         // 有机质形状因子
     const double GA_ROCK = 0.333;     // 岩石形状因子
     
-    double air = soil_pore - liq - ice - excess_ice;
-    if (air < 0.0) {
-        air = 0.0;
-    }
+    double air_raw = soil_pore - liq - ice - excess_ice;
+    double air = max(air_raw, 0.0);
+    double dair_dliq = (air_raw > 0.0) ? -1.0 : 0.0;
+    double dair_dice = (air_raw > 0.0) ? -1.0 : 0.0;
     
     // 根据黏粒和沙粒含量确定适用下限
     double VLMT = 0.10 + 0.2 * clay_node - 0.1 * sand_node;
@@ -89,13 +89,19 @@ soil_conductivity(double  liq,
                        W_air * air;
         
         TK = numer / denom;
-        double dnumer_dliq = W_liq * CONST_KFWICE - W_air * CONST_KDAIR + dW_air_dliq * air * CONST_KDAIR;
-        double ddenom_dliq = W_liq - W_air + dW_air_dliq * air;
+        // 热导率对水含量的导数
+        double dnumer_dliq = W_liq * CONST_KFWICE + W_air * dair_dliq * 
+                             CONST_KDAIR + dW_air_dliq * air * CONST_KDAIR;
+        double ddenom_dliq = W_liq + W_air * dair_dliq + dW_air_dliq * air;
         (*dTK_dliq) = (dnumer_dliq - TK * ddenom_dliq) / denom;
+        // 热导率对冰含量的导数
+        double dnumer_dice = W_ice * CONST_KICE + W_air * dair_dice * CONST_KDAIR;
+        double ddenom_dice = W_ice + W_air * dair_dice;
+        (*dTK_dice) = (dnumer_dice - TK * ddenom_dice) / denom;
     } 
     else {     
         // 计算干燥土壤热导率
-        double W_air_dry = 1.0;
+        double W_air_dry = devries_weight(CONST_KFWICE, CONST_KDAIR, 0.035);
         double W_quartz_dry = devries_weight(CONST_KDAIR, CONST_KQUARTZ, GA_QUARTZ);
         double W_silt_dry = devries_weight(CONST_KDAIR, CONST_KSILT, GA_SILT);
         double W_clay_dry = devries_weight(CONST_KDAIR, CONST_KCLAY, GA_CLAY);
@@ -104,10 +110,9 @@ soil_conductivity(double  liq,
         double W_ice_dry = 1.0;
         
         // 干燥时的空气体积 = 总孔隙度 - 冰
-        double V_air_dry = soil_pore - ice;
-        if (V_air_dry < 0.0) {
-            V_air_dry = 0.0;
-        }
+        double V_air_dry_raw = soil_pore - ice - excess_ice;
+        double V_air_dry = max(V_air_dry_raw, 0.0);
+        double dVairdry_dice = (V_air_dry_raw > 0.0) ? -1.0 : 0.0;
         
         double numer_dry = W_quartz_dry * vol_sand * CONST_KQUARTZ +
                            W_silt_dry * vol_silt * CONST_KSILT +
@@ -126,14 +131,14 @@ soil_conductivity(double  liq,
                            W_air_dry * V_air_dry;
         
         double TK_dry = numer_dry / denom_dry;
-        double dTKdry_dice = (CONST_KICE - CONST_KDAIR) / denom_dry;
-        // 计算湿润下限热导率 (含水量 = VLMT)
-        double V_air_wet = soil_pore - ice - VLMT;
-        if (V_air_wet < 0.0) {
-            V_air_wet = 0.0;
-        }
-        double GAAIR_wet = 0.035;  // 湿润下限时的空气形状因子
-        double W_air_wet = devries_weight(CONST_KFWICE, CONST_KDAIR, GAAIR_wet);
+        // 干燥状态下对冰含量的导数
+        double dnumer_dice_dry = W_ice_dry * CONST_KICE +
+                                W_air_dry * dVairdry_dice * CONST_KDAIR;
+
+        double ddenom_dice_dry = W_ice_dry +
+                                W_air_dry * dVairdry_dice;
+
+        double dTKdry_dice = (dnumer_dice_dry - TK_dry * ddenom_dice_dry) / denom_dry;
         
         // 湿润条件下的权重因子
         double W_water_wet = 1.0;
@@ -144,40 +149,62 @@ soil_conductivity(double  liq,
         double W_om_wet = devries_weight(CONST_KFWICE, CONST_KORGANIC, GA_OM);
         double W_rock_wet = devries_weight(CONST_KFWICE, CONST_KGRAVEL, GA_ROCK);
         
-        double numer_wet = W_quartz_wet * vol_sand * CONST_KQUARTZ +
-                           W_silt_wet * vol_silt * CONST_KSILT +
-                           W_clay_wet * vol_clay * CONST_KCLAY +
-                           W_om_wet * vol_organic * CONST_KORGANIC +
-                           W_rock_wet * vol_gravel * CONST_KGRAVEL +
-                           W_water_wet * VLMT * CONST_KFWICE +
-                           W_ice_wet * ice * CONST_KICE +
-                           W_air_wet * V_air_wet * CONST_KDAIR;
-        
-        double denom_wet = W_quartz_wet * vol_sand +
-                           W_silt_wet * vol_silt +
-                           W_clay_wet * vol_clay +
-                           W_om_wet * vol_organic +
-                           W_rock_wet * vol_gravel +
-                           W_water_wet * VLMT +
-                           W_ice_wet * ice +
-                           W_air_wet * V_air_wet;
-        
-        double TK_wet = numer_wet / denom_wet;
-        double dTKwet_dice = (W_ice_wet * CONST_KICE - W_air_wet * CONST_KDAIR - 
-                             TK_wet * (W_ice_wet - W_air_wet)) / denom_wet;
-        // 线性插值
-        if (VLMT > 0.0) {
-            TK = TK_dry + (TK_wet - TK_dry) * liq / VLMT;
-            (*dTK_dliq) = (TK_wet - TK_dry) / VLMT;
-            (*dTK_dice) = dTKdry_dice + liq / VLMT * (dTKwet_dice - dTKdry_dice);
-        } 
-        else {
+        // 在当前液态水含量下，计算湿润公式的热导率及其导数
+        double GAAIR_current = 0.035 + 0.298 * (liq - VLMT) / (soil_pore - VLMT);
+        double dGAAIR_dliq = 0.298 / (soil_pore - VLMT);
+        double W_air_current = devries_weight(CONST_KFWICE, CONST_KDAIR, GAAIR_current);
+        double dW_air_dliq = devries_weight_dga(CONST_KFWICE, CONST_KDAIR, GAAIR_current) * dGAAIR_dliq;
+
+        double numer_wet_current = W_quartz_wet * vol_sand * CONST_KQUARTZ +
+                                   W_silt_wet * vol_silt * CONST_KSILT +
+                                   W_clay_wet * vol_clay * CONST_KCLAY +
+                                   W_om_wet * vol_organic * CONST_KORGANIC +
+                                   W_rock_wet * vol_gravel * CONST_KGRAVEL +
+                                   W_water_wet * liq * CONST_KFWICE +
+                                   W_ice_wet * ice * CONST_KICE +
+                                   W_air_current * air * CONST_KDAIR;
+
+        double denom_wet_current = W_quartz_wet * vol_sand +
+                                   W_silt_wet * vol_silt +
+                                   W_clay_wet * vol_clay +
+                                   W_om_wet * vol_organic +
+                                   W_rock_wet * vol_gravel +
+                                   W_water_wet * liq +
+                                   W_ice_wet * ice +
+                                   W_air_current * air;
+
+        double TK_wet_current = numer_wet_current / denom_wet_current;
+
+        double dnumer_dliq = W_water_wet * CONST_KFWICE + W_air_current * dair_dliq * 
+                             CONST_KDAIR + dW_air_dliq * air * CONST_KDAIR;
+        double ddenom_dliq = W_water_wet + W_air_current * dair_dliq + dW_air_dliq * air;
+        double dTKwet_dliq = (dnumer_dliq - TK_wet_current * ddenom_dliq) / denom_wet_current;
+
+        double dnumer_dice = W_ice_wet * CONST_KICE + W_air_current * dair_dice * CONST_KDAIR;
+        double ddenom_dice = W_ice_wet + W_air_current * dair_dice;
+        double dTKwet_dice = (dnumer_dice - TK_wet_current * ddenom_dice) / denom_wet_current;
+
+        // 平滑过渡
+        double delta_liq = 0.1 * VLMT;
+        double liq_start = VLMT - delta_liq;
+
+        if (liq <= liq_start) {
             TK = TK_dry;
             (*dTK_dliq) = 0.0;
             (*dTK_dice) = dTKdry_dice;
         }
+        else {
+            double x = (liq - liq_start) / delta_liq;
+            double S = x * x * (3.0 - 2.0 * x);
+            double dS_dliq = 6.0 * x * (1.0 - x) / delta_liq;
+
+            TK = (1.0 - S) * TK_dry + S * TK_wet_current;
+            (*dTK_dliq) = dS_dliq * (TK_wet_current - TK_dry) + S * dTKwet_dliq;
+            (*dTK_dice) = (1.0 - S) * dTKdry_dice + S * dTKwet_dice;
+        }
     }
-    
+
+    // 热导率上下限截断
     if (TK < CONST_KDAIR) {
         TK = CONST_KDAIR;
         (*dTK_dliq) = 0.0;
@@ -430,6 +457,7 @@ calc_solids_fractions(soil_con_struct *soil_con)
         double wf_silt = silt_node[i] * (1.0 - wf_om_fine) * (1.0 - wf_gravel);
         double wf_clay = clay_node[i] * (1.0 - wf_om_fine) * (1.0 - wf_gravel);
         double wf_organ = wf_om_fine * (1.0 - wf_gravel);
+        
         // 各组分在全土中的体积分数（固相）
         vol_sand[i] = wf_sand * bulk_dens_avg[i] / BD_mineral;
         vol_clay[i] = wf_clay * bulk_dens_avg[i] / BD_mineral;
@@ -438,6 +466,7 @@ calc_solids_fractions(soil_con_struct *soil_con)
         double BD_particle_inv = wf_gravel / BD_gravel +
                 (1.0 - wf_gravel) * ((1.0 - wf_om_fine) / BD_mineral + wf_om_fine / BD_organic);
         double BD_particle = 1.0 / BD_particle_inv;
+
         // 土壤孔隙度
         soil_pore[i] = 1.0 - bulk_dens_avg[i] * BD_particle_inv;
         if (soil_pore[i] <= 0.0) {
@@ -472,13 +501,13 @@ calc_tkfrz(size_t             nidx,
     if (moist[nidx] > Wsat_node) {
         moist[nidx] = Wsat_node;
     }
-    double tmp_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, 
+    double total_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, 
                                                 moist[nidx], 0.0, 0.0, soil_con);
-    if (tmp_matric < 0.0) {
+    if (total_matric < 0.0) {
         double A = CONST_LATICE / CONST_G;
-        tmp_tkfrz = CONST_TKTRIP * tmp_matric / (A - tmp_matric) + CONST_TKTRIP;
+        tmp_tkfrz = CONST_TKTRIP * total_matric / (A - total_matric) + CONST_TKTRIP;
         if (dT_dpsi != NULL) {
-            double denom = A - tmp_matric;
+            double denom = A - total_matric;
             (*dT_dpsi) = CONST_TKTRIP * A / (denom * denom);
         }
     } 

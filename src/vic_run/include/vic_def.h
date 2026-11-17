@@ -827,6 +827,7 @@ typedef struct {
     double compress[MAX_SOILS];        /**< soil compressibility */
     double dcompress_dpsi[MAX_SOILS];  /**< derivative of compressibility with respect to matric potential */
     double dwat_dpsi0[MAX_SOILS];      /**< derivative of soil moisture content with respect to matric potential */
+    double dtheta_dpsi[MAX_SOILS];     /**< derivative in the soil water characteristic */
     double dCs_dpsi0[MAX_SOILS];       /**< derivatives in heat capacity w.r.t. matric potential (J m-3) */
     double dCm_dpsi0[MAX_SOILS];       /**< derivatives in heat capacity w.r.t. matric potential (J kg-1) */
     double matric[MAX_SOILS];          /**< soil matric potential [m] */
@@ -874,9 +875,9 @@ typedef struct {
     double dCs_dT[MAX_NODES];          /**< derivatives in heat capacity w.r.t. temperature (J m-3 K-2) */
     double dCm_dT[MAX_NODES];          /**< derivatives in heat capacity w.r.t. temperature (J kg-1 K-2) */
     double dCs_dtheta[MAX_NODES];      /**< derivatives in heat capacity w.r.t. volumetric liquid water content (J m-3) */
-    double dfliq_dT[MAX_NODES];        /**< derivatives in liquid water content w.r.t. temperature */
+    double dFracLiq_dT[MAX_NODES];     /**< derivatives in liquid water content w.r.t. temperature */
     double dkappa_dT[MAX_NODES];       /**< derivative in thermal conductivity w.r.t. temperature */
-    double dkappa_dtheta[MAX_NODES];   /**< derivative in thermal conductivity w.r.t. matric head or volumetric liquid water */
+    double dkappa_dwat[MAX_NODES];     /**< derivative in thermal conductivity w.r.t. matric head or volumetric liquid water */
     double deriv_snow;
     double deriv_soil;
     double deriv_terms;                /**< terms in the energy balance that are linear with respect to the surface temperature (W/m^2/K) */
@@ -1044,7 +1045,7 @@ typedef struct {
     double pack_melt[MAX_SNOWS];    /**< melt rate of each snow pack [m/s] */
     double pack_frze[MAX_SNOWS];    /**< freeze rate of each snow pack [m/s] */
     double phase_snow[MAX_SNOWS];   /**< last step Phase change heat source W/m2 */
-    double liq_deriv[MAX_SNOWS];
+    double SnowLiq_deriv[MAX_SNOWS]; /**< derivative in vertical liquid water flux at layer interfaces */
     double snow_frost;              /**< snow surface frost rate [mm/s] */
     double snow_sublim;             /**< snow surface sublimation rate [mm/s] */
     double snow_dew;                /**< snow surface dew rate [mm/s] */

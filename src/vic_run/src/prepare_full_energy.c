@@ -28,7 +28,7 @@ prepare_full_energy(double             step_dt,
     size_t Nsoil = cell->Nsoil;
     double dzp, zdn, zdp, denom, k_int;
     double enthliq, enthice, enthair;
-    double dliq_dtheta, dice_dtheta;
+    double dFracLiq_dwat, dFracIce_dwat;
     double dice_dT;
     double tmp_density = 0.0;
     double qsaT = 0.0, qsdT = 0.0;
@@ -66,7 +66,7 @@ prepare_full_energy(double             step_dt,
     double *moist = cell->moist;
     double *dCs_dT = energy->dCs_dT;
     double *dCm_dT = energy->dCm_dT;
-    double *dfliq_dT = energy->dfliq_dT;
+    double *dFracLiq_dT = energy->dFracLiq_dT;
     double *dtheta_dT = energy->dtheta_dT;
     double *dEdW_left = energy->dEdW_left;
     double *dEdW_right = energy->dEdW_right;
@@ -76,8 +76,9 @@ prepare_full_energy(double             step_dt,
     double *dCm_dpsi0 = cell->dCm_dpsi0;
     double *dCs_dtheta = energy->dCs_dtheta;
     double *dwat_dpsi0 = cell->dwat_dpsi0;
+    double *dtheta_dpsi = cell->dtheta_dpsi;
     double *dkappa_dT = energy->dkappa_dT;
-    double *dkappa_dtheta = energy->dkappa_dtheta;
+    double *dkappa_dwat = energy->dkappa_dwat;
     double *excess_ice = cell->excess_ice;
     double *zc_soil = soil_con->zc_soil;
     double *Zsum_soil = soil_con->Zsum_soil;
@@ -100,6 +101,7 @@ prepare_full_energy(double             step_dt,
         zc_node[Nsnow] = zc_soil[0] + Zsum_snow[Nsnow-1];
         Zsum_node[Nsnow] = Zsum_soil[0] + Zsum_snow[Nsnow-1];
     }
+
     // 计算雪的热导率和热容量
     if (Nsnow > 0) {
         for (i = 0; i < Nsnow; i++) {
@@ -139,8 +141,8 @@ prepare_full_energy(double             step_dt,
                             frac_liq) + CONST_RHODAIR * ((frac_liq - 1.0) * (CONST_RHOFW / 
                             CONST_RHOICE) - frac_liq) * CONST_CPDAIR;
             if (pack_T[i] < CONST_TKFRZ) {
-                dfliq_dT[i] = SnowFreezingCurve(DERILIQ_FLAG, pack_T[i], 0.0);
-                dtheta_dT[i] = dfliq_dT[i] * (theta_ice[i] * CONST_RHOICE / CONST_RHOFW + theta_liq[i]);
+                dFracLiq_dT[i] = SnowFreezingCurve(DERILIQ_FLAG, pack_T[i], 0.0);
+                dtheta_dT[i] = dFracLiq_dT[i] * (theta_ice[i] * CONST_RHOICE / CONST_RHOFW + theta_liq[i]);
                 dCs_dT[i] = (CONST_RHOFW * (-CONST_CPICE + CONST_CPFWICE) + CONST_CPDAIR * 
                             (CONST_RHOFW / CONST_RHOICE - 1.0) * CONST_CPDAIR) * dtheta_dT[i];
                 enthliq = CONST_RHOFW * CONST_CPFWICE * theta_moist[i] * integral;
@@ -149,7 +151,7 @@ prepare_full_energy(double             step_dt,
                           (difft - integral) + integral));
             }
             else {
-                dfliq_dT[i] = 0.0;
+                dFracLiq_dT[i] = 0.0;
                 dCs_dT[i] = 0.0;
                 dtheta_dT[i] = 0.0;
                 enthliq = CONST_RHOFW * CONST_CPFWICE * theta_moist[i] * difft;
@@ -161,11 +163,11 @@ prepare_full_energy(double             step_dt,
             // 计算雪的热导率和热容量的偏导数
             tmp_density = (pack_ice[i] + pack_liq[i]) / (dz_snow[i] * coverage);
             dice_dT = -dtheta_dT[i] * (CONST_RHOFW / CONST_RHOICE);
-            dice_dtheta = (1.0 - frac_liq) * (CONST_RHOFW / CONST_RHOICE);
+            dFracIce_dwat = (1.0 - frac_liq) * (CONST_RHOFW / CONST_RHOICE);
             kappa_node[i] = CONST_KDAIR + (7.75e-5 * tmp_density + 1.105e-6 * 
                             tmp_density * tmp_density) * (CONST_KICE - CONST_KDAIR);
-            dkappa_dtheta[i] = (7.75e-5 + 2.0 * 1.105e-6 * theta_ice[i] * CONST_RHOICE) * 
-                               (CONST_KICE - CONST_KDAIR) * CONST_RHOICE * dice_dtheta;
+            dkappa_dwat[i] = (7.75e-5 + 2.0 * 1.105e-6 * theta_ice[i] * CONST_RHOICE) * 
+                               (CONST_KICE - CONST_KDAIR) * CONST_RHOICE * dFracIce_dwat;
             dkappa_dT[i] = (7.75e-5 + 2.0 * 1.105e-6 * theta_ice[i] * CONST_RHOICE) * 
                            (CONST_KICE - CONST_KDAIR) * CONST_RHOICE * dice_dT;
         }
@@ -200,23 +202,27 @@ prepare_full_energy(double             step_dt,
     double dTK_dice, dTK_dliq;
     for (i = 0; i < Nsoil; i++) {
         nidx = tmp_Nsnow + i;
-        double dT_dpsi = 0.0;
-        double soil_tkfrz = calc_tkfrz(i, &dT_dpsi, cell, soil_con);
+        double dTfrz_dpsi0 = 0.0;
+        double soil_tkfrz = calc_tkfrz(i, &dTfrz_dpsi0, cell, soil_con);
 
         // 计算土壤水分含量对土壤基质势的偏导数
-        dwat_dpsi0[i] = SoilWaterRetentionCurve(DW_DPSI_FLAG, i, liq[i], 
-                                                 matric[i], soil_T[i], soil_con);
+        double total_matric = SoilWaterRetentionCurve(MATRIC_FLAG, i, 
+                                                    moist[i], 0.0, 0.0, soil_con);
+        dwat_dpsi0[i] = SoilWaterRetentionCurve(DW_DPSI_FLAG, i, 0.0, 
+                                                total_matric, 0.0, soil_con);
+        dtheta_dpsi[i] = SoilWaterRetentionCurve(DW_DPSI_FLAG, i, 0.0, 
+                                                 matric[i], 0.0, soil_con);
         if (soil_T[i] < soil_tkfrz) {
-            dfliq_dT[nidx] = 0.0;
-            dliq_dtheta = 0.0;
-            dice_dtheta = dwat_dpsi0[i];
-            dtheta_dT[nidx] = SoilWaterRetentionCurve(DW_DT_FLAG, i, liq[i], 
-                                                      matric[i], soil_T[i], soil_con);
+            dFracLiq_dT[nidx] = 0.0;
+            dFracLiq_dwat = 0.0;
+            dFracIce_dwat = dtheta_dpsi[i];
+            dtheta_dT[nidx] = SoilWaterRetentionCurve(DW_DT_FLAG, i, 0.0,
+                                                      matric[i], 0.0, soil_con);
         }
         else {
-            dfliq_dT[nidx] = 0.0;
-            dliq_dtheta = dwat_dpsi0[i];
-            dice_dtheta = 0.0;
+            dFracLiq_dT[nidx] = 0.0;
+            dFracLiq_dwat = dtheta_dpsi[i];
+            dFracIce_dwat = 0.0;
             dtheta_dT[nidx] = 0.0;
         }
              
@@ -226,7 +232,7 @@ prepare_full_energy(double             step_dt,
 
         // 土壤节点体积热容
         Cs_node[nidx] = volumetric_heat_capacity(soil_pore[i],
-                                                 liq[i], ice[i], 
+                                                 liq[i], ice[i],
                                                  soil_T[i], matric[i],
                                                  pressure,
                                                  excess_ice[i],
@@ -246,18 +252,19 @@ prepare_full_energy(double             step_dt,
                                              vol_gravel[i],
                                              &dTK_dliq, &dTK_dice);
         // 计算土壤热导率的偏导数
-        dkappa_dtheta[nidx] = dTK_dliq * dliq_dtheta + dTK_dice * dice_dtheta;
-        dkappa_dT[nidx] = dTK_dliq * dtheta_dT[nidx] - dTK_dice * dtheta_dT[nidx];
+        dkappa_dwat[nidx] = dTK_dliq * dFracLiq_dwat + dTK_dice * dFracIce_dwat;
+        dkappa_dT[nidx] = (dTK_dliq - dTK_dice) * dtheta_dT[nidx];
+
         // 计算土壤体积热容量的偏导数
         double difft = soil_T[i] - CONST_TKFRZ;
         double air = soil_pore[i] - liq[i] - ice[i] - excess_ice[i];
-        dCs_dtheta[nidx] = CONST_RHOFW * CONST_CPFWICE;
         if (soil_T[i] < soil_tkfrz) {
+            dCs_dtheta[nidx] = CONST_RHOICE * CONST_CPICE - CONST_RHODAIR * CONST_CPDAIR; // not used
             Cm_node[nidx] = -CONST_RHODAIR * CONST_CPDAIR * difft + CONST_RHOICE * CONST_CPICE * 
-                        (soil_T[i] - soil_tkfrz) + CONST_RHOFW * CONST_CPFWICE * difft;
+                        (soil_T[i] - soil_tkfrz) + CONST_RHOFW * CONST_CPFWICE * (soil_tkfrz - CONST_TKFRZ);
             dCm_dT[nidx] = -CONST_RHODAIR * CONST_CPDAIR + CONST_RHOICE * CONST_CPICE;
 
-            dCm_dpsi0[i] = (-CONST_RHOICE * CONST_CPICE + CONST_RHOFW * CONST_CPFWICE) * dT_dpsi;
+            dCm_dpsi0[i] = (-CONST_RHOICE * CONST_CPICE + CONST_RHOFW * CONST_CPFWICE) * dTfrz_dpsi0;
             dCs_dpsi0[i] = (CONST_RHOICE * CONST_CPICE - CONST_RHODAIR * CONST_CPDAIR) * dwat_dpsi0[i];
             dCs_dT[nidx] = (-CONST_RHOICE * CONST_CPICE + CONST_RHOFW * CONST_CPFWICE) * dtheta_dT[nidx];
             enthliq = CONST_RHOFW * CONST_CPFWICE * liq[i] * difft;
@@ -265,6 +272,7 @@ prepare_full_energy(double             step_dt,
             enthair = CONST_RHODAIR * CONST_CPDAIR * air * difft;
         }
         else {
+            dCs_dtheta[nidx] = CONST_RHOFW * CONST_CPFWICE - CONST_RHODAIR * CONST_CPDAIR; // not used
             Cm_node[nidx] = (-CONST_RHODAIR * CONST_CPDAIR + CONST_RHOFW * CONST_CPFWICE) * difft;
             dCm_dT[nidx] = -CONST_RHODAIR * CONST_CPDAIR + CONST_RHOFW * CONST_CPFWICE;
             dCm_dpsi0[i] = 0.0;
@@ -279,10 +287,6 @@ prepare_full_energy(double             step_dt,
                            1300.0 * vol_organic[i] * CONST_CPORGANIC) * difft;
         enthalpy[nidx] = enthliq + enthice + enthair + enthsoil;
     }
-    // 计算基岩热导率和热容量
-    nidx = Nnode - 1;
-    Cs_node[nidx] = CONST_CPSOIL;
-    kappa_node[nidx] = CONST_KGRAVEL;
 
     // 计算界面热导率（调和平均）
     double dTKdE_left, dTKdE_right;
@@ -297,16 +301,16 @@ prepare_full_energy(double             step_dt,
             /* 调和平均公式 */
             if (kappa_node[i] + kappa_node[i+1] > param.TOL_A) {
                 k_int = kappa_node[i] * kappa_node[i+1] * dzp / denom;
-                dTKdW_right = (pow(kappa_node[i], 2.0) * dzp * zdp) / pow(denom, 2.0) * dkappa_dtheta[i+1];
-                dTKdW_left  = (pow(kappa_node[i+1], 2.0) * dzp * zdn) / pow(denom, 2.0) * dkappa_dtheta[i];
+                dTKdW_right = (pow(kappa_node[i], 2.0) * dzp * zdp) / pow(denom, 2.0) * dkappa_dwat[i+1];
+                dTKdW_left  = (pow(kappa_node[i+1], 2.0) * dzp * zdn) / pow(denom, 2.0) * dkappa_dwat[i];
                 dTKdE_right = (pow(kappa_node[i], 2.0) * dzp * zdp) / pow(denom, 2.0) * dkappa_dT[i+1];
                 dTKdE_left  = (pow(kappa_node[i+1], 2.0) * dzp * zdn) / pow(denom, 2.0) * dkappa_dT[i];
             } 
             else {
                 /* 加权平均公式 */
                 k_int = (kappa_node[i] * zdn + kappa_node[i+1] * zdp) / dzp;
-                dTKdW_right = zdp / dzp * dkappa_dtheta[i+1];
-                dTKdW_left  = zdn / dzp * dkappa_dtheta[i];
+                dTKdW_right = zdp / dzp * dkappa_dwat[i+1];
+                dTKdW_left  = zdn / dzp * dkappa_dwat[i];
                 dTKdE_right = zdp / dzp * dkappa_dT[i+1];
                 dTKdE_left  = zdn / dzp * dkappa_dT[i];
             }
@@ -322,15 +326,15 @@ prepare_full_energy(double             step_dt,
 
             if (kappa_node[i] + kappa_node[i+1] > param.TOL_A) {
                 k_int = kappa_node[i] * kappa_node[i+1] * dzp / denom;
-                dTKdW_right = (pow(kappa_node[i], 2.0) * dzp * zdp) / pow(denom, 2.0) * dkappa_dtheta[i+1];
-                dTKdW_left  = (pow(kappa_node[i+1], 2.0) * dzp * zdn) / pow(denom, 2.0) * dkappa_dtheta[i];
+                dTKdW_right = (pow(kappa_node[i], 2.0) * dzp * zdp) / pow(denom, 2.0) * dkappa_dwat[i+1];
+                dTKdW_left  = (pow(kappa_node[i+1], 2.0) * dzp * zdn) / pow(denom, 2.0) * dkappa_dwat[i];
                 dTKdE_right = (pow(kappa_node[i], 2.0) * dzp * zdp) / pow(denom, 2.0) * dkappa_dT[i+1];
                 dTKdE_left  = (pow(kappa_node[i+1], 2.0) * dzp * zdn) / pow(denom, 2.0) * dkappa_dT[i];
             }
             else {
                 k_int = (kappa_node[i] * zdn + kappa_node[i+1] * zdp) / dzp;
-                dTKdW_right = zdp / dzp * dkappa_dtheta[i+1];
-                dTKdW_left  = zdn / dzp * dkappa_dtheta[i];
+                dTKdW_right = zdp / dzp * dkappa_dwat[i+1];
+                dTKdW_left  = zdn / dzp * dkappa_dwat[i];
                 dTKdE_right = zdp / dzp * dkappa_dT[i+1];
                 dTKdE_left  = zdn / dzp * dkappa_dT[i];
             }
@@ -346,15 +350,15 @@ prepare_full_energy(double             step_dt,
 
             if (kappa_node[i] + kappa_node[i+1] > param.TOL_A) {
                 k_int = kappa_node[i] * kappa_node[i+1] * dzp / denom;
-                dTKdW_right = (pow(kappa_node[i], 2.0) * dzp * zdp) / pow(denom, 2.0) * dkappa_dtheta[i+1];
-                dTKdW_left  = (pow(kappa_node[i+1], 2.0) * dzp * zdn) / pow(denom, 2.0) * dkappa_dtheta[i];
+                dTKdW_right = (pow(kappa_node[i], 2.0) * dzp * zdp) / pow(denom, 2.0) * dkappa_dwat[i+1];
+                dTKdW_left  = (pow(kappa_node[i+1], 2.0) * dzp * zdn) / pow(denom, 2.0) * dkappa_dwat[i];
                 dTKdE_right = (pow(kappa_node[i], 2.0) * dzp * zdp) / pow(denom, 2.0) * dkappa_dT[i+1];
                 dTKdE_left  = (pow(kappa_node[i+1], 2.0) * dzp * zdn) / pow(denom, 2.0) * dkappa_dT[i];
-            } 
+            }
             else {
                 k_int = (kappa_node[i] * zdn + kappa_node[i+1] * zdp) / dzp;
-                dTKdW_right = zdp / dzp * dkappa_dtheta[i+1];
-                dTKdW_left  = zdn / dzp * dkappa_dtheta[i];
+                dTKdW_right = zdp / dzp * dkappa_dwat[i+1];
+                dTKdW_left  = zdn / dzp * dkappa_dwat[i];
                 dTKdE_right = zdp / dzp * dkappa_dT[i+1];
                 dTKdE_left  = zdn / dzp * dkappa_dT[i];
             }
@@ -364,15 +368,23 @@ prepare_full_energy(double             step_dt,
         else {
             /* 下边界：热导等于最下层节点的热导 */
             kappa_int[Nnode-1] = kappa_node[Nnode-1];
-            dTKdW_right = dkappa_dtheta[Nnode-1];
+            dTKdW_right = dkappa_dwat[Nnode-1];
             dTKdW_left  = 0.0;   /* 下边界无上方节点，置零或缺失值 */
             dTKdE_right = dkappa_dT[Nnode-1];
             dTKdE_left  = 0.0;
         }
         // 计算在层间界面处相对于上层和下层状态的通量导数
-        dEdW_left[i]  = -dTKdW_left * (T[i+1] - T[i]) / dzp;
-        dEdW_right[i] = -dTKdW_right * (T[i+1] - T[i]) / dzp;
-        dEdT_left[i]  = -dTKdE_left * (T[i+1] - T[i]) / dzp + kappa_int[i]; 
-        dEdT_right[i] = -dTKdE_right * (T[i+1] - T[i]) / dzp - kappa_int[i];
+        if (i < Nnode - 1) {
+            dEdW_left[i]  = -dTKdW_left * (T[i+1] - T[i]) / dzp;
+            dEdW_right[i] = -dTKdW_right * (T[i+1] - T[i]) / dzp;
+            dEdT_left[i]  = -dTKdE_left * (T[i+1] - T[i]) / dzp + kappa_int[i];
+            dEdT_right[i] = -dTKdE_right * (T[i+1] - T[i]) / dzp - kappa_int[i];
+        }
+        else {
+            dEdW_left[i]  = 0.0;
+            dEdW_right[i] = 0.0;
+            dEdT_left[i]  = 0.0;
+            dEdT_right[i] = 0.0;
+        }
     }
 }
