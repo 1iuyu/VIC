@@ -18,8 +18,9 @@ calc_vapor_flux(double             pressure,
                 soil_con_struct   *soil_con)
 {
     extern parameters_struct param;
+    extern option_struct     options;
     /* Initialize variables */
-    size_t i, lidx;
+    size_t i, nidx;
     double air = 0.0;
     double dzp = 0.0;
     double coef_vapor = 0.6;
@@ -119,14 +120,14 @@ calc_vapor_flux(double             pressure,
     // 土层水汽扩散
     size_t Nsoil = cell->Nsoil;
     for (i = 0; i < Nsoil; i++) {
-        lidx = i + tmp_Nsnow;
+        nidx = i + tmp_Nsnow;
         air = soil_pore[i] - ice[i] - liq[i];
         if (air > 0.0 && matric[i] < 0.0) {
             // Calculate vapor fluxes due to temperature gradient
-            vapor_diff[lidx] = CONST_VAPDIFF *
+            vapor_diff[nidx] = CONST_VAPDIFF *
                 pow(soil_T[i] / CONST_TKFRZ, 2.0) *
                 (CONST_PSTD / pressure);
-            vapor_diff[lidx] *= coef_vapor * pow(air, vapor_exp);
+            vapor_diff[nidx] *= coef_vapor * pow(air, vapor_exp);
 
             svp_flags(soil_T[i], pressure,
                       &esaT, &qsaT, 
@@ -161,12 +162,12 @@ calc_vapor_flux(double             pressure,
             }
             enhance = 9.5 + 3.0 * liq[i] / soil_pore[i] - 8.5 * expon;
 
-            diff_therm[i] = vapor_diff[lidx] * enhance * rel_humid[i] * sat_vap_dens_dT;
-            diff_vapor[lidx] = vapor_diff[lidx] * sat_vap_dens;
+            diff_therm[i] = vapor_diff[nidx] * enhance * rel_humid[i] * sat_vap_dens_dT;
+            diff_vapor[nidx] = vapor_diff[nidx] * sat_vap_dens;
         }
         else {
             diff_therm[i] = 0.0;
-            diff_vapor[lidx] = 0.0;
+            diff_vapor[nidx] = 0.0;
             rel_humid[i] = 1.0;
         }
     }
@@ -188,23 +189,29 @@ calc_vapor_flux(double             pressure,
         vapor_flux[Nsnow] = conv_vapor[Nsnow] * (diff_vapor[Nsnow] - diff_vapor[Nsnow+1]);
     }
     for (i = 0; i < Nsoil - 1; i++) {
-        lidx = tmp_Nsnow + i;
+        nidx = tmp_Nsnow + i;
         dzp = zc_soil[i+1] - zc_soil[i];
         conv_temp = diff_therm[i] * diff_therm[i+1] * dzp /
                         (diff_therm[i] * (zc_soil[i+1] - Zsum_soil[i]) +
                         diff_therm[i+1] * (Zsum_soil[i] - zc_soil[i]));
         conv_temp /= dzp;
-        conv_vapor[lidx] = diff_vapor[lidx] * diff_vapor[lidx+1] * dzp /
-                        (diff_vapor[lidx] * (zc_soil[i+1] - Zsum_soil[i]) +
-                        diff_vapor[lidx+1] * (Zsum_soil[i] - zc_soil[i]));
-        conv_vapor[lidx] /= dzp;
+        conv_vapor[nidx] = diff_vapor[nidx] * diff_vapor[nidx+1] * dzp /
+                        (diff_vapor[nidx] * (zc_soil[i+1] - Zsum_soil[i]) +
+                        diff_vapor[nidx+1] * (Zsum_soil[i] - zc_soil[i]));
+        conv_vapor[nidx] /= dzp;
         // 水汽通量 = 热梯度项 + 湿度梯度项
-        vapor_flux[lidx] = conv_temp * (soil_T[i] - soil_T[i+1]) + 
-                            conv_vapor[lidx] * (rel_humid[i] - rel_humid[i+1]);
-        dQvdSMP[i] = CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * conv_vapor[lidx];
+        vapor_flux[nidx] = conv_temp * (soil_T[i] - soil_T[i+1]) + 
+                            conv_vapor[nidx] * (rel_humid[i] - rel_humid[i+1]);
+        dQvdSMP[i] = CONST_MWWV * CONST_G / CONST_RGAS / soil_T[i] * conv_vapor[nidx];
     }
     dQvdSMP[Nsoil-1] = CONST_MWWV * CONST_G / CONST_RGAS / soil_T[Nsoil-1] *
                                      conv_vapor[tmp_Nsnow + Nsoil - 1];
+    
+    // 底部边界条件
+    nidx = cell->Nnode - 1;
+    if (options.NOFLUX) {
+        vapor_flux[nidx] = 0.0;
+    }
 
     return (0);
 }

@@ -28,7 +28,8 @@ physical_constraints(size_t             Nstate,
 {
     int ErrorFlag;
     const double maxTempInc = 20.0; // Maximum temperature increment (K)
-    const double maxMoistInc = 1.0; // Maximum moisture increment (m3/m3)
+    const double maxPsiInc = 1.0;   // Maximum matric(ψ) increment (m)
+    const double maxSnowLiqInc = 0.05;
     size_t i, j, iLine, nidx;
 	size_t Nsnow = snow->Nsnow;
 	size_t Nnode = cell->Nnode;
@@ -39,13 +40,22 @@ physical_constraints(size_t             Nstate,
     double alpha = 1.0e-4;
     double lambda_min = 0.1;
     double increment;
+    double delta[MAX_STATES] = {0};
+    double residual[MAX_STATES] = {0};
     double *pack_T = snow->pack_T;
     double *soil_T = cell->soil_T;
     double *theta_moist = snow->theta_moist;
     double *moist = cell->moist;
+    double *total_matric = cell->total_matric;
     double *Wpwp_node = soil_con->Wpwp_node;
     double *Wsat_node = soil_con->Wsat_node;
 
+    // 保存临时数组
+    for (i = 0; i < Nstate; i++) {
+        delta[i] = mat_RHS[i];
+        residual[i] = 0.0;
+    }
+    // 线搜索和物理约束
     for (iLine = 0; iLine < 5; iLine++) {
 
         /* Impose physical constraints */
@@ -77,9 +87,9 @@ physical_constraints(size_t             Nstate,
             }
             // 水量物理约束
             delt_q = lambda * mat_RHS[j+1];
-            if (fabs(delt_q) > maxMoistInc) {
-                delt_q = copysign(maxMoistInc, delt_q);
-                if (i < Nsnow) {
+            if (i < Nsnow) {
+                if (fabs(delt_q) > maxSnowLiqInc) {
+                    delt_q = copysign(maxSnowLiqInc, delt_q);
                     frac_liq = SnowFreezingCurve(SNOWLIQ_FLAG, pack_T[i], 0.0);
                     frac_ice = 0.0;
                     if (-delt_q > frac_liq) {
@@ -89,8 +99,14 @@ physical_constraints(size_t             Nstate,
                         delt_q = 0.5 * (1.0 - frac_liq - frac_ice);
                     }
                 }
-                else {
-                    nidx = i - Nsnow;
+                // 更新状态变量
+                pack_T[i] = mat_state[j] + delt_t;
+                theta_moist[i] = mat_state[j+1] + delt_q;
+            }
+            else {
+                nidx = i - Nsnow;
+                if (fabs(delt_q) > maxPsiInc) {
+                    delt_q = copysign(maxPsiInc, delt_q);
                     double Tfrz = calc_tkfrz(nidx, NULL, cell, soil_con);
                     if (soil_T[nidx] < Tfrz) {
                         double xConst = CONST_LATICE / (CONST_G * CONST_TKFRZ);
@@ -108,18 +124,11 @@ physical_constraints(size_t             Nstate,
                     }
                     else if (delt_q > Wsat_node[nidx] - frac_liq - frac_ice) {
                         delt_q = 0.5 * (Wsat_node[nidx] - frac_liq - frac_ice);
-                    }                   
+                    }
                 }
-            }
-            // 更新状态变量
-            if (i < Nsnow) {
-                pack_T[i] = mat_state[j] + delt_t;
-                theta_moist[i] = mat_state[j+1] + delt_q;
-            }
-            else {
-                nidx = i - Nsnow;
+                // 更新状态变量
                 soil_T[nidx] = mat_state[j] + delt_t;
-                moist[nidx] = mat_state[j+1] + delt_q;
+                total_matric[nidx] = mat_state[j+1] + delt_q;              
             }
         }
 
@@ -134,7 +143,7 @@ physical_constraints(size_t             Nstate,
                       veg_var, veg_lib);
 
         // 计算残差向量
-        ErrorFlag = calc_resid_vec(step_dt, mat_RHS,
+        ErrorFlag = calc_resid_vec(step_dt, residual,
                                    energy, cell, 
                                    snow, soil_con);
 
@@ -145,7 +154,7 @@ physical_constraints(size_t             Nstate,
         /* Calculate scaled residual norm */
         fNew = 0.0;
         for (i = 0; i < Nstate; i++) {
-            increment = fScale[i] * mat_RHS[i];
+            increment = fScale[i] * residual[i];
             fNew += 0.5 * increment * increment;
         }
 
@@ -155,7 +164,15 @@ physical_constraints(size_t             Nstate,
         }
 
         /* Reduce step length */
-        lambda = max(lambda_min * lambda, 0.5 * lambda);
+        lambda = max(lambda_min, 0.5 * lambda);
+    }
+    
+    // 线搜索失败返回 ERROR，由外层做时间步减半
+    if (iLine >= 5) {
+        log_err("physical_constraints: line search failed, "
+                "fNew=%.6e fOld=%.6e slopeInit=%.6e lambda=%.6e",
+                fNew, fOld, slopeInit, lambda);
+        return (ERROR);
     }
 
     return (0);

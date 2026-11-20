@@ -216,7 +216,7 @@ generate_default_state(all_vars_struct   *all_vars,
             band = veg_con[veg].BandIndex;
             double pressure = force[band].pressure;
             /* Soil and ice thermal properties for the layer */
-            prepare_full_energy(step_dt, pressure, 
+            prepare_full_energy(pressure, 
                                 &cell[veg], 
                                 &energy[veg],
                                 &snow[veg], soil_con);

@@ -150,7 +150,8 @@ runoff(double             step_dt,
         } else {
             dInfilArea_dWat = dInfilArea_dS1 * dz_soil[i] * dwat_dpsi0[i];
         }
-        
+        cell->asat = 1.0 - infil_area;
+        cell->ainfil = infil_area;
         // 压缩限制因子修正
         double denom = sqrt(matric[i] * matric[i] + headSmooth * headSmooth);
         double dPosHead_dPsi = 0.5 * (1.0 + matric[i] / max(denom, 1.0e-12));

@@ -32,7 +32,7 @@ surface_fluxes(double             step_dt,
     double fScale[MAX_STATES] = {0};
     double xScale[MAX_STATES] = {0};
     double mat_RHS[MAX_STATES] = {0};
-    double mat_LHS[MAX_STATES*10] = {0};
+    double mat_LHS[MAX_STATES*LAPACK_LDAB] = {0};
     double shortwave_dir[MAX_SWBANDS] = {0};
     double shortwave_dfs[MAX_SWBANDS] = {0};
 
@@ -117,7 +117,7 @@ surface_fluxes(double             step_dt,
                 else {
                     nidx = i - iter_snow.Nsnow;
                     mat_state[j] = iter_cell.soil_T[nidx];
-                    mat_state[j+1] = iter_cell.moist[nidx];
+                    mat_state[j+1] = iter_cell.total_matric[nidx];
                 }
             }
 
@@ -134,8 +134,8 @@ surface_fluxes(double             step_dt,
                 Solve Water Balance Components
             ********************************************/
             ErrorFlag = calc_resid_vec(iter_dt, mat_RHS,
-                                       &iter_energy, 
-                                       &iter_cell, 
+                                       &iter_energy,
+                                       &iter_cell,
                                        &iter_snow,
                                        soil_con);
 
@@ -176,13 +176,8 @@ surface_fluxes(double             step_dt,
 
             /* Scale band Jacobian: J_s = F * J * X */
             for (col = 0; col < Nstate; col++) {
-                if (col > LAPACK_KU) {
-                    jmin = col - LAPACK_KU;
-                } else {
-                    jmin = 0;
-                }
+                jmin = (col > LAPACK_KU) ? col - LAPACK_KU : 0;
                 jmax = min(Nstate - 1, col + LAPACK_KL);
-
                 for (row = jmin; row <= jmax; row++) {
                     k = get_band_idx(row, col);
                     mat_LHS[k] *= fScale[row] * xScale[col];
@@ -191,6 +186,11 @@ surface_fluxes(double             step_dt,
 
             // 计算函数向量的梯度
             calc_gradient(mat_LHS, mat_RHS, grad, Nstate);
+
+            /* Solve: J_s * delta_y = -R_s */
+            for (i = 0; i < Nstate; i++) {
+                mat_RHS[i] = -mat_RHS[i];
+            }
 
             // 调用LAPACK函数求解线性方程组
             int info = LAPACKE_dgbsv(LAPACK_COL_MAJOR, Nstate,
@@ -219,11 +219,34 @@ surface_fluxes(double             step_dt,
                                              mat_state, force, 
                                              &iter_energy, 
                                              &iter_cell, &iter_snow, 
-                                             soil_con, 
+                                             soil_con,
                                              &iter_veg_var, veg_lib);
 
             if (ErrorFlag == ERROR) {
-                return (ERROR);
+                if (iter_dt > MAX_SUBDAILY_STEPS_PER_DAY * SEC_PER_DAY) {
+                    // 时间步长减半，重新开始
+                    iter_dt = iter_dt / 2.0;
+                    iter_energy.energy_flag = false;
+                    iter_energy.moist_flag = false;
+                    for (i = 0; i < MAX_SNOWS; i++) {
+                        iter_snow.phase_snow[i] = 0.0;
+                        iter_snow.pack_frze[i] = 0.0;
+                        iter_snow.pack_melt[i] = 0.0;
+                    }
+                    iter = 0;
+                    // 回滚状态至初始值
+                    iter_cell = (*cell);
+                    iter_energy = (*energy);
+                    iter_veg_var = (*veg_var);
+                    iter_snow = (*snow);
+                    continue;
+                } 
+                else {
+                    // 已达到最小时间步长，强制收敛并继续
+                    iter_energy.energy_flag = true;
+                    iter_energy.moist_flag = true;
+                    break;
+                }
             }
 
             double diff_t = 0.0, diff_q = 0.0;

@@ -138,7 +138,7 @@ update_snow(double             step_dt,
         pack_ice[0] = snow->swq;
         pack_liq[0] = 0.0;
         // Update node properties
-        update_nodes(step_dt, pressure, 
+        update_nodes(pressure, 
                      energy,  cell, 
                      snow, soil_con);
     }

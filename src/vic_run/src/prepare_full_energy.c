@@ -13,8 +13,7 @@
  *           ice contents for the layers.
  *****************************************************************************/
 void
-prepare_full_energy(double             step_dt,
-                    double             pressure,
+prepare_full_energy(double             pressure,
                     cell_data_struct  *cell,
                     energy_bal_struct *energy,
                     snow_data_struct  *snow,
@@ -60,9 +59,8 @@ prepare_full_energy(double             step_dt,
     double *dz_snow = snow->dz_snow;
     double *soil_T = cell->soil_T;
     double *matric = cell->matric;
-    double *last_matric = cell->last_matric;
+    double *last_moist = cell->last_moist;
     double *compress = cell->compress;
-    double *dcompress_dpsi = cell->dcompress_dpsi;
     double *moist = cell->moist;
     double *dCs_dT = energy->dCs_dT;
     double *dCm_dT = energy->dCm_dT;
@@ -74,6 +72,7 @@ prepare_full_energy(double             step_dt,
     double *dEdT_right = energy->dEdT_right;
     double *dCs_dpsi0 = cell->dCs_dpsi0;
     double *dCm_dpsi0 = cell->dCm_dpsi0;
+    double *total_matric = cell->total_matric;
     double *dCs_dtheta = energy->dCs_dtheta;
     double *dwat_dpsi0 = cell->dwat_dpsi0;
     double *dtheta_dpsi = cell->dtheta_dpsi;
@@ -87,6 +86,7 @@ prepare_full_energy(double             step_dt,
     double *kappa_node = energy->kappa_node;
     double *kappa_int = energy->kappa_int;
     double *enthalpy = energy->enthalpy;
+    double *dcompress_dpsi = cell->dcompress_dpsi;
     
     // 构造临时节点深度矩阵
     for (i = 0; i < Nsnow; i++) {
@@ -206,10 +206,10 @@ prepare_full_energy(double             step_dt,
         double soil_tkfrz = calc_tkfrz(i, &dTfrz_dpsi0, cell, soil_con);
 
         // 计算土壤水分含量对土壤基质势的偏导数
-        double total_matric = SoilWaterRetentionCurve(MATRIC_FLAG, i, 
-                                                    moist[i], 0.0, 0.0, soil_con);
+        total_matric[i] = SoilWaterRetentionCurve(MATRIC_FLAG, i, 
+                                                  moist[i], 0.0, 0.0, soil_con);
         dwat_dpsi0[i] = SoilWaterRetentionCurve(DW_DPSI_FLAG, i, 0.0, 
-                                                total_matric, 0.0, soil_con);
+                                                total_matric[i], 0.0, soil_con);
         dtheta_dpsi[i] = SoilWaterRetentionCurve(DW_DPSI_FLAG, i, 0.0, 
                                                  matric[i], 0.0, soil_con);
         if (soil_T[i] < soil_tkfrz) {
@@ -227,8 +227,10 @@ prepare_full_energy(double             step_dt,
         }
              
         // 计算土壤压缩性
-        soil_compress(liq[i], ice[i], step_dt, Wsat_node[i], matric[i],
-                      last_matric[i], &compress[i], &dcompress_dpsi[i]);
+        double last_totmatric = SoilWaterRetentionCurve(MATRIC_FLAG, i, 
+                                                        last_moist[i], 0.0, 0.0, soil_con);
+        soil_compress(liq[i], ice[i], Wsat_node[i], total_matric[i],
+                      last_totmatric, &compress[i], &dcompress_dpsi[i]);
 
         // 土壤节点体积热容
         Cs_node[nidx] = volumetric_heat_capacity(soil_pore[i],
@@ -257,7 +259,7 @@ prepare_full_energy(double             step_dt,
 
         // 计算土壤体积热容量的偏导数
         double difft = soil_T[i] - CONST_TKFRZ;
-        double air = soil_pore[i] - liq[i] - ice[i] - excess_ice[i];
+        double air = max(0.0, soil_pore[i] - liq[i] - ice[i] - excess_ice[i]);
         if (soil_T[i] < soil_tkfrz) {
             dCs_dtheta[nidx] = CONST_RHOICE * CONST_CPICE - CONST_RHODAIR * CONST_CPDAIR; // not used
             Cm_node[nidx] = -CONST_RHODAIR * CONST_CPDAIR * difft + CONST_RHOICE * CONST_CPICE * 
@@ -339,7 +341,7 @@ prepare_full_energy(double             step_dt,
                 dTKdE_left  = zdn / dzp * dkappa_dT[i];
             }
             kappa_int[i] = k_int / dzp;
-        } 
+        }
         else if (i < Nnode - 1) {
             /* 土壤层内部界面 */
             nidx = i - tmp_Nsnow;

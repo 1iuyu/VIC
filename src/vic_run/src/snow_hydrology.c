@@ -362,7 +362,7 @@ snow_hydrology(double             step_dt,
     snow->glac_excess = excess_flux * step_dt;
 
     // Update node properties
-    update_nodes(step_dt, pressure, 
+    update_nodes(pressure, 
                  energy,  cell, 
                  snow, soil_con);
     snow->last_Nsnow = snow->Nsnow;

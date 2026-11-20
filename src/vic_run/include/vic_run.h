@@ -99,7 +99,7 @@ int photosynth_hydrostress(double, double, double, double, double, double, doubl
 int physical_constraints(size_t, double, double, double, double *, double *, double *,
                          force_data_struct *, energy_bal_struct *, cell_data_struct *,
                          snow_data_struct *, soil_con_struct *, veg_var_struct *, veg_lib_struct *);
-void prepare_full_energy(double, double, cell_data_struct *, energy_bal_struct *,
+void prepare_full_energy(double, cell_data_struct *, energy_bal_struct *,
                          snow_data_struct *, soil_con_struct *);
 double plc(double, double);
 double piecewise_linear_interp(size_t, double *, double *, double);
@@ -121,7 +121,7 @@ double SnowFreezingCurve(int, double, double);
 double snow_curve_deriv(double, double, double, double);
 double soil_conductivity(double, double, double, double, double, double,
                          double, double, double, double, double, double *, double *);
-int soil_compress(double, double, double, double, double, double, double *, double *);
+int soil_compress(double, double, double, double, double, double *, double *);
 void soil_hydraulic_conductivity(energy_bal_struct *, cell_data_struct *, snow_data_struct *,
                                  soil_con_struct *);
 int surface_albedo(double, force_data_struct *, energy_bal_struct *, 
@@ -147,7 +147,7 @@ void update_snow(double, force_data_struct *, energy_bal_struct *,
                  cell_data_struct *, snow_data_struct *, soil_con_struct *);
 int update_fluxes(double, force_data_struct *, energy_bal_struct *, cell_data_struct *, 
                    snow_data_struct *, soil_con_struct *, veg_var_struct *, veg_lib_struct *);
-void update_nodes(double, double, energy_bal_struct *, cell_data_struct *, 
+void update_nodes(double, energy_bal_struct *, cell_data_struct *, 
                  snow_data_struct *, soil_con_struct *);
 void update_snow_fluxes(double *, double *, double *, double *,
                            double, double, double, double);

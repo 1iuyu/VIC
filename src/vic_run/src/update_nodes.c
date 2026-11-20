@@ -10,8 +10,7 @@
  * @brief    This routine update the nodes properties in the vertical direction.
  *****************************************************************************/
 void
-update_nodes(double             step_dt,
-             double             pressure,
+update_nodes(double             pressure,
              energy_bal_struct *energy,
              cell_data_struct  *cell,
              snow_data_struct  *snow,
@@ -95,7 +94,7 @@ update_nodes(double             step_dt,
             T[i] = new_T[i];
         }
         // update the Cs_node for the new snow layer
-        prepare_full_energy(step_dt, pressure,
+        prepare_full_energy(pressure,
                             cell, energy,
                             snow, soil_con);
     }

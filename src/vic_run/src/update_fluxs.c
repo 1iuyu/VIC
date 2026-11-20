@@ -20,7 +20,7 @@ update_fluxes(double             step_dt,
               veg_var_struct    *veg_var,
               veg_lib_struct    *veg_lib)
 {
-    extern option_struct     options;
+    extern option_struct options;
     int    ErrorFlag;
     size_t Nsnow = snow->Nsnow;
 
@@ -87,7 +87,7 @@ update_fluxes(double             step_dt,
     /***************************************
       Compute layer thermal properties
     ***************************************/
-    prepare_full_energy(step_dt, pressure, 
+    prepare_full_energy(pressure, 
                         cell, energy,
                         snow, soil_con);
 

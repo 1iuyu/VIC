@@ -231,6 +231,7 @@ vic_init(void)
         }
 
         double z_bedrock = soil_con[i].z_bedrock;
+        z_bedrock = 0.1; // test
         // Soil thermal node thicknesses and positions
         // 表层2m土层厚度固定
         size_t Nbedrock = 0;
@@ -240,6 +241,7 @@ vic_init(void)
             remain = z_bedrock - accum_depth;
             if (remain <= 0.0) {
                 /* 已达基岩，停止 */
+                Nbedrock = k + 1;
                 break;
             }
 
@@ -285,11 +287,11 @@ vic_init(void)
 
         /* Compute soil node depths */
         double sum_dz = 0.;
-        for (k = 0; k < Nbedrock; k++) {
+        for (k = 0; k < Nbedrock - 1; k++) {
             sum_dz += soil_con[i].dz_soil[k];
             soil_con[i].Zsum_soil[k] = sum_dz;
         }
-        for (k = 0; k < Nbedrock; k++) {
+        for (k = 0; k < Nbedrock - 1; k++) {
             soil_con[i].zc_soil[k] = soil_con[i].Zsum_soil[k] - 
                                     soil_con[i].dz_soil[k] / 2.0;
         }
@@ -317,7 +319,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].clay_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
 
     // sand: sand content for each soil layer
@@ -335,7 +337,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].sand_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
 
     // silt: silt content for each soil layer
@@ -353,7 +355,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].silt_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
 
     // gravel: gravel content for each soil layer
@@ -371,7 +373,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].gravel_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
 
     // Wsat: saturated point for each layer
@@ -389,7 +391,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].organic_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
 
     for (j = 0; j < Nlayer; j++) {
@@ -406,7 +408,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].bulk_dens_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
     
     // alpha: retention shape parameter in van Genuchten equation [1/m]
@@ -424,7 +426,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].alpha_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
     // expt: layer-specific exponent n in van Genuchten eqn
     for (j = 0; j < Nlayer; j++) {
@@ -441,7 +443,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].expt_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
     // Ksat: saturated hydraulic conductivity [m/s]
     for (j = 0; j < Nlayer; j++) {
@@ -458,7 +460,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].Ksat_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
     // Wpwp: soil moisture content at permanent wilting point [m3/m3]
     for (j = 0; j < Nlayer; j++) {
@@ -475,7 +477,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].Wpwp_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
     // Wsat: soil moisture content at saturation [m3/m3]
     for (j = 0; j < Nlayer; j++) {
@@ -492,7 +494,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].Wsat_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
     // lpar: unsaturated hydraulic conductivity exponent.
     for (j = 0; j < Nlayer; j++) {
@@ -509,7 +511,7 @@ vic_init(void)
                             soil_con[i].depth,
                             soil_con[i].Zsum_soil,
                             &soil_con[i].lpar_node[0],
-                            &array[i * Nlayer]);
+                            &array[i*Nlayer]);
     }
     // mpar: unsaturated hydraulic conductivity exponent.
     for (i = 0; i < local_domain.ncells_active; i++) {

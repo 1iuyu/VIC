@@ -371,6 +371,7 @@ distribute_node_moisture_properties(cell_data_struct  *cell,
     double *soil_porosity = cell->soil_porosity;
     double *matric = cell->matric;
     double *excess_ice = cell->excess_ice;
+    double *total_matric = cell->total_matric;
 
     /* node estimates */
     for (i = 0; i < Nsoil; i++) {
@@ -414,6 +415,8 @@ distribute_node_moisture_properties(cell_data_struct  *cell,
             // 计算土壤基质势
             matric[i] = SoilWaterRetentionCurve(MATRIC_FLAG, i, liq[i], 
                                                 0.0, 0.0, soil_con);
+            total_matric[i] = SoilWaterRetentionCurve(MATRIC_FLAG, i, moist[i], 
+                                                      0.0, 0.0, soil_con);
         }
     }
     return (0);
@@ -502,7 +505,7 @@ calc_tkfrz(size_t             nidx,
         moist[nidx] = Wsat_node;
     }
     double total_matric = SoilWaterRetentionCurve(MATRIC_FLAG, nidx, 
-                                                moist[nidx], 0.0, 0.0, soil_con);
+                                                  moist[nidx], 0.0, 0.0, soil_con);
     if (total_matric < 0.0) {
         double A = CONST_LATICE / CONST_G;
         tmp_tkfrz = CONST_TKTRIP * total_matric / (A - total_matric) + CONST_TKTRIP;
@@ -528,7 +531,6 @@ calc_tkfrz(size_t             nidx,
 int
 soil_compress(double  liq,
               double  ice,
-              double  step_dt,
               double  Wsat_node,
               double  matric,
               double  last_matric,
@@ -538,7 +540,7 @@ soil_compress(double  liq,
     extern parameters_struct param;
     
     (*dcompress_dpsi) = param.SOIL_SPECSTORE * (liq + ice) / Wsat_node;
-    (*compress) = (matric - last_matric) * (*dcompress_dpsi) / step_dt;
+    (*compress) = (matric - last_matric) * (*dcompress_dpsi);
 
     return (0);
 }

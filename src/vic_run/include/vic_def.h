@@ -751,6 +751,7 @@ typedef struct {
     double displacement[2];            /**< displacement height (m) */
     double ref_height[3];              /**< height of meteorological forcing data (m) */
     double asat;                       /**< saturated area fraction */
+    double ainfil;                     /**< Infiltration area fraction */
     double rootmoist;                  /**< total of layer.moist over all layers in the root zone (mm) */
     double zwt;                        /**< average water table position [cm] - using lowest unsaturated layer */
     double max_daylen;                 /**< maximum daylength for this grid cell (s) */
@@ -831,6 +832,7 @@ typedef struct {
     double dCs_dpsi0[MAX_SOILS];       /**< derivatives in heat capacity w.r.t. matric potential (J m-3) */
     double dCm_dpsi0[MAX_SOILS];       /**< derivatives in heat capacity w.r.t. matric potential (J kg-1) */
     double matric[MAX_SOILS];          /**< soil matric potential [m] */
+    double total_matric[MAX_SOILS];    /**< total water matric potential (m) */
     double last_matric[MAX_SOILS];     /**< last step soil matric potential [m] */
 } cell_data_struct;
 

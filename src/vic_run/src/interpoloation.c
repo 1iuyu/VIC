@@ -70,9 +70,27 @@ double sign(double a, double b) {
 /******************************************************************************
  * @brief    Get the index in the band-diagonal matrix or full matrix
  *****************************************************************************/
-size_t 
+size_t
 get_band_idx(size_t row, size_t col)
 {
+    // 检查是否超出矩阵带宽
+    if (row >= col) {
+        if (row - col > LAPACK_KL) {
+            log_err("ERROR: Matrix index out of lower band! "
+                    "row=%zu, col=%zu, KL=%d",
+                    row, col, LAPACK_KL);
+            return (ERROR);
+        }
+    }
+    else {
+        if (col - row > LAPACK_KU) {
+            log_err("ERROR: Matrix index out of upper band! "
+                    "row=%zu, col=%zu, KU=%d",
+                    row, col, LAPACK_KU);
+            return (ERROR);
+        }
+    }
+
     return (LAPACK_KL + LAPACK_KU + row - col) + col * LAPACK_LDAB;
 }
 

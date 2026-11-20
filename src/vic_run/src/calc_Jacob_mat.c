@@ -28,7 +28,9 @@ calc_Jacob_mat(double             step_dt,
 	size_t Nsnow = snow->Nsnow;
     size_t Nsoil = cell->Nsoil;
 	size_t Nnode = cell->Nnode;
+    size_t surf_idx = 2 * Nsnow + 1;
     double coverage = snow->coverage;
+    double infil_area = cell->ainfil;
     double zc_node[MAX_SNOWS+1] = {0};
     double fact[MAX_NODES] = {0};
 	double *T = energy->T;
@@ -68,6 +70,7 @@ calc_Jacob_mat(double             step_dt,
     double deriv_snow = energy->deriv_snow;
     double deriv_soil = energy->deriv_soil;
     double deriv_terms = energy->deriv_terms;
+    double deriv_evap = energy->deriv_evap;
     double *dcompress_dpsi = cell->dcompress_dpsi;
 
 	/* 计算临时距离节点 */
@@ -201,6 +204,9 @@ calc_Jacob_mat(double             step_dt,
                     mat_LHS[idx] = -fact[i+1] * SnowLiq_deriv[i] * dtheta_dT[i];
                 }
             }
+            // 雪层温度变化对表层土壤入渗通量的影响
+            idx = get_band_idx(Nsnow*2+1, j);
+            mat_LHS[idx] -= fact[Nsnow] * coverage * infil_area * SnowLiq_deriv[i] * dtheta_dT[i];
         }
         else {
             nidx = i - Nsnow;
@@ -212,9 +218,9 @@ calc_Jacob_mat(double             step_dt,
                                     CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + (dCm_dT[i] + 
                                     CONST_LATICE * CONST_RHOFW * dFracLiq_dT[i]) * (moist[nidx] - last_moist[nidx]);
 
-                    // 主对角项(本层水量对液态水的导数) dW(i)/dθ(i)
+                    // 主对角项(本层水量对基质势的导数) dW(i)/dψ(i)
                     idx = get_band_idx(j+1, j+1);
-                    mat_LHS[idx] = fact[i] * dWdQ_left[nidx] + dcompress_dpsi[nidx] * dwat_dpsi0[nidx];
+                    mat_LHS[idx] = fact[i] * dWdQ_left[nidx] + dcompress_dpsi[nidx] + dwat_dpsi0[nidx];
 
                     // 主对角项(本层水量对温度的导数) dW(i)/dT(i)
                     idx = get_band_idx(j+1, j);
@@ -227,17 +233,17 @@ calc_Jacob_mat(double             step_dt,
                                     CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + (dCm_dT[i] +
                                     CONST_LATICE * CONST_RHOFW * dFracLiq_dT[i]) * (moist[nidx] - last_moist[nidx]);
 
-                    // 主对角项(本层水量对液态水的导数) dW(i)/dθ(i)
+                    // 主对角项(本层水量对基质势的导数) dW(i)/dψ(i)
                     idx = get_band_idx(j+1, j+1);
                     mat_LHS[idx] = fact[i] * dWdQ_left[nidx] + 
-                                dcompress_dpsi[nidx] * dwat_dpsi0[nidx];
+                                dcompress_dpsi[nidx] + dwat_dpsi0[nidx];
 
                     // 主对角项(本层水量对温度的导数) dW(i)/dT(i)
                     idx = get_band_idx(j+1, j);
-                    mat_LHS[idx] = fact[i] * dWdE_left[nidx];
+                    mat_LHS[idx] = fact[i] * (dWdE_left[nidx] - deriv_evap);
                 }
 
-                // 主对角项(本层能量对水量的导数) dE(i)/dθ(i)
+                // 主对角项(本层能量对基质势的导数) dE(i)/dψ(i)
                 idx = get_band_idx(j, j+1);
                 mat_LHS[idx] = Cm_node[i] * dwat_dpsi0[nidx] + dCs_dpsi0[nidx] * (T[i] - last_T[i]) + dCm_dpsi0[nidx] * 
                               (moist[nidx] - last_moist[nidx]) + fact[i] * dEdW_left[i];
@@ -253,7 +259,7 @@ calc_Jacob_mat(double             step_dt,
                                 CONST_RHOFW * dtheta_dT[i] + dCs_dT[i] * (T[i] - last_T[i]) + (dCm_dT[i] +
                                 CONST_LATICE * CONST_RHOFW * dFracLiq_dT[i]) * (moist[nidx] - last_moist[nidx]);
 
-                // 主对角项(本层能量对水量的导数) dE(i)/dθ(i)
+                // 主对角项(本层能量对水量的导数) dE(i)/dψ(i)
                 idx = get_band_idx(j, j+1);
                 mat_LHS[idx] = Cm_node[i] * dwat_dpsi0[nidx] + dCs_dpsi0[nidx] * (T[i] - last_T[i]) + dCm_dpsi0[nidx] * 
                               (moist[nidx] - last_moist[nidx]) + fact[i] * (dEdW_left[i] - dEdW_right[i-1]);
@@ -265,7 +271,7 @@ calc_Jacob_mat(double             step_dt,
                 // 主对角项(本层水量对液态水的导数) dW(i)/dθ(i)
                 idx = get_band_idx(j+1, j+1);
                 mat_LHS[idx] = fact[i] * (dWdQ_left[nidx] - dWdQ_right[nidx-1]) +
-                            dcompress_dpsi[nidx] * dwat_dpsi0[nidx];
+                            dcompress_dpsi[nidx] + dwat_dpsi0[nidx];
 
                 // 主对角项(本层水量对温度的导数) dW(i)/dT(i)
                 idx = get_band_idx(j+1, j);
@@ -321,12 +327,111 @@ calc_Jacob_mat(double             step_dt,
             }
 
             // 交叉项(地表入渗对于温度的导数)
-            idx = get_band_idx(Nsnow*2+1, j);
-            mat_LHS[idx] -= fact[Nsnow] * dWdE_surf[nidx];
+            if ((j <= surf_idx) ? (surf_idx - j <= LAPACK_KL) : (j - surf_idx <= LAPACK_KU)) {
+                idx = get_band_idx(surf_idx, j);
+                mat_LHS[idx] -= fact[Nsnow] * dWdE_surf[nidx];
+            }
 
             // 交叉项(地表入渗对于水量的导数)
-            idx = get_band_idx(Nsnow*2+1, j+1);
-            mat_LHS[idx] -= fact[Nsnow] * dWdQ_surf[nidx];
+            if ((j + 1 <= surf_idx) ? (surf_idx - (j + 1) <= LAPACK_KL) : (j + 1 - surf_idx <= LAPACK_KU)) {
+                idx = get_band_idx(surf_idx, j+1);
+                mat_LHS[idx] -= fact[Nsnow] * dWdQ_surf[nidx];
+            }
+
+            printf("\n[Interface flux derivatives]\n");
+
+            printf("dEdT_left         = %.12e\n", dEdT_left[i]);
+            printf("dEdW_left         = %.12e\n", dEdW_left[i]);
+            printf("dWdE_left         = %.12e\n", dWdE_left[nidx]);
+            printf("dWdQ_left         = %.12e\n", dWdQ_left[nidx]);
+
+            if (i < Nnode - 1) {
+                printf("dEdT_right        = %.12e\n", dEdT_right[i]);
+                printf("dEdW_right        = %.12e\n", dEdW_right[i]);
+            }
+
+            if (nidx > 0) {
+                printf("upper dEdT_right  = %.12e\n", dEdT_right[i-1]);
+                printf("upper dEdW_right  = %.12e\n", dEdW_right[i-1]);
+                printf("upper dWdE_right  = %.12e\n", dWdE_right[nidx-1]);
+                printf("upper dWdQ_right  = %.12e\n", dWdQ_right[nidx-1]);
+            }
+
+            if (nidx < Nsoil - 1) {
+                printf("lower dWdE_left   = %.12e\n", dWdE_left[nidx]);
+                printf("lower dWdQ_left   = %.12e\n", dWdQ_left[nidx]);
+            }
+
+            printf("dWdE_surf         = %.12e\n", dWdE_surf[nidx]);
+            printf("dWdQ_surf         = %.12e\n", dWdQ_surf[nidx]);
+
+            printf("\n[Jacobian matrix elements]\n");
+
+            // 主对角 2x2 子矩阵
+            printf("J(E,T) = %.12e\n",
+                mat_LHS[get_band_idx(j, j)]);
+
+            printf("J(E,psi0) = %.12e\n",
+                mat_LHS[get_band_idx(j, j+1)]);
+
+            printf("J(W,T) = %.12e\n",
+                mat_LHS[get_band_idx(j+1, j)]);
+
+            printf("J(W,psi0) = %.12e\n",
+                mat_LHS[get_band_idx(j+1, j+1)]);
+
+            // 上层耦合
+            if (nidx > 0) {
+                printf("\n[Upper layer coupling]\n");
+
+                printf("J(E_upper,T) = %.12e\n",
+                    mat_LHS[get_band_idx(j-2, j)]);
+
+                printf("J(E_upper,psi0) = %.12e\n",
+                    mat_LHS[get_band_idx(j-2, j+1)]);
+
+                printf("J(W_upper,T) = %.12e\n",
+                    mat_LHS[get_band_idx(j-1, j)]);
+
+                printf("J(W_upper,psi0) = %.12e\n",
+                    mat_LHS[get_band_idx(j-1, j+1)]);
+            }
+
+            // 下层耦合
+            if (i < Nnode - 1) {
+                printf("\n[Lower layer coupling]\n");
+
+                printf("J(E_lower,T) = %.12e\n",
+                    mat_LHS[get_band_idx(j+2, j)]);
+
+                printf("J(E_lower,psi0) = %.12e\n",
+                    mat_LHS[get_band_idx(j+2, j+1)]);
+            }
+
+            if (nidx < Nsoil - 1) {
+                printf("J(W_lower,T) = %.12e\n",
+                    mat_LHS[get_band_idx(j+3, j)]);
+
+                printf("J(W_lower,psi0) = %.12e\n",
+                    mat_LHS[get_band_idx(j+3, j+1)]);
+            }
+
+            // 地表入渗交叉项
+            printf("\n[Surface infiltration coupling]\n");
+
+            if ((j <= surf_idx) ? (surf_idx - j <= LAPACK_KL) :
+                                (j - surf_idx <= LAPACK_KU)) {
+                printf("J(surface,T) = %.12e\n",
+                    mat_LHS[get_band_idx(surf_idx, j)]);
+            }
+
+            if ((j + 1 <= surf_idx) ? (surf_idx - (j + 1) <= LAPACK_KL) :
+                                    (j + 1 - surf_idx <= LAPACK_KU)) {
+                printf("J(surface,psi0) = %.12e\n",
+                    mat_LHS[get_band_idx(surf_idx, j+1)]);
+            }
+
+            printf("============================================================\n");
         }
     }
 

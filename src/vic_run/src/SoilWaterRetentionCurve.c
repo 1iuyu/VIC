@@ -148,19 +148,10 @@ SoilWaterRetentionCurve(int              flag,
         /* dθ/dT */
         double kappa = CONST_LATICE / (CONST_G * CONST_TKFRZ);
         double xtemp = alpha_node[idx] * kappa * (CONST_TKFRZ - soil_T);
-        double xn = 0.0;
-        if (xtemp > 0.0) {
-            xn = pow(xtemp, expt_node[idx] - 1.0);
-        }
-        else if (expt_node[idx] > 1.0) {
-            xn = 0.0;
-        }
-        else {
-            xn = 0.0;
-        }
+        double xn = (xtemp > 0.0) ? pow(xtemp, expt_node[idx] - 1.0) : 0.0;
         /* 链式法则求导 */
-        return (alpha_node[idx] * kappa) * expt_node[idx] * xn * (-mpar_node[idx]) * pow(1.0 + 
-               pow(xtemp, expt_node[idx]), -mpar_node[idx] - 1.0) * (Wsat_node[idx] - Wpwp_node[idx]);
+        return (alpha_node[idx] * kappa) * expt_node[idx] * xn * mpar_node[idx] * pow(1.0 + 
+                pow(xtemp, expt_node[idx]), -mpar_node[idx] - 1.0) * (Wsat_node[idx] - Wpwp_node[idx]);
     }
     else if (flag == CONDUCT_FLAG) {
         double *lpar_node = soil_con->lpar_node;
